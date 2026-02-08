@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wizard Red Pro v7 (Router links + Interfaces)</title>
+<style>
+  :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+  body { margin:16px; background:#f6f7fb; color:#111; }
+  h1 { margin:0 0 6px; }
+  h2 { margin:16px 0 8px; }
+  h3 { margin:12px 0 8px; }
+  .hint { font-size:12px; opacity:.78; line-height:1.35; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items:start; }
+  .card { background:white; border-radius:14px; padding:12px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:12px; }
+  label { display:block; font-size:12px; opacity:.85; margin-top:8px; }
+  input, select, textarea, button { width:100%; padding:8px; border-radius:10px; border:1px solid #d7d9e0; box-sizing:border-box; }
+  textarea { min-height: 90px; }
+  button { cursor:pointer; border:0; background:#2f6fed; color:white; font-weight:800; }
+  button.secondary { background:#e9edf7; color:#1b2b55; border:1px solid #ccd6f5; }
+  button.danger { background:#e23b3b; }
+  button:disabled { opacity:.55; cursor:not-allowed; }
+  .row { display:flex; gap:8px; }
+  .row > * { flex:1; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid #eee; font-size: 13px; vertical-align: top; }
+  th { font-size:12px; opacity:.8; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size: 12px; background:#eef2ff; font-weight:800; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  hr { border:0; border-top:1px solid #eee; margin:12px 0; }
+  .callout { border:1px solid #e6e8f2; border-radius:12px; padding:10px; background:#fbfcff; }
+
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0 12px; }
+  .tab { padding:8px 10px; border-radius:999px; border:1px solid #d7d9e0; background:#fff; cursor:pointer; user-select:none; font-weight:900; font-size:13px; }
+  .tab.active { background:#2f6fed; color:#fff; border-color:#2f6fed; }
+  .banner { padding:10px 12px; border-radius:12px; background:#fff; border:1px solid #e6e8f2; margin-bottom:12px; }
+
+  .legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .legend span { font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid #e6e8f2; background:#fff; }
+  .portGrid { display:grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap:8px; margin-top:10px; }
+  @media (max-width: 1100px){ .portGrid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+  @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } .portGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+  @media (max-width: 520px){ .portGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .portBtn { border:1px solid #d7d9e0; border-radius:12px; padding:8px; background:#fff; cursor:pointer; user-select:none; min-height:76px; display:flex; flex-direction:column; gap:4px; }
+  .portBtn.access { background:#f3fff5; border-color:#bfe8c7; }
+  .portBtn.trunk  { background:#fff7ea; border-color:#f0d0a1; }
+  .portBtn.routed { background:#f2f4f8; border-color:#cfd6e4; }
+  .portBtn.empty  { opacity:.6; background:#fafafa; cursor:default; }
+  .portBtn.connected { box-shadow:0 0 0 2px rgba(47,111,237,.15) inset; }
+  .pName { font-weight:950; font-size:12px; line-height:1.1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .pMeta { font-size:11px; opacity:.85; line-height:1.15; display:flex; flex-direction:column; gap:2px; }
+  .chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:auto; }
+  .chip { font-size:10.5px; padding:2px 6px; border-radius:999px; background:#eef2ff; font-weight:900; }
+  .chip.warn { background:#ffe9e9; }
+  .chip.ok { background:#e9fff1; }
+  .chip.neu { background:#f2f4f8; }
+
+  .layoutGrid { display:grid; gap:8px; }
+  .slotCell { border:1px solid #e6e8f2; border-radius:12px; padding:8px; background:#fff; }
+  .slotTitle { display:flex; justify-content:space-between; align-items:center; font-weight:900; }
+  .mini { font-size:12px; opacity:.8; }
+  .tinySelect { padding:6px; border-radius:10px; }
+
+  .modalBackdrop { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; padding:14px; }
+  .modalBackdrop.open { display:flex; }
+  .modal { width:min(980px, 100%); background:#fff; border-radius:16px; padding:12px; box-shadow:0 10px 40px rgba(0,0,0,.25); }
+  .modalHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .modalHeader h3 { margin:0; }
+  .modalClose { width:auto; padding:8px 10px; border-radius:10px; }
+  .modalActions { display:flex; gap:8px; margin-top:10px; }
+  .modalActions button { flex:1; }
+
+  .canvasWrap { border:1px solid #e6e8f2; background:#fff; border-radius:14px; padding:10px; }
+  canvas { width:100%; height:420px; display:block; border-radius:12px; background:linear-gradient(180deg, #fbfcff, #ffffff); }
+  .canvasTools { display:flex; gap:8px; margin-top:8px; }
+  .canvasTools button { flex:1; }
+</style>
+</head>
+<body>
+<h1>Wizard de Red Pro v7</h1>
+<div class="hint">✅ Ahora puedes crear <b>interfaces físicas en routers/firewalls</b> y enlazarlas a switches. (Antes sólo había layout de switches.)</div>
+
+<div class="banner">
+  <div class="tabs" id="tabs"></div>
+  <div id="stepTitle" class="hint"></div>
+</div>
+
+<section class="card" id="step1">
+  <h2>1) Dispositivos + Interfaces (routers/firewalls)</h2>
+  <div class="grid">
+    <div>
+      <div class="row">
+        <div>
+          <label>Nombre</label>
+          <input id="devName" placeholder="SW-ACC-01 / R-EDGE-01" />
+        </div>
+        <div>
+          <label>Tipo</label>
+          <select id="devType">
+            <option value="switch">Switch</option>
+            <option value="router">Router</option>
+            <option value="firewall">Firewall</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Vendor/OS</label>
+          <select id="devVendor">
+            <option value="">(selecciona)</option>
+            <option value="cisco_ios">Cisco IOS</option>
+            <option value="juniper_junos">Juniper Junos</option>
+            <option value="aruba_aoss">Aruba AOS‑S</option>
+          </select>
+        </div>
+        <div>
+          <label>IP de gestión (opcional)</label>
+          <input id="devMgmt" placeholder="10.10.99.10" />
+        </div>
+      </div>
+
+      <details style="margin-top:8px;">
+        <summary><span class="pill">Router/Firewall: Internet edge</span></summary>
+        <div class="row" style="margin-top:8px;">
+          <div>
+            <label>¿Gestiona Internet?</label>
+            <select id="devInternetEdge">
+              <option value="no">No</option>
+              <option value="yes">Sí (default route/NAT)</option>
+            </select>
+          </div>
+          <div>
+            <label>WAN Interface (Cisco)</label>
+            <input id="devWanIf" placeholder="GigabitEthernet0/0" />
+          </div>
+        </div>
+      </details>
+
+      <label>Notas</label>
+      <textarea id="devNotes" placeholder="Ubicación, modelo, etc."></textarea>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="addDevice">Añadir dispositivo</button>
+        <button class="secondary" id="resetAll">Borrar todo</button>
+      </div>
+
+      <hr>
+
+      <h3>Interfaces físicas en routers/firewalls (para poder crear enlaces)</h3>
+      <div class="callout">
+        <div class="row">
+          <div>
+            <label>Dispositivo (router/firewall)</label>
+            <select id="rfDevice"></select>
+          </div>
+          <div>
+            <label>Nombre de interfaz</label>
+            <input id="rfIfName" placeholder="GigabitEthernet0/1" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Tipo de puerto</label>
+            <select id="rfMedia">
+              <option value="GE">GE (Gigabit)</option>
+              <option value="FE">FE (FastEthernet)</option>
+              <option value="SFP">SFP (Fibra)</option>
+            </select>
+          </div>
+          <div>
+            <label>Rol</label>
+            <select id="rfRole">
+              <option value="lan">LAN (hacia switches)</option>
+              <option value="wan">WAN (hacia ISP)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button id="addRfIf">Añadir interfaz</button>
+          <button class="secondary" id="quickRf">Crear LAN+WAN ejemplo</button>
+        </div>
+        <div class="hint">Estas interfaces aparecerán en el selector de enlaces (Paso 3) para poder conectar router↔switch. Luego, en el Paso 4, RoaS/NAT usará estas interfaces.</div>
+      </div>
+    </div>
+
+    <div>
+      <h3>Listado</h3>
+      <div id="devicesView"></div>
+
+      <h3 style="margin-top:12px;">Interfaces router/firewall</h3>
+      <div id="rfIfView"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="step2" style="display:none;">
+  <h2>2) VLANs + Subnets</h2>
+  <div class="grid">
+    <div>
+      <div class="row">
+        <div>
+          <label>VLAN ID</label>
+          <input id="vlanId" type="number" min="1" max="4094" placeholder="10" />
+        </div>
+        <div>
+          <label>Nombre VLAN</label>
+          <input id="vlanName" placeholder="Comercial" />
+        </div>
+      </div>
+      <button id="addVlan" style="margin-top:10px;">Añadir VLAN</button>
+
+      <hr>
+
+      <details open>
+        <summary><span class="pill">Auto‑subnet por VLAN (recomendado)</span></summary>
+        <div class="callout" style="margin-top:8px;">
+          <div class="row">
+            <div>
+              <label>Bloque base</label>
+              <input id="autoBase" placeholder="10.10.0.0/16" />
+            </div>
+            <div>
+              <label>Tamaño por VLAN</label>
+              <select id="autoSize">
+                <option value="24">/24 (254 hosts)</option>
+                <option value="25">/25 (126)</option>
+                <option value="26">/26 (62)</option>
+                <option value="27">/27 (30)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Gateway sugerido</label>
+              <select id="autoGwRule">
+                <option value="first">Primera IP usable (.1)</option>
+                <option value="last">Última IP usable</option>
+              </select>
+            </div>
+            <div>
+              <label>VLAN gestión (opcional)</label>
+              <select id="mgmtVlan"></select>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button id="autoBuildSubnets">Generar subnets</button>
+            <button class="secondary" id="autoExplain">¿Por qué?</button>
+          </div>
+          <div id="autoExplainBox" class="hint" style="display:none;margin-top:8px;"></div>
+        </div>
+      </details>
+    </div>
+
+    <div>
+      <h3>VLANs</h3>
+      <div id="vlansView"></div>
+      <h3>Subnets</h3>
+      <div id="subnetsView"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="step3" style="display:none;">
+  <h2>3) Puertos + enlaces (ahora también router↔switch)</h2>
+  <div class="grid">
+    <div>
+      <h3>Chasis / Layout (switches)</h3>
+      <div class="row">
+        <div>
+          <label>Switch</label>
+          <select id="layoutDevice"></select>
+        </div>
+        <div>
+          <label>Total posiciones</label>
+          <input id="layoutTotal" type="number" min="1" placeholder="24" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Columnas</label>
+          <input id="layoutCols" type="number" min="2" max="16" placeholder="12" />
+        </div>
+        <div>
+          <label>Base naming</label>
+          <input id="layoutBase" placeholder="Cisco: 0/   | Juniper: 0/0/  | Aruba: 1/1/" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>VLAN default access</label>
+          <select id="defaultAccessVlan"></select>
+        </div>
+        <div>
+          <label>Modo</label>
+          <select id="layoutMode">
+            <option value="replace">Reemplazar</option>
+            <option value="merge">Mezclar</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="secondary" id="buildLayout">Crear/Actualizar layout</button>
+        <button id="applyLayout">Generar puertos</button>
+      </div>
+      <div class="hint">Los routers no usan layout aquí: sus interfaces se crean en el Paso 1.</div>
+      <div id="layoutEditor" style="margin-top:10px;"></div>
+
+      <hr>
+
+      <h3>Uplinks automáticos</h3>
+      <div class="callout">
+        <div class="row">
+          <div>
+            <label>Al crear enlace Switch↔Switch</label>
+            <select id="uplinkPolicy">
+              <option value="suggest">Sugerir trunk (no tocar)</option>
+              <option value="auto">Aplicar trunk automáticamente</option>
+              <option value="off">Desactivado</option>
+            </select>
+          </div>
+          <div>
+            <label>Allowed VLANs trunk</label>
+            <select id="uplinkAllowed">
+              <option value="all">Todas las VLANs</option>
+              <option value="used">Sólo VLANs usadas</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint">Router↔Switch: la recomendación típica (si haces RoaS) es trunk en el puerto del switch y subinterfaces en el router.</div>
+      </div>
+
+      <hr>
+
+      <h3>Enlaces</h3>
+      <div class="row">
+        <div>
+          <label>Puerto A</label>
+          <select id="linkA"></select>
+        </div>
+        <div>
+          <label>Puerto B</label>
+          <select id="linkB"></select>
+        </div>
+      </div>
+      <label>Notas</label>
+      <input id="linkNotes" placeholder="Uplink / Router trunk / WAN..." />
+      <button id="addLink">Crear enlace</button>
+      <div id="uplinkSuggestBox" class="hint" style="margin-top:8px;"></div>
+    </div>
+
+    <div>
+      <div class="row">
+        <div>
+          <label>Switch a visualizar</label>
+          <select id="visualDevice"></select>
+        </div>
+        <div>
+          <label>Filtro</label>
+          <select id="visualFilter">
+            <option value="ALL">Todos</option>
+            <option value="FE">FE</option>
+            <option value="GE">GE</option>
+            <option value="SFP">SFP</option>
+            <option value="EMPTY">Vacíos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span style="background:#f3fff5;border-color:#bfe8c7;">access</span>
+        <span style="background:#fff7ea;border-color:#f0d0a1;">trunk</span>
+        <span style="background:#f2f4f8;border-color:#cfd6e4;">routed (L3)</span>
+        <span style="box-shadow:0 0 0 2px rgba(47,111,237,.15) inset;">conectado</span>
+        <span style="opacity:.6;">vacío</span>
+      </div>
+
+      <div id="portGrid" class="portGrid"></div>
+
+      <h3 style="margin-top:12px;">Enlaces</h3>
+      <div id="linksView"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="step4" style="display:none;">
+  <h2>4) Mapa + RoaS + DHCP + Internet/NAT + Export</h2>
+  <div class="grid">
+    <div>
+      <h3>Mapa topología</h3>
+      <div class="canvasWrap">
+        <canvas id="topology"></canvas>
+        <div class="canvasTools">
+          <button class="secondary" id="fitMap">Ajustar</button>
+          <button class="secondary" id="reLayout">Reordenar</button>
+        </div>
+        <div class="hint">Click en un switch en el mapa para saltar al Paso 3.</div>
+      </div>
+
+      <hr>
+
+      <h3>Router‑on‑a‑Stick</h3>
+      <div class="callout">
+        <label>Gateway router/firewall</label>
+        <select id="gwDevice"></select>
+        <div class="row">
+          <div>
+            <label>Interfaz física hacia LAN (trunk)</label>
+            <select id="gwLanIfPick"></select>
+          </div>
+          <div>
+            <label>Native VLAN (opcional)</label>
+            <select id="gwNativeVlan"></select>
+          </div>
+        </div>
+        <button class="secondary" id="applyRoaS">Aplicar RoaS</button>
+        <div class="hint">Se generarán subinterfaces .VLAN con IP gateway por VLAN usando las subnets del Paso 2.</div>
+      </div>
+
+      <hr>
+
+      <h3>DHCP por VLAN</h3>
+      <div class="callout">
+        <div id="dhcpView"></div>
+      </div>
+
+      <hr>
+
+      <h3>Internet / NAT / Default route</h3>
+      <div class="callout">
+        <label>WAN IP/CIDR</label>
+        <input id="wanCidr" placeholder="203.0.113.2/30" />
+        <label>Next-hop ISP</label>
+        <input id="wanNextHop" placeholder="203.0.113.1" />
+        <div class="hint">Se genera default route + NAT overload (Cisco) si el dispositivo está marcado como “Internet edge”.</div>
+      </div>
+    </div>
+
+    <div>
+      <h3>Seguridad pro (Switch)</h3>
+      <div class="callout">
+        <div class="row">
+          <div>
+            <label>BPDU Guard + PortFast</label>
+            <select id="secBpdu"><option value="yes">Sí</option><option value="no">No</option></select>
+          </div>
+          <div>
+            <label>Port‑Security (máx 2 MAC)</label>
+            <select id="secPortSec"><option value="yes">Sí</option><option value="no">No</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>DHCP Snooping</label>
+            <select id="secDhcpSnoop"><option value="yes">Sí</option><option value="no">No</option></select>
+          </div>
+          <div>
+            <label>VLANs (vacío = todas)</label>
+            <input id="secDhcpVlans" placeholder="10,20,30" />
+          </div>
+        </div>
+        <div class="hint">Buena práctica: trunks “trust”, puertos de usuario “untrusted”.</div>
+      </div>
+
+      <hr>
+
+      <h3>Export</h3>
+      <div class="row">
+        <button id="exportPerDevice">Exportar 1 archivo por dispositivo</button>
+        <button class="secondary" id="exportBundle">Exportar bundle</button>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="secondary" id="exportJson">Exportar JSON</button>
+        <button class="secondary" id="importJsonBtn">Importar JSON</button>
+      </div>
+
+      <label>Import/Export JSON</label>
+      <textarea id="jsonBox" class="mono" placeholder="Pega JSON aquí"></textarea>
+
+      <hr>
+      <h3>Preview</h3>
+      <label>Dispositivo</label>
+      <select id="previewDevice"></select>
+      <textarea id="configOut" class="mono" placeholder="Config"></textarea>
+
+      <hr>
+      <h3>Resumen</h3>
+      <div id="summaryView"></div>
+    </div>
+  </div>
+</section>
+
+<div class="row" style="position:sticky;bottom:12px;gap:8px;">
+  <button class="secondary" id="prevBtn">Anterior</button>
+  <button id="nextBtn">Siguiente</button>
+</div>
+
+<div class="modalBackdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modalHeader">
+      <h3 id="modalTitle">Puerto</h3>
+      <button class="secondary modalClose" id="modalClose">Cerrar</button>
+    </div>
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <label>Modo</label>
+        <select id="mMode">
+          <option value="access">access (L2)</option>
+          <option value="trunk">trunk (L2)</option>
+          <option value="routed">routed (L3)</option>
+        </select>
+        <label>Access VLAN</label>
+        <select id="mAccessVlan"></select>
+        <label>Native VLAN (opcional)</label>
+        <select id="mNativeVlan"></select>
+        <label>Allowed VLANs (coma)</label>
+        <input id="mAllowed" placeholder="10,20,30" />
+        <label>Descripción</label>
+        <input id="mDesc" placeholder="Uplink a ..." />
+      </div>
+      <div>
+        <div id="mInfo" class="hint"></div>
+        <hr>
+        <div class="callout hint">
+          <b>Router↔Switch (RoaS):</b> el puerto del switch suele ser <b>trunk</b> y el router usa <b>subinterfaces</b> (Gi0/1.10, Gi0/1.20...).<br>
+          <b>WAN:</b> normalmente es <b>routed</b> (L3) con IP y NAT fuera (en export Cisco se configura en el dispositivo “Internet edge”).
+        </div>
+      </div>
+    </div>
+
+    <div class="modalActions">
+      <button class="secondary" id="mReset">Reset access</button>
+      <button id="mSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY="net_wizard_pro_v7";
+  const STEPS=[{n:1,title:"Dispositivos/Interfaces"},{n:2,title:"VLAN/Subnets"},{n:3,title:"Puertos/Enlaces"},{n:4,title:"Mapa + RoaS + Export"}];
+
+  let state = load() || {
+    step:1,
+    devices:[], vlans:[], subnets:[], ports:[], links:[],
+    roas:{gwDeviceId:null,gwLanIf:"",nativeVlanRef:null,wanCidr:"",wanNextHop:""},
+    dhcp:{},
+    security:{bpdu:"yes",portsec:"yes",dhcpsnoop:"yes",dhcpVlans:""},
+    uplink:{policy:"suggest", allowed:"all"},
+    topo:{pos:{}},
+  };
+
+  const $=id=>document.getElementById(id);
+  const uid=p=>p+"_"+Math.random().toString(16).slice(2)+"_"+Date.now().toString(16);
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function load(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY));}catch{return null;} }
+  function escapeHtml(s){ return (s??"").toString().replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
+
+  function parseIPv4(ip){ const parts=(ip||"").trim().split("."); if(parts.length!==4) return null; let n=0;
+    for(const p of parts){ if(!/^\d+$/.test(p)) return null; const v=Number(p); if(v<0||v>255) return null; n=(n<<8)|v; } return n>>>0; }
+  function ipv4ToStr(n){ n=n>>>0; return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join("."); }
+  function parseCidr(cidr){ const m=(cidr||"").trim().match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d|[12]\d|3[0-2])$/); if(!m) return null;
+    const ip=parseIPv4(m[1]); const prefix=Number(m[2]); if(ip===null) return null;
+    const mask= prefix===0?0 : (0xFFFFFFFF << (32-prefix))>>>0;
+    const network=(ip & mask)>>>0; const broadcast=(network | (~mask>>>0))>>>0;
+    const firstHost = prefix>=31? null : (network+1)>>>0;
+    const lastHost  = prefix>=31? null : (broadcast-1)>>>0;
+    return {ip,prefix,mask,network,broadcast,firstHost,lastHost};
+  }
+  function maskToStr(mask){ return ipv4ToStr(mask>>>0); }
+  function cidrOverlap(a,b){ return !(a.broadcast < b.network || b.broadcast < a.network); }
+
+  function deviceById(id){ return state.devices.find(d=>d.id===id)||null; }
+  function vlanByRef(ref){ return state.vlans.find(v=>v.id===ref)||null; }
+  function vlanByNum(num){ return state.vlans.find(v=>v.vlanId===num)||null; }
+  function subnetByVlanRef(ref){ return state.subnets.find(s=>s.vlanRef===ref)||null; }
+  function portsByDevice(deviceId){ return state.ports.filter(p=>p.deviceId===deviceId); }
+  function isPortConnected(portId){ return state.links.some(l=>l.aPortId===portId || l.bPortId===portId); }
+  function portDisplay(p){ const d=deviceById(p.deviceId); return `${d?.name||"?"} :: ${p.name} (${p.media})`; }
+  function parseAllowed(str){
+    const s=(str||"").trim(); if(!s) return [];
+    const arr=s.split(",").map(x=>parseInt(x.trim(),10)).filter(n=>Number.isFinite(n)&&n>=1&&n<=4094);
+    return Array.from(new Set(arr)).sort((a,b)=>a-b);
+  }
+  function safeJunosVlanName(v){ return (v.name||`VLAN${v.vlanId}`).replace(/[^A-Za-z0-9_\-]/g,"_"); }
+
+  function buildPortName(vendorOs, media, position1based, baseHint){
+    const base=(baseHint||"").trim();
+    if(vendorOs==="cisco_ios"){
+      const suffix= base? `${base}${position1based}` : `0/${position1based}`;
+      if(media==="FE") return `FastEthernet${suffix}`;
+      if(media==="GE") return `GigabitEthernet${suffix}`;
+      if(media==="SFP") return `GigabitEthernet${suffix}`;
+      return `GigabitEthernet${suffix}`;
+    }
+    if(vendorOs==="juniper_junos"){
+      const last=position1based-1;
+      const suffix= base? `${base}${last}` : `0/0/${last}`;
+      return `ge-${suffix}`;
+    }
+    if(vendorOs==="aruba_aoss"){
+      const suffix= base? `${base}${position1based}` : `1/1/${position1based}`;
+      return suffix;
+    }
+    return `${media}${position1based}`;
+  }
+
+  function computeUsedVlans(){
+    const used=new Set();
+    for(const p of state.ports){
+      if(p.mode==="access"){
+        const v=vlanByRef(p.accessVlanRef);
+        if(v) used.add(v.vlanId);
+      } else {
+        for(const vid of (p.allowedVlans||[])) used.add(vid);
+      }
+    }
+    return Array.from(used).sort((a,b)=>a-b);
+  }
+  function suggestedTrunkVlans(){
+    return (state.uplink.allowed==="used") ? computeUsedVlans() : state.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);
+  }
+  function suggestOrApplyUplink(portAId, portBId){
+    const pA=state.ports.find(p=>p.id===portAId);
+    const pB=state.ports.find(p=>p.id===portBId);
+    if(!pA||!pB) return {did:false,msg:""};
+    const dA=deviceById(pA.deviceId), dB=deviceById(pB.deviceId);
+    if(!dA||!dB) return {did:false,msg:""};
+    const isSwitchSwitch=(dA.type==="switch" && dB.type==="switch");
+    if(!isSwitchSwitch) return {did:false,msg:""};
+    const policy=state.uplink.policy;
+    if(policy==="off") return {did:false,msg:""};
+    const allowed=suggestedTrunkVlans();
+    const hint=`Uplink detectado (${dA.name} ↔ ${dB.name}). Recomendación: trunk allowed [${allowed.join(",")||"—"}].`;
+    if(policy==="suggest") return {did:true,msg:hint+" (Sugerencia)"};
+    if(policy==="auto"){
+      pA.mode="trunk"; pB.mode="trunk";
+      pA.allowedVlans=allowed.slice(); pB.allowedVlans=allowed.slice();
+      pA.accessVlanRef=null; pB.accessVlanRef=null;
+      if(!pA.desc) pA.desc="Uplink (auto)";
+      if(!pB.desc) pB.desc="Uplink (auto)";
+      save();
+      return {did:true,msg:hint+" ✅ aplicado automáticamente."};
+    }
+    return {did:false,msg:""};
+  }
+
+  function renderCiscoSwitch(d){
+    const lines=[];
+    lines.push("!"); lines.push(`! DEVICE: ${d.name}`);
+    lines.push("configure terminal");
+    lines.push(`hostname ${d.name.replace(/\s+/g,"")}`);
+    if(state.vlans.length){
+      lines.push("!"); lines.push("! VLANs");
+      for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+        lines.push(`vlan ${v.vlanId}`);
+        if(v.name) lines.push(` name ${v.name}`);
+        lines.push(" exit");
+      }
+    }
+    if(state.security.dhcpsnoop==="yes"){
+      const snoopVlans=(state.security.dhcpVlans||"").trim() || state.vlans.map(v=>v.vlanId).join(",");
+      lines.push("!"); lines.push("! DHCP Snooping (global)");
+      lines.push("ip dhcp snooping");
+      if(snoopVlans) lines.push(`ip dhcp snooping vlan ${snoopVlans}`);
+    }
+    const ports=portsByDevice(d.id).slice().sort((a,b)=>(a.position??9999)-(b.position??9999));
+    if(ports.length){
+      lines.push("!"); lines.push("! Interfaces");
+      for(const p of ports){
+        lines.push(`interface ${p.name}`);
+        if(p.desc) lines.push(` description ${p.desc}`);
+        lines.push(" switchport");
+        lines.push(" switchport nonegotiate");
+        if(p.mode==="access"){
+          const v=vlanByRef(p.accessVlanRef);
+          lines.push(" switchport mode access");
+          if(v) lines.push(` switchport access vlan ${v.vlanId}`);
+          if(state.security.bpdu==="yes"){
+            lines.push(" spanning-tree portfast");
+            lines.push(" spanning-tree bpduguard enable");
+          }
+          if(state.security.portsec==="yes"){
+            lines.push(" switchport port-security");
+            lines.push(" switchport port-security maximum 2");
+            lines.push(" switchport port-security violation restrict");
+            lines.push(" switchport port-security mac-address sticky");
+          }
+          if(state.security.dhcpsnoop==="yes") lines.push(" no ip dhcp snooping trust");
+        } else if (p.mode==="trunk"){
+          lines.push(" switchport mode trunk");
+          const nv=vlanByRef(p.nativeVlanRef);
+          if(nv) lines.push(` switchport trunk native vlan ${nv.vlanId}`);
+          const allowed=(p.allowedVlans||[]).slice().sort((a,b)=>a-b);
+          if(allowed.length) lines.push(` switchport trunk allowed vlan ${allowed.join(",")}`);
+          if(state.security.dhcpsnoop==="yes") lines.push(" ip dhcp snooping trust");
+        } else {
+          lines.push("! (modo routed en switch: no generado)");
+        }
+        lines.push(" no shutdown");
+        lines.push(" exit");
+      }
+    }
+    lines.push("end"); lines.push("write memory"); lines.push("!");
+    return lines.join("\n")+"\n";
+  }
+
+  function renderCiscoRouter(d){
+    const lines=[];
+    lines.push("!"); lines.push(`! DEVICE: ${d.name}`);
+    lines.push("configure terminal");
+    lines.push(`hostname ${d.name.replace(/\s+/g,"")}`);
+
+    const ifs = portsByDevice(d.id).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    if(ifs.length){
+      lines.push("!"); lines.push("! Interfaces físicas (definidas en el wizard)");
+      for(const p of ifs){
+        lines.push(`interface ${p.name}`);
+        if(p.desc) lines.push(` description ${p.desc}`);
+        lines.push(" no shutdown");
+        lines.push(" exit");
+      }
+    }
+
+    const roas=state.roas;
+    const isGw = roas.gwDeviceId===d.id;
+    if(isGw){
+      const lanIf=(roas.gwLanIf||"").trim();
+      if(lanIf){
+        lines.push("!"); lines.push("! Router-on-a-stick: subinterfaces por VLAN");
+        lines.push(`interface ${lanIf}`);
+        lines.push(" no shutdown");
+        lines.push(" exit");
+        for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+          const sn=subnetByVlanRef(v.id);
+          if(!sn || !sn.gateway) continue;
+          const ci=parseCidr(sn.cidr);
+          const mask=ci?maskToStr(ci.mask):"255.255.255.0";
+          lines.push(`interface ${lanIf}.${v.vlanId}`);
+          lines.push(` encapsulation dot1Q ${v.vlanId}${(roas.nativeVlanRef===v.id)?" native":""}`);
+          lines.push(` ip address ${sn.gateway} ${mask}`);
+          lines.push(" ip nat inside");
+          lines.push(" no shutdown");
+          lines.push(" exit");
+        }
+      } else {
+        lines.push("! (Falta definir Interfaz hacia LAN (trunk) en RoaS)");
+      }
+
+      const dhcpLines=[];
+      for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+        const cfg=state.dhcp[String(v.vlanId)];
+        if(!cfg || !cfg.enabled) continue;
+        const sn=subnetByVlanRef(v.id);
+        if(!sn) continue;
+        const ci=parseCidr(sn.cidr);
+        if(!ci || ci.firstHost===null || ci.lastHost===null) continue;
+        if(sn.gateway) dhcpLines.push(`ip dhcp excluded-address ${sn.gateway}`);
+        dhcpLines.push(`ip dhcp pool VLAN${v.vlanId}`);
+        dhcpLines.push(` network ${ipv4ToStr(ci.network)} ${maskToStr(ci.mask)}`);
+        if(sn.gateway) dhcpLines.push(` default-router ${sn.gateway}`);
+        const dns=(cfg.dns||"").trim(); if(dns) dhcpLines.push(` dns-server ${dns}`);
+        const start=(ci.network+(cfg.startOffset||50))>>>0;
+        const end=(ci.network+(cfg.endOffset||200))>>>0;
+        dhcpLines.push(`! (Sugerencia rango) ${ipv4ToStr(start)} - ${ipv4ToStr(end)}`);
+        dhcpLines.push(" exit");
+      }
+      if(dhcpLines.length){
+        lines.push("!"); lines.push("! DHCP por VLAN");
+        lines.push(...dhcpLines);
+      }
+
+      const isEdge = d.internetEdge==="yes";
+      const wanIf=(d.wanIf||"").trim();
+      const wanCidr=(roas.wanCidr||"").trim();
+      const nextHop=(roas.wanNextHop||"").trim();
+      if(isEdge && wanIf && wanCidr){
+        const ci=parseCidr(wanCidr);
+        if(ci){
+          lines.push("!"); lines.push("! WAN interface");
+          lines.push(`interface ${wanIf}`);
+          lines.push(` ip address ${ipv4ToStr(ci.ip)} ${maskToStr(ci.mask)}`);
+          lines.push(" ip nat outside");
+          lines.push(" no shutdown");
+          lines.push(" exit");
+        }
+      }
+      if(isEdge && nextHop){
+        lines.push("!"); lines.push("! Default route");
+        lines.push(`ip route 0.0.0.0 0.0.0.0 ${nextHop}`);
+      }
+      if(isEdge && wanIf){
+        lines.push("!"); lines.push("! NAT overload (PAT)");
+        lines.push("access-list 100 permit ip any any");
+        lines.push(`ip nat inside source list 100 interface ${wanIf} overload`);
+      }
+    }
+
+    lines.push("end"); lines.push("write memory"); lines.push("!");
+    return lines.join("\n")+"\n";
+  }
+
+  function renderJuniperSwitch(d){
+    const lines=[];
+    lines.push(`# DEVICE: ${d.name}`);
+    lines.push(`# Junos set (L2 básico)`);
+    for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+      lines.push(`set vlans ${safeJunosVlanName(v)} vlan-id ${v.vlanId}`);
+    }
+    lines.push("");
+    const ports=portsByDevice(d.id).slice().sort((a,b)=>(a.position??9999)-(b.position??9999));
+    for(const p of ports){
+      lines.push(`set interfaces ${p.name} unit 0 family ethernet-switching`);
+      if(p.mode==="access"){
+        lines.push(`set interfaces ${p.name} unit 0 family ethernet-switching port-mode access`);
+        const v=vlanByRef(p.accessVlanRef);
+        if(v) lines.push(`set interfaces ${p.name} unit 0 family ethernet-switching vlan members ${safeJunosVlanName(v)}`);
+      } else if(p.mode==="trunk"){
+        lines.push(`set interfaces ${p.name} unit 0 family ethernet-switching port-mode trunk`);
+        for(const vid of (p.allowedVlans||[])){
+          const v=vlanByNum(vid);
+          lines.push(`set interfaces ${p.name} unit 0 family ethernet-switching vlan members ${(v?safeJunosVlanName(v):("VLAN"+vid))}`);
+        }
+      }
+      lines.push("");
+    }
+    return lines.join("\n").trimEnd()+"\n";
+  }
+
+  function renderArubaSwitch(d){
+    const lines=[];
+    lines.push(`hostname "${d.name}"`);
+    lines.push("! Aruba AOS-S (L2 básico)");
+    for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+      lines.push(`vlan ${v.vlanId}`);
+      if(v.name) lines.push(` name "${v.name.replaceAll('"',"'")}"`);
+      lines.push(" exit");
+      lines.push("!");
+    }
+    return lines.join("\n")+"\n";
+  }
+
+  function generateConfig(deviceId){
+    const d=deviceById(deviceId);
+    if(!d) return "";
+    if(!d.vendorOs) return `! ${d.name}: sin vendor\n`;
+    if(d.vendorOs==="cisco_ios") return (d.type==="switch") ? renderCiscoSwitch(d) : renderCiscoRouter(d);
+    if(d.vendorOs==="juniper_junos") return (d.type==="switch") ? renderJuniperSwitch(d) : `# ${d.name}: Junos router no implementado\n`;
+    if(d.vendorOs==="aruba_aoss") return (d.type==="switch") ? renderArubaSwitch(d) : `! ${d.name}: Aruba router no implementado\n`;
+    return `! vendor no soportado\n`;
+  }
+
+  function downloadText(filename,text){
+    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function renderTabs(){
+    $("tabs").innerHTML = STEPS.map(s=>`<div class="tab ${state.step===s.n?"active":""}" data-step="${s.n}">${s.n}. ${escapeHtml(s.title)}</div>`).join("");
+    document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ state.step=Number(t.dataset.step); refresh(); });
+    $("stepTitle").textContent=`Paso ${state.step} de ${STEPS.length}`;
+  }
+  function showStep(){
+    for(const s of STEPS) $("step"+s.n).style.display = (state.step===s.n) ? "" : "none";
+    $("prevBtn").disabled = state.step===1;
+    $("nextBtn").textContent = (state.step===STEPS.length) ? "Finalizar" : "Siguiente";
+  }
+  $("prevBtn").onclick=()=>{ state.step=Math.max(1,state.step-1); refresh(); };
+  $("nextBtn").onclick=()=>{ if(state.step<STEPS.length){ state.step++; refresh(); } else alert("Listo. Exporta en el Paso 4."); };
+
+  function renderDevices(){
+    const el=$("devicesView");
+    if(!state.devices.length){ el.innerHTML="<div class='hint'>No hay dispositivos.</div>"; return; }
+    el.innerHTML=`
+      <table>
+        <thead><tr><th>Nombre</th><th>Tipo</th><th>Vendor</th><th>Internet</th><th></th></tr></thead>
+        <tbody>
+          ${state.devices.map(d=>`
+            <tr>
+              <td><b>${escapeHtml(d.name)}</b><div class="hint">${escapeHtml(d.notes||"")}</div></td>
+              <td>${escapeHtml(d.type)}</td>
+              <td><span class="pill">${escapeHtml(d.vendorOs||"-")}</span></td>
+              <td>${(d.type!=="switch" && d.internetEdge==="yes")?"✅":"—"}</td>
+              <td><button class="danger" data-del="${d.id}">Eliminar</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+    el.querySelectorAll("[data-del]").forEach(btn=>btn.onclick=()=>{
+      const id=btn.dataset.del;
+      const portIds=state.ports.filter(p=>p.deviceId===id).map(p=>p.id);
+      state.links=state.links.filter(l=>!portIds.includes(l.aPortId)&&!portIds.includes(l.bPortId));
+      state.ports=state.ports.filter(p=>p.deviceId!==id);
+      state.devices=state.devices.filter(d=>d.id!==id);
+      if(state.roas.gwDeviceId===id){ state.roas.gwDeviceId=null; state.roas.gwLanIf=""; }
+      delete state.topo.pos[id];
+      refresh();
+    });
+  }
+
+  function renderRouterIfs(){
+    const el=$("rfIfView");
+    const rf = state.devices.filter(d=>d.type!=="switch");
+    if(!rf.length){ el.innerHTML="<div class='hint'>Añade un router/firewall para crear interfaces.</div>"; return; }
+    const rows = rf.map(d=>{
+      const ifs = portsByDevice(d.id).slice().sort((a,b)=>a.name.localeCompare(b.name));
+      const txt = ifs.length ? ifs.map(p=>`${p.name} | ${p.media} | ${p.role||""} | ${p.mode}`).join("\n") : "—";
+      return `<tr><td><b>${escapeHtml(d.name)}</b></td><td class="mono">${escapeHtml(txt)}</td></tr>`;
+    }).join("");
+    el.innerHTML = `
+      <table>
+        <thead><tr><th>Dispositivo</th><th>Interfaces</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="hint">Para borrar una interfaz: abre el puerto en el Paso 3 y cámbialo (próxima mejora: botón eliminar por interfaz).</div>
+    `;
+  }
+
+  function renderVlans(){
+    const el=$("vlansView");
+    if(!state.vlans.length){ el.innerHTML="<div class='hint'>No hay VLANs.</div>"; return; }
+    el.innerHTML=`
+      <table>
+        <thead><tr><th>ID</th><th>Nombre</th><th></th></tr></thead>
+        <tbody>
+          ${state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`
+            <tr><td class="mono">${v.vlanId}</td><td>${escapeHtml(v.name||"")}</td><td><button class="danger" data-delv="${v.id}">Eliminar</button></td></tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+    el.querySelectorAll("[data-delv]").forEach(btn=>btn.onclick=()=>{
+      const ref=btn.dataset.delv;
+      state.ports=state.ports.map(p=>{
+        if(p.accessVlanRef===ref) p.accessVlanRef=null;
+        if(p.nativeVlanRef===ref) p.nativeVlanRef=null;
+        return p;
+      });
+      state.subnets=state.subnets.filter(s=>s.vlanRef!==ref);
+      state.vlans=state.vlans.filter(v=>v.id!==ref);
+      refresh();
+    });
+  }
+
+  function renderSubnets(){
+    const el=$("subnetsView");
+    if(!state.subnets.length){ el.innerHTML="<div class='hint'>No hay subnets.</div>"; return; }
+    el.innerHTML=`
+      <table>
+        <thead><tr><th>VLAN</th><th>CIDR</th><th>GW</th><th></th></tr></thead>
+        <tbody>
+          ${state.subnets.map(s=>{
+            const v=vlanByRef(s.vlanRef);
+            return `<tr><td>${v?`${v.vlanId} ${escapeHtml(v.name)}`:"—"}</td><td class="mono">${escapeHtml(s.cidr)}</td><td class="mono">${escapeHtml(s.gateway||"")}</td><td><button class="danger" data-dels="${s.id}">Eliminar</button></td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+    el.querySelectorAll("[data-dels]").forEach(btn=>btn.onclick=()=>{ state.subnets=state.subnets.filter(s=>s.id!==btn.dataset.dels); refresh(); });
+  }
+
+  function renderVlanSelects(){
+    const opts=[`<option value="">(ninguna)</option>`].concat(state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} - ${escapeHtml(v.name)}</option>`));
+    $("mgmtVlan").innerHTML=opts.join("");
+    $("defaultAccessVlan").innerHTML=opts.join("");
+    $("mAccessVlan").innerHTML=opts.join("");
+    $("mNativeVlan").innerHTML=opts.join("");
+    $("gwNativeVlan").innerHTML=opts.join("");
+  }
+
+  function renderDeviceSelects(){
+    const sw=state.devices.filter(d=>d.type==="switch");
+    const devOpts=sw.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+    $("layoutDevice").innerHTML = devOpts || `<option value="">(no hay switches)</option>`;
+    $("visualDevice").innerHTML = devOpts || `<option value="">(no hay switches)</option>`;
+
+    const rf=state.devices.filter(d=>d.type!=="switch").slice().sort((a,b)=>a.name.localeCompare(b.name));
+    $("rfDevice").innerHTML = rf.map(d=>`<option value="${d.id}">${escapeHtml(d.name)} (${escapeHtml(d.type)})</option>`).join("") || `<option value="">(no hay routers/firewalls)</option>`;
+  }
+
+  function buildLayoutEditor(deviceId){
+    const d=deviceById(deviceId);
+    const editor=$("layoutEditor");
+    if(!d){ editor.innerHTML=""; return; }
+    const total=Number($("layoutTotal").value || d.layout?.total || 0);
+    const cols=Number($("layoutCols").value || d.layout?.cols || 12);
+    if(!Number.isFinite(total)||total<=0){ editor.innerHTML="<div class='hint'>Indica Total posiciones y pulsa Crear/Actualizar.</div>"; return; }
+    const baseHint=($("layoutBase").value||"").trim();
+    const slots=(d.layout?.slots && d.layout.slots.length===total) ? d.layout.slots.slice() : Array.from({length:total},()=> "EMPTY");
+    d.layout={total,cols,baseHint,slots};
+    save();
+
+    editor.innerHTML=`<div class="hint">Define el tipo de cada posición (puede haber huecos).</div><div id="layoutGrid" class="layoutGrid"></div>`;
+    const grid=$("layoutGrid");
+    grid.style.gridTemplateColumns=`repeat(${Math.max(2,Math.min(16,cols))},1fr)`;
+
+    const typeOpts=v=>`
+      <option value="EMPTY" ${v==="EMPTY"?"selected":""}>vacía</option>
+      <option value="FE" ${v==="FE"?"selected":""}>FE</option>
+      <option value="GE" ${v==="GE"?"selected":""}>GE</option>
+      <option value="SFP" ${v==="SFP"?"selected":""}>SFP</option>
+    `;
+
+    grid.innerHTML=slots.map((t,idx)=>{
+      const pos=idx+1;
+      const preview=(t!=="EMPTY" && d.vendorOs) ? buildPortName(d.vendorOs,t,pos,baseHint) : (t==="EMPTY"?"—":"(sin vendor)");
+      return `<div class="slotCell"><div class="slotTitle"><span>Pos <span class="mono">${pos}</span></span><span class="mini">${escapeHtml(preview)}</span></div><select class="tinySelect" data-slot="${idx}">${typeOpts(t)}</select></div>`;
+    }).join("");
+
+    grid.querySelectorAll("select[data-slot]").forEach(sel=>sel.onchange=()=>{
+      const i=Number(sel.dataset.slot);
+      d.layout.slots[i]=sel.value;
+      save();
+      buildLayoutEditor(deviceId);
+      renderVisualPorts();
+      drawTopology();
+    });
+  }
+
+  function applyLayout(deviceId){
+    const d=deviceById(deviceId);
+    if(!d?.layout?.total) return alert("Primero crea el layout.");
+    if(!d.vendorOs) return alert("Selecciona Vendor/OS para auto-naming.");
+    const mode=$("layoutMode").value;
+    const defaultAccess=$("defaultAccessVlan").value || (state.vlans[0]?.id || null);
+    if(mode==="replace"){
+      const old=state.ports.filter(p=>p.deviceId===deviceId).map(p=>p.id);
+      state.links=state.links.filter(l=>!old.includes(l.aPortId)&&!old.includes(l.bPortId));
+      state.ports=state.ports.filter(p=>p.deviceId!==deviceId);
+    }
+    for(let idx=0; idx<d.layout.slots.length; idx++){
+      const pos=idx+1;
+      const media=d.layout.slots[idx];
+      if(media==="EMPTY") continue;
+      const name=buildPortName(d.vendorOs, media, pos, d.layout.baseHint);
+      if(mode==="merge" && state.ports.some(p=>p.deviceId===deviceId && p.name===name)) continue;
+      state.ports.push({ id:uid("port"), deviceId, name, media, mode:"access", accessVlanRef:defaultAccess, nativeVlanRef:null, allowedVlans:[], desc:null, position:pos, role:null });
+    }
+    save(); refresh();
+  }
+
+  function portChips(p){
+    const chips=[];
+    const connected=isPortConnected(p.id);
+    chips.push(`<span class="chip neu">${escapeHtml(p.media)}</span>`);
+    chips.push(`<span class="chip ${p.mode==="trunk"?"warn":(p.mode==="routed"?"neu":"ok")}">${escapeHtml(p.mode.toUpperCase())}</span>`);
+    if(p.mode==="access"){
+      const v=vlanByRef(p.accessVlanRef);
+      chips.push(`<span class="chip">${v?("VLAN "+v.vlanId):"VLAN ?"}</span>`);
+    } else if(p.mode==="trunk"){
+      const allowed=(p.allowedVlans||[]);
+      chips.push(`<span class="chip">${allowed.length?("VLANs "+allowed.length):"allowed ?"}</span>`);
+      if(p.nativeVlanRef){
+        const nv=vlanByRef(p.nativeVlanRef);
+        chips.push(`<span class="chip">native ${nv?nv.vlanId:"?"}</span>`);
+      }
+    } else {
+      chips.push(`<span class="chip">L3</span>`);
+    }
+    if(p.role) chips.push(`<span class="chip neu">${escapeHtml(p.role)}</span>`);
+    if(connected) chips.push(`<span class="chip ok">LINK</span>`);
+    return chips.join("");
+  }
+
+  function renderVisualPorts(){
+    const devId=$("visualDevice").value;
+    const filter=$("visualFilter").value;
+    const grid=$("portGrid");
+    grid.innerHTML="";
+    if(!devId){ grid.innerHTML="<div class='hint'>No hay switches.</div>"; return; }
+    const d=deviceById(devId);
+    const cols=d?.layout?.cols || 12;
+    grid.style.gridTemplateColumns=`repeat(${Math.max(2,Math.min(16,cols))},minmax(0,1fr))`;
+
+    if(d?.layout?.total && Array.isArray(d.layout.slots)){
+      const portByPos=new Map();
+      for(const p of portsByDevice(devId)) if(p.position) portByPos.set(p.position,p);
+
+      const cells=[];
+      for(let pos=1; pos<=d.layout.total; pos++){
+        const slot=d.layout.slots[pos-1] || "EMPTY";
+        const p=portByPos.get(pos)||null;
+
+        if(filter==="EMPTY" && slot!=="EMPTY") continue;
+        if(filter!=="ALL" && filter!=="EMPTY"){
+          if(slot==="EMPTY") continue;
+          if(slot!==filter) continue;
+        }
+
+        if(slot==="EMPTY"){
+          cells.push(`<div class="portBtn empty"><div class="pName">(vacío)</div><div class="pMeta">Posición ${pos}<br>—</div><div class="chips"><span class="chip neu">EMPTY</span></div></div>`);
+          continue;
+        }
+
+        const label=p?.name || buildPortName(d.vendorOs, slot, pos, d.layout.baseHint);
+        const connected=p?isPortConnected(p.id):false;
+        const cls=["portBtn",(p?.mode||"access"),connected?"connected":""].join(" ");
+        const meta1 = `${slot} · Pos ${pos}`;
+        const meta2 = p?.desc ? escapeHtml(p.desc) : (p ? "—" : "Genera puertos desde layout");
+        cells.push(`
+          <div class="${cls}" ${p?`data-port="${p.id}"`:""} title="${p?'Editar':'Genera puertos desde layout'}">
+            <div class="pName">${escapeHtml(label)}</div>
+            <div class="pMeta"><div>${escapeHtml(meta1)}</div><div style="opacity:.75">${meta2}</div></div>
+            <div class="chips">${p ? portChips(p) : `<span class="chip warn">SIN GENERAR</span>`}</div>
+          </div>
+        `);
+      }
+      grid.innerHTML=cells.join("");
+      grid.querySelectorAll("[data-port]").forEach(el=>el.onclick=()=>openPortModal(el.dataset.port));
+    } else {
+      grid.innerHTML="<div class='hint'>Este switch no tiene layout. Crea el layout y genera puertos.</div>";
+    }
+  }
+
+  function renderLinkPickers(){
+    const all=state.ports.slice().sort((a,b)=>portDisplay(a).localeCompare(portDisplay(b)));
+    const opts=all.map(p=>`<option value="${p.id}">${escapeHtml(portDisplay(p))}${isPortConnected(p.id)?" [OCUPADO]":""}</option>`).join("");
+    $("linkA").innerHTML=opts||`<option value="">(sin puertos)</option>`;
+    $("linkB").innerHTML=opts||`<option value="">(sin puertos)</option>`;
+  }
+
+  function renderLinks(){
+    const el=$("linksView");
+    if(!state.links.length){ el.innerHTML="<div class='hint'>No hay enlaces.</div>"; return; }
+    el.innerHTML=`
+      <table>
+        <thead><tr><th>A</th><th>B</th><th>Notas</th><th></th></tr></thead>
+        <tbody>
+          ${state.links.map(l=>{
+            const a=state.ports.find(p=>p.id===l.aPortId);
+            const b=state.ports.find(p=>p.id===l.bPortId);
+            return `<tr><td>${escapeHtml(a?portDisplay(a):"?")}</td><td>${escapeHtml(b?portDisplay(b):"?")}</td><td>${escapeHtml(l.notes||"")}</td><td><button class="danger" data-dell="${l.id}">Eliminar</button></td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+    el.querySelectorAll("[data-dell]").forEach(btn=>btn.onclick=()=>{ state.links=state.links.filter(x=>x.id!==btn.dataset.dell); refresh(); });
+  }
+
+  let modalPortId=null;
+  function openPortModal(portId){
+    const p=state.ports.find(x=>x.id===portId);
+    if(!p) return;
+    modalPortId=portId;
+    const d=deviceById(p.deviceId);
+
+    $("modalTitle").textContent=`${d?.name||""} — ${p.name}`;
+    $("mMode").value=p.mode||"access";
+    $("mAccessVlan").value=p.accessVlanRef||"";
+    $("mNativeVlan").value=p.nativeVlanRef||"";
+    $("mAllowed").value=(p.allowedVlans||[]).join(",");
+    $("mDesc").value=p.desc||"";
+
+    const hint = (d && d.type!=="switch")
+      ? "Este puerto es de Router/Firewall: usa 'routed' para WAN o 'trunk' para LAN (RoaS)."
+      : "Este puerto es de Switch: usa access para usuarios y trunk para uplinks.";
+
+    $("mInfo").innerHTML=`Vendor: <span class="pill">${escapeHtml(d?.vendorOs||"-")}</span><br>Tipo: <b>${escapeHtml(d?.type||"-")}</b><br>Enlace: <b>${isPortConnected(p.id)?"✅":"—"}</b><br><span class="hint">${hint}</span>`;
+    updateModalModeUI();
+    $("modalBackdrop").classList.add("open");
+  }
+  function closeModal(){ $("modalBackdrop").classList.remove("open"); modalPortId=null; }
+  $("modalClose").onclick=closeModal;
+  $("modalBackdrop").onclick=e=>{ if(e.target.id==="modalBackdrop") closeModal(); };
+
+  function updateModalModeUI(){
+    const mode=$("mMode").value;
+    const l2 = (mode!=="routed");
+    $("mAccessVlan").disabled = !l2 || mode!=="access";
+    $("mNativeVlan").disabled = !l2 || mode!=="trunk";
+    $("mAllowed").disabled = !l2 || mode!=="trunk";
+  }
+  $("mMode").onchange=updateModalModeUI;
+
+  $("mReset").onclick=()=>{
+    $("mMode").value="access";
+    $("mAccessVlan").value=state.vlans[0]?.id || "";
+    $("mNativeVlan").value="";
+    $("mAllowed").value="";
+    $("mDesc").value="";
+    updateModalModeUI();
+  };
+  $("mSave").onclick=()=>{
+    const p=state.ports.find(x=>x.id===modalPortId);
+    if(!p) return closeModal();
+
+    const mode=$("mMode").value;
+    const accessRef=$("mAccessVlan").value||null;
+    const nativeRef=$("mNativeVlan").value||null;
+    const allowed=parseAllowed($("mAllowed").value);
+    const desc=($("mDesc").value||"").trim();
+
+    if(mode==="access" && !accessRef) return alert("Access requiere VLAN.");
+    if(mode==="trunk" && allowed.length===0) return alert("Trunk requiere allowed VLANs.");
+
+    p.mode=mode;
+    p.accessVlanRef = mode==="access"?accessRef:null;
+    p.nativeVlanRef = mode==="trunk"?nativeRef:null;
+    p.allowedVlans = mode==="trunk"?allowed:[];
+    p.desc = desc||null;
+
+    save();
+    renderVisualPorts();
+    renderSummary();
+    drawTopology();
+    closeModal();
+  };
+
+  function renderRoaSSelectors(){
+    const candidates=state.devices.filter(d=>d.type!=="switch").slice().sort((a,b)=>a.name.localeCompare(b.name));
+    $("gwDevice").innerHTML=[`<option value="">(selecciona)</option>`].concat(candidates.map(d=>`<option value="${d.id}">${escapeHtml(d.name)} (${escapeHtml(d.vendorOs||"")})</option>`)).join("");
+    $("gwDevice").value=state.roas.gwDeviceId||"";
+
+    const gwId=state.roas.gwDeviceId;
+    const ifs = gwId ? portsByDevice(gwId).filter(p=>(p.role==="lan" || !p.role)) : [];
+    $("gwLanIfPick").innerHTML = [`<option value="">(selecciona)</option>`].concat(ifs.map(p=>`<option value="${p.name}">${escapeHtml(p.name)} (${escapeHtml(p.media)})</option>`)).join("");
+    $("gwLanIfPick").value=state.roas.gwLanIf||"";
+
+    $("wanCidr").value=state.roas.wanCidr||"";
+    $("wanNextHop").value=state.roas.wanNextHop||"";
+    $("gwNativeVlan").value=state.roas.nativeVlanRef||"";
+  }
+
+  function renderDhcp(){
+    const box=$("dhcpView");
+    if(!state.vlans.length){ box.innerHTML="<div class='hint'>Crea VLANs primero.</div>"; return; }
+    const rows=state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>{
+      const key=String(v.vlanId);
+      if(!state.dhcp[key]) state.dhcp[key]={enabled:false,startOffset:50,endOffset:200,dns:"8.8.8.8"};
+      const cfg=state.dhcp[key];
+      const sn=subnetByVlanRef(v.id);
+      const snTxt=sn?`${sn.cidr} (GW ${sn.gateway||"—"})`:"— (sin subnet)";
+      return `
+        <tr>
+          <td><b>${v.vlanId}</b> ${escapeHtml(v.name||"")}</td>
+          <td class="mono">${escapeHtml(snTxt)}</td>
+          <td><select data-en="${key}"><option value="0" ${cfg.enabled?"":"selected"}>No</option><option value="1" ${cfg.enabled?"selected":""}>Sí</option></select></td>
+          <td><input data-dns="${key}" value="${escapeHtml(cfg.dns||"")}" placeholder="8.8.8.8"></td>
+          <td class="mono">+<input style="width:80px" data-s="${key}" type="number" min="2" value="${cfg.startOffset||50}"> … +<input style="width:80px" data-e="${key}" type="number" min="3" value="${cfg.endOffset||200}"></td>
+        </tr>
+      `;
+    }).join("");
+    box.innerHTML=`
+      <table>
+        <thead><tr><th>VLAN</th><th>Subnet</th><th>DHCP</th><th>DNS</th><th>Rango (offsets)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="hint">Offsets: inicio/fin desde la network. El gateway se excluye automáticamente.</div>
+    `;
+    box.querySelectorAll("[data-en]").forEach(sel=>sel.onchange=()=>{ const k=sel.dataset.en; state.dhcp[k].enabled=sel.value==="1"; save(); });
+    box.querySelectorAll("[data-dns]").forEach(inp=>inp.onblur=()=>{ const k=inp.dataset.dns; state.dhcp[k].dns=(inp.value||"").trim(); save(); });
+    box.querySelectorAll("[data-s]").forEach(inp=>inp.onblur=()=>{ const k=inp.dataset.s; state.dhcp[k].startOffset=parseInt(inp.value,10)||50; save(); });
+    box.querySelectorAll("[data-e]").forEach(inp=>inp.onblur=()=>{ const k=inp.dataset.e; state.dhcp[k].endOffset=parseInt(inp.value,10)||200; save(); });
+  }
+
+  function renderPreviewSelect(){
+    $("previewDevice").innerHTML = state.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))
+      .map(d=>`<option value="${d.id}">${escapeHtml(d.name)} (${escapeHtml(d.vendorOs||"")})</option>`).join("") || `<option value="">(no hay)</option>`;
+  }
+
+  function renderSummary(){
+    const el=$("summaryView");
+    if(!state.devices.length){ el.innerHTML="<div class='hint'>No hay dispositivos.</div>"; return; }
+    el.innerHTML=`
+      <table>
+        <thead><tr><th>Dispositivo</th><th>Interfaces</th><th>IPs / Gateways</th></tr></thead>
+        <tbody>
+          ${state.devices.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>{
+            const ports=portsByDevice(d.id).slice().sort((a,b)=>a.name.localeCompare(b.name));
+            const ifs=ports.length ? ports.map(p=>{
+              const v = p.mode==="access" ? (vlanByRef(p.accessVlanRef)?.vlanId ?? "?") : (p.mode==="trunk" ? `trunk [${(p.allowedVlans||[]).join(",")}]` : "routed");
+              return `${p.name} | ${p.media} | ${p.mode} | ${v}`;
+            }).join("\n") : "—";
+            const ips=[];
+            if(d.mgmtIp) ips.push(`mgmt: ${d.mgmtIp}`);
+            if(state.roas.gwDeviceId===d.id){
+              for(const v of state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+                const sn=subnetByVlanRef(v.id);
+                if(sn?.gateway) ips.push(`GW VLAN ${v.vlanId}: ${sn.gateway}`);
+              }
+              if((d.internetEdge==="yes") && (state.roas.wanNextHop||"").trim()) ips.push(`default -> ${state.roas.wanNextHop.trim()}`);
+            }
+            return `<tr><td><b>${escapeHtml(d.name)}</b><div class="hint">${escapeHtml(d.type)} · ${escapeHtml(d.vendorOs||"")}</div></td><td class="mono">${escapeHtml(ifs)}</td><td class="mono">${escapeHtml(ips.length?ips.join("\n"):"—")}</td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  const canvas = $("topology");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvasToCSS(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function ensurePositions(){
+    for(const d of state.devices){
+      if(!state.topo.pos[d.id]) state.topo.pos[d.id]={ x: 100 + Math.random()*600, y: 80 + Math.random()*280 };
+    }
+    for(const k of Object.keys(state.topo.pos)){
+      if(!state.devices.some(d=>d.id===k)) delete state.topo.pos[k];
+    }
+  }
+  function autoLayout(){
+    ensurePositions();
+    const nodes=state.devices.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const w = canvas.getBoundingClientRect().width || 900;
+    const h = canvas.getBoundingClientRect().height || 420;
+    const margin=70;
+    const cols=Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
+    const rows=Math.max(1, Math.ceil(nodes.length/cols));
+    const cellW=(w-margin*2)/cols;
+    const cellH=(h-margin*2)/rows;
+    for(let i=0;i<nodes.length;i++){
+      const c=i%cols, r=Math.floor(i/cols);
+      state.topo.pos[nodes[i].id]={ x: margin+c*cellW+cellW/2, y: margin+r*cellH+cellH/2 };
+    }
+    save();
+  }
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    const rr=Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+  function drawTopology(){
+    resizeCanvasToCSS();
+    ensurePositions();
+    const w=canvas.getBoundingClientRect().width;
+    const h=canvas.getBoundingClientRect().height;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.globalAlpha=0.08;
+    ctx.beginPath();
+    for(let x=0;x<w;x+=28){ ctx.moveTo(x,0); ctx.lineTo(x,h); }
+    for(let y=0;y<h;y+=28){ ctx.moveTo(0,y); ctx.lineTo(w,y); }
+    ctx.strokeStyle="#2f6fed";
+    ctx.stroke();
+    ctx.globalAlpha=1;
+
+    for(const l of state.links){
+      const a=state.ports.find(p=>p.id===l.aPortId);
+      const b=state.ports.find(p=>p.id===l.bPortId);
+      if(!a||!b) continue;
+      const da=deviceById(a.deviceId), db=deviceById(b.deviceId);
+      if(!da||!db) continue;
+      const pa=state.topo.pos[da.id], pb=state.topo.pos[db.id];
+      if(!pa||!pb) continue;
+
+      ctx.lineWidth=2;
+      ctx.strokeStyle="#2f6fed";
+      ctx.globalAlpha=0.55;
+      ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke();
+
+      const mx=(pa.x+pb.x)/2, my=(pa.y+pb.y)/2;
+      ctx.globalAlpha=0.9;
+      ctx.font="11px system-ui";
+      const label=`${da.name}:${a.name} ↔ ${db.name}:${b.name}`;
+      const tw=ctx.measureText(label).width;
+      ctx.fillStyle="rgba(255,255,255,0.9)";
+      ctx.fillRect(mx - tw/2 - 6, my - 10, tw + 12, 18);
+      ctx.fillStyle="#111";
+      ctx.fillText(label, mx - tw/2, my + 3);
+      ctx.globalAlpha=1;
+    }
+
+    for(const d of state.devices){
+      const p=state.topo.pos[d.id]; if(!p) continue;
+      const boxW=160, boxH=54;
+      const x=p.x-boxW/2, y=p.y-boxH/2;
+      ctx.fillStyle=(d.type==="switch")?"rgba(47,111,237,0.10)":"rgba(16,185,129,0.10)";
+      ctx.strokeStyle="rgba(17,17,17,0.25)";
+      ctx.lineWidth=1;
+      roundRect(ctx,x,y,boxW,boxH,12,true,true);
+      ctx.fillStyle="#111";
+      ctx.font="bold 12px system-ui";
+      ctx.fillText(d.name, x+10, y+20);
+      ctx.font="11px system-ui";
+      ctx.globalAlpha=0.85;
+      ctx.fillText(`${d.type} · ${d.vendorOs||"-"}`, x+10, y+38);
+      ctx.globalAlpha=1;
+      if(d.internetEdge==="yes"){
+        ctx.fillStyle="rgba(226,59,59,0.9)";
+        ctx.beginPath(); ctx.arc(x+boxW-12, y+12, 5, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+  function hitTestNode(x,y){
+    for(const d of state.devices){
+      const p=state.topo.pos[d.id]; if(!p) continue;
+      const boxW=160, boxH=54;
+      const left=p.x-boxW/2, top=p.y-boxH/2;
+      if(x>=left && x<=left+boxW && y>=top && y<=top+boxH) return d;
+    }
+    return null;
+  }
+  let dragging=null;
+  canvas.addEventListener("mousedown",(e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+    const hit=hitTestNode(x,y);
+    if(hit){
+      dragging={id:hit.id, dx:x-state.topo.pos[hit.id].x, dy:y-state.topo.pos[hit.id].y};
+    }
+  });
+  window.addEventListener("mouseup",()=>{ if(dragging){ dragging=null; save(); } });
+  window.addEventListener("mousemove",(e)=>{
+    if(!dragging) return;
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+    state.topo.pos[dragging.id].x = x - dragging.dx;
+    state.topo.pos[dragging.id].y = y - dragging.dy;
+    drawTopology();
+  });
+  canvas.addEventListener("click",(e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+    const hit=hitTestNode(x,y);
+    if(hit){
+      if(hit.type==="switch"){
+        state.step=3;
+        $("visualDevice").value=hit.id;
+        refresh();
+        setTimeout(()=>{ $("portGrid").scrollIntoView({behavior:"smooth",block:"start"}); }, 50);
+      } else {
+        state.step=4; refresh();
+      }
+    }
+  });
+  $("fitMap").onclick=()=>{ autoLayout(); drawTopology(); };
+  $("reLayout").onclick=()=>{ autoLayout(); drawTopology(); };
+  window.addEventListener("resize", ()=>{ if(state.step===4) drawTopology(); });
+
+  $("addDevice").onclick=()=>{
+    const name=($("devName").value||"").trim();
+    const type=$("devType").value;
+    const vendorOs=$("devVendor").value||null;
+    const mgmtIp=($("devMgmt").value||"").trim();
+    const notes=($("devNotes").value||"").trim();
+    const internetEdge=$("devInternetEdge").value||"no";
+    const wanIf=($("devWanIf").value||"").trim();
+    if(!name) return alert("Nombre requerido.");
+    if(!vendorOs) return alert("Vendor/OS requerido.");
+    if(mgmtIp && parseIPv4(mgmtIp)===null) return alert("IP de gestión inválida.");
+    if((type==="router"||type==="firewall") && internetEdge==="yes"){
+      const exists=state.devices.some(d=>(d.type==="router"||d.type==="firewall") && d.internetEdge==="yes");
+      if(exists) return alert("Ya existe un Internet edge.");
+    }
+    const id=uid("dev");
+    state.devices.push({ id, name, type, vendorOs, mgmtIp: mgmtIp||null, notes: notes||null,
+      internetEdge:(type==="switch"?"no":internetEdge), wanIf:(type==="switch"?null:(wanIf||null)), layout:null });
+    state.topo.pos[id] = { x: 140 + Math.random()*520, y: 90 + Math.random()*260 };
+    $("devName").value=""; $("devMgmt").value=""; $("devNotes").value=""; $("devVendor").value=""; $("devInternetEdge").value="no"; $("devWanIf").value="";
+    refresh();
+  };
+
+  $("resetAll").onclick=()=>{
+    if(!confirm("¿Borrar TODO el proyecto?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state={ step:1, devices:[], vlans:[], subnets:[], ports:[], links:[],
+      roas:{gwDeviceId:null,gwLanIf:"",nativeVlanRef:null,wanCidr:"",wanNextHop:""},
+      dhcp:{}, security:{bpdu:"yes",portsec:"yes",dhcpsnoop:"yes",dhcpVlans:""},
+      uplink:{policy:"suggest", allowed:"all"}, topo:{pos:{}} };
+    refresh();
+  };
+
+  $("addRfIf").onclick=()=>{
+    const devId=$("rfDevice").value;
+    const ifname=($("rfIfName").value||"").trim();
+    const media=$("rfMedia").value;
+    const role=$("rfRole").value;
+    if(!devId) return alert("Selecciona un router/firewall.");
+    if(!ifname) return alert("Nombre de interfaz requerido.");
+    if(state.ports.some(p=>p.deviceId===devId && p.name===ifname)) return alert("Esa interfaz ya existe en el dispositivo.");
+    const mode = (role==="wan") ? "routed" : "trunk";
+    const allowed = (role==="lan") ? state.vlans.map(v=>v.vlanId).sort((a,b)=>a-b) : [];
+    state.ports.push({
+      id:uid("port"), deviceId:devId, name:ifname, media, mode,
+      accessVlanRef:null, nativeVlanRef:null, allowedVlans: allowed,
+      desc: (role==="wan") ? "WAN (hacia ISP)" : "LAN trunk (hacia switches)",
+      position:null, role
+    });
+    $("rfIfName").value="";
+    refresh();
+  };
+
+  $("quickRf").onclick=()=>{
+    const devId=$("rfDevice").value;
+    if(!devId) return alert("Selecciona un router/firewall.");
+    const dev=deviceById(devId);
+    if(!dev) return;
+    const lan = dev.vendorOs==="cisco_ios" ? "GigabitEthernet0/1" : "ge-0/0/1";
+    const wan = dev.vendorOs==="cisco_ios" ? (dev.wanIf||"GigabitEthernet0/0") : "ge-0/0/0";
+    if(!state.ports.some(p=>p.deviceId===devId && p.name===lan)){
+      state.ports.push({id:uid("port"),deviceId:devId,name:lan,media:"GE",mode:"trunk",accessVlanRef:null,nativeVlanRef:null,allowedVlans:state.vlans.map(v=>v.vlanId).sort((a,b)=>a-b),desc:"LAN trunk (ejemplo)",position:null,role:"lan"});
+    }
+    if(!state.ports.some(p=>p.deviceId===devId && p.name===wan)){
+      state.ports.push({id:uid("port"),deviceId:devId,name:wan,media:"GE",mode:"routed",accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:"WAN (ejemplo)",position:null,role:"wan"});
+    }
+    refresh();
+  };
+
+  $("addVlan").onclick=()=>{
+    const vlanId=parseInt(($("vlanId").value||"").trim(),10);
+    const name=($("vlanName").value||"").trim() || `VLAN${vlanId}`;
+    if(!Number.isFinite(vlanId)||vlanId<1||vlanId>4094) return alert("VLAN ID inválida.");
+    if(state.vlans.some(v=>v.vlanId===vlanId)) return alert("Ya existe esa VLAN.");
+    state.vlans.push({ id:uid("vlan"), vlanId, name });
+    $("vlanId").value=""; $("vlanName").value="";
+    for(const p of state.ports){
+      const d=deviceById(p.deviceId);
+      if(d && d.type!=="switch" && p.mode==="trunk"){
+        if(!p.allowedVlans.includes(vlanId)) p.allowedVlans.push(vlanId);
+        p.allowedVlans.sort((a,b)=>a-b);
+      }
+    }
+    refresh();
+  };
+
+  $("autoExplain").onclick=()=>{
+    const box=$("autoExplainBox");
+    box.style.display = (!box.style.display || box.style.display==="none") ? "block" : "none";
+    box.innerHTML = "<b>Por qué:</b> un plan consistente (p.ej. /24 por VLAN dentro de un /16) evita solapes y simplifica operación.<br><b>Qué hace:</b> asigna subnets consecutivas y sugiere gateway (primera o última usable).";
+  };
+
+  $("autoBuildSubnets").onclick=()=>{
+    if(!state.vlans.length) return alert("Crea VLANs primero.");
+    const baseStr=($("autoBase").value||"").trim() || "10.10.0.0/16";
+    const per=parseInt($("autoSize").value,10);
+    const rule=$("autoGwRule").value;
+    const mgmtRef=$("mgmtVlan").value||null;
+    const base=parseCidr(baseStr);
+    if(!base) return alert("Bloque base inválido.");
+    if(per < base.prefix) return alert("El tamaño por VLAN no puede ser mayor que el bloque base.");
+    const step = 2 ** (32 - per);
+    const start = base.network;
+    const vlans=state.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
+    for(let i=0;i<vlans.length;i++){
+      const v=vlans[i];
+      if(state.subnets.some(s=>s.vlanRef===v.id)) continue;
+      const net=(start + i*step)>>>0;
+      const cidr=`${ipv4ToStr(net)}/${per}`;
+      const ci=parseCidr(cidr); if(!ci) continue;
+      let overlap=false;
+      for(const s of state.subnets){
+        const c2=parseCidr(s.cidr);
+        if(c2 && cidrOverlap(ci,c2)) { overlap=true; break; }
+      }
+      if(overlap) continue;
+      const gw = (rule==="last") ? (ci.lastHost!==null?ipv4ToStr(ci.lastHost):null) : (ci.firstHost!==null?ipv4ToStr(ci.firstHost):null);
+      state.subnets.push({ id:uid("subnet"), vlanRef:v.id, cidr, gateway:gw });
+    }
+    if(mgmtRef) state.roas.nativeVlanRef=mgmtRef;
+    save(); refresh();
+  };
+
+  $("buildLayout").onclick=()=>{ const id=$("layoutDevice").value; if(!id) return alert("Selecciona un switch."); buildLayoutEditor(id); };
+  $("applyLayout").onclick=()=>{ const id=$("layoutDevice").value; if(!id) return alert("Selecciona un switch."); applyLayout(id); };
+  $("layoutDevice").onchange=()=>{
+    const d=deviceById($("layoutDevice").value); if(!d) return;
+    $("layoutTotal").value=d.layout?.total||"";
+    $("layoutCols").value=d.layout?.cols||12;
+    $("layoutBase").value=d.layout?.baseHint||"";
+    buildLayoutEditor(d.id);
+  };
+  $("visualDevice").onchange=()=>renderVisualPorts();
+  $("visualFilter").onchange=()=>renderVisualPorts();
+
+  $("uplinkPolicy").onchange=()=>{ state.uplink.policy=$("uplinkPolicy").value; save(); };
+  $("uplinkAllowed").onchange=()=>{ state.uplink.allowed=$("uplinkAllowed").value; save(); };
+
+  $("addLink").onclick=()=>{
+    const a=$("linkA").value, b=$("linkB").value;
+    const notes=($("linkNotes").value||"").trim();
+    if(!a||!b) return alert("Selecciona dos puertos.");
+    if(a===b) return alert("No puedes enlazar un puerto consigo mismo.");
+    if(isPortConnected(a)||isPortConnected(b)) return alert("Uno de los puertos ya está conectado.");
+    state.links.push({ id:uid("link"), aPortId:a, bPortId:b, notes:notes||null });
+    $("linkNotes").value="";
+    const res=suggestOrApplyUplink(a,b);
+    $("uplinkSuggestBox").textContent=res.msg||"";
+    refresh();
+  };
+
+  $("gwDevice").onchange=()=>{ state.roas.gwDeviceId=$("gwDevice").value||null; save(); refresh(); };
+  $("gwLanIfPick").onchange=()=>{ state.roas.gwLanIf=$("gwLanIfPick").value||""; save(); };
+  $("gwNativeVlan").onchange=()=>{ state.roas.nativeVlanRef=$("gwNativeVlan").value||null; save(); refresh(); };
+  $("wanCidr").onblur=()=>{ state.roas.wanCidr=($("wanCidr").value||"").trim(); save(); };
+  $("wanNextHop").onblur=()=>{ state.roas.wanNextHop=($("wanNextHop").value||"").trim(); save(); };
+
+  $("applyRoaS").onclick=()=>{
+    if(!state.roas.gwDeviceId) return alert("Selecciona el gateway.");
+    if(!(state.roas.gwLanIf||"").trim()) return alert("Selecciona la interfaz LAN del router.");
+    const gwId=state.roas.gwDeviceId;
+    const lanIfName=(state.roas.gwLanIf||"").trim();
+    const gwPort = state.ports.find(p=>p.deviceId===gwId && p.name===lanIfName);
+    if(gwPort) gwPort.mode="trunk";
+    if(gwPort){
+      const link = state.links.find(l=>l.aPortId===gwPort.id || l.bPortId===gwPort.id);
+      if(link){
+        const otherId = (link.aPortId===gwPort.id) ? link.bPortId : link.aPortId;
+        const otherPort = state.ports.find(p=>p.id===otherId);
+        const otherDev = otherPort ? deviceById(otherPort.deviceId) : null;
+        if(otherPort && otherDev && otherDev.type==="switch"){
+          otherPort.mode="trunk";
+          otherPort.allowedVlans = state.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);
+          otherPort.accessVlanRef=null;
+          if(!otherPort.desc) otherPort.desc="Uplink a gateway (RoaS)";
+        }
+      }
+    }
+    save(); refresh();
+    alert("RoaS aplicado: el export generará subinterfaces por VLAN en el gateway (Cisco).");
+  };
+
+  $("secBpdu").onchange=()=>{ state.security.bpdu=$("secBpdu").value; save(); };
+  $("secPortSec").onchange=()=>{ state.security.portsec=$("secPortSec").value; save(); };
+  $("secDhcpSnoop").onchange=()=>{ state.security.dhcpsnoop=$("secDhcpSnoop").value; save(); };
+  $("secDhcpVlans").onblur=()=>{ state.security.dhcpVlans=($("secDhcpVlans").value||"").trim(); save(); };
+
+  $("exportPerDevice").onclick=()=>{
+    for(const d of state.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){
+      const cfg=generateConfig(d.id);
+      const ext = d.vendorOs==="juniper_junos" ? "set.txt" : "cfg";
+      downloadText(`${d.name}.${ext}`, cfg);
+    }
+  };
+  $("exportBundle").onclick=()=>{
+    let out="";
+    for(const d of state.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){
+      out += "#############################################\n";
+      out += `# ${d.name} (${d.vendorOs||"sin vendor"})\n`;
+      out += "#############################################\n\n";
+      out += generateConfig(d.id) + "\n";
+    }
+    downloadText("configs_bundle.txt", out);
+    $("configOut").value=out;
+  };
+  $("exportJson").onclick=()=>{ $("jsonBox").value=JSON.stringify(state,null,2); };
+  $("importJsonBtn").onclick=()=>{
+    const txt=($("jsonBox").value||"").trim();
+    if(!txt) return alert("Pega un JSON.");
+    try{
+      const parsed=JSON.parse(txt);
+      if(!parsed || !parsed.devices || !parsed.vlans) return alert("JSON inválido.");
+      state=parsed;
+      save(); refresh();
+    }catch(e){ alert("JSON inválido: "+e.message); }
+  };
+
+  $("previewDevice").onchange=()=>{
+    const id=$("previewDevice").value;
+    $("configOut").value = id ? generateConfig(id) : "";
+  };
+
+  function refresh(){
+    save();
+    renderTabs();
+    showStep();
+
+    renderDeviceSelects();
+    renderDevices();
+    renderRouterIfs();
+
+    renderVlans();
+    renderSubnets();
+    renderVlanSelects();
+    if(!$("autoBase").value) $("autoBase").value="10.10.0.0/16";
+
+    renderLinkPickers();
+    renderLinks();
+
+    $("uplinkPolicy").value = state.uplink.policy || "suggest";
+    $("uplinkAllowed").value = state.uplink.allowed || "all";
+
+    if($("layoutDevice").value){
+      const d=deviceById($("layoutDevice").value);
+      if(d?.layout?.total){
+        $("layoutTotal").value=d.layout.total;
+        $("layoutCols").value=d.layout.cols||12;
+        $("layoutBase").value=d.layout.baseHint||"";
+        buildLayoutEditor(d.id);
+      }
+    }
+    renderVisualPorts();
+
+    renderRoaSSelectors();
+    renderDhcp();
+
+    $("secBpdu").value=state.security.bpdu||"yes";
+    $("secPortSec").value=state.security.portsec||"yes";
+    $("secDhcpSnoop").value=state.security.dhcpsnoop||"yes";
+    $("secDhcpVlans").value=state.security.dhcpVlans||"";
+
+    renderPreviewSelect();
+    const first=state.devices[0]?.id;
+    if(first && !$("previewDevice").value) $("previewDevice").value=first;
+    const pid=$("previewDevice").value;
+    $("configOut").value = pid ? generateConfig(pid) : "";
+
+    renderSummary();
+
+    if(state.step===4) drawTopology();
+  }
+
+  refresh();
+})();
+</script>
+</body>
+</html>
