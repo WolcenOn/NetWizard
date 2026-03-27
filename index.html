@@ -259,6 +259,32 @@ canvas{display:block;width:100%;height:360px;}
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px;}
+
+.v5-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.v5-layout{display:grid;grid-template-columns:1.35fr .95fr;gap:14px;align-items:start}
+.v5-layout.fs{position:fixed;inset:10px;z-index:3000;background:var(--bg);padding:10px;border:1px solid var(--b1);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.45);grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr)}
+.v5-layout.fs, .v5-layout:fullscreen{width:auto;height:auto}
+.v5-layout:fullscreen{padding:14px;background:var(--bg);grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr)}
+.v5-layout:fullscreen::backdrop{background:rgba(3,6,12,.95)}
+.v5-cw{position:relative;height:420px;border:1px solid var(--b1);border-radius:16px;background:linear-gradient(180deg,rgba(8,12,20,.88),rgba(12,18,30,.96));overflow:hidden;touch-action:none}
+.v5-layout.fs .v5-cw,.v5-layout.fs .v5-panel,.v5-layout:fullscreen .v5-cw,.v5-layout:fullscreen .v5-panel{height:calc(100vh - 40px);max-height:calc(100vh - 40px);min-height:calc(100vh - 40px)}
+#v5view{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#v5view.dragging{cursor:grabbing}
+.v5-panel{min-height:420px;max-height:420px;overflow:auto}
+.v5-meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.v5-list{display:grid;gap:8px;margin-top:8px}.v5-item{padding:10px;border:1px solid var(--b1);border-radius:12px;background:var(--s2)}
+.v5-empty{color:var(--t2);padding:12px;border:1px dashed var(--b1);border-radius:12px;background:rgba(255,255,255,.02)}
+.v5-mini{font-size:12px;color:var(--t2)}
+.v5-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.v5-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.v5-note{font-size:12px;color:var(--t2);margin-top:8px}
+.v5-ports{display:grid;gap:8px;margin-top:10px}
+.v5-port{padding:10px;border:1px solid var(--b1);border-radius:12px;background:rgba(255,255,255,.03)}
+.v5-port h4{margin:0 0 8px;font-size:13px}
+.v5-drop{outline:2px dashed #60a5fa;outline-offset:-5px}
+body.v5-fs-lock{overflow:hidden}
+@media (max-width:1100px){.v5-layout,.v5-layout.fs{grid-template-columns:1fr}.v5-layout.fs{inset:8px}}
+
 </style>
 </head>
 <body>
@@ -289,6 +315,7 @@ canvas{display:block;width:100%;height:360px;}
     <div class="sb-it" data-step="wiz"><div class="sb-num">⚡</div>⚡ Asistente</div>
     <div class="sb-div"></div>
     <div class="sb-sec">Red</div>
+    <div class="sb-it" data-step="loc"><div class="sb-num">0</div>📍 Ubicaciones</div>
     <div class="sb-it" data-step="dev"><div class="sb-num">1</div>🖥 Dispositivos</div>
     <div class="sb-it" data-step="ports"><div class="sb-num">2</div>🔌 Puertos & Interfaces</div>
     <div class="sb-it" data-step="vlan"><div class="sb-num">3</div>🏷 VLANs & Subnets</div>
@@ -378,6 +405,51 @@ canvas{display:block;width:100%;height:360px;}
 </div>
 
 <!-- ═══════════ DISPOSITIVOS ═══════════ -->
+<div class="pg" id="pg-loc">
+  <div class="ph"><h1>📍 Paso 0 · Ubicaciones</h1></div>
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="card-h"><div class="card-t">📍 Ubicaciones físicas</div><span class="b bac" id="physLocCnt">0</span></div>
+        <div class="hint" style="margin-bottom:10px;">Define una jerarquía de ubicaciones tipo árbol. Ejemplo: Almacén → Oficina → Producción. Los cambios se comparten entre V4 y V5.</div>
+        <div class="row">
+          <div><label class="fl">Nombre</label><input id="plName" placeholder="Edificio A / Planta 1 / Rack R1 / Sala 203"/></div>
+          <div><label class="fl">Tipo</label>
+            <select id="plType">
+              <option value="site">Sede</option>
+              <option value="campus">Campus</option>
+              <option value="building" selected>Edificio</option>
+              <option value="floor">Planta</option>
+              <option value="room">Habitación</option>
+              <option value="rack">Rack</option>
+              <option value="zone">Zona</option>
+              <option value="desk">Puesto</option>
+              <option value="other">Otra</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Ubicación superior</label><select id="plParent"></select></div>
+          <div><label class="fl">Distancia a superior (m)</label><input id="plDistance" type="number" min="0" step="0.1" placeholder="12.5"/></div>
+        </div>
+        <label class="fl">Notas</label><input id="plNotes" placeholder="Jerarquía física, observaciones, tramo, etc."/>
+        <input type="hidden" id="plEditId"/>
+        <div class="brow">
+          <button type="button" class="btn bp" id="btnAddPhysLoc">➕ Añadir ubicación</button>
+          <button type="button" class="btn bs" id="btnCancelPhysLocEdit" style="display:none;">Cancelar edición</button>
+        </div>
+        <div id="physLocList" style="margin-top:10px;"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-h"><div class="card-t">🧭 Uso de ubicaciones</div></div>
+        <div class="hint">Puedes asignar ubicaciones desde formularios y desde la Vista Visual V5. Siempre se guarda la última modificación.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="pg" id="pg-dev">
   <div class="ph"><h1>🖥 Dispositivos</h1><p>Switches, routers, firewalls y endpoints de red.</p></div>
   <div class="g2">
@@ -418,7 +490,8 @@ canvas{display:block;width:100%;height:360px;}
         </div>
         <label class="fl">Notas</label>
         <input id="devNotes" placeholder="Modelo, rack, ubicación…"/>
-        <div class="brow"><button class="btn bp bfull" id="btnAddDev">➕ Añadir dispositivo</button></div>
+        <input type="hidden" id="devEditId"/>
+        <div class="brow"><button class="btn bp bfull" id="btnAddDev">➕ Añadir dispositivo</button><button class="btn bs" id="btnCancelDevEdit" style="display:none;">Cancelar edición</button></div>
       </div>
     </div>
     <div>
@@ -476,8 +549,10 @@ canvas{display:block;width:100%;height:360px;}
           <input id="pDesc" placeholder="Ej: Uplink SW-DIST / PC-Ventas / WAN-ISP"/>
         </div>
         <div class="hint" id="pHint"></div>
+        <input type="hidden" id="portEditId"/>
         <div class="brow">
           <button class="btn bp" id="btnAddPort">➕ Añadir</button>
+          <button class="btn bs" id="btnCancelPortEdit" style="display:none;">Cancelar edición</button>
           <button class="btn bs" id="btnQuick24">⚡ Generar 24 GE (switch)</button>
         </div>
       </div>
@@ -509,6 +584,19 @@ canvas{display:block;width:100%;height:360px;}
         <div class="brow"><button class="btn bp" id="btnAddVlan">➕ Añadir VLAN</button></div>
       </div>
       <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">✍ Configuración manual de VLAN / Subnet</div>
+        <div class="row">
+          <div><label class="fl">VLAN</label><select id="mSnVlan"></select></div>
+          <div><label class="fl">CIDR</label><input id="mSnCidr" placeholder="10.10.10.0/24"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Gateway</label><input id="mSnGw" placeholder="10.10.10.1"/></div>
+          <div><label class="fl">RoaS nativa</label><select id="aNatV"></select></div>
+        </div>
+        <div class="hint" id="mSnHint">Asigna manualmente la red y gateway de cada VLAN. Si la VLAN ya tiene subnet, se actualiza.</div>
+        <div class="brow"><button class="btn bg" id="btnAddManualSn">💾 Guardar subnet manual</button></div>
+      </div>
+      <div class="card">
         <div class="card-t" style="margin-bottom:11px;">⚡ Auto-subnetting</div>
         <div class="row">
           <div><label class="fl">Bloque base</label><input id="aBase" placeholder="10.10.0.0/16"/></div>
@@ -518,7 +606,7 @@ canvas{display:block;width:100%;height:360px;}
         </div>
         <div class="row">
           <div><label class="fl">Gateway</label><select id="aGw"><option value="first">Primera IP (.1)</option><option value="last">Última IP</option></select></div>
-          <div><label class="fl">VLAN nativa RoaS</label><select id="aNatV"></select></div>
+          <div><label class="fl">Modo</label><input value="Solo VLANs sin subnet" readonly/></div>
         </div>
         <div class="brow"><button class="btn bp" id="btnAutoSn">⚡ Generar subnets</button></div>
       </div>
@@ -562,10 +650,22 @@ canvas{display:block;width:100%;height:360px;}
         </div>
         <div class="row">
           <div><label class="fl">MAC (opcional)</label><input id="hMac" placeholder="aa:bb:cc:dd:ee:ff"/></div>
-          <div><label class="fl">Puerto switch</label><select id="hPort"></select></div>
+          <div><label class="fl">Ubicación en esquema</label><select id="hLoc"></select></div>
         </div>
+        <div class="row">
+          <div><label class="fl">Ubicación física / puesto</label><select id="hPhysLocSel"></select><input id="hPhysLoc" placeholder="Planta 1 · Mesa 12 · Sala A" style="margin-top:6px;"/></div>
+          <div><label class="fl">Equipo conectado</label><select id="hConnDev"></select></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Asignación de puerto</label><select id="hPortMode"><option value="auto">Automática</option><option value="manual">Manual</option></select></div>
+          <div><label class="fl">Puerto del equipo</label><select id="hPort"></select></div>
+        </div>
+        <label class="fl">Resumen conexión</label><input id="hDevHint" placeholder="Selecciona equipo y puerto" readonly/>
+        <label class="fl">Notas host</label><input id="hNotes" placeholder="Observaciones, servicio, toma, usuario…"/>
+        <input type="hidden" id="hostEditId"/>
         <div class="brow">
           <button class="btn bp" id="btnAddHost">➕ Añadir host</button>
+          <button class="btn bs" id="btnCancelHostEdit" style="display:none;">Cancelar edición</button>
           <button class="btn bs" id="btnBulk">📋 Carga masiva</button>
         </div>
       </div>
@@ -734,6 +834,20 @@ canvas{display:block;width:100%;height:360px;}
         <div class="hint" style="margin-top:5px;">Clic en dispositivo → ver configuración. Arrastra para mover.</div>
       </div>
       <div class="card">
+        <div class="card-t" style="margin-bottom:10px;">🧭 Vista visual V5 — ajuste fino sobre datos de V4</div>
+        <div class="hint" style="margin-bottom:10px;">La V4 sigue siendo la fuente principal. Esta vista representa hosts, VLAN, IP y enlaces construidos en V4 para afinar ubicaciones y parámetros individuales.</div>
+        <div class="v5-toolbar">
+          <button class="btn bs bsm" id="v5AutoLoc">🪄 Auto-ubicar</button>
+          <button class="btn bs bsm" id="v5AddLoc">📍 Nueva ubicación</button>
+          <button class="btn bs bsm" id="v5Fit">⊞ Ajustar vista</button>
+          <button class="btn bs bsm" id="v5Fs">⛶ Pantalla completa</button>
+        </div>
+        <div class="v5-layout" id="v5Layout">
+          <div class="v5-cw"><canvas id="v5view"></canvas></div>
+          <div class="card v5-panel" id="v5Panel"></div>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🌐 Router-on-a-Stick (RoaS)</div>
         <div class="row">
           <div><label class="fl">Gateway</label><select id="roasDev"></select></div>
@@ -758,7 +872,30 @@ canvas{display:block;width:100%;height:360px;}
         <div id="devPickCfg"></div>
         <div class="card-t" style="margin:10px 0 6px;">Formato de salida</div>
         <div id="cfgVendorPills" class="cfg-vendor-pills"></div>
-        <textarea class="cfg" id="cfgOut" readonly style="min-height:240px;"></textarea>
+        <div class="g2">
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Código a usar</div>
+            <textarea class="cfg" id="cfgOut" readonly style="min-height:240px;"></textarea>
+          </div>
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Código comentado</div>
+            <textarea class="cfg" id="cfgOutComment" readonly style="min-height:240px;"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
+        <div class="hint" style="margin-bottom:8px;">Parámetros importantes: dominio, contraseña, versión y rol por switch. Para VTP, los enlaces entre switches deben ir en trunk.</div>
+        <div class="row">
+          <div><label class="fl">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
+          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" placeholder="cisco"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+          <div><label class="fl">Pruning</label><select id="vtpPruning"><option value="no">No</option><option value="yes">Sí</option></select></div>
+        </div>
+        <div id="vtpSwitchRoles"></div>
+        <div class="brow"><button class="btn bg" id="btnSaveVtp">✔ Guardar VTP</button></div>
       </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">📤 Exportar</div>
@@ -787,6 +924,7 @@ canvas{display:block;width:100%;height:360px;}
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bnav"><div class="bnav-inner">
   <div class="bnit" data-step="dash"><span class="ni">🏠</span>Inicio</div>
+  <div class="bnit" data-step="loc"><span class="ni">📍</span>Ubics</div>
   <div class="bnit" data-step="dev"><span class="ni">🖥</span>Devs</div>
   <div class="bnit" data-step="ports"><span class="ni">🔌</span>Puertos</div>
   <div class="bnit" data-step="vlan"><span class="ni">🏷</span>VLANs</div>
@@ -828,9 +966,10 @@ canvas{display:block;width:100%;height:360px;}
 <div class="mbk" id="bulkModal">
   <div class="modal">
     <div class="mh"><h3>📋 Carga masiva de hosts</h3><button class="btn bs bsm" id="bulkClose">✕</button></div>
-    <div class="co co-ac">Formato: <code>Nombre, tipo, VLAN-ID, ip-o-dhcp</code><br>
-      Tipos: pc, laptop, server, printer, phone, camera, ap, iot</div>
-    <textarea class="cfg" id="bulkTxt" style="min-height:130px;" placeholder="PC-Ventas-01, pc, 10, 10.10.10.50&#10;Impresora-01, printer, 10, dhcp&#10;SRV-Web, server, 20, 10.10.20.10"></textarea>
+    <div class="co co-ac">Formato: <code>Nombre, tipo, VLAN-ID, ip-o-dhcp, ubicación-física, ubicación-esquema</code><br>Tipos: pc, laptop, server, printer, phone, camera, ap, iot. Los dos últimos campos son opcionales.</div>
+    <textarea class="cfg" id="bulkTxt" style="min-height:130px;" placeholder="PC-Ventas-01, pc, 10, 10.10.10.50, Planta 1 · Mesa 12, Oficina
+Impresora-01, printer, 10, dhcp, Recepción, Recepción
+SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
     <div class="mf"><button class="btn bs" id="bulkCancel">Cancelar</button><button class="btn bp" id="bulkAdd">➕ Añadir</button></div>
   </div>
 </div>
@@ -853,7 +992,16 @@ canvas{display:block;width:100%;height:360px;}
     </div>
     <div class="card-t" style="margin-bottom:6px;">Selecciona formato de configuración:</div>
     <div class="cfg-vendor-pills" id="dcmPills"></div>
-    <textarea class="cfg" id="dcmCfg" readonly style="min-height:300px;"></textarea>
+    <div class="g2">
+      <div>
+        <div class="card-t" style="margin:6px 0;">Código a usar</div>
+        <textarea class="cfg" id="dcmCfg" readonly style="min-height:300px;"></textarea>
+      </div>
+      <div>
+        <div class="card-t" style="margin:6px 0;">Código comentado</div>
+        <textarea class="cfg" id="dcmCfgComment" readonly style="min-height:300px;"></textarea>
+      </div>
+    </div>
     <div class="mf"><button class="btn bs" id="dcmCopy">📋 Copiar</button><button class="btn bp" id="dcmDl">⬇ Descargar</button></div>
   </div>
 </div>
@@ -862,9 +1010,10 @@ canvas{display:block;width:100%;height:360px;}
 'use strict';
 const SK='nwp_v4';
 const $=id=>document.getElementById(id);
+const qsa=s=>Array.from(document.querySelectorAll(s));
 
 // ── CONSTANTS ──
-const STEP_ORDER=['dash','wiz','dev','ports','vlan','hosts','links','fw','cfg'];
+const STEP_ORDER=['dash','wiz','loc','dev','ports','vlan','hosts','links','fw','cfg'];
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
@@ -918,11 +1067,96 @@ const FW_TPLS=[
 ];
 
 // ── STATE ──
-function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},topo:{pos:{}}};}
+function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
 let S=loadS()||defS();
+if(!S.vtp)S.vtp={domain:'',password:'',version:'2',pruning:'no',roles:{}};
+if(!S.vtp.roles)S.vtp.roles={};
+if(!S.visual)S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null};
+if(!S.visual.locs)S.visual.locs=[];
+if(!S.visual.assign)S.visual.assign={devices:{},hosts:{}};
+if(!S.visual.assign.devices)S.visual.assign.devices={};
+if(!S.visual.assign.hosts)S.visual.assign.hosts={};
+if(!S.visual.pos)S.visual.pos={};
+if(!S.visual.view)S.visual.view={px:60,py:50,zoom:1};
+
+if(!Array.isArray(S.hostPhysicalLocations))S.hostPhysicalLocations=[];
+if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
+if(!S.uiSort)S.uiSort={};
+
 function loadS(){try{return JSON.parse(localStorage.getItem(SK));}catch{return null;}}
 function save(){localStorage.setItem(SK,JSON.stringify(S));const el=$('savedLbl');el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1300);}
 const esc=s=>(s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+function cleanStr(v){return (v??'').toString().trim();}
+function ensurePhysicalLocationModel(){
+  if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
+  const seen=new Set();
+  S.physicalLocations=(S.physicalLocations||[]).filter(Boolean).map(l=>({
+    id:l.id||uid('pl'),
+    name:cleanStr(l.name),
+    type:cleanStr(l.type)||'other',
+    parentId:l.parentId||'',
+    distance:l.distance==null?'':String(l.distance),
+    notes:cleanStr(l.notes)
+  })).filter(l=>l.name && !seen.has(l.name.toLowerCase()) && seen.add(l.name.toLowerCase()));
+  for(const n of (S.hostPhysicalLocations||[])) if(cleanStr(n) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(n).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(n),type:'other',parentId:'',distance:'',notes:''});
+  for(const h of S.hosts||[]) if(cleanStr(h.physicalLocation) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(h.physicalLocation).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(h.physicalLocation),type:'other',parentId:'',distance:'',notes:''});
+  S.hostPhysicalLocations=S.physicalLocations.map(l=>l.name).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+}
+function physLocById(id){ ensurePhysicalLocationModel(); return S.physicalLocations.find(l=>l.id===id)||null; }
+function physLocByName(name){ const n=cleanStr(name).toLowerCase(); if(!n) return null; ensurePhysicalLocationModel(); return S.physicalLocations.find(l=>l.name.toLowerCase()===n)||null; }
+function syncPhysicalLocationNames(){ S.hostPhysicalLocations=(S.physicalLocations||[]).map(l=>cleanStr(l.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})); }
+function physLocLabel(loc){ if(!loc) return ''; const p=loc.parentId?physLocById(loc.parentId):null; return p? `${loc.name} · ${p.name}`:loc.name; }
+function fillPhysicalLocationParentSel(excludeId=''){
+  ensurePhysicalLocationModel();
+  const sel=$('plParent'); if(!sel) return;
+  sel.innerHTML=['<option value="">— sin ubicación superior —</option>',...S.physicalLocations.filter(l=>l.id!==excludeId).map(l=>`<option value="${l.id}">${esc(physLocLabel(l))}</option>`)].join('');
+}
+function fillHostPhysLocSel(){
+  ensurePhysicalLocationModel();
+  const sel=$('hPhysLocSel'); if(!sel) return;
+  sel.innerHTML=['<option value="">— seleccionar ubicación física —</option>',...S.physicalLocations.map(l=>`<option value="${esc(l.name)}">${esc(physLocLabel(l))} · ${esc(locTypeLabel(l.type))}</option>`)].join('');
+}
+function applyHostPhysicalLocationSelection(){ const sel=$('hPhysLocSel'); if(sel&&sel.value) $('hPhysLoc').value=sel.value; }
+function rememberPhysicalLocation(v,meta={}){
+  const val=cleanStr(v); if(!val) return null;
+  ensurePhysicalLocationModel();
+  let loc=physLocByName(val);
+  if(!loc){ loc={id:uid('pl'),name:val,type:meta.type||'other',parentId:meta.parentId||'',distance:meta.distance||'',notes:meta.notes||''}; S.physicalLocations.push(loc); }
+  else {
+    if(meta.type && (!loc.type || loc.type==='other')) loc.type=meta.type;
+    if(meta.parentId && !loc.parentId) loc.parentId=meta.parentId;
+    if(meta.distance && !loc.distance) loc.distance=meta.distance;
+    if(meta.notes && !loc.notes) loc.notes=meta.notes;
+  }
+  S.hostPhysicalLocations=S.physicalLocations.map(l=>l.name).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+  return loc;
+}
+function locTypeLabel(t){ return ({site:'Sede',campus:'Campus',building:'Edificio',floor:'Planta',room:'Habitación',rack:'Rack/Armario',zone:'Zona',desk:'Puesto',other:'Otra'})[t]||t||'Otra'; }
+function clearPhysicalLocationForm(){ $('plEditId').value=''; $('plName').value=''; $('plType').value='building'; fillPhysicalLocationParentSel(); $('plParent').value=''; $('plDistance').value=''; $('plNotes').value=''; $('btnAddPhysLoc').textContent='➕ Añadir ubicación'; $('btnCancelPhysLocEdit').style.display='none'; }
+function startPhysicalLocationEdit(id){ const loc=physLocById(id); if(!loc) return; $('plEditId').value=id; $('plName').value=loc.name||''; $('plType').value=loc.type||'other'; fillPhysicalLocationParentSel(id); $('plParent').value=loc.parentId||''; $('plDistance').value=loc.distance||''; $('plNotes').value=loc.notes||''; $('btnAddPhysLoc').textContent='💾 Guardar ubicación'; $('btnCancelPhysLocEdit').style.display=''; }
+function renderPhysicalLocations(){
+  ensurePhysicalLocationModel();
+  const el=$('physLocList');
+  const cnt=$('physLocCnt'); if(cnt) cnt.textContent=(S.physicalLocations||[]).length;
+  if(!el) return;
+  const items=S.physicalLocations.slice().sort((a,b)=>cmpMixed(a.name,b.name));
+  if(!items.length){ el.innerHTML='<div class="hint">Aún no hay ubicaciones físicas definidas.</div>'; return; }
+  el.innerHTML=items.map(l=>{ const p=l.parentId?physLocById(l.parentId):null; const used=(S.hosts||[]).filter(h=>cleanStr(h.physicalLocation).toLowerCase()===l.name.toLowerCase()).length; const usedDev=(S.devices||[]).filter(d=>cleanStr(d.physicalLocation).toLowerCase()===l.name.toLowerCase()).length; return `<div class="hrow"><div class="hinfo"><div class="hn">${esc(l.name)} <span class="b bac">${esc(locTypeLabel(l.type))}</span></div><div class="hm">${p?`Dentro de ${esc(p.name)}`:'Sin superior'}${l.distance?` · ${esc(l.distance)} m`:''}${usedDev?` · ${usedDev} equipo(s)`:''}${used?` · ${used} host(s)`:''}</div></div><div style="display:flex;gap:4px;"><button type="button" class="btn bs bxs" onclick="startPhysicalLocationEdit('${l.id}')">✎</button><button type="button" class="btn bd bxs" onclick="deletePhysicalLocation('${l.id}',true)">🗑</button></div></div>`; }).join('');
+}
+function setTableSort(name,key){
+  const cur=S.uiSort[name]||{};
+  S.uiSort[name]={key,dir:(cur.key===key?-(cur.dir||1):1)};
+  save(); refresh();
+}
+function sortIndicator(name,key){ const cur=S.uiSort[name]||{}; return cur.key===key ? (cur.dir===-1?' ▼':' ▲') : ''; }
+function sortableTh(name,key,label){ return `<th style="cursor:pointer;user-select:none;" onclick="setTableSort('${name}','${key}')">${label}${sortIndicator(name,key)}</th>`; }
+function cmpMixed(a,b){
+  const na=parseFloat(a), nb=parseFloat(b);
+  if(!Number.isNaN(na) && !Number.isNaN(nb)) return na-nb;
+  return cleanStr(a).localeCompare(cleanStr(b),'es',{numeric:true,sensitivity:'base'});
+}
+
 const uid=p=>p+Math.random().toString(36).slice(2)+Date.now().toString(36);
 
 // ── IP UTILS ──
@@ -931,6 +1165,32 @@ const ip4s=n=>{n=n>>>0;return[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join(
 const parseCidr=cidr=>{const m=(cidr||'').trim().match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d{1,2})$/);if(!m)return null;const ip=parseIp(m[1]);const pfx=+m[2];if(ip===null||pfx>32)return null;const mask=pfx===0?0:(0xFFFFFFFF<<(32-pfx))>>>0;const net=(ip&mask)>>>0;const bc=(net|(~mask>>>0))>>>0;return{ip,pfx,mask,net,bc,fh:pfx>=31?null:(net+1)>>>0,lh:pfx>=31?null:(bc-1)>>>0};};
 const msk=m=>ip4s(m>>>0);
 const ipInSn=(ipStr,cidr)=>{const ip=parseIp(ipStr);const c=parseCidr(cidr);if(!ip||!c)return false;return ip>=c.net&&ip<=c.bc;};
+const parseCidrInputDetailed=cidr=>{
+  const raw=(cidr||'').trim();
+  if(!raw)return {ok:false,msg:'Debes indicar un bloque base en formato IP/prefijo, por ejemplo 10.10.0.0/16.'};
+  const m=raw.match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d{1,2})$/);
+  if(!m)return {ok:false,msg:`Formato inválido: "${raw}". Usa algo como 172.16.10.0/24.`};
+  const ip=parseIp(m[1]);
+  const pfx=+m[2];
+  if(ip===null)return {ok:false,msg:`La IP base "${m[1]}" no es válida.`};
+  if(pfx<0||pfx>32)return {ok:false,msg:`El prefijo /${pfx} no es válido. Debe estar entre /0 y /32.`};
+  const c=parseCidr(raw);
+  if(!c)return {ok:false,msg:`No se pudo interpretar el bloque "${raw}".`};
+  const normalized=`${ip4s(c.net)}/${c.pfx}`;
+  const note=(c.ip!==c.net)?`Se ha normalizado ${raw} a la red ${normalized}.` : '';
+  return {ok:true,cidr:normalized,ci:c,note};
+};
+function subnettingExplain(baseRaw,pfx,vlanCount){
+  const r=parseCidrInputDetailed(baseRaw);
+  if(!r.ok)return r;
+  const bc=r.ci;
+  if(!Number.isFinite(pfx))return {ok:false,msg:'El prefijo por VLAN no es válido.'};
+  if(pfx < bc.pfx)return {ok:false,msg:`El prefijo por VLAN /${pfx} es más grande que el bloque base ${r.cidr}. Usa /${bc.pfx} o mayor (por ejemplo /${bc.pfx+1}).`,note:r.note};
+  const capacity = 2 ** Math.max(0, pfx - bc.pfx);
+  if(vlanCount > capacity)return {ok:false,msg:`El bloque ${r.cidr} solo permite ${capacity} subred(es) de tamaño /${pfx}, pero tienes ${vlanCount} VLAN(s). Reduce VLANs o usa un bloque mayor.`,note:r.note};
+  return {ok:true,base:r.cidr,ci:bc,note:r.note,capacity};
+}
+
 
 // ── LOOKUPS ──
 const devById=id=>S.devices.find(d=>d.id===id)||null;
@@ -952,12 +1212,83 @@ function buildPName(vendorOs,media,pos,base){
   return`${media}${pos}`;
 }
 
+function getVtpRole(devId){return (S.vtp?.roles&&S.vtp.roles[devId])||'off';}
+function buildCommentedConfig(cfg){
+  const lines=(cfg||'').split(/\r?\n/);
+  const out=[];
+  const explain=line=>{
+    const t=(line||'').trim();
+    if(!t) return '';
+    if(t==='!') return 'Separador visual en la configuración.';
+    if(/^! /.test(t)) return 'Comentario o cabecera informativa.';
+    if(t==='configure terminal') return 'Entra al modo de configuración global.';
+    if(t==='end') return 'Sale del modo de configuración.';
+    if(t==='write memory') return 'Guarda la configuración en memoria.';
+    if(/^hostname\s+/.test(t)) return 'Asigna el nombre del dispositivo.';
+    if(/^vlan\s+\d+/.test(t)) return 'Crea o selecciona la VLAN indicada.';
+    if(/^name\s+/.test(t)) return 'Asigna un nombre descriptivo a la VLAN.';
+    if(/^vtp domain\s+/.test(t)) return 'Define el dominio VTP; todos los switches VTP deben compartirlo.';
+    if(/^vtp password\s+/.test(t)) return 'Establece la contraseña VTP común entre switches.';
+    if(/^vtp mode\s+server/.test(t)) return 'Este switch actuará como servidor VTP y publicará las VLAN.';
+    if(/^vtp mode\s+client/.test(t)) return 'Este switch actuará como cliente VTP y recibirá las VLAN del servidor.';
+    if(/^vtp mode\s+transparent/.test(t)) return 'Modo transparente: no aprende VLAN por VTP, pero reenvía anuncios.';
+    if(/^vtp version\s+/.test(t)) return 'Fija la versión de VTP usada en el dominio.';
+    if(/^vtp pruning/.test(t)) return 'Activa VTP pruning para reducir tráfico innecesario en trunks.';
+    if(/^interface\s+/.test(t)) return 'Entra en la configuración de la interfaz indicada.';
+    if(/^description\s+/.test(t)) return 'Añade una descripción a la interfaz.';
+    if(t==='switchport') return 'Habilita parámetros de capa 2 de switchport.';
+    if(t==='switchport nonegotiate') return 'Desactiva DTP para que el trunk no se negocie automáticamente.';
+    if(t==='switchport mode access') return 'Configura el puerto como acceso para una única VLAN.';
+    if(/^switchport access vlan\s+/.test(t)) return 'Asocia el puerto de acceso a la VLAN indicada.';
+    if(t==='switchport mode trunk') return 'Configura el puerto como trunk para transportar varias VLAN.';
+    if(/^switchport trunk native vlan\s+/.test(t)) return 'Define la VLAN nativa del trunk.';
+    if(/^switchport trunk allowed vlan\s+/.test(t)) return 'Limita las VLAN permitidas por el trunk.';
+    if(/^spanning-tree portfast/.test(t)) return 'Acelera la transición del puerto de acceso a forwarding.';
+    if(/^spanning-tree bpduguard enable/.test(t)) return 'Protege el puerto apagándolo si recibe BPDUs.';
+    if(/^switchport port-security/.test(t)) return 'Activa seguridad de puerto y control de MACs.';
+    if(/^ip dhcp snooping/.test(t)) return 'Activa o ajusta DHCP Snooping para proteger frente a servidores DHCP falsos.';
+    if(/^ip arp inspection/.test(t)) return 'Activa o ajusta Dynamic ARP Inspection.';
+    if(/^ip verify source/.test(t)) return 'Activa IP Source Guard en el puerto.';
+    if(/^no shutdown/.test(t)) return 'Habilita administrativamente la interfaz.';
+    if(t==='exit') return 'Vuelve al modo de configuración anterior.';
+    if(/^encapsulation dot1Q\s+/.test(t)) return 'Etiqueta la subinterfaz con la VLAN indicada para RoaS.';
+    if(/^ip address\s+/.test(t)) return 'Asigna dirección IP y máscara a la interfaz.';
+    if(/^ip route\s+0\.0\.0\.0/.test(t)) return 'Crea la ruta por defecto hacia el siguiente salto.';
+    if(/^ip nat inside source list/.test(t)) return 'Configura NAT overload para salida a Internet.';
+    if(/^access-list\s+/.test(t)) return 'Define una ACL o regla usada por NAT/filtrado.';
+    if(/^ip dhcp pool\s+/.test(t)) return 'Crea un pool DHCP para la red indicada.';
+    if(/^network\s+/.test(t)) return 'Define la red atendida por el pool DHCP.';
+    if(/^default-router\s+/.test(t)) return 'Indica la puerta de enlace entregada por DHCP.';
+    if(/^dns-server\s+/.test(t)) return 'Define los DNS que dará el servicio DHCP.';
+    if(/^lease\s+/.test(t)) return 'Establece la duración de la concesión DHCP.';
+    return 'Línea de configuración generada automáticamente.';
+  };
+  for(const line of lines){
+    if(line.trim()) out.push(line+'    ! '+explain(line));
+    else out.push('');
+  }
+  return out.join('\n');
+}
+
 // ─────────────────── CONFIG GENERATORS ───────────────────
 
 // Cisco IOS Switch
 function genCiscoSwitch(d){
   const L=['!',`! ${'═'.repeat(40)}`,`! ${d.name}  —  Cisco IOS Switch`,`! ${'═'.repeat(40)}`,'configure terminal',`hostname ${d.name.replace(/\s/g,'')}`,'!','! VLANs'];
-  for(const v of S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){L.push(`vlan ${v.vlanId}`);if(v.name)L.push(` name ${v.name}`);L.push('exit');}
+  const vtp=S.vtp||{};
+  const vtpRole=getVtpRole(d.id);
+  if(vtpRole!=='off' && (vtp.domain||vtp.password||vtp.version||vtp.pruning==='yes')){
+    L.push('!','! VTP');
+    if(vtp.domain)L.push(`vtp domain ${vtp.domain}`);
+    if(vtp.password)L.push(`vtp password ${vtp.password}`);
+    L.push(`vtp mode ${vtpRole}`);
+    if(vtp.version)L.push(`vtp version ${vtp.version}`);
+    if(vtp.pruning==='yes')L.push('vtp pruning');
+  }
+  for(const v of S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
+    if(vtpRole==='client') continue;
+    L.push(`vlan ${v.vlanId}`);if(v.name)L.push(` name ${v.name}`);L.push('exit');
+  }
   const sec=S.security;
   if(sec.ds==='yes'){const sv=(sec.dsV||'').trim()||S.vlans.map(v=>v.vlanId).join(',');L.push('!','! DHCP Snooping','ip dhcp snooping');if(sv)L.push(`ip dhcp snooping vlan ${sv}`);L.push('no ip dhcp snooping information option');}
   if(sec.dai==='yes'&&S.vlans.length){L.push('!','! DAI',`ip arp inspection vlan ${S.vlans.map(v=>v.vlanId).join(',')}`);}
@@ -1357,23 +1688,30 @@ $('wApply').onclick=()=>{
 
 // ─────────────────── DEVICES ───────────────────
 $('devType').onchange=()=>{const t=$('devType').value;$('devEdgeSec').style.display=(t==='router'||t==='firewall')?'':'none';};
+function clearDevForm(){ $('devEditId').value=''; $('devName').value='';$('devMgmt').value='';$('devNotes').value='';$('devVendor').value='';$('devType').value='switch';$('devEdge').value='no';$('devWanIf').value='';$('btnAddDev').textContent='➕ Añadir dispositivo';$('btnCancelDevEdit').style.display='none';$('devEdgeSec').style.display='none'; }
+function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=d.type||'switch'; $('devVendor').value=d.vendorOs||''; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=(d.type==='switch')?'none':''; $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
+$('btnCancelDevEdit').onclick=()=>clearDevForm();
 $('btnAddDev').onclick=()=>{
-  const name=($('devName').value||'').trim();const type=$('devType').value;const vo=$('devVendor').value||null;
-  const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;
-  const edge=$('devEdge').value||'no';const wanIf=($('devWanIf').value||'').trim()||null;
-  if(!name)return alert('Nombre requerido.');if(!vo)return alert('Selecciona Vendor/OS.');
-  if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
-  const id=uid('dev');
-  S.devices.push({id,name,type,vendorOs:vo,mgmtIp:mgmt,notes,internetEdge:type==='switch'?'no':edge,wanIf:type==='switch'?null:wanIf,layout:null});
-  S.topo.pos[id]={x:80+Math.random()*540,y:60+Math.random()*280};
-  $('devName').value='';$('devMgmt').value='';$('devNotes').value='';$('devVendor').value='';
-  save();refresh();
+  const name=($('devName').value||'').trim();const type=$('devType').value;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const edge=type==='switch'?'no':$('devEdge').value;const wanIf=type==='switch'?null:(($('devWanIf').value||'').trim()||null);
+  const eid=$('devEditId').value||null;
+  if(!name)return alert('Nombre requerido.');if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
+  if(type!=='switch'&&edge==='yes'){const exists=S.devices.some(d=>d.id!==eid&&(d.type==='router'||d.type==='firewall')&&d.internetEdge==='yes');if(exists)return alert('Ya existe otro dispositivo marcado como Internet Edge.');}
+  if(eid){
+    const d=devById(eid); if(!d)return alert('No se encontró el dispositivo a editar.');
+    Object.assign(d,{name,type,vendorOs:vendor,mgmtIp:mgmt,notes,internetEdge:edge,wanIf});
+  }else{
+    const id=uid('dev');
+    S.devices.push({id,name,type,vendorOs:vendor,mgmtIp:mgmt,notes,internetEdge:edge,wanIf,layout:null});
+    S.topo.pos[id]={x:80+Math.random()*540,y:60+Math.random()*280};
+  }
+  clearDevForm(); save();refresh();
 };
 function renderDevs(){
   const el=$('devsList');
   if(!S.devices.length){el.innerHTML=`<div class="empty"><div class="ei">🖥</div><p>Sin dispositivos.<br>Añade uno o usa el ⚡ Asistente.</p></div>`;return;}
-  el.innerHTML=`<div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Vendor</th><th>IE</th><th>Pts</th><th></th></tr></thead><tbody>
-    ${S.devices.map(d=>`<tr>
+  const devices=S.devices.slice(); const dsort=S.uiSort.devices||{key:'name',dir:1}; devices.sort((a,b)=>{let av='',bv=''; switch(dsort.key){case 'type': av=a.type; bv=b.type; break; case 'vendor': av=a.vendorOs||''; bv=b.vendorOs||''; break; case 'edge': av=a.internetEdge==='yes'?1:0; bv=b.internetEdge==='yes'?1:0; break; case 'ports': av=portsByDev(a.id).length; bv=portsByDev(b.id).length; break; default: av=a.name; bv=b.name;} return dsort.dir*cmpMixed(av,bv);});
+  el.innerHTML=`<div class="tw"><table><thead><tr>${sortableTh('devices','name','Nombre')}${sortableTh('devices','type','Tipo')}${sortableTh('devices','vendor','Vendor')}${sortableTh('devices','edge','IE')}${sortableTh('devices','ports','Pts')}<th></th></tr></thead><tbody>
+    ${devices.map(d=>`<tr>
     <td><b>${esc(d.name)}</b>${d.notes?`<div class="hint">${esc(d.notes.substring(0,28))}</div>`:''}</td>
     <td><span class="dtype dtype-${d.type==='switch'?'sw':d.type==='router'?'rt':'fw'}">${d.type==='switch'?'🔀':d.type==='router'?'🌐':'🛡'} ${esc(d.type)}</span></td>
     <td><span class="b bac">${esc(d.vendorOs||'-')}</span></td>
@@ -1381,9 +1719,11 @@ function renderDevs(){
     <td><span class="b bgr">${portsByDev(d.id).length}</span></td>
     <td style="display:flex;gap:4px;">
       <button class="btn bs bxs" data-cfgdev="${d.id}">⚙</button>
+      <button class="btn bs bxs" data-eddev="${d.id}">✎</button>
       <button class="btn bd bxs" data-deldev="${d.id}">✕</button>
     </td></tr>`).join('')}</tbody></table></div>`;
   el.querySelectorAll('[data-cfgdev]').forEach(btn=>btn.onclick=()=>openDevCfgModal(btn.dataset.cfgdev));
+  el.querySelectorAll('[data-eddev]').forEach(btn=>btn.onclick=()=>startDevEdit(btn.dataset.eddev));
   el.querySelectorAll('[data-deldev]').forEach(btn=>btn.onclick=()=>{
     const id=btn.dataset.deldev;const pids=S.ports.filter(p=>p.deviceId===id).map(p=>p.id);
     S.links=S.links.filter(l=>!pids.includes(l.aPortId)&&!pids.includes(l.bPortId));
@@ -1421,27 +1761,36 @@ function updatePortRoleOpts(){
 $('pDev').onchange=()=>{updatePortRoleOpts();};
 $('pRole').onchange=()=>{const isSwitch=devById($('pDev').value)?.type==='switch';$('pVlanWrap').style.display=(isSwitch&&$('pRole').value==='access')?'':'none';};
 
+function clearPortForm(){ $('portEditId').value=''; $('pName').value=''; $('pDesc').value=''; $('btnAddPort').textContent='➕ Añadir'; $('btnCancelPortEdit').style.display='none'; $('pHint').textContent=''; $('pHint').className='hint'; updatePortRoleOpts(); }
+function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(d?.type==='switch'){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.role|| (p.mode==='trunk'?'lan':'routed'); } $('pDesc').value=p.desc||''; $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; $('pVlanWrap').style.display=(d?.type==='switch'&&$('pRole').value==='access')?'':'none'; navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
+$('btnCancelPortEdit').onclick=()=>clearPortForm();
 $('btnAddPort').onclick=()=>{
   const devId=$('pDev').value;
   if(!devId)return alert('Selecciona un dispositivo primero.');
   const pname=($('pName').value||'').trim();
   if(!pname)return alert('Nombre del puerto requerido.');
-  if(S.ports.some(p=>p.deviceId===devId&&p.name===pname))return alert(`El puerto "${pname}" ya existe en ese dispositivo.`);
+  const editId=$('portEditId').value||null;
+  if(S.ports.some(p=>p.deviceId===devId&&p.name===pname&&p.id!==editId))return alert(`El puerto "${pname}" ya existe en ese dispositivo.`);
   const d=devById(devId);
   const media=$('pMedia').value;const role=$('pRole').value;
   const vlanRef=$('pVlan').value||null;const desc=($('pDesc').value||'').trim()||null;
-  let mode,accessVlanRef=null,allowedVlans=[];
+  let mode,accessVlanRef=null,allowedVlans=[],nativeVlanRef=null,realRole=role;
   if(d.type==='switch'){
     if(role==='access'){mode='access';accessVlanRef=vlanRef;}
     else{mode='trunk';allowedVlans=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);}
+    realRole=null;
   } else {
     if(role==='lan'){mode='trunk';allowedVlans=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);}
     else{mode='routed';}
   }
-  S.ports.push({id:uid('port'),deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef:null,allowedVlans,desc,position:null,role});
-  $('pName').value='';$('pDesc').value='';
-  save();refresh();
-  $('pHint').textContent=`✓ Puerto "${pname}" añadido a ${d.name}`;
+  if(editId){
+    const p=S.ports.find(x=>x.id===editId); if(!p)return alert('No se encontró el puerto a editar.');
+    Object.assign(p,{deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef,allowedVlans,desc,role:realRole});
+  }else{
+    S.ports.push({id:uid('port'),deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef,allowedVlans,desc,position:null,role:realRole});
+  }
+  clearPortForm(); save();refresh();
+  $('pHint').textContent=`✓ Puerto "${pname}" guardado en ${d.name}`;
   $('pHint').className='hint ok';
   setTimeout(()=>{$('pHint').textContent='';$('pHint').className='hint';},2000);
 };
@@ -1460,18 +1809,18 @@ $('btnQuick24').onclick=()=>{
 
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
-  let pts=S.ports.slice().sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId);return(da?.name||'').localeCompare(db?.name||'')|(a.name.localeCompare(b.name));});
-  if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev);
+  let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId),va=vByRef(a.accessVlanRef),vb=vByRef(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
   const el=$('portsList');
   if(!pts.length){el.innerHTML=`<div class="empty"><div class="ei">🔌</div><p>${S.ports.length?'Cambia el filtro.':'Añade puertos arriba.'}</p></div>`;return;}
-  el.innerHTML=`<div class="tw"><table><thead><tr><th>Dispositivo</th><th>Puerto</th><th>Modo</th><th>VLAN/Info</th><th></th></tr></thead><tbody>
+  el.innerHTML=`<div class="tw"><table><thead><tr>${sortableTh('ports','device','Dispositivo')}${sortableTh('ports','port','Puerto')}${sortableTh('ports','mode','Modo')}${sortableTh('ports','info','VLAN/Info')}<th></th></tr></thead><tbody>
     ${pts.map(p=>{const d=devById(p.deviceId);const v=vByRef(p.accessVlanRef);const lnk=isLinked(p.id);
     return`<tr><td><span class="b bgr">${esc(d?.name||'?')}</span></td>
     <td class="mono"><b>${esc(p.name)}</b>${p.desc?`<div style="font-size:9.5px;color:var(--t3)">${esc(p.desc.substring(0,20))}</div>`:''}</td>
     <td><span class="b ${p.mode==='access'?'bgn':p.mode==='trunk'?'byw':'bpu'}">${esc(p.mode)}</span></td>
     <td class="mono">${p.mode==='access'?`V${v?.vlanId||'?'}`:p.mode==='trunk'?`${(p.allowedVlans||[]).length}VL`:'L3'}${lnk?' <span class="b bac">🔗</span>':''}</td>
-    <td><button class="btn bd bxs" data-dp="${p.id}">✕</button></td></tr>`;}).join('')}
+    <td style="display:flex;gap:4px;"><button class="btn bs bxs" data-ep="${p.id}">✎</button><button class="btn bd bxs" data-dp="${p.id}">✕</button></td></tr>`;}).join('')}
     </tbody></table></div>`;
+  el.querySelectorAll('[data-ep]').forEach(btn=>btn.onclick=()=>startPortEdit(btn.dataset.ep));
   el.querySelectorAll('[data-dp]').forEach(btn=>btn.onclick=()=>{
     const pid=btn.dataset.dp;S.links=S.links.filter(l=>l.aPortId!==pid&&l.bPortId!==pid);
     S.hosts=S.hosts.map(h=>{if(h.portRef===pid)h.portRef=null;return h;});
@@ -1484,10 +1833,38 @@ $('portFiltDev').onchange=()=>renderPortsList();
 function fillVlanSels(){
   const opts=['<option value="">(ninguna)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)];
   const mgo=opts.join('');
-  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
+  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
   $('hVlan').innerHTML=['<option value="">(elige VLAN)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
   $('hFiltV').innerHTML=['<option value="">Todas</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
 }
+
+function updManualSnHint(){
+  const ref=$('mSnVlan')?.value||'';
+  const hint=$('mSnHint');
+  if(!hint)return;
+  if(!ref){hint.textContent='Asigna manualmente la red y gateway de cada VLAN. Si la VLAN ya tiene subnet, se actualiza.';return;}
+  const v=vByRef(ref);const sn=snByVRef(ref);
+  hint.textContent=sn?`Editando VLAN ${v?.vlanId||'—'}: ${sn.cidr} · GW ${sn.gateway||'—'}`:`Nueva subnet manual para VLAN ${v?.vlanId||'—'}.`;
+  if(sn){$('mSnCidr').value=sn.cidr||'';$('mSnGw').value=sn.gateway||'';}
+}
+$('mSnVlan').onchange=updManualSnHint;
+$('btnAddManualSn').onclick=()=>{
+  const vRef=$('mSnVlan').value||null;
+  const cidr=($('mSnCidr').value||'').trim();
+  const gateway=($('mSnGw').value||'').trim()||null;
+  if(!vRef)return alert('Selecciona una VLAN.');
+  const ci=parseCidr(cidr); if(!ci)return alert('CIDR inválido. Usa formato tipo 10.10.10.0/24.');
+  if(gateway && parseIp(gateway)===null)return alert('Gateway inválido.');
+  if(gateway && !ipInSn(gateway,cidr))return alert('El gateway no pertenece a la subnet indicada.');
+  const dup=S.subnets.find(s=>s.vlanRef!==vRef && s.cidr===cidr);
+  if(dup)return alert('Esa subnet ya está asignada a otra VLAN.');
+  const ex=snByVRef(vRef);
+  if(ex){ex.cidr=cidr;ex.gateway=gateway;}
+  else S.subnets.push({id:uid('sn'),vlanRef:vRef,cidr,gateway});
+  if($('aNatV').value)S.roas.natVRef=$('aNatV').value;
+  $('mSnCidr').value='';$('mSnGw').value='';$('mSnVlan').value='';
+  save();refresh();
+};
 
 $('btnAddVlan').onclick=()=>{
   const vid=parseInt($('vId').value||'',10);const name=($('vName').value||'').trim()||`VLAN${vid}`;const color=$('vColor').value||VCOLS[S.vlans.length%VCOLS.length];
@@ -1500,69 +1877,184 @@ $('btnAddVlan').onclick=()=>{
 };
 $('btnAutoSn').onclick=()=>{
   if(!S.vlans.length)return alert('Crea VLANs primero.');
-  const base=($('aBase').value||'').trim()||'10.10.0.0/16';const pfx=parseInt($('aSize').value||'24');const rule=$('aGw').value;
-  const bc=parseCidr(base);if(!bc)return alert('Bloque base inválido.');if(pfx<bc.pfx)return alert('Prefijo demasiado corto.');
+  const rawBase=($('aBase').value||'').trim()||'10.10.0.0/16';
+  const pfx=parseInt($('aSize').value||'24',10);
+  const rule=$('aGw').value;
+  const info=subnettingExplain(rawBase,pfx,S.vlans.length);
+  if(!info.ok)return alert(info.msg+(info.note?`
+
+Nota: ${info.note}`:''));
+  const bc=info.ci;
   const step=2**(32-pfx);let c=0;
   for(let i=0;i<S.vlans.length;i++){const v=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)[i];if(S.subnets.some(s=>s.vlanRef===v.id))continue;
     const net=(bc.net+i*step)>>>0;const cidr=`${ip4s(net)}/${pfx}`;const ci=parseCidr(cidr);if(!ci)continue;
     const gw=rule==='last'?(ci.lh?ip4s(ci.lh):null):(ci.fh?ip4s(ci.fh):null);
     S.subnets.push({id:uid('sn'),vlanRef:v.id,cidr,gateway:gw});c++;}
-  const nv=$('aNatV').value;if(nv)S.roas.natVRef=nv;save();refresh();alert(`${c} subnets generadas.`);
+  const nv=$('aNatV').value;if(nv)S.roas.natVRef=nv;save();refresh();
+  const msg=[`${c} subnets generadas.`];
+  if(info.note)msg.push(info.note);
+  if(c===0)msg.push('No se han creado subnets nuevas porque esas VLANs ya tenían una asignada.');
+  alert(msg.join('\n\n'));
 };
 function renderVlans(){
-  $('vlanList').innerHTML=S.vlans.length?`<div class="tw"><table><thead><tr><th></th><th>ID</th><th>Nombre</th><th></th></tr></thead><tbody>
-    ${S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<tr><td><span class="vd" style="background:${v.color||vColor(v.id)}"></span></td><td class="mono">${v.vlanId}</td><td>${esc(v.name)}</td><td><button class="btn bd bxs" data-dv="${v.id}">✕</button></td></tr>`).join('')}</tbody></table></div>`:`<div class="empty"><p>Sin VLANs</p></div>`;
+  const vrows=S.vlans.slice(); const vsort=S.uiSort.vlans||{key:'id',dir:1}; vrows.sort((a,b)=>vsort.dir*cmpMixed(vsort.key==='name'?a.name:a.vlanId, vsort.key==='name'?b.name:b.vlanId));
+  $('vlanList').innerHTML=S.vlans.length?`<div class="tw"><table><thead><tr><th></th>${sortableTh('vlans','id','ID')}${sortableTh('vlans','name','Nombre')}<th></th></tr></thead><tbody>
+    ${vrows.map(v=>`<tr><td><span class="vd" style="background:${v.color||vColor(v.id)}"></span></td><td class="mono">${v.vlanId}</td><td>${esc(v.name)}</td><td><button class="btn bd bxs" data-dv="${v.id}">✕</button></td></tr>`).join('')}</tbody></table></div>`:`<div class="empty"><p>Sin VLANs</p></div>`;
   $('vlanList').querySelectorAll('[data-dv]').forEach(btn=>btn.onclick=()=>{const r=btn.dataset.dv;S.ports=S.ports.map(p=>{if(p.accessVlanRef===r)p.accessVlanRef=null;return p;});S.subnets=S.subnets.filter(s=>s.vlanRef!==r);S.hosts=S.hosts.map(h=>{if(h.vlanRef===r)h.vlanRef=null;return h;});S.vlans=S.vlans.filter(v=>v.id!==r);save();refresh();});
 }
 function renderSubnets(){
-  $('snList').innerHTML=S.subnets.length?`<div class="tw"><table><thead><tr><th></th><th>VLAN</th><th>CIDR</th><th>GW</th><th></th></tr></thead><tbody>
-    ${S.subnets.map(s=>{const v=vByRef(s.vlanRef);return`<tr><td><span class="vd" style="background:${v?vColor(v.id):'#888'}"></span></td><td>${v?v.vlanId+' '+esc(v.name):'—'}</td><td class="mono">${esc(s.cidr)}</td><td class="mono">${esc(s.gateway||'—')}</td><td><button class="btn bd bxs" data-ds="${s.id}">✕</button></td></tr>`;}).join('')}</tbody></table></div>`:`<div class="empty"><p>Sin subnets. Usa Auto-subnetting.</p></div>`;
+  const srows=S.subnets.slice(); const ssort=S.uiSort.subnets||{key:'vlan',dir:1}; srows.sort((a,b)=>{const va=vByRef(a.vlanRef),vb=vByRef(b.vlanRef); let av='',bv=''; switch(ssort.key){case 'cidr': av=a.cidr; bv=b.cidr; break; case 'gw': av=a.gateway||''; bv=b.gateway||''; break; default: av=va?.vlanId||99999; bv=vb?.vlanId||99999;} return ssort.dir*cmpMixed(av,bv);});
+  $('snList').innerHTML=S.subnets.length?`<div class="tw"><table><thead><tr><th></th>${sortableTh('subnets','vlan','VLAN')}${sortableTh('subnets','cidr','CIDR')}${sortableTh('subnets','gw','GW')}<th></th></tr></thead><tbody>
+    ${srows.map(s=>{const v=vByRef(s.vlanRef);return`<tr><td><span class="vd" style="background:${v?vColor(v.id):'#888'}"></span></td><td>${v?v.vlanId+' '+esc(v.name):'—'}</td><td class="mono">${esc(s.cidr)}</td><td class="mono">${esc(s.gateway||'—')}</td><td><div style="display:flex;gap:4px;"><button class="btn bs bxs" data-es="${s.id}">✎</button><button class="btn bd bxs" data-ds="${s.id}">✕</button></div></td></tr>`;}).join('')}</tbody></table></div>`:`<div class="empty"><p>Sin subnets. Puedes crearlas manualmente o usar Auto-subnetting.</p></div>`;
   $('snList').querySelectorAll('[data-ds]').forEach(btn=>btn.onclick=()=>{S.subnets=S.subnets.filter(s=>s.id!==btn.dataset.ds);save();refresh();});
+  $('snList').querySelectorAll('[data-es]').forEach(btn=>btn.onclick=()=>{const s=S.subnets.find(x=>x.id===btn.dataset.es);if(!s)return;$('mSnVlan').value=s.vlanRef||'';$('mSnCidr').value=s.cidr||'';$('mSnGw').value=s.gateway||'';updManualSnHint();navTo('vlan');window.scrollTo({top:0,behavior:'smooth'});});
 }
 
 // ─────────────────── HOSTS ───────────────────
 $('hIpMode').onchange=()=>{const s=$('hIpMode').value==='static';$('hStaticSec').style.display=s?'':'none';if(s)updSnHint();};
 $('hVlan').onchange=updSnHint;
 function updSnHint(){const ref=$('hVlan').value;if(!ref){$('hSnHint').textContent='';return;}const sn=snByVRef(ref);if(!sn){$('hSnHint').textContent='Sin subnet en esta VLAN.';return;}const ci=parseCidr(sn.cidr);$('hSnHint').textContent=`${sn.cidr} · GW: ${sn.gateway||'—'} · Rango: ${ci?.fh?ip4s(ci.fh):'?'}–${ci?.lh?ip4s(ci.lh):'?'}`;}
-function fillHostPortSel(){const swPts=S.ports.filter(p=>{const d=devById(p.deviceId);return d?.type==='switch'&&p.mode==='access';});$('hPort').innerHTML=['<option value="">Sin puerto asignado</option>',...swPts.map(p=>`<option value="${p.id}">${esc(portDisp(p))}</option>`)].join('');}
+function hostConnectedDeviceId(h){
+  if(h?.connectedDeviceId && devById(h.connectedDeviceId))return h.connectedDeviceId;
+  const p=h?.portRef?S.ports.find(x=>x.id===h.portRef):null;
+  return p?.deviceId||null;
+}
+function connectableDevices(){return S.devices.filter(d=>portsByDev(d.id).length>0);}
+function hostAssignablePorts(deviceId){
+  if(!deviceId)return [];
+  const d=devById(deviceId); if(!d) return [];
+  const ports=portsByDev(deviceId).slice().sort((a,b)=>(a.position||999)-(b.position||999)||a.name.localeCompare(b.name));
+  if(d.type==='switch')return ports.filter(p=>p.mode!=='trunk');
+  return ports;
+}
+function hostPortUsedByOther(portId,excludeHostId){return S.hosts.some(h=>h.id!==excludeHostId&&h.portRef===portId);}
+function suggestHostPort(deviceId,excludeHostId){
+  const ports=hostAssignablePorts(deviceId);
+  if(!ports.length)return '';
+  const free=ports.find(p=>!hostPortUsedByOther(p.id,excludeHostId));
+  return (free||ports[0]).id;
+}
+function fillHostDeviceSel(){
+  const opts=['<option value="">— Sin equipo —</option>'].concat(connectableDevices().map(d=>`<option value="${d.id}">${esc(d.name)} · ${esc(d.type||'equipo')}</option>`));
+  $('hConnDev').innerHTML=opts.join('');
+}
+function fillHostPortSel(deviceId,keepValue){
+  const devId=deviceId||$('hConnDev').value||'';
+  const prev=keepValue!==undefined?keepValue:($('hPort')?.value||'');
+  const pts=hostAssignablePorts(devId);
+  $('hPort').innerHTML=['<option value="">Sin puerto asignado</option>',...pts.map(p=>`<option value="${p.id}">${esc(p.name)}${hostPortUsedByOther(p.id,$('hostEditId').value||null)?' · ocupado':''}</option>`)].join('');
+  if(prev && pts.some(p=>p.id===prev))$('hPort').value=prev;
+}
+function fillHostLocSel(){
+  ensureVisualModel();
+  $('hLoc').innerHTML=['<option value="">Automática / según equipo</option>',...vLocs().map(l=>`<option value="${l.id}">${esc(l.name)}</option>`)].join('');
+}
+function updateHostDeviceHint(){
+  const devId=$('hConnDev').value||'';
+  const dev=devId?devById(devId):null;
+  const mode=$('hPortMode').value||'auto';
+  fillHostPortSel(devId,$('hPort').value||'');
+  if(mode==='auto' && devId){
+    const suggested=suggestHostPort(devId,$('hostEditId').value||null);
+    if(suggested)$('hPort').value=suggested;
+  }
+  const pid=$('hPort').value||'';
+  const p=pid?S.ports.find(x=>x.id===pid):null;
+  const finalDev=p?devById(p.deviceId):dev;
+  $('hDevHint').value=finalDev?(mode==='auto'?`Auto → ${finalDev.name}${p?` · ${p.name}`:''}`:`Manual → ${finalDev.name}${p?` · ${p.name}`:''}`):'Sin equipo asociado';
+  if(finalDev && !$('hLoc').value)$('hLoc').value=deviceVisualLoc(finalDev.id)||'';
+}
+function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType').value='pc'; $('hVlan').value=''; $('hIpMode').value='dhcp'; $('hStaticIp').value=''; $('hMac').value=''; $('hPhysLoc').value=''; if($('hPhysLocSel'))$('hPhysLocSel').value=''; $('hNotes').value=''; fillHostDeviceSel(); fillHostLocSel(); $('hConnDev').value=''; $('hPortMode').value='auto'; fillHostPortSel(''); $('hPort').value=''; $('hLoc').value=''; $('hDevHint').value='Sin equipo asociado'; $('hStaticSec').style.display='none'; $('btnAddHost').textContent='➕ Añadir host'; $('btnCancelHostEdit').style.display='none'; $('hSnHint').textContent=''; }
+function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,h.portRef||''); $('hPort').value=h.portRef||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').textContent='💾 Guardar cambios'; $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
+if($('btnCancelPhysLocEdit')) $('btnCancelPhysLocEdit').onclick=()=>clearPhysicalLocationForm();
+if($('btnAddPhysLoc')) $('btnAddPhysLoc').onclick=()=>{
+  const name=cleanStr($('plName').value); const type=$('plType').value||'other'; const parentId=$('plParent').value||''; const distance=cleanStr($('plDistance').value); const notes=cleanStr($('plNotes').value); const editId=$('plEditId').value||'';
+  if(!name) return alert('Nombre de ubicación requerido.');
+  if(editId){
+    const dup=S.physicalLocations.find(l=>l.id!==editId && l.name.toLowerCase()===name.toLowerCase());
+    if(dup) return alert('Ya existe una ubicación con ese nombre.');
+    const loc=physLocById(editId); if(!loc) return;
+    const oldName=loc.name;
+    Object.assign(loc,{name,type,parentId,distance,notes});
+    (S.hosts||[]).forEach(h=>{ if(cleanStr(h.physicalLocation).toLowerCase()===oldName.toLowerCase()) h.physicalLocation=name; });
+    (S.devices||[]).forEach(d=>{ if(cleanStr(d.physicalLocation).toLowerCase()===oldName.toLowerCase()) d.physicalLocation=name; });
+  } else {
+    if(physLocByName(name)) return alert('Esa ubicación ya existe.');
+    S.physicalLocations.push({id:uid('pl'),name,type,parentId,distance,notes});
+  }
+  syncPhysicalLocationNames();
+  clearPhysicalLocationForm();
+  save();
+  refresh();
+};
+$('hPhysLocSel').onchange=()=>applyHostPhysicalLocationSelection();
+$('hConnDev').onchange=()=>updateHostDeviceHint();
+$('hPortMode').onchange=()=>updateHostDeviceHint();
+$('hPort').onchange=()=>updateHostDeviceHint();
+$('btnCancelHostEdit').onclick=()=>clearHostForm();
 $('btnAddHost').onclick=()=>{
   const name=($('hName').value||'').trim();const type=$('hType').value;const vRef=$('hVlan').value||null;const ipMode=$('hIpMode').value;
-  const sip=($('hStaticIp').value||'').trim()||null;const mac=($('hMac').value||'').trim()||null;const portRef=$('hPort').value||null;
+  const sip=($('hStaticIp').value||'').trim()||null;const mac=($('hMac').value||'').trim()||null;const editId=$('hostEditId').value||null;
+  const connectedDeviceId=$('hConnDev').value||null;const portAssignMode=$('hPortMode').value||'auto';
+  let portRef=$('hPort').value||null;const physicalLocation=(($('hPhysLoc').value||$('hPhysLocSel').value||'').trim())||null;const notes=($('hNotes').value||'').trim()||null;
+  if(physicalLocation)rememberPhysicalLocation(physicalLocation);
   if(!name)return alert('Nombre requerido.');if(!vRef)return alert('Selecciona VLAN.');
-  if(ipMode==='static'){if(!sip)return alert('IP estática requerida.');if(parseIp(sip)===null)return alert('IP inválida.');const sn=snByVRef(vRef);if(sn&&!ipInSn(sip,sn.cidr))return alert(`La IP ${sip} no está en ${sn.cidr}.`);if(S.hosts.some(h=>h.staticIp===sip&&h.vlanRef===vRef))return alert('IP duplicada.');if(snByVRef(vRef)?.gateway===sip)return alert('Esa IP es el gateway.');}
-  S.hosts.push({id:uid('h'),name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes:null});
-  $('hName').value='';$('hStaticIp').value='';$('hMac').value='';
-  save();refresh();
+  if(ipMode==='static'){if(!sip)return alert('IP estática requerida.');if(parseIp(sip)===null)return alert('IP inválida.');const sn=snByVRef(vRef);if(sn&&!ipInSn(sip,sn.cidr))return alert(`La IP ${sip} no está en ${sn.cidr}.`);if(S.hosts.some(h=>h.id!==editId&&h.staticIp===sip&&h.vlanRef===vRef))return alert('IP duplicada.');if(snByVRef(vRef)?.gateway===sip)return alert('Esa IP es el gateway.');}
+  if(connectedDeviceId && portAssignMode==='auto')portRef=suggestHostPort(connectedDeviceId,editId)||null;
+  if(portRef){const port=S.ports.find(p=>p.id===portRef);if(!port)return alert('El puerto seleccionado ya no existe.');if(connectedDeviceId&&port.deviceId!==connectedDeviceId)return alert('El puerto no pertenece al equipo seleccionado.');if(hostPortUsedByOther(portRef,editId))return alert('Ese puerto ya está asociado a otro host.');}
+  const locVal=$('hLoc').value||'';
+  if(editId){ const h=S.hosts.find(x=>x.id===editId); if(!h)return alert('No se encontró el host a editar.'); Object.assign(h,{name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode}); if(locVal)setHostVisualLoc(editId,locVal); else if(connectedDeviceId)setHostVisualLoc(editId,deviceVisualLoc(connectedDeviceId)||hostVisualLoc(editId)||''); }
+  else { const id=uid('h'); S.hosts.push({id,name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode}); if(locVal)setHostVisualLoc(id,locVal); else if(connectedDeviceId)setHostVisualLoc(id,deviceVisualLoc(connectedDeviceId)||''); }
+  clearHostForm(); save();refresh();
 };
 $('btnBulk').onclick=()=>$('bulkModal').classList.add('on');
 $('bulkClose').onclick=$('bulkCancel').onclick=()=>$('bulkModal').classList.remove('on');
 $('bulkAdd').onclick=()=>{
   const lines=$('bulkTxt').value.split('\n').map(l=>l.trim()).filter(Boolean);let ok=0,errs=[];
-  for(const line of lines){const p=line.split(',').map(s=>s.trim());if(p.length<3){errs.push(`"${line}": formato inválido`);continue;}
-    const[name,typeRaw,vidStr,ipRaw]=p;const vid=parseInt(vidStr,10);const v=vByNum(vid);if(!v){errs.push(`VLAN ${vidStr} no existe`);continue;}
-    const t=Object.keys(HT).includes(typeRaw.toLowerCase())?typeRaw.toLowerCase():'iot';
-    const im=(ipRaw||'dhcp').toLowerCase()==='dhcp'?'dhcp':'static';const sip=im==='static'?(ipRaw||'').trim():null;
+  for(const line of lines){
+    const p=line.split(',').map(s=>s.trim());
+    if(p.length<3){errs.push(`"${line}": formato inválido`);continue;}
+    const [name,typeRaw,vidStr,ipRaw,physicalLocationRaw,visualLocRaw]=p;
+    const vid=parseInt(vidStr,10); const v=vByNum(vid);
+    if(!v){errs.push(`VLAN ${vidStr} no existe`);continue;}
+    const t=Object.keys(HT).includes((typeRaw||'').toLowerCase())?(typeRaw||'').toLowerCase():'iot';
+    const im=(ipRaw||'dhcp').toLowerCase()==='dhcp'?'dhcp':'static';
+    const sip=im==='static'?(ipRaw||'').trim():null;
     if(im==='static'&&sip&&parseIp(sip)===null){errs.push(`IP inválida: ${sip}`);continue;}
-    S.hosts.push({id:uid('h'),name,type:t,vlanRef:v.id,ipMode:im,staticIp:sip,mac:null,portRef:null,notes:null});ok++;}
+    const physicalLocation=cleanStr(physicalLocationRaw)||null;
+    if(physicalLocation)rememberPhysicalLocation(physicalLocation);
+    const id=uid('h');
+    S.hosts.push({id,name,type:t,vlanRef:v.id,ipMode:im,staticIp:sip,mac:null,portRef:null,notes:null,physicalLocation,connectedDeviceId:null,portAssignMode:'auto'});
+    if(cleanStr(visualLocRaw)){
+      ensureVisualModel();
+      const loc=vLocs().find(l=>cleanStr(l.name).toLowerCase()===cleanStr(visualLocRaw).toLowerCase());
+      if(loc) setHostVisualLoc(id,loc.id);
+    }
+    ok++;
+  }
   $('bulkModal').classList.remove('on');$('bulkTxt').value='';save();refresh();
-  alert(`${ok} hosts añadidos.${errs.length?'\nErrores:\n'+errs.join('\n'):''}`);
+  alert(`${ok} hosts añadidos.${errs.length ? ('\nErrores:\n' + errs.join('\n')) : ''}`);
 };
 $('hFiltV').onchange=$('hFiltT').onchange=renderHosts;
 function renderHosts(){
   const fv=$('hFiltV').value,ft=$('hFiltT').value;
   let hosts=S.hosts.slice();if(fv)hosts=hosts.filter(h=>h.vlanRef===fv);if(ft)hosts=hosts.filter(h=>h.type===ft);
+  const sort=S.uiSort.hosts||{key:'name',dir:1};
+  hosts.sort((a,b)=>{const va=vByRef(a.vlanRef), vb=vByRef(b.vlanRef), da=devById(hostConnectedDeviceId(a)||''), db=devById(hostConnectedDeviceId(b)||''); const la=vLocById(hostVisualLoc(a.id)||''), lb=vLocById(hostVisualLoc(b.id)||''); let av='',bv=''; switch(sort.key){case 'type': av=HT[a.type]?.l||a.type; bv=HT[b.type]?.l||b.type; break; case 'vlan': av=va?.vlanId||99999; bv=vb?.vlanId||99999; break; case 'ip': av=effectiveHostIp(a); bv=effectiveHostIp(b); break; case 'location': av=la?.name||a.physicalLocation||''; bv=lb?.name||b.physicalLocation||''; break; case 'connection': av=(da?.name||'')+' '+(a.portRef||''); bv=(db?.name||'')+' '+(b.portRef||''); break; default: av=a.name; bv=b.name; } return sort.dir*cmpMixed(av,bv); });
   $('hCnt').textContent=`${S.hosts.length} hosts`;
   const el=$('hostsList');
   if(!hosts.length){el.innerHTML=`<div class="empty"><div class="ei">💻</div><p>${S.hosts.length?'Sin resultados.':'Añade hosts arriba.'}</p></div>`;return;}
-  el.innerHTML=`<div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>VLAN</th><th>IP</th><th>MAC</th><th></th></tr></thead><tbody>
-    ${hosts.map(h=>{const v=vByRef(h.vlanRef);return`<tr><td><b>${esc(h.name)}</b></td>
+  el.innerHTML=`<div class="tw"><table><thead><tr>${sortableTh('hosts','name','Nombre')}${sortableTh('hosts','type','Tipo')}${sortableTh('hosts','vlan','VLAN')}${sortableTh('hosts','ip','IP')}${sortableTh('hosts','location','Ubicación')}${sortableTh('hosts','connection','Conexión')}<th></th></tr></thead><tbody>
+    ${hosts.map(h=>{const v=vByRef(h.vlanRef);const dev=devById(hostConnectedDeviceId(h)||'');const port=h.portRef?S.ports.find(p=>p.id===h.portRef):null;const loc=vLocById(hostVisualLoc(h.id)||'');return`<tr><td><b>${esc(h.name)}</b><div class="hint">${esc(h.physicalLocation||'—')}</div></td>
     <td>${HT[h.type]?.i||''} ${esc(HT[h.type]?.l||h.type)}</td>
     <td>${v?`<span style="display:inline-flex;align-items:center;gap:3px;"><span class="vd" style="background:${v.color||vColor(v.id)}"></span>${v.vlanId} ${esc(v.name)}</span>`:'—'}</td>
     <td class="mono">${h.ipMode==='static'?`<span class="b bgn">${esc(h.staticIp||'—')}</span>`:'<span class="b bac">DHCP</span>'}</td>
-    <td class="mono">${esc(h.mac||'—')}</td>
-    <td><button class="btn bd bxs" data-dh="${h.id}">✕</button></td></tr>`;}).join('')}
-    </tbody></table></div>`;
-  el.querySelectorAll('[data-dh]').forEach(btn=>btn.onclick=()=>{S.hosts=S.hosts.filter(h=>h.id!==btn.dataset.dh);save();refresh();});
+    <td>${esc(loc?.name||'—')}<div class="hint">${esc(h.physicalLocation||'—')}</div></td>
+    <td><div>${esc(dev?dev.name:'Sin equipo')}</div><div class="hint mono">${esc(port?port.name:(h.portAssignMode==='auto'?'Auto':'—'))}</div></td>
+    <td style="display:flex;gap:4px;"><button class="btn bs bxs" data-eh="${h.id}">✎</button><button class="btn bd bxs" data-dh="${h.id}">🗑</button></td></tr>`;}).join('')}
+  </tbody></table></div>`;
+  qsa('[data-eh]').forEach(b=>b.onclick=()=>startHostEdit(b.dataset.eh));
+  qsa('[data-dh]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar host?')){S.hosts=S.hosts.filter(x=>x.id!==b.dataset.dh); delete vv().assign.hosts[b.dataset.dh]; delete vv().pos[b.dataset.dh]; save();refresh();}});
 }
 function renderIpMap(){
   const el=$('ipMap');let html='';
@@ -1575,7 +2067,7 @@ function renderIpMap(){
     const statics=hosts.filter(h=>h.ipMode==='static'&&h.staticIp);const dhcpC=hosts.filter(h=>h.ipMode==='dhcp').length;
     if(ci&&ci.fh&&total>0){const gP=1/total*100;const sP=Math.min(statics.length/total*100,99-gP);const dP=Math.min(dhcpC/total*100,99-gP-sP);
     html+=`<div class="ipbar"><div class="ipbs ipb-gw" style="width:${gP.toFixed(1)}%">GW</div>${statics.length?`<div class="ipbs ipb-st" style="width:${sP.toFixed(1)}%">${statics.length}E</div>`:''} ${dhcpC?`<div class="ipbs ipb-dh" style="width:${dP.toFixed(1)}%">${dhcpC}D</div>`:''}</div>`;}
-    for(const h of hosts.slice().sort((a,b)=>a.ipMode==='static'?-1:1))
+    for(const h of hosts.slice().sort((a,b)=>((a.ipMode==='static')=== (b.ipMode==='static') ? cmpMixed(a.name,b.name) : (a.ipMode==='static'?-1:1))))
       html+=`<div style="display:flex;align-items:center;gap:5px;font-size:11px;padding:2px 0;border-bottom:1px solid var(--b1);">${HT[h.type]?.i||''} <span style="flex:1;font-weight:600;">${esc(h.name)}</span> ${h.ipMode==='static'?`<span class="b bgn mono">${esc(h.staticIp||'')}</span>`:'<span class="b bac">DHCP</span>'}</div>`;
     html+=`</div>`;
   }
@@ -1634,8 +2126,9 @@ function renderVisPorts(){
 }
 function renderLinks(){
   const el=$('linksList');if(!S.links.length){el.innerHTML='<div class="empty"><p>Sin enlaces.</p></div>';return;}
-  el.innerHTML=`<div class="tw"><table><thead><tr><th>Puerto A</th><th>Puerto B</th><th>Notas</th><th></th></tr></thead><tbody>
-    ${S.links.map(l=>{const a=S.ports.find(p=>p.id===l.aPortId),b=S.ports.find(p=>p.id===l.bPortId);return`<tr><td class="mono">${esc(a?portDisp(a):'?')}</td><td class="mono">${esc(b?portDisp(b):'?')}</td><td>${esc(l.notes||'')}</td><td><button class="btn bd bxs" data-dl="${l.id}">✕</button></td></tr>`;}).join('')}</tbody></table></div>`;
+  const lrows=S.links.slice(); const lsort=S.uiSort.links||{key:'a',dir:1}; lrows.sort((x,y)=>{const ax=S.ports.find(p=>p.id===x.aPortId), ay=S.ports.find(p=>p.id===y.aPortId), bx=S.ports.find(p=>p.id===x.bPortId), by=S.ports.find(p=>p.id===y.bPortId); let av='',bv=''; switch(lsort.key){case 'b': av=portDisp(bx||{}); bv=portDisp(by||{}); break; case 'notes': av=x.notes||''; bv=y.notes||''; break; default: av=portDisp(ax||{}); bv=portDisp(ay||{});} return lsort.dir*cmpMixed(av,bv);});
+  el.innerHTML=`<div class="tw"><table><thead><tr>${sortableTh('links','a','Puerto A')}${sortableTh('links','b','Puerto B')}${sortableTh('links','notes','Notas')}<th></th></tr></thead><tbody>
+    ${lrows.map(l=>{const a=S.ports.find(p=>p.id===l.aPortId),b=S.ports.find(p=>p.id===l.bPortId);return`<tr><td class="mono">${esc(a?portDisp(a):'?')}</td><td class="mono">${esc(b?portDisp(b):'?')}</td><td>${esc(l.notes||'')}</td><td><button class="btn bd bxs" data-dl="${l.id}">✕</button></td></tr>`;}).join('')}</tbody></table></div>`;
   el.querySelectorAll('[data-dl]').forEach(btn=>btn.onclick=()=>{S.links=S.links.filter(x=>x.id!==btn.dataset.dl);save();refresh();});
 }
 $('btnAddLink').onclick=()=>{
@@ -1777,10 +2270,10 @@ function selectDevCfg(devId){
   selDevCfg=devId;const d=devById(devId);if(!d)return;
   selVendorCfg=d.vendorOs||ALL_VENDORS[0].id;
   document.querySelectorAll('[data-dcfg]').forEach(el=>el.classList.toggle('on',el.dataset.dcfg===devId));
-  // Update pills
+  const paint=()=>{const cfg=genConfig(selDevCfg,selVendorCfg);$('cfgOut').value=cfg;$('cfgOutComment').value=buildCommentedConfig(cfg);};
   $('cfgVendorPills').innerHTML=ALL_VENDORS.map(v=>`<span class="vp ${selVendorCfg===v.id?'on':''}" data-vp="${v.id}">${v.l}</span>`).join('');
-  document.querySelectorAll('[data-vp]').forEach(el=>el.onclick=()=>{selVendorCfg=el.dataset.vp;document.querySelectorAll('[data-vp]').forEach(e=>e.classList.toggle('on',e.dataset.vp===selVendorCfg));$('cfgOut').value=genConfig(selDevCfg,selVendorCfg);});
-  $('cfgOut').value=genConfig(devId,selVendorCfg);
+  document.querySelectorAll('[data-vp]').forEach(el=>el.onclick=()=>{selVendorCfg=el.dataset.vp;document.querySelectorAll('[data-vp]').forEach(e=>e.classList.toggle('on',e.dataset.vp===selVendorCfg));paint();});
+  paint();
 }
 
 // ─── DEVICE CFG MODAL (from topo click or devs list) ───
@@ -1790,15 +2283,36 @@ function openDevCfgModal(devId){
   dcmDevId=devId;dcmVendor=d.vendorOs||ALL_VENDORS[0].id;
   $('dcmTitle').textContent=`⚙ ${d.name}`;
   $('dcmMeta').innerHTML=`<span class="b bac">${esc(d.type)}</span> <span class="b bgr">${esc(d.vendorOs||'—')}</span> <span class="b bgr">${portsByDev(devId).length} puertos</span>`;
+  const paint=()=>{const cfg=genConfig(dcmDevId,dcmVendor);$('dcmCfg').value=cfg;$('dcmCfgComment').value=buildCommentedConfig(cfg);};
   $('dcmPills').innerHTML=ALL_VENDORS.map(v=>`<span class="vp ${dcmVendor===v.id?'on':''}" data-dcmp="${v.id}">${v.l}</span>`).join('');
-  document.querySelectorAll('[data-dcmp]').forEach(el=>el.onclick=()=>{dcmVendor=el.dataset.dcmp;document.querySelectorAll('[data-dcmp]').forEach(e=>e.classList.toggle('on',e.dataset.dcmp===dcmVendor));$('dcmCfg').value=genConfig(dcmDevId,dcmVendor);});
-  $('dcmCfg').value=genConfig(devId,dcmVendor);
+  document.querySelectorAll('[data-dcmp]').forEach(el=>el.onclick=()=>{dcmVendor=el.dataset.dcmp;document.querySelectorAll('[data-dcmp]').forEach(e=>e.classList.toggle('on',e.dataset.dcmp===dcmVendor));paint();});
+  paint();
   $('devCfgModal').classList.add('on');
 }
 $('dcmClose').onclick=()=>$('devCfgModal').classList.remove('on');
 $('devCfgModal').onclick=e=>{if(e.target.id==='devCfgModal'){$('devCfgModal').classList.remove('on');}};
 $('dcmCopy').onclick=()=>{navigator.clipboard.writeText($('dcmCfg').value).then(()=>alert('✓ Copiado al portapapeles.'));};
 $('dcmDl').onclick=()=>{const d=devById(dcmDevId);dl(`${d?.name||'config'}_${dcmVendor}.txt`,$('dcmCfg').value);};
+
+function renderVtp(){
+  if($('vtpDomain'))$('vtpDomain').value=S.vtp?.domain||'';
+  if($('vtpPassword'))$('vtpPassword').value=S.vtp?.password||'';
+  if($('vtpVersion'))$('vtpVersion').value=S.vtp?.version||'2';
+  if($('vtpPruning'))$('vtpPruning').value=S.vtp?.pruning||'no';
+  const sws=S.devices.filter(d=>d.type==='switch' && (d.vendorOs||'cisco_ios')==='cisco_ios').sort((a,b)=>a.name.localeCompare(b.name));
+  $('vtpSwitchRoles').innerHTML=sws.length?sws.map(d=>`<div class="row" style="margin-top:8px;"><div><label class="fl">${esc(d.name)}</label><div class="hint">${esc(d.vendorOs||'cisco_ios')}</div></div><div><label class="fl">Rol VTP</label><select data-vtprole="${d.id}"><option value="off">Desactivado</option><option value="server">Server</option><option value="client">Client</option><option value="transparent">Transparent</option></select></div></div>`).join(''):'<div class="hint">Añade switches Cisco IOS para poder usar VTP.</div>';
+  document.querySelectorAll('[data-vtprole]').forEach(el=>el.value=getVtpRole(el.dataset.vtprole));
+}
+$('btnSaveVtp').onclick=()=>{
+  S.vtp=S.vtp||{domain:'',password:'',version:'2',pruning:'no',roles:{}};
+  S.vtp.domain=($('vtpDomain').value||'').trim();
+  S.vtp.password=($('vtpPassword').value||'').trim();
+  S.vtp.version=($('vtpVersion').value||'2');
+  S.vtp.pruning=($('vtpPruning').value||'no');
+  S.vtp.roles={};
+  document.querySelectorAll('[data-vtprole]').forEach(el=>{if(el.value!=='off')S.vtp.roles[el.dataset.vtprole]=el.value;});
+  save();renderVtp();if(selDevCfg)selectDevCfg(selDevCfg);alert('✓ VTP guardado.');
+};
 
 // EXPORT
 const dl=(fn,txt)=>{const b=new Blob([txt],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);};
@@ -1849,9 +2363,418 @@ canvas.addEventListener('click',e=>{if(drag)return;const r=canvas.getBoundingCli
 canvas.addEventListener('touchstart',e=>{const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;for(const d of S.devices){const p=S.topo.pos[d.id];if(!p)continue;if(Math.abs(x-p.x)<72&&Math.abs(y-p.y)<25){drag={id:d.id,dx:x-p.x,dy:y-p.y};break;}}},{passive:true});
 canvas.addEventListener('touchmove',e=>{if(!drag)return;e.preventDefault();const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;S.topo.pos[drag.id].x=x-drag.dx;S.topo.pos[drag.id].y=y-drag.dy;drawTopo();},{passive:false});
 canvas.addEventListener('touchend',()=>{if(drag){save();drag=null;}});
-$('fitTopo').onclick=()=>{autoLayout();drawTopo();};$('reLy').onclick=()=>{for(const k in S.topo.pos)delete S.topo.pos[k];autoLayout();drawTopo();};
+$('fitTopo').onclick=()=>{autoLayout();drawTopo();};$('reLy').onclick=()=>{for(const k in S.topo.pos)delete S.topo.pos[k];autoLayout();drawTopo();};$('v5AutoLoc').onclick=()=>autoVisualAssign();$('v5AddLoc').onclick=()=>addV5Location();$('v5Fit').onclick=()=>fitV5();$('v5Fs').onclick=()=>toggleV5Fullscreen();
 window.addEventListener('resize',()=>{if(S.step==='cfg')drawTopo();});
 
+
+// ─────────────────── V5 VISUAL OVERLAY (driven by V4 data) ───────────────────
+const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
+const V5S={locHead:36,devW:176,devH:62,hstW:196,hstH:54,colW:214};
+function vv(){return S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}});}
+function v5ProMode(){return vv().proMode!==false;}
+function setV5ProMode(on){vv().proMode=!!on;if(v5ProMode())applyProfessionalLocationLayout();save();drawV5();renderV5Panel();}
+function vLocChildren(id){return vLocs().filter(l=>(l.parentId||'')===id);}
+function vLocRoots(){return vLocs().filter(l=>!l.parentId||!vLocById(l.parentId));}
+function vLocDepth(id){let depth=0,cur=vLocById(id),guard=0;while(cur&&cur.parentId&&guard<20){const p=vLocById(cur.parentId);if(!p)break;depth++;cur=p;guard++;}return depth;}
+function visualLocOwnMinHeight(loc){const rows=Math.max(devsInVisualLoc(loc.id).length,hostsInVisualLoc(loc.id).length,1);return V5S.locHead+24+rows*72;}
+function computeProfessionalLocationBounds(){
+  const bounds={}; const gap=22, inset=18, minW=Math.max(330,V5S.colW*2+36);
+  const roots=vLocRoots();
+  let nextX=80;
+  function place(loc,forcedX,forcedY,forcedW){
+    const ownMinH=visualLocOwnMinHeight(loc);
+    const x=Number.isFinite(forcedX)?forcedX:(Number.isFinite(loc.x)?loc.x:nextX);
+    const y=Number.isFinite(forcedY)?forcedY:(Number.isFinite(loc.y)?loc.y:90);
+    const w=Math.max(minW, Number.isFinite(forcedW)?forcedW:(Number(loc.w)||minW));
+    let h=Math.max(170, Number(loc.h)||0, ownMinH);
+    const kids=vLocChildren(loc.id).sort((a,b)=>cmpMixed(a.name,b.name));
+    if(kids.length){
+      let cy=y+ownMinH+18;
+      let deepest=cy;
+      for(const kid of kids){
+        const child=place(kid,x+inset,cy,Math.max(minW-24,w-inset*2));
+        cy=child.y+child.h+14;
+        deepest=Math.max(deepest,child.y+child.h);
+      }
+      h=Math.max(h, deepest-y+inset);
+    }
+    bounds[loc.id]={x,y,w,h};
+    return bounds[loc.id];
+  }
+  roots.forEach((loc,idx)=>{const b=place(loc,Number.isFinite(loc.x)?loc.x:nextX,Number.isFinite(loc.y)?loc.y:(90+(idx%2)*260),Number(loc.w)||minW);nextX=Math.max(nextX,b.x+b.w+gap);});
+  vv().proBounds=bounds;
+  return bounds;
+}
+function applyProfessionalLocationLayout(){
+  if(!v5ProMode())return;
+  const roots=vLocRoots().sort((a,b)=>cmpMixed(a.name,b.name));
+  roots.forEach((loc,idx)=>{if(!Number.isFinite(loc.x))loc.x=80+idx*380;if(!Number.isFinite(loc.y))loc.y=90+((idx%2)*260);if(!loc.w)loc.w=Math.max(360,V5S.colW*2+48);});
+  computeProfessionalLocationBounds();
+}
+function deletePhysicalLocation(id,askConfirm=true){
+  ensurePhysicalLocationModel();
+  const list=S.physicalLocations||[];
+  const locIndex=list.findIndex(x=>x.id===id);
+  if(locIndex===-1){
+    console.warn('No se encontró la ubicación a eliminar:',id);
+    alert('No se ha encontrado la ubicación a eliminar.');
+    return false;
+  }
+
+  const loc=list[locIndex];
+  const locNameLower=cleanStr(loc.name).toLowerCase();
+  const parent=loc.parentId?physLocById(loc.parentId):null;
+  const children=list.filter(x=>x.parentId===id);
+  const hosts=(S.hosts||[]).filter(h=>cleanStr(h.physicalLocation).toLowerCase()===locNameLower);
+  const devices=(S.devices||[]).filter(d=>cleanStr(d.physicalLocation).toLowerCase()===locNameLower);
+
+  let msg=`¿Eliminar la ubicación "${loc.name}"?`;
+  if(children.length||hosts.length||devices.length){
+    msg+=`
+
+Se recolocarán ${children.length} sububicación(es), ${devices.length} equipo(s) y ${hosts.length} host(s) a ${parent?`"${parent.name}"`:'sin ubicación'}.`;
+  }
+  if(askConfirm && !confirm(msg)) return false;
+
+  const fallbackParentId=parent?parent.id:'';
+  const fallbackParentName=parent?parent.name:'';
+
+  children.forEach(x=>{ x.parentId=fallbackParentId; });
+
+  (S.devices||[]).forEach(d=>{
+    if(cleanStr(d.physicalLocation).toLowerCase()===locNameLower){
+      d.physicalLocation=fallbackParentName;
+    }
+  });
+  (S.hosts||[]).forEach(h=>{
+    if(cleanStr(h.physicalLocation).toLowerCase()===locNameLower){
+      h.physicalLocation=fallbackParentName;
+    }
+  });
+
+  if(S.visual&&S.visual.assign){
+    const anotherLoc=(typeof vLocs==='function' ? vLocs().find(l=>l.id!==id) : null);
+    const fallbackVisualId=fallbackParentId || (anotherLoc?anotherLoc.id:'');
+    (S.devices||[]).forEach(d=>{
+      if(typeof deviceVisualLoc==='function' && deviceVisualLoc(d.id)===id && typeof setDeviceVisualLoc==='function'){
+        setDeviceVisualLoc(d.id,fallbackVisualId);
+      }
+    });
+    (S.hosts||[]).forEach(h=>{
+      if(typeof hostVisualLoc==='function' && hostVisualLoc(h.id)===id && typeof setHostVisualLoc==='function'){
+        setHostVisualLoc(h.id,fallbackVisualId);
+      }
+    });
+  }
+
+  list.splice(locIndex,1);
+
+  if(S.visual&&Array.isArray(S.visual.locs)){
+    S.visual.locs=S.visual.locs.filter(l=>{
+      const sameId = l.id===id;
+      const sameName = cleanStr(l.name).toLowerCase()===locNameLower;
+      if(sameName && fallbackParentName && !l.parentId) l.parentId=fallbackParentId;
+      return !sameId && !sameName;
+    });
+  }
+
+  if(vv().sel&&vv().sel.id===id) vv().sel=null;
+
+  syncPhysicalLocationNames();
+  clearPhysicalLocationForm();
+  save();
+
+  try{ renderPhysicalLocations(); }catch(e){ console.error('renderPhysicalLocations',e); }
+  try{ fillPhysicalLocationParentSel(); }catch(e){ console.error('fillPhysicalLocationParentSel',e); }
+  try{ fillHostLocSel(); }catch(e){ console.error('fillHostLocSel',e); }
+  try{ fillHostPhysLocSel(); }catch(e){ console.error('fillHostPhysLocSel',e); }
+  try{ renderHosts(); }catch(e){ console.error('renderHosts',e); }
+  try{ renderDevs(); }catch(e){ console.error('renderDevs',e); }
+  try{ renderWizard(); }catch(e){ console.error('renderWizard',e); }
+  try{ renderV5Panel(); }catch(e){ console.error('renderV5Panel',e); }
+  try{ drawV5(); }catch(e){ console.error('drawV5',e); }
+  try{ refresh(); }catch(e){ console.error('refresh',e); }
+
+  console.log('Ubicación eliminada correctamente:',loc.name,id);
+  return true;
+}
+function vLocs(){return vv().locs;}
+function vLocById(id){return vLocs().find(x=>x.id===id)||null;}
+function deviceVisualLoc(id){return vv().assign.devices[id]||'';}
+function hostVisualLoc(id){return vv().assign.hosts[id]||'';}
+function setDeviceVisualLoc(id,lid){vv().assign.devices[id]=lid;}
+function setHostVisualLoc(id,lid){vv().assign.hosts[id]=lid;}
+function v5ApplyRefresh(sel){save();refresh();if(sel)selectV5(sel.t,sel.id);}
+function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;d[key]=val;if(key==='type'&&val==='switch'){d.internetEdge='no';d.wanIf=null;}v5ApplyRefresh({t:'device',id});}
+function v5UpdateHost(id,key,val){const h=S.hosts.find(x=>x.id===id);if(!h)return;h[key]=val;v5ApplyRefresh({t:'host',id});}
+function v5UpdateHostPort(id,portId){const h=S.hosts.find(x=>x.id===id);if(!h)return;h.portRef=portId||null;if(portId){const p=S.ports.find(pp=>pp.id===portId);if(p){h.connectedDeviceId=p.deviceId;setHostVisualLoc(id,deviceVisualLoc(p.deviceId));}}v5ApplyRefresh({t:'host',id});}
+function v5UpdatePort(portId,key,val){const p=S.ports.find(x=>x.id===portId);if(!p)return;p[key]=val;if(key==='mode'&&val!=='access'&&p.accessVlanRef)p.accessVlanRef=null;v5ApplyRefresh(vv().sel||null);}
+function syncV5FullscreenState(){const layout=$('v5Layout');const fullEl=document.fullscreenElement;const nativeFs=!!(fullEl&&fullEl===layout);const fallbackFs=layout.classList.contains('fs');const on=nativeFs||fallbackFs;layout.classList.toggle('fs',fallbackFs&&!nativeFs);document.body.classList.toggle('v5-fs-lock',on);vv().fs=on;$('v5Fs').textContent=on?'🗗 Salir pantalla completa':'⛶ Pantalla completa';setTimeout(()=>{resizeV5();fitV5(false);renderV5Panel();},30);}
+async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)return;const active=!!(document.fullscreenElement===layout)||layout.classList.contains('fs');const next=force==null?!active:!!force;try{
+  if(next){
+    if(document.fullscreenElement&&document.fullscreenElement!==layout&&document.exitFullscreen)await document.exitFullscreen();
+    if(layout.requestFullscreen)await layout.requestFullscreen();
+    else layout.classList.add('fs');
+  }else{
+    if(document.fullscreenElement===layout&&document.exitFullscreen)await document.exitFullscreen();
+    layout.classList.remove('fs');
+  }
+}catch(err){
+  layout.classList.toggle('fs',next);
+}
+syncV5FullscreenState();}
+function ensureVisualModel(){
+  const V=vv();
+  for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
+  for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
+  for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
+  if(!V.locs.length){
+    V.locs=[
+      {id:uid('loc'),name:'Core / Perímetro',color:'#0f2744',x:60,y:70},
+      {id:uid('loc'),name:'Acceso / Usuarios',color:'#14263b',x:430,y:70},
+      {id:uid('loc'),name:'Servicios',color:'#2a1f3b',x:800,y:70},
+    ];
+  }
+  const l0=V.locs[0]?.id||'',l1=V.locs[1]?.id||l0,l2=V.locs[2]?.id||l1;
+  for(const d of S.devices){
+    if(!V.assign.devices[d.id]||!vLocById(V.assign.devices[d.id])){
+      let lid=l1;
+      if(d.type==='firewall'||d.type==='router')lid=l0;
+      else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
+      V.assign.devices[d.id]=lid;
+    }
+  }
+  for(const h of S.hosts){
+    if(!V.assign.hosts[h.id]||!vLocById(V.assign.hosts[h.id])){
+      const linkedId=hostConnectedDeviceId(h);
+      V.assign.hosts[h.id]=linkedId?deviceVisualLoc(linkedId):l1;
+    }
+  }
+}
+function devsInVisualLoc(lid){return S.devices.filter(d=>deviceVisualLoc(d.id)===lid);}
+function hostsInVisualLoc(lid){return S.hosts.filter(h=>hostVisualLoc(h.id)===lid);}
+function effectiveHostIp(h){
+  if(h.ipMode==='static')return h.staticIp||'—';
+  const sn=snByVRef(h.vlanRef);const ci=sn?parseCidr(sn.cidr):null;
+  if(!ci||ci.fh==null)return 'DHCP';
+  const idx=Math.max(2,S.hosts.filter(x=>x.vlanRef===h.vlanRef).findIndex(x=>x.id===h.id)+2);
+  const next=(ci.fh+idx)<=ci.lh?ip4s(ci.fh+idx):'DHCP';
+  return h.ipMode==='dhcp'?('DHCP · '+next):next;
+}
+function visualNodeBounds(kind,id){const pos=vv().pos[id]||{x:0,y:0};return kind==='dev'?{x:pos.x,y:pos.y,w:V5S.devW,h:V5S.devH}:{x:pos.x,y:pos.y,w:V5S.hstW,h:V5S.hstH};}
+function visualLocBounds(loc){
+  if(v5ProMode()){
+    const map=vv().proBounds&&Object.keys(vv().proBounds).length?vv().proBounds:computeProfessionalLocationBounds();
+    if(map[loc.id]) return map[loc.id];
+  }
+  const rows=Math.max(devsInVisualLoc(loc.id).length,hostsInVisualLoc(loc.id).length,1);
+  const minW=Math.max(330,V5S.colW*2+36);
+  const minH=V5S.locHead+24+rows*72;
+  return{x:loc.x,y:loc.y,w:Math.max(minW,Number(loc.w)||0),h:Math.max(minH,Number(loc.h)||0)};
+}
+function layoutVisualLoc(loc,force=false){
+  const b=visualLocBounds(loc);
+  devsInVisualLoc(loc.id).forEach((d,i)=>{if(force||!vv().pos[d.id])vv().pos[d.id]={x:b.x+16,y:b.y+V5S.locHead+14+i*72};});
+  hostsInVisualLoc(loc.id).forEach((h,i)=>{if(force||!vv().pos[h.id])vv().pos[h.id]={x:b.x+V5S.colW+18,y:b.y+V5S.locHead+14+i*72};});
+}
+function nextNodePositionInLoc(lid,kind,excludeId){
+  const loc=vLocById(lid);if(!loc)return {x:40,y:40};
+  const b=visualLocBounds(loc);
+  const list=(kind==='device'?devsInVisualLoc(lid):hostsInVisualLoc(lid)).filter(x=>x.id!==excludeId);
+  return kind==='device'?{x:b.x+16,y:b.y+V5S.locHead+14+list.length*72}:{x:b.x+V5S.colW+18,y:b.y+V5S.locHead+14+list.length*72};
+}
+function autoVisualAssign(){ensureVisualModel();if(v5ProMode())applyProfessionalLocationLayout();for(const loc of vLocs())layoutVisualLoc(loc,true);save();drawV5();renderV5Panel();}
+function resizeV5(){const wrap=vcv.parentElement;if(!wrap)return;const r=wrap.getBoundingClientRect();const dpr=Math.max(1,window.devicePixelRatio||1);vcv.width=Math.floor(r.width*dpr);vcv.height=Math.floor(r.height*dpr);vcv.style.width=r.width+'px';vcv.style.height=r.height+'px';vctx.setTransform(dpr,0,0,dpr,0,0);drawV5();}
+function v2s(x,y){const vw=vv().view;return{x:x*vw.zoom+vw.px,y:y*vw.zoom+vw.py};}
+function s2v(x,y){const vw=vv().view;return{x:(x-vw.px)/vw.zoom,y:(y-vw.py)/vw.zoom};}
+function nodeCenterById(kind,id){const b=visualNodeBounds(kind,id);return{x:b.x+b.w/2,y:b.y+b.h/2};}
+function drawRound(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawNodeText(x,y,lines,mono){let yy=y;for(const ln of lines){vctx.fillText(ln,x,yy);yy+=13*vv().view.zoom;}}
+function colorFromSeed(seed){let h=0;seed=String(seed||'seed');for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))%360;return `hsl(${h} 78% 62%)`;}
+function rgbaFromCss(css,alpha){
+  const m=String(css||'').match(/hsl\(([-\d.]+)\s+([\d.]+)%\s+([\d.]+)%\)/i);
+  if(!m)return `rgba(96,165,250,${alpha})`;
+  let h=(+m[1]%360+360)%360,s=(+m[2])/100,l=(+m[3])/100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m0=l-c/2;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x;} else if(h<120){r=x;g=c;} else if(h<180){g=c;b=x;} else if(h<240){g=x;b=c;} else if(h<300){r=x;b=c;} else {r=c;b=x;}
+  r=Math.round((r+m0)*255); g=Math.round((g+m0)*255); b=Math.round((b+m0)*255);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function linkedDeviceIds(devId){
+  const ids=new Set();
+  for(const lk of S.links){
+    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);
+    if(!a||!b)continue;
+    if(a.deviceId===devId&&b.deviceId!==devId)ids.add(b.deviceId);
+    if(b.deviceId===devId&&a.deviceId!==devId)ids.add(a.deviceId);
+  }
+  return [...ids];
+}
+function deviceAccentColor(devId,seen){
+  seen=seen||new Set();
+  if(seen.has(devId))return colorFromSeed(devId);
+  seen.add(devId);
+  const d=devById(devId); if(!d) return colorFromSeed(devId);
+  if(d.type==='switch') return colorFromSeed((d.name||devId)+'-switch');
+  const neigh=linkedDeviceIds(devId).map(id=>devById(id)).filter(Boolean);
+  const sw=neigh.find(n=>n.type==='switch');
+  if(sw) return colorFromSeed((sw.name||sw.id)+'-switch');
+  if(neigh[0]) return deviceAccentColor(neigh[0].id,seen);
+  if(d.type==='router') return 'hsl(196 82% 63%)';
+  if(d.type==='firewall') return 'hsl(8 84% 66%)';
+  return colorFromSeed((d.name||devId)+'-'+(d.type||'dev'));
+}
+function compactLinkLabel(host,dev,port){
+  const compact=vv().compactLabels!==false;
+  if(compact) return `${dev.name||'equipo'}${port?` · ${port.name}`:''}`.slice(0,24);
+  return `${dev.name||'equipo'}${port?` · ${port.name}`:' · auto/pendiente'}`.slice(0,42);
+}
+function drawV5(){
+  if(!vcv)return;ensureVisualModel();if(v5ProMode())computeProfessionalLocationBounds();const r=vcv.getBoundingClientRect();if(!r.width||!r.height)return;vctx.clearRect(0,0,r.width,r.height);
+  const z=vv().view.zoom;
+  vctx.globalAlpha=.05;vctx.strokeStyle='#3b82f6';vctx.lineWidth=1;for(let x=0;x<r.width;x+=26){vctx.beginPath();vctx.moveTo(x,0);vctx.lineTo(x,r.height);vctx.stroke();}for(let y=0;y<r.height;y+=26){vctx.beginPath();vctx.moveTo(0,y);vctx.lineTo(r.width,y);vctx.stroke();}vctx.globalAlpha=1;
+  for(const loc of vLocs())layoutVisualLoc(loc,false);
+  const ordered=[...vLocs()].sort((a,b)=>vLocDepth(a.id)-vLocDepth(b.id));
+  for(const loc of ordered){
+    const b=visualLocBounds(loc),p=v2s(b.x,b.y),w=b.w*z,h=b.h*z,depth=vLocDepth(loc.id);
+    vctx.fillStyle=loc.color||'#10233c';vctx.globalAlpha=Math.max(.16,.33-depth*.05);drawRound(vctx,p.x,p.y,w,h,Math.max(10,18-depth*2));vctx.fill();vctx.globalAlpha=1;vctx.strokeStyle=vv().sel&&vv().sel.t==='loc'&&vv().sel.id===loc.id?'#93c5fd':(v5ProMode()&&loc.parentId?'rgba(125,211,252,.75)':'rgba(58,77,102,.9)');vctx.lineWidth=v5ProMode()&&loc.parentId?1.1:1.4;drawRound(vctx,p.x,p.y,w,h,Math.max(10,18-depth*2));vctx.stroke();
+    if(vdrag&&vdrag.overLoc===loc.id){vctx.strokeStyle='#60a5fa';vctx.lineWidth=2;vctx.setLineDash([8,5]);drawRound(vctx,p.x+4,p.y+4,w-8,h-8,15);vctx.stroke();vctx.setLineDash([]);}
+    vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(11,13-depth)+'px Space Grotesk,sans-serif';vctx.fillText((depth?('↳ '.repeat(Math.min(depth,2))):'')+loc.name,p.x+12*z,p.y+22*z);vctx.fillStyle='#8fa3c0';vctx.font='11px Space Grotesk,sans-serif';vctx.fillText(devsInVisualLoc(loc.id).length+' equipos · '+hostsInVisualLoc(loc.id).length+' hosts',p.x+12*z,p.y+37*z);
+    const hs=12*z,hx=p.x+w-hs-8*z,hy=p.y+h-hs-8*z;
+    if(!(v5ProMode()&&loc.parentId)){ vctx.fillStyle='rgba(148,163,184,.95)';vctx.fillRect(hx,hy,hs,hs); vctx.strokeStyle='rgba(15,23,42,.95)';vctx.strokeRect(hx,hy,hs,hs); vctx.beginPath();vctx.moveTo(hx+3*z,hy+hs-3*z);vctx.lineTo(hx+hs-3*z,hy+3*z);vctx.stroke(); }
+  }
+  for(const lk of S.links){const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b)continue;const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db)continue;const ca=nodeCenterById('dev',da.id),cb=nodeCenterById('dev',db.id);const pa=v2s(ca.x,ca.y),pb=v2s(cb.x,cb.y);const trunk=a.mode==='trunk'||b.mode==='trunk';vctx.lineWidth=trunk?2.8:1.6;vctx.strokeStyle=trunk?'#f59e0b':'#3b82f6';vctx.setLineDash(trunk?[8,4]:[]);vctx.beginPath();vctx.moveTo(pa.x,pa.y);vctx.lineTo(pb.x,pb.y);vctx.stroke();vctx.setLineDash([]);}
+  for(const loc of vLocs()){
+    for(const d of devsInVisualLoc(loc.id)){
+      const nb=visualNodeBounds('dev',d.id),np=v2s(nb.x,nb.y),accent=deviceAccentColor(d.id),accentSoft=rgbaFromCss(accent,.18);
+      vctx.fillStyle='rgba(7,12,20,.96)';drawRound(vctx,np.x,np.y,nb.w*z,nb.h*z,10);vctx.fill();
+      vctx.fillStyle=accentSoft;drawRound(vctx,np.x+1,np.y+1,nb.w*z-2,nb.h*z-2,10);vctx.fill();
+      vctx.strokeStyle=vv().sel&&vv().sel.t==='device'&&vv().sel.id===d.id?'#22c55e':accent;vctx.lineWidth=1.6;drawRound(vctx,np.x,np.y,nb.w*z,nb.h*z,10);vctx.stroke();
+      vctx.fillStyle='#e2eaf7';vctx.font='600 '+(12*z)+'px Space Grotesk,sans-serif';vctx.fillText((d.name||'').slice(0,22),np.x+10*z,np.y+16*z);
+      vctx.fillStyle='#8fa3c0';vctx.font='10px Fira Code,monospace';drawNodeText(np.x+10*z,np.y+31*z,[((d.type||'')+' · '+(d.mgmtIp||'sin mgmt')).slice(0,28),((d.vendorOs||'—')+(d.internetEdge==='yes'?' · EDGE':'' )).slice(0,28)]);
+    }
+    for(const h of hostsInVisualLoc(loc.id)){
+      const nb=visualNodeBounds('host',h.id),np=v2s(nb.x,nb.y),linked=hostConnectedDeviceId(h),accent=linked?deviceAccentColor(linked):'hsl(262 83% 74%)',accentSoft=rgbaFromCss(accent,.15);
+      vctx.fillStyle='rgba(9,16,26,.96)';drawRound(vctx,np.x,np.y,nb.w*z,nb.h*z,10);vctx.fill();
+      vctx.fillStyle=accentSoft;drawRound(vctx,np.x+1,np.y+1,nb.w*z-2,nb.h*z-2,10);vctx.fill();
+      vctx.strokeStyle=vv().sel&&vv().sel.t==='host'&&vv().sel.id===h.id?'#a78bfa':accent;vctx.lineWidth=1.5;drawRound(vctx,np.x,np.y,nb.w*z,nb.h*z,10);vctx.stroke();
+      const vlan=vByRef(h.vlanRef);vctx.fillStyle='#e2eaf7';vctx.font='600 '+(11.5*z)+'px Space Grotesk,sans-serif';vctx.fillText((h.name||'').slice(0,24),np.x+10*z,np.y+15*z);
+      vctx.fillStyle='#8fa3c0';vctx.font='10px Fira Code,monospace';drawNodeText(np.x+10*z,np.y+30*z,[((vlan?'VLAN '+vlan.vlanId+' · '+vlan.name:'Sin VLAN')).slice(0,28),effectiveHostIp(h).slice(0,28)]);
+    }
+  }
+  for(const h of S.hosts){
+    const linkedDev=devById(hostConnectedDeviceId(h)||'');
+    if(!linkedDev)continue;
+    let p=h.portRef?S.ports.find(x=>x.id===h.portRef):null;
+    if(!p && (h.portAssignMode||'auto')==='auto'){
+      const suggested=suggestHostPort(linkedDev.id,h.id);
+      p=suggested?S.ports.find(x=>x.id===suggested):null;
+    }
+    const hb=visualNodeBounds('host',h.id), db=visualNodeBounds('dev',linkedDev.id);
+    const start={x:hb.x, y:hb.y+hb.h/2};
+    const end={x:db.x+db.w, y:db.y+db.h/2};
+    const ph=v2s(start.x,start.y), pd=v2s(end.x,end.y);
+    vctx.lineWidth=2.6;
+    vctx.strokeStyle='rgba(196,181,253,1)';
+    vctx.beginPath();
+    vctx.moveTo(ph.x,ph.y);
+    const midX=(ph.x+pd.x)/2;
+    vctx.bezierCurveTo(midX,ph.y,midX,pd.y,pd.x,pd.y);
+    vctx.stroke();
+    const mx=(ph.x+pd.x)/2,my=(ph.y+pd.y)/2;
+    const accent=deviceAccentColor(linkedDev.id);
+    const label=compactLinkLabel(h,linkedDev,p);
+    const compact=vv().compactLabels!==false;
+    const lw=Math.max(compact?74:120, label.length*(compact?5.7:6.3)+(compact?12:16));
+    const lh=compact?18:24;
+    vctx.fillStyle='rgba(15,23,42,.98)';drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.fill();
+    vctx.strokeStyle=rgbaFromCss(accent,.78);drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.stroke();
+    vctx.fillStyle=rgbaFromCss(accent,.98);vctx.font=(compact?'9px':'10px')+' Fira Code,monospace';vctx.fillText(label,mx-lw/2+(compact?6:8),my+(compact?3:4));
+  }
+}
+function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;for(const loc of vLocs()){const b=visualLocBounds(loc);minx=Math.min(minx,b.x);miny=Math.min(miny,b.y);maxx=Math.max(maxx,b.x+b.w);maxy=Math.max(maxy,b.y+b.h);}if(!isFinite(minx)){vv().view={px:60,py:50,zoom:1};drawV5();return;}const r=vcv.parentElement.getBoundingClientRect();const padx=24,pady=24;const zw=Math.max(.45,Math.min(1.25,(r.width-padx*2)/(maxx-minx||1)));const zh=Math.max(.45,Math.min(1.25,(r.height-pady*2)/(maxy-miny||1)));const zoom=Math.min(zw,zh);vv().view.zoom=zoom;vv().view.px=padx-minx*zoom+(r.width-(maxx-minx)*zoom-padx*2)/2;vv().view.py=pady-miny*zoom+(r.height-(maxy-miny)*zoom-pady*2)/2;drawV5();}
+function visualResizeHandleHit(wx,wy){
+  for(const loc of [...vLocs()].reverse()){
+    const b=visualLocBounds(loc),hs=16/vv().view.zoom,hx=b.x+b.w-hs-8/vv().view.zoom,hy=b.y+b.h-hs-8/vv().view.zoom;
+    if(wx>=hx&&wx<=hx+hs&&wy>=hy&&wy<=hy+hs)return{t:'loc-resize',id:loc.id};
+  }
+  return null;
+}
+function visualHit(wx,wy){const rh=visualResizeHandleHit(wx,wy);if(rh)return rh;for(const h of [...S.hosts].reverse()){const b=visualNodeBounds('host',h.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'host',id:h.id};}for(const d of [...S.devices].reverse()){const b=visualNodeBounds('dev',d.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'device',id:d.id};}for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'loc',id:loc.id};}return null;}
+function locAt(wx,wy){for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return loc;}return null;}
+function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
+function v5UpdateLocationSize(id,key,val){const l=vLocById(id);if(!l)return;const num=Math.max(key==='w'?330:160,Number(val)||0);l[key]=num;save();drawV5();}
+function addV5Location(){ensureVisualModel();const idx=vLocs().length+1;vLocs().push({id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)});save();renderV5Panel();drawV5();}
+function v5UpdateLocationMeta(id,key,val){const l=vLocById(id);if(!l)return;l[key]=val;save();drawV5();}
+function renderPortEditorHtml(d){
+  const vlanOptions=(selected)=>['<option value="">—</option>']
+    .concat(S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}" ${selected===v.id?'selected':''}>VLAN ${v.vlanId} — ${esc(v.name)}</option>`))
+    .join('');
+  const ports=portsByDev(d.id).sort((a,b)=>(a.position||999)-(b.position||999)||a.name.localeCompare(b.name));
+  if(!ports.length)return '<div class="v5-empty">Este equipo no tiene puertos definidos todavía.</div>';
+  return '<div class="v5-ports">'+ports.map(p=>`<div class="v5-port"><h4>${esc(p.name)}</h4><div class="v5-row3"><div><label class="fl">Nombre</label><input value="${esc(p.name||'')}" oninput="v5UpdatePort('${p.id}','name',this.value)"></div><div><label class="fl">Medio</label><select onchange="v5UpdatePort('${p.id}','media',this.value)"><option value="FE" ${p.media==='FE'?'selected':''}>FE</option><option value="GE" ${p.media==='GE'?'selected':''}>GE</option><option value="SFP" ${p.media==='SFP'?'selected':''}>SFP</option></select></div><div><label class="fl">Modo</label><select onchange="v5UpdatePort('${p.id}','mode',this.value)"><option value="access" ${p.mode==='access'?'selected':''}>access</option><option value="trunk" ${p.mode==='trunk'?'selected':''}>trunk</option><option value="layer3" ${p.mode==='layer3'?'selected':''}>layer3</option></select></div></div><div class="v5-row3"><div><label class="fl">VLAN access</label><select onchange="v5UpdatePort('${p.id}','accessVlanRef',this.value||null)">${vlanOptions(p.accessVlanRef)}</select></div><div><label class="fl">Rol</label><input value="${esc(p.role||'')}" oninput="v5UpdatePort('${p.id}','role',this.value||null)"></div><div><label class="fl">Descripción</label><input value="${esc(p.desc||'')}" oninput="v5UpdatePort('${p.id}','desc',this.value||null)"></div></div></div>`).join('')+'</div>';
+}
+function renderV5Panel(){
+  const box=$('v5Panel');if(!box)return;ensureVisualModel();const sel=vv().sel;
+  if(!sel){
+    box.innerHTML=`<div class="card-t">Panel V5</div>
+      <div class="brow" style="margin:0 0 10px 0"><button class="btn bs bsm" onclick="addV5Location()">📍 Nueva ubicación</button><button class="btn bs bsm" onclick="fitV5()">⊞ Ajustar vista</button><button class="btn bs bsm" onclick="toggleV5Fullscreen()">${vv().fs?'🗗 Salir pantalla completa':'⛶ Pantalla completa'}</button></div>
+      <div class="brow" style="margin:0 0 10px 0"><button class="btn bs bsm" onclick="setV5ProMode(!v5ProMode())">${v5ProMode()?'🧱 Modo profesional: ON':'🧱 Modo profesional: OFF'}</button></div>
+      <div class="v5-empty">Selecciona una ubicación, un dispositivo o un host para retocarlo usando los datos ya construidos en V4.</div>
+      <div class="v5-note">${v5ProMode()?'Modo profesional activo: las sububicaciones se muestran anidadas y heredan su contenedor superior.':'Modo libre activo: puedes mover y redimensionar ubicaciones sin jerarquía visual automática.'}</div>
+      <div class="v5-list">${vLocs().map(l=>`<div class="v5-item" onclick="selectV5('loc','${l.id}')" style="cursor:pointer"><b>${'· '.repeat(vLocDepth(l.id))}${esc(l.name)}</b><div class="v5-mini">${devsInVisualLoc(l.id).length} equipos · ${hostsInVisualLoc(l.id).length} hosts</div></div>`).join('')}</div>`;
+    return;
+  }
+  if(sel.t==='loc'){
+    const l=vLocById(sel.id);if(!l)return;
+    box.innerHTML=`<div class="card-t">📍 ${esc(l.name)}</div>
+      <div class="brow" style="margin:0 0 10px 0"><button class="btn bs bsm" onclick="addV5Location()">📍 Nueva ubicación</button><button class="btn bs bsm" onclick="toggleV5Fullscreen()">${vv().fs?'🗗 Salir pantalla completa':'⛶ Pantalla completa'}</button><button class="btn bs bsm" onclick="setV5ProMode(!v5ProMode())">${v5ProMode()?'🧱 Profesional ON':'🧱 Profesional OFF'}</button></div>
+      <div class="v5-meta"><span class="b bac">${devsInVisualLoc(l.id).length} equipos</span><span class="b bgr">${hostsInVisualLoc(l.id).length} hosts</span><span class="b byw">${vLocChildren(l.id).length} sububicaciones</span></div>
+      <div class="v5-row2"><div><label class="fl">Nombre</label><input value="${esc(l.name)}" oninput="v5UpdateLocationMeta('${l.id}','name',this.value)"></div><div><label class="fl">Color</label><input type="color" value="${esc(l.color||'#10233c')}" oninput="v5UpdateLocationMeta('${l.id}','color',this.value)"></div></div>
+      <div class="v5-row3"><div><label class="fl">Ancho</label><input type="number" min="330" step="10" value="${Math.round(visualLocBounds(l).w)}" oninput="v5UpdateLocationSize('${l.id}','w',this.value)"></div><div><label class="fl">Alto</label><input type="number" min="160" step="10" value="${Math.round(visualLocBounds(l).h)}" oninput="v5UpdateLocationSize('${l.id}','h',this.value)"></div><div><label class="fl">Etiquetas enlaces</label><select onchange="vv().compactLabels=this.value==='compact'; save(); drawV5(); renderV5Panel();"><option value="compact" ${(vv().compactLabels!==false)?'selected':''}>Compactas</option><option value="full" ${(vv().compactLabels===false)?'selected':''}>Completas</option></select></div></div>
+      <div class="brow"><button class="btn bs bsm" onclick="removeV5Location('${l.id}')">🗑 Eliminar ubicación</button><button class="btn bs bsm" onclick="fitV5()">⊞ Centrar</button></div>
+      <div class="v5-note">${v5ProMode()&&l.parentId?'Esta sububicación se dibuja anidada dentro de su ubicación superior.':'Puedes reorganizar esta ubicación libremente o usar el modo profesional para anidarla visualmente.'}</div>
+      <div class="v5-list">${devsInVisualLoc(l.id).map(d=>`<div class="v5-item" onclick="selectV5('device','${d.id}')" style="cursor:pointer">🔀 <b>${esc(d.name)}</b><div class="v5-mini">${esc(d.type||'')} · ${esc(d.mgmtIp||'sin mgmt')}</div></div>`).join('')}${hostsInVisualLoc(l.id).map(h=>{const v=vByRef(h.vlanRef);return `<div class="v5-item" onclick="selectV5('host','${h.id}')" style="cursor:pointer">💻 <b>${esc(h.name)}</b><div class="v5-mini">${esc(v?('VLAN '+v.vlanId+' · '+v.name):'Sin VLAN')} · ${esc(effectiveHostIp(h))}</div></div>`;}).join('')}</div>`;
+    return;
+  }
+  if(sel.t==='device'){
+    const d=devById(sel.id);if(!d)return;
+    box.innerHTML=`<div class="card-t">🧩 ${esc(d.name)}</div>
+      <div class="v5-row2"><div><label class="fl">Nombre</label><input value="${esc(d.name||'')}" oninput="v5UpdateDevice('${d.id}','name',this.value)"></div><div><label class="fl">Ubicación visual</label><select onchange="setDeviceVisualLoc('${d.id}',this.value);vv().pos['${d.id}']=nextNodePositionInLoc(this.value,'device','${d.id}');v5ApplyRefresh({t:'device',id:'${d.id}'})">${vLocs().map(l=>`<option value="${l.id}" ${deviceVisualLoc(d.id)===l.id?'selected':''}>${esc(l.name)}</option>`).join('')}</select></div></div>
+      <div class="v5-row3"><div><label class="fl">Tipo</label><select onchange="v5UpdateDevice('${d.id}','type',this.value)"><option value="switch" ${d.type==='switch'?'selected':''}>switch</option><option value="router" ${d.type==='router'?'selected':''}>router</option><option value="firewall" ${d.type==='firewall'?'selected':''}>firewall</option></select></div><div><label class="fl">Gestión</label><input value="${esc(d.mgmtIp||'')}" oninput="v5UpdateDevice('${d.id}','mgmtIp',this.value)"></div><div><label class="fl">Vendor/OS</label><select onchange="v5UpdateDevice('${d.id}','vendorOs',this.value)">${ALL_VENDORS.map(v=>`<option value="${v.id}" ${d.vendorOs===v.id?'selected':''}>${v.l}</option>`).join('')}</select></div></div>
+      <div class="v5-row2"><div><label class="fl">Internet edge</label><select onchange="v5UpdateDevice('${d.id}','internetEdge',this.value)"><option value="no" ${d.internetEdge!=='yes'?'selected':''}>No</option><option value="yes" ${d.internetEdge==='yes'?'selected':''}>Sí</option></select></div><div><label class="fl">WAN IF</label><input value="${esc(d.wanIf||'')}" oninput="v5UpdateDevice('${d.id}','wanIf',this.value||null)"></div></div>
+      <label class="fl">Notas</label><input value="${esc(d.notes||'')}" oninput="v5UpdateDevice('${d.id}','notes',this.value)">
+      <div class="v5-meta"><span class="b bac">${esc(d.type||'')}</span><span class="b bgr">${portsByDev(d.id).length} puertos</span><span class="b bgr">${esc(d.vendorOs||'—')}</span></div>
+      <div class="v5-note">Todos los cambios aquí alimentan la configuración generada en la V4.</div>
+      <div class="card-t" style="margin-top:12px">Puertos del equipo</div>${renderPortEditorHtml(d)}`;
+    return;
+  }
+  if(sel.t==='host'){
+    const h=S.hosts.find(x=>x.id===sel.id);if(!h)return;
+    const vlan=vByRef(h.vlanRef);const linkedDev=devById(hostConnectedDeviceId(h)||'');
+    box.innerHTML=`<div class="card-t">🖥 ${esc(h.name)}</div>
+      <div class="v5-row2"><div><label class="fl">Nombre</label><input value="${esc(h.name||'')}" oninput="v5UpdateHost('${h.id}','name',this.value)"></div><div><label class="fl">Ubicación en esquema</label><select onchange="setHostVisualLoc('${h.id}',this.value);vv().pos['${h.id}']=nextNodePositionInLoc(this.value||deviceVisualLoc('${linkedDev?.id||''}')||vLocs()[0]?.id,'host','${h.id}');v5ApplyRefresh({t:'host',id:'${h.id}'})">${['<option value="">Automática / según equipo</option>'].concat(vLocs().map(l=>`<option value="${l.id}" ${hostVisualLoc(h.id)===l.id?'selected':''}>${esc(l.name)}</option>`)).join('')}</select></div></div>
+      <div class="v5-row3"><div><label class="fl">Tipo</label><select onchange="v5UpdateHost('${h.id}','type',this.value)">${Object.entries(HT).map(([k,v])=>`<option value="${k}" ${h.type===k?'selected':''}>${v.l}</option>`).join('')}</select></div><div><label class="fl">VLAN</label><select onchange="v5UpdateHost('${h.id}','vlanRef',this.value||null)"><option value="">— sin VLAN —</option>${S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}" ${h.vlanRef===v.id?'selected':''}>VLAN ${v.vlanId} — ${esc(v.name)}</option>`).join('')}</select></div><div><label class="fl">Modo IP</label><select onchange="v5UpdateHost('${h.id}','ipMode',this.value)"><option value="dhcp" ${h.ipMode==='dhcp'?'selected':''}>DHCP</option><option value="static" ${h.ipMode==='static'?'selected':''}>Static</option></select></div></div>
+      <div class="v5-row3"><div><label class="fl">IP estática</label><input value="${esc(h.staticIp||'')}" oninput="v5UpdateHost('${h.id}','staticIp',this.value)"></div><div><label class="fl">MAC</label><input value="${esc(h.mac||'')}" oninput="v5UpdateHost('${h.id}','mac',this.value)"></div><div><label class="fl">Ubicación física</label><input value="${esc(h.physicalLocation||'')}" oninput="v5UpdateHost('${h.id}','physicalLocation',this.value)"></div></div>
+      <div class="v5-row3"><div><label class="fl">Equipo conectado</label><select onchange="v5UpdateHost('${h.id}','connectedDeviceId',this.value||null);if(this.value && (S.hosts.find(x=>x.id==='${h.id}')?.portAssignMode||'auto')==='auto'){v5UpdateHostPort('${h.id}',suggestHostPort(this.value,'${h.id}')||'');} else {v5ApplyRefresh({t:'host',id:'${h.id}'})}"><option value="">— sin equipo —</option>${connectableDevices().map(d=>`<option value="${d.id}" ${hostConnectedDeviceId(h)===d.id?'selected':''}>${esc(d.name)} · ${esc(d.type||'equipo')}</option>`).join('')}</select></div><div><label class="fl">Modo puerto</label><select onchange="v5UpdateHost('${h.id}','portAssignMode',this.value); if(this.value==='auto'){v5UpdateHostPort('${h.id}',suggestHostPort(hostConnectedDeviceId(S.hosts.find(x=>x.id==='${h.id}')),'${h.id}')||'');} else {v5ApplyRefresh({t:'host',id:'${h.id}'})}"><option value="auto" ${(h.portAssignMode||'manual')==='auto'?'selected':''}>Automático</option><option value="manual" ${(h.portAssignMode||'manual')==='manual'?'selected':''}>Manual</option></select></div><div><label class="fl">Puerto asociado</label><select onchange="v5UpdateHostPort('${h.id}',this.value)"><option value="">— sin puerto —</option>${hostAssignablePorts(hostConnectedDeviceId(h)||'').map(p=>`<option value="${p.id}" ${h.portRef===p.id?'selected':''}>${esc(p.name)}${hostPortUsedByOther(p.id,'${h.id}')?' · ocupado':''}</option>`).join('')}</select></div></div>
+      <label class="fl">Notas</label><input value="${esc(h.notes||'')}" oninput="v5UpdateHost('${h.id}','notes',this.value)">
+      <div class="v5-meta"><span class="b bac">${esc(h.type||'host')}</span><span class="b bgr">${esc(vlan?('VLAN '+vlan.vlanId):'sin vlan')}</span><span class="b bgr">${esc(effectiveHostIp(h))}</span><span class="b bpu">${esc(linkedDev?linkedDev.name:'sin equipo')}</span></div>`;
+    return;
+  }}
+function selectV5(t,id){vv().sel={t,id};renderV5Panel();drawV5();}
+function v5CanvasPoint(evt){const r=vcv.getBoundingClientRect();const clientX=evt.clientX ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientX) ?? 0;const clientY=evt.clientY ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientY) ?? 0;return s2v(clientX-r.left,clientY-r.top);}
+function v5PointerDown(evt){const pt=v5CanvasPoint(evt);const hit=visualHit(pt.x,pt.y);if(hit){selectV5(hit.t==='loc-resize'?'loc':hit.t,hit.id);if(hit.t==='loc-resize'){const loc=vLocById(hit.id),b=visualLocBounds(loc);vdrag={t:'loc-resize',id:hit.id,startW:b.w,startH:b.h,startX:pt.x,startY:pt.y,downX:pt.x,downY:pt.y,moved:false};}else if(hit.t==='loc'){const loc=vLocById(hit.id);const members=[...devsInVisualLoc(hit.id).map(d=>({id:d.id,pos:{...(vv().pos[d.id]||{x:0,y:0})}})),...hostsInVisualLoc(hit.id).map(h=>({id:h.id,pos:{...(vv().pos[h.id]||{x:0,y:0})}}))];vdrag={t:'loc',id:hit.id,dx:pt.x-loc.x,dy:pt.y-loc.y,startX:loc.x,startY:loc.y,members,downX:pt.x,downY:pt.y,moved:false};}else{const b=visualNodeBounds(hit.t==='device'?'dev':'host',hit.id);vdrag={t:hit.t,id:hit.id,dx:pt.x-b.x,dy:pt.y-b.y,fromLoc:hit.t==='device'?deviceVisualLoc(hit.id):hostVisualLoc(hit.id),startPos:{...(vv().pos[hit.id]||{x:b.x,y:b.y})},downX:pt.x,downY:pt.y,moved:false};}vcv.classList.add('dragging');if(vcv.setPointerCapture&&evt.pointerId!=null)vcv.setPointerCapture(evt.pointerId);}else{vv().sel=null;renderV5Panel();drawV5();}}
+function v5PointerMove(evt){if(!vdrag)return;const pt=v5CanvasPoint(evt);if(Math.hypot(pt.x-vdrag.downX,pt.y-vdrag.downY)>4)vdrag.moved=true;if(vdrag.t==='loc-resize'){const loc=vLocById(vdrag.id);if(loc&&vdrag.moved){loc.w=Math.max(330,vdrag.startW+(pt.x-vdrag.startX));loc.h=Math.max(160,vdrag.startH+(pt.y-vdrag.startY));drawV5();renderV5Panel();}}else if(vdrag.t==='loc'){const loc=vLocById(vdrag.id);if(loc&&vdrag.moved){const nx=pt.x-vdrag.dx,ny=pt.y-vdrag.dy,deltaX=nx-vdrag.startX,deltaY=ny-vdrag.startY;loc.x=nx;loc.y=ny;for(const m of (vdrag.members||[])){vv().pos[m.id]={x:m.pos.x+deltaX,y:m.pos.y+deltaY};}drawV5();}}else if(vdrag.moved){vv().pos[vdrag.id]={x:pt.x-vdrag.dx,y:pt.y-vdrag.dy};const over=locAt(pt.x,pt.y);vdrag.overLoc=over?over.id:null;drawV5();}}
+function v5PointerUp(evt){if(!vdrag)return;const d=vdrag;vdrag=null;vcv.classList.remove('dragging');if(d.t==='loc-resize'){save();drawV5();renderV5Panel();return;}if(d.t==='device'||d.t==='host'){if(!d.moved){vv().pos[d.id]=d.startPos||vv().pos[d.id];drawV5();renderV5Panel();return;}const targetId=d.overLoc||d.fromLoc;const over=targetId?vLocById(targetId):null;if(over){if(d.t==='device'){setDeviceVisualLoc(d.id,over.id);if(over.id!==d.fromLoc)vv().pos[d.id]=nextNodePositionInLoc(over.id,'device',d.id);}else{setHostVisualLoc(d.id,over.id);if(over.id!==d.fromLoc)vv().pos[d.id]=nextNodePositionInLoc(over.id,'host',d.id);}}save();refresh();selectV5(d.t,d.id);}else{save();drawV5();}}
+vcv.addEventListener('pointerdown',v5PointerDown);
+vcv.addEventListener('pointermove',v5PointerMove);
+vcv.addEventListener('pointerup',v5PointerUp);
+vcv.addEventListener('pointercancel',v5PointerUp);
+vcv.addEventListener('lostpointercapture',v5PointerUp);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&vv().fs)toggleV5Fullscreen(false);});
+document.addEventListener('fullscreenchange',syncV5FullscreenState);
+window.addEventListener('resize',()=>{if(S.step==='cfg')resizeV5();});
 // ─────────────────── MAIN REFRESH ───────────────────
 function refresh(){
   renderNav();
@@ -1861,15 +2784,15 @@ function refresh(){
   updatePortRoleOpts();
   renderDevs();
   renderPortsList();
-  renderVlans();renderSubnets();fillVlanSels();
-  fillHostPortSel();renderHosts();renderIpMap();
+  renderVlans();renderSubnets();fillVlanSels();updManualSnHint();
+  renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
   fillSwDevSels();fillLinkPickers();renderVisPorts();renderLinks();
   renderFwRules();renderVlanMatrix();
   ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
   $('secBpdu').value=S.security.bpdu||'yes';$('secPs').value=S.security.ps||'yes';$('secDs').value=S.security.ds||'yes';$('secDai').value=S.security.dai||'yes';
   $('secDsV').value=S.security.dsV||'';
-  fillRoasSels();renderDhcp();renderDevPickCfg();
-  if(S.step==='cfg'){drawTopo();if(selDevCfg)selectDevCfg(selDevCfg);}
+  fillRoasSels();renderDhcp();renderDevPickCfg();renderVtp();
+  if(S.step==='cfg'){drawTopo();resizeV5();renderV5Panel();if(selDevCfg)selectDevCfg(selDevCfg);}
 }
 
 refresh();
