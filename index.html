@@ -2368,9 +2368,14 @@ window.addEventListener('resize',()=>{if(S.step==='cfg')drawTopo();});
 
 
 // ─────────────────── V5 VISUAL OVERLAY (driven by V4 data) ───────────────────
-const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
+const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;let v5LinkHotspots=[];
 const V5S={locHead:36,devW:176,devH:62,hstW:196,hstH:54,colW:214};
-function vv(){return S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}});}
+function vv(){
+  const base=S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{},linkLabelMode:'dot',expandedLinks:{}});
+  if(!base.expandedLinks)base.expandedLinks={};
+  if(!base.linkLabelMode)base.linkLabelMode='dot';
+  return base;
+}
 function v5ProMode(){return vv().proMode!==false;}
 function setV5ProMode(on){vv().proMode=!!on;if(v5ProMode())applyProfessionalLocationLayout();save();drawV5();renderV5Panel();}
 function vLocChildren(id){return vLocs().filter(l=>(l.parentId||'')===id);}
@@ -2631,7 +2636,7 @@ function compactLinkLabel(host,dev,port){
   return `${dev.name||'equipo'}${port?` · ${port.name}`:' · auto/pendiente'}`.slice(0,42);
 }
 function drawV5(){
-  if(!vcv)return;ensureVisualModel();if(v5ProMode())computeProfessionalLocationBounds();const r=vcv.getBoundingClientRect();if(!r.width||!r.height)return;vctx.clearRect(0,0,r.width,r.height);
+  if(!vcv)return;ensureVisualModel();if(v5ProMode())computeProfessionalLocationBounds();const r=vcv.getBoundingClientRect();if(!r.width||!r.height)return;vctx.clearRect(0,0,r.width,r.height);v5LinkHotspots=[];
   const z=vv().view.zoom;
   vctx.globalAlpha=.05;vctx.strokeStyle='#3b82f6';vctx.lineWidth=1;for(let x=0;x<r.width;x+=26){vctx.beginPath();vctx.moveTo(x,0);vctx.lineTo(x,r.height);vctx.stroke();}for(let y=0;y<r.height;y+=26){vctx.beginPath();vctx.moveTo(0,y);vctx.lineTo(r.width,y);vctx.stroke();}vctx.globalAlpha=1;
   for(const loc of vLocs())layoutVisualLoc(loc,false);
@@ -2686,11 +2691,25 @@ function drawV5(){
     const accent=deviceAccentColor(linkedDev.id);
     const label=compactLinkLabel(h,linkedDev,p);
     const compact=vv().compactLabels!==false;
-    const lw=Math.max(compact?74:120, label.length*(compact?5.7:6.3)+(compact?12:16));
-    const lh=compact?18:24;
-    vctx.fillStyle='rgba(15,23,42,.98)';drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.fill();
-    vctx.strokeStyle=rgbaFromCss(accent,.78);drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.stroke();
-    vctx.fillStyle=rgbaFromCss(accent,.98);vctx.font=(compact?'9px':'10px')+' Fira Code,monospace';vctx.fillText(label,mx-lw/2+(compact?6:8),my+(compact?3:4));
+    const key=`${h.id}:${linkedDev.id}`;
+    const alwaysOpen=vv().linkLabelMode==='full';
+    const expanded=alwaysOpen||!!vv().expandedLinks[key];
+    if(expanded){
+      const lw=Math.max(compact?74:120, label.length*(compact?5.7:6.3)+(compact?12:16));
+      const lh=compact?18:24;
+      vctx.fillStyle='rgba(15,23,42,.98)';drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.fill();
+      vctx.strokeStyle=rgbaFromCss(accent,.78);drawRound(vctx,mx-lw/2,my-lh/2,lw,lh,8);vctx.stroke();
+      vctx.fillStyle=rgbaFromCss(accent,.98);vctx.font=(compact?'9px':'10px')+' Fira Code,monospace';vctx.fillText(label,mx-lw/2+(compact?6:8),my+(compact?3:4));
+      v5LinkHotspots.push({k:key,t:'rect',x:mx-lw/2,y:my-lh/2,w:lw,h:lh});
+    }else{
+      const rad=7;
+      vctx.fillStyle='rgba(15,23,42,.98)';
+      vctx.beginPath();vctx.arc(mx,my,rad,0,Math.PI*2);vctx.fill();
+      vctx.strokeStyle=rgbaFromCss(accent,.85);
+      vctx.lineWidth=1.8;
+      vctx.beginPath();vctx.arc(mx,my,rad,0,Math.PI*2);vctx.stroke();
+      v5LinkHotspots.push({k:key,t:'dot',x:mx,y:my,r:rad+4});
+    }
   }
 }
 function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;for(const loc of vLocs()){const b=visualLocBounds(loc);minx=Math.min(minx,b.x);miny=Math.min(miny,b.y);maxx=Math.max(maxx,b.x+b.w);maxy=Math.max(maxy,b.y+b.h);}if(!isFinite(minx)){vv().view={px:60,py:50,zoom:1};drawV5();return;}const r=vcv.parentElement.getBoundingClientRect();const padx=24,pady=24;const zw=Math.max(.45,Math.min(1.25,(r.width-padx*2)/(maxx-minx||1)));const zh=Math.max(.45,Math.min(1.25,(r.height-pady*2)/(maxy-miny||1)));const zoom=Math.min(zw,zh);vv().view.zoom=zoom;vv().view.px=padx-minx*zoom+(r.width-(maxx-minx)*zoom-padx*2)/2;vv().view.py=pady-miny*zoom+(r.height-(maxy-miny)*zoom-pady*2)/2;drawV5();}
@@ -2701,7 +2720,14 @@ function visualResizeHandleHit(wx,wy){
   }
   return null;
 }
-function visualHit(wx,wy){const rh=visualResizeHandleHit(wx,wy);if(rh)return rh;for(const h of [...S.hosts].reverse()){const b=visualNodeBounds('host',h.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'host',id:h.id};}for(const d of [...S.devices].reverse()){const b=visualNodeBounds('dev',d.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'device',id:d.id};}for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'loc',id:loc.id};}return null;}
+function visualLocHeaderHit(wx,wy){
+  for(const loc of [...vLocs()].reverse()){
+    const b=visualLocBounds(loc),head=Math.max(V5S.locHead+8,46);
+    if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+head)return{t:'loc',id:loc.id};
+  }
+  return null;
+}
+function visualHit(wx,wy){const rh=visualResizeHandleHit(wx,wy);if(rh)return rh;const lh=visualLocHeaderHit(wx,wy);if(lh)return lh;for(const h of [...S.hosts].reverse()){const b=visualNodeBounds('host',h.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'host',id:h.id};}for(const d of [...S.devices].reverse()){const b=visualNodeBounds('dev',d.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'device',id:d.id};}for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'loc',id:loc.id};}return null;}
 function locAt(wx,wy){for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return loc;}return null;}
 function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
 function v5UpdateLocationSize(id,key,val){const l=vLocById(id);if(!l)return;const num=Math.max(key==='w'?330:160,Number(val)||0);l[key]=num;save();drawV5();}
@@ -2732,7 +2758,7 @@ function renderV5Panel(){
       <div class="brow" style="margin:0 0 10px 0"><button class="btn bs bsm" onclick="addV5Location()">📍 Nueva ubicación</button><button class="btn bs bsm" onclick="toggleV5Fullscreen()">${vv().fs?'🗗 Salir pantalla completa':'⛶ Pantalla completa'}</button><button class="btn bs bsm" onclick="setV5ProMode(!v5ProMode())">${v5ProMode()?'🧱 Profesional ON':'🧱 Profesional OFF'}</button></div>
       <div class="v5-meta"><span class="b bac">${devsInVisualLoc(l.id).length} equipos</span><span class="b bgr">${hostsInVisualLoc(l.id).length} hosts</span><span class="b byw">${vLocChildren(l.id).length} sububicaciones</span></div>
       <div class="v5-row2"><div><label class="fl">Nombre</label><input value="${esc(l.name)}" oninput="v5UpdateLocationMeta('${l.id}','name',this.value)"></div><div><label class="fl">Color</label><input type="color" value="${esc(l.color||'#10233c')}" oninput="v5UpdateLocationMeta('${l.id}','color',this.value)"></div></div>
-      <div class="v5-row3"><div><label class="fl">Ancho</label><input type="number" min="330" step="10" value="${Math.round(visualLocBounds(l).w)}" oninput="v5UpdateLocationSize('${l.id}','w',this.value)"></div><div><label class="fl">Alto</label><input type="number" min="160" step="10" value="${Math.round(visualLocBounds(l).h)}" oninput="v5UpdateLocationSize('${l.id}','h',this.value)"></div><div><label class="fl">Etiquetas enlaces</label><select onchange="vv().compactLabels=this.value==='compact'; save(); drawV5(); renderV5Panel();"><option value="compact" ${(vv().compactLabels!==false)?'selected':''}>Compactas</option><option value="full" ${(vv().compactLabels===false)?'selected':''}>Completas</option></select></div></div>
+      <div class="v5-row3"><div><label class="fl">Ancho</label><input type="number" min="330" step="10" value="${Math.round(visualLocBounds(l).w)}" oninput="v5UpdateLocationSize('${l.id}','w',this.value)"></div><div><label class="fl">Alto</label><input type="number" min="160" step="10" value="${Math.round(visualLocBounds(l).h)}" oninput="v5UpdateLocationSize('${l.id}','h',this.value)"></div><div><label class="fl">Etiquetas enlaces</label><select onchange="vv().linkLabelMode=this.value; if(this.value==='full')vv().expandedLinks={}; save(); drawV5(); renderV5Panel();"><option value="dot" ${(vv().linkLabelMode||'dot')==='dot'?'selected':''}>Punto plegado</option><option value="full" ${(vv().linkLabelMode||'dot')==='full'?'selected':''}>Siempre visibles</option></select></div></div>
       <div class="brow"><button class="btn bs bsm" onclick="removeV5Location('${l.id}')">🗑 Eliminar ubicación</button><button class="btn bs bsm" onclick="fitV5()">⊞ Centrar</button></div>
       <div class="v5-note">${v5ProMode()&&l.parentId?'Esta sububicación se dibuja anidada dentro de su ubicación superior.':'Puedes reorganizar esta ubicación libremente o usar el modo profesional para anidarla visualmente.'}</div>
       <div class="v5-list">${devsInVisualLoc(l.id).map(d=>`<div class="v5-item" onclick="selectV5('device','${d.id}')" style="cursor:pointer">🔀 <b>${esc(d.name)}</b><div class="v5-mini">${esc(d.type||'')} · ${esc(d.mgmtIp||'sin mgmt')}</div></div>`).join('')}${hostsInVisualLoc(l.id).map(h=>{const v=vByRef(h.vlanRef);return `<div class="v5-item" onclick="selectV5('host','${h.id}')" style="cursor:pointer">💻 <b>${esc(h.name)}</b><div class="v5-mini">${esc(v?('VLAN '+v.vlanId+' · '+v.name):'Sin VLAN')} · ${esc(effectiveHostIp(h))}</div></div>`;}).join('')}</div>`;
@@ -2763,8 +2789,16 @@ function renderV5Panel(){
     return;
   }}
 function selectV5(t,id){vv().sel={t,id};renderV5Panel();drawV5();}
+function v5CanvasScreenPoint(evt){const r=vcv.getBoundingClientRect();const clientX=evt.clientX ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientX) ?? 0;const clientY=evt.clientY ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientY) ?? 0;return{x:clientX-r.left,y:clientY-r.top};}
 function v5CanvasPoint(evt){const r=vcv.getBoundingClientRect();const clientX=evt.clientX ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientX) ?? 0;const clientY=evt.clientY ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientY) ?? 0;return s2v(clientX-r.left,clientY-r.top);}
-function v5PointerDown(evt){const pt=v5CanvasPoint(evt);const hit=visualHit(pt.x,pt.y);if(hit){selectV5(hit.t==='loc-resize'?'loc':hit.t,hit.id);if(hit.t==='loc-resize'){const loc=vLocById(hit.id),b=visualLocBounds(loc);vdrag={t:'loc-resize',id:hit.id,startW:b.w,startH:b.h,startX:pt.x,startY:pt.y,downX:pt.x,downY:pt.y,moved:false};}else if(hit.t==='loc'){const loc=vLocById(hit.id);const members=[...devsInVisualLoc(hit.id).map(d=>({id:d.id,pos:{...(vv().pos[d.id]||{x:0,y:0})}})),...hostsInVisualLoc(hit.id).map(h=>({id:h.id,pos:{...(vv().pos[h.id]||{x:0,y:0})}}))];vdrag={t:'loc',id:hit.id,dx:pt.x-loc.x,dy:pt.y-loc.y,startX:loc.x,startY:loc.y,members,downX:pt.x,downY:pt.y,moved:false};}else{const b=visualNodeBounds(hit.t==='device'?'dev':'host',hit.id);vdrag={t:hit.t,id:hit.id,dx:pt.x-b.x,dy:pt.y-b.y,fromLoc:hit.t==='device'?deviceVisualLoc(hit.id):hostVisualLoc(hit.id),startPos:{...(vv().pos[hit.id]||{x:b.x,y:b.y})},downX:pt.x,downY:pt.y,moved:false};}vcv.classList.add('dragging');if(vcv.setPointerCapture&&evt.pointerId!=null)vcv.setPointerCapture(evt.pointerId);}else{vv().sel=null;renderV5Panel();drawV5();}}
+function v5HitLinkHotspot(sx,sy){
+  for(const it of [...v5LinkHotspots].reverse()){
+    if(it.t==='dot'&&Math.hypot(sx-it.x,sy-it.y)<=it.r)return it;
+    if(it.t==='rect'&&sx>=it.x&&sx<=it.x+it.w&&sy>=it.y&&sy<=it.y+it.h)return it;
+  }
+  return null;
+}
+function v5PointerDown(evt){const sp=v5CanvasScreenPoint(evt);const lh=v5HitLinkHotspot(sp.x,sp.y);if(lh&&vv().linkLabelMode!=='full'){vv().expandedLinks[lh.k]=!vv().expandedLinks[lh.k];save();drawV5();renderV5Panel();return;}const pt=v5CanvasPoint(evt);const hit=visualHit(pt.x,pt.y);if(hit){selectV5(hit.t==='loc-resize'?'loc':hit.t,hit.id);if(hit.t==='loc-resize'){const loc=vLocById(hit.id),b=visualLocBounds(loc);vdrag={t:'loc-resize',id:hit.id,startW:b.w,startH:b.h,startX:pt.x,startY:pt.y,downX:pt.x,downY:pt.y,moved:false};}else if(hit.t==='loc'){const loc=vLocById(hit.id);const members=[...devsInVisualLoc(hit.id).map(d=>({id:d.id,pos:{...(vv().pos[d.id]||{x:0,y:0})}})),...hostsInVisualLoc(hit.id).map(h=>({id:h.id,pos:{...(vv().pos[h.id]||{x:0,y:0})}}))];vdrag={t:'loc',id:hit.id,dx:pt.x-loc.x,dy:pt.y-loc.y,startX:loc.x,startY:loc.y,members,downX:pt.x,downY:pt.y,moved:false};}else{const b=visualNodeBounds(hit.t==='device'?'dev':'host',hit.id);vdrag={t:hit.t,id:hit.id,dx:pt.x-b.x,dy:pt.y-b.y,fromLoc:hit.t==='device'?deviceVisualLoc(hit.id):hostVisualLoc(hit.id),startPos:{...(vv().pos[hit.id]||{x:b.x,y:b.y})},downX:pt.x,downY:pt.y,moved:false};}vcv.classList.add('dragging');if(vcv.setPointerCapture&&evt.pointerId!=null)vcv.setPointerCapture(evt.pointerId);}else{vv().sel=null;renderV5Panel();drawV5();}}
 function v5PointerMove(evt){if(!vdrag)return;const pt=v5CanvasPoint(evt);if(Math.hypot(pt.x-vdrag.downX,pt.y-vdrag.downY)>4)vdrag.moved=true;if(vdrag.t==='loc-resize'){const loc=vLocById(vdrag.id);if(loc&&vdrag.moved){loc.w=Math.max(330,vdrag.startW+(pt.x-vdrag.startX));loc.h=Math.max(160,vdrag.startH+(pt.y-vdrag.startY));drawV5();renderV5Panel();}}else if(vdrag.t==='loc'){const loc=vLocById(vdrag.id);if(loc&&vdrag.moved){const nx=pt.x-vdrag.dx,ny=pt.y-vdrag.dy,deltaX=nx-vdrag.startX,deltaY=ny-vdrag.startY;loc.x=nx;loc.y=ny;for(const m of (vdrag.members||[])){vv().pos[m.id]={x:m.pos.x+deltaX,y:m.pos.y+deltaY};}drawV5();}}else if(vdrag.moved){vv().pos[vdrag.id]={x:pt.x-vdrag.dx,y:pt.y-vdrag.dy};const over=locAt(pt.x,pt.y);vdrag.overLoc=over?over.id:null;drawV5();}}
 function v5PointerUp(evt){if(!vdrag)return;const d=vdrag;vdrag=null;vcv.classList.remove('dragging');if(d.t==='loc-resize'){save();drawV5();renderV5Panel();return;}if(d.t==='device'||d.t==='host'){if(!d.moved){vv().pos[d.id]=d.startPos||vv().pos[d.id];drawV5();renderV5Panel();return;}const targetId=d.overLoc||d.fromLoc;const over=targetId?vLocById(targetId):null;if(over){if(d.t==='device'){setDeviceVisualLoc(d.id,over.id);if(over.id!==d.fromLoc)vv().pos[d.id]=nextNodePositionInLoc(over.id,'device',d.id);}else{setHostVisualLoc(d.id,over.id);if(over.id!==d.fromLoc)vv().pos[d.id]=nextNodePositionInLoc(over.id,'host',d.id);}}save();refresh();selectV5(d.t,d.id);}else{save();drawV5();}}
 vcv.addEventListener('pointerdown',v5PointerDown);
