@@ -1067,17 +1067,14 @@ const FW_TPLS=[
 ];
 
 // ── STATE ──
-function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
+function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},visual:{pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{},locStyle:{}}};}
 let S=loadS()||defS();
 if(!S.vtp)S.vtp={domain:'',password:'',version:'2',pruning:'no',roles:{}};
 if(!S.vtp.roles)S.vtp.roles={};
-if(!S.visual)S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null};
-if(!S.visual.locs)S.visual.locs=[];
-if(!S.visual.assign)S.visual.assign={devices:{},hosts:{}};
-if(!S.visual.assign.devices)S.visual.assign.devices={};
-if(!S.visual.assign.hosts)S.visual.assign.hosts={};
+if(!S.visual)S.visual={pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{},locStyle:{}};
 if(!S.visual.pos)S.visual.pos={};
 if(!S.visual.view)S.visual.view={px:60,py:50,zoom:1};
+if(!S.visual.locStyle)S.visual.locStyle={};
 
 if(!Array.isArray(S.hostPhysicalLocations))S.hostPhysicalLocations=[];
 if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
@@ -1107,6 +1104,48 @@ function physLocById(id){ ensurePhysicalLocationModel(); return S.physicalLocati
 function physLocByName(name){ const n=cleanStr(name).toLowerCase(); if(!n) return null; ensurePhysicalLocationModel(); return S.physicalLocations.find(l=>l.name.toLowerCase()===n)||null; }
 function syncPhysicalLocationNames(){ S.hostPhysicalLocations=(S.physicalLocations||[]).map(l=>cleanStr(l.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})); }
 function physLocLabel(loc){ if(!loc) return ''; const p=loc.parentId?physLocById(loc.parentId):null; return p? `${loc.name} · ${p.name}`:loc.name; }
+function vLocStyles(){ const V=S.visual||(S.visual={}); if(!V.locStyle)V.locStyle={}; return V.locStyle; }
+function migrateLegacyVisualModel(){
+  const legacy=S.visual||{};
+  const legacyLocs=Array.isArray(legacy.locs)?legacy.locs:[];
+  const legacyAssign=legacy.assign||{devices:{},hosts:{}};
+  const hasLegacyAssign=Object.keys(legacyAssign.devices||{}).length||Object.keys(legacyAssign.hosts||{}).length;
+  if(!legacyLocs.length && !hasLegacyAssign) return;
+  ensurePhysicalLocationModel();
+  const idMap={};
+  for(const rawLoc of legacyLocs){
+    const name=cleanStr(rawLoc?.name);
+    if(!name)continue;
+    let loc=physLocByName(name);
+    if(!loc){
+      const wantedId=rawLoc.id && !physLocById(rawLoc.id) ? rawLoc.id : uid('pl');
+      loc={id:wantedId,name,type:'other',parentId:'',distance:'',notes:''};
+      S.physicalLocations.push(loc);
+    }
+    idMap[rawLoc.id]=loc.id;
+    const st=vLocStyles()[loc.id]||(vLocStyles()[loc.id]={});
+    if(rawLoc.color)st.color=rawLoc.color;
+    if(Number.isFinite(rawLoc.x))st.x=rawLoc.x;
+    if(Number.isFinite(rawLoc.y))st.y=rawLoc.y;
+    if(Number.isFinite(rawLoc.w))st.w=rawLoc.w;
+    if(Number.isFinite(rawLoc.h))st.h=rawLoc.h;
+  }
+  const mapDevice=legacyAssign.devices||{};
+  const mapHost=legacyAssign.hosts||{};
+  for(const d of (S.devices||[])){
+    const lid=idMap[mapDevice[d.id]]||mapDevice[d.id];
+    const loc=lid?physLocById(lid):null;
+    if(loc && !cleanStr(d.physicalLocation)) d.physicalLocation=loc.name;
+  }
+  for(const h of (S.hosts||[])){
+    const lid=idMap[mapHost[h.id]]||mapHost[h.id];
+    const loc=lid?physLocById(lid):null;
+    if(loc && !cleanStr(h.physicalLocation)) h.physicalLocation=loc.name;
+  }
+  syncPhysicalLocationNames();
+  delete legacy.locs;
+  delete legacy.assign;
+}
 function fillPhysicalLocationParentSel(excludeId=''){
   ensurePhysicalLocationModel();
   const sel=$('plParent'); if(!sel) return;
@@ -1133,6 +1172,7 @@ function rememberPhysicalLocation(v,meta={}){
   return loc;
 }
 function locTypeLabel(t){ return ({site:'Sede',campus:'Campus',building:'Edificio',floor:'Planta',room:'Habitación',rack:'Rack/Armario',zone:'Zona',desk:'Puesto',other:'Otra'})[t]||t||'Otra'; }
+migrateLegacyVisualModel();
 function clearPhysicalLocationForm(){ $('plEditId').value=''; $('plName').value=''; $('plType').value='building'; fillPhysicalLocationParentSel(); $('plParent').value=''; $('plDistance').value=''; $('plNotes').value=''; $('btnAddPhysLoc').textContent='➕ Añadir ubicación'; $('btnCancelPhysLocEdit').style.display='none'; }
 function startPhysicalLocationEdit(id){ const loc=physLocById(id); if(!loc) return; $('plEditId').value=id; $('plName').value=loc.name||''; $('plType').value=loc.type||'other'; fillPhysicalLocationParentSel(id); $('plParent').value=loc.parentId||''; $('plDistance').value=loc.distance||''; $('plNotes').value=loc.notes||''; $('btnAddPhysLoc').textContent='💾 Guardar ubicación'; $('btnCancelPhysLocEdit').style.display=''; }
 function renderPhysicalLocations(){
@@ -2054,7 +2094,7 @@ function renderHosts(){
     <td style="display:flex;gap:4px;"><button class="btn bs bxs" data-eh="${h.id}">✎</button><button class="btn bd bxs" data-dh="${h.id}">🗑</button></td></tr>`;}).join('')}
   </tbody></table></div>`;
   qsa('[data-eh]').forEach(b=>b.onclick=()=>startHostEdit(b.dataset.eh));
-  qsa('[data-dh]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar host?')){S.hosts=S.hosts.filter(x=>x.id!==b.dataset.dh); delete vv().assign.hosts[b.dataset.dh]; delete vv().pos[b.dataset.dh]; save();refresh();}});
+  qsa('[data-dh]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar host?')){S.hosts=S.hosts.filter(x=>x.id!==b.dataset.dh); delete vv().pos[b.dataset.dh]; save();refresh();}});
 }
 function renderIpMap(){
   const el=$('ipMap');let html='';
@@ -2370,7 +2410,7 @@ window.addEventListener('resize',()=>{if(S.step==='cfg')drawTopo();});
 // ─────────────────── V5 VISUAL OVERLAY (driven by V4 data) ───────────────────
 const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
 const V5S={locHead:36,devW:176,devH:62,hstW:196,hstH:54,colW:214};
-function vv(){return S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}});}
+function vv(){return S.visual||(S.visual={pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{},locStyle:{}});}
 function v5ProMode(){return vv().proMode!==false;}
 function setV5ProMode(on){vv().proMode=!!on;if(v5ProMode())applyProfessionalLocationLayout();save();drawV5();renderV5Panel();}
 function vLocChildren(id){return vLocs().filter(l=>(l.parentId||'')===id);}
@@ -2452,31 +2492,8 @@ Se recolocarán ${children.length} sububicación(es), ${devices.length} equipo(s
     }
   });
 
-  if(S.visual&&S.visual.assign){
-    const anotherLoc=(typeof vLocs==='function' ? vLocs().find(l=>l.id!==id) : null);
-    const fallbackVisualId=fallbackParentId || (anotherLoc?anotherLoc.id:'');
-    (S.devices||[]).forEach(d=>{
-      if(typeof deviceVisualLoc==='function' && deviceVisualLoc(d.id)===id && typeof setDeviceVisualLoc==='function'){
-        setDeviceVisualLoc(d.id,fallbackVisualId);
-      }
-    });
-    (S.hosts||[]).forEach(h=>{
-      if(typeof hostVisualLoc==='function' && hostVisualLoc(h.id)===id && typeof setHostVisualLoc==='function'){
-        setHostVisualLoc(h.id,fallbackVisualId);
-      }
-    });
-  }
-
   list.splice(locIndex,1);
-
-  if(S.visual&&Array.isArray(S.visual.locs)){
-    S.visual.locs=S.visual.locs.filter(l=>{
-      const sameId = l.id===id;
-      const sameName = cleanStr(l.name).toLowerCase()===locNameLower;
-      if(sameName && fallbackParentName && !l.parentId) l.parentId=fallbackParentId;
-      return !sameId && !sameName;
-    });
-  }
+  if(vLocStyles()[id]) delete vLocStyles()[id];
 
   if(vv().sel&&vv().sel.id===id) vv().sel=null;
 
@@ -2498,12 +2515,51 @@ Se recolocarán ${children.length} sububicación(es), ${devices.length} equipo(s
   console.log('Ubicación eliminada correctamente:',loc.name,id);
   return true;
 }
-function vLocs(){return vv().locs;}
+function defaultV5LocColor(id){
+  const pal=['#12324f','#173050','#2a1f3b','#1f3a2f','#3b2f19','#1d2c46'];
+  let h=0; for(const ch of (id||'')) h=((h<<5)-h)+ch.charCodeAt(0);
+  return pal[Math.abs(h)%pal.length];
+}
+function vLocs(){
+  ensurePhysicalLocationModel();
+  const styles=vLocStyles();
+  return (S.physicalLocations||[]).map((loc,idx)=>{
+    const st=styles[loc.id]||(styles[loc.id]={});
+    return {
+      id:loc.id,
+      name:loc.name,
+      parentId:loc.parentId||'',
+      color:st.color||defaultV5LocColor(loc.id),
+      x:Number.isFinite(st.x)?st.x:80+idx*320,
+      y:Number.isFinite(st.y)?st.y:90+((idx%2)*240),
+      w:Number.isFinite(st.w)?st.w:Math.max(330,V5S.colW*2+36),
+      h:Number.isFinite(st.h)?st.h:Math.max(170,V5S.locHead+24+72),
+    };
+  });
+}
 function vLocById(id){return vLocs().find(x=>x.id===id)||null;}
-function deviceVisualLoc(id){return vv().assign.devices[id]||'';}
-function hostVisualLoc(id){return vv().assign.hosts[id]||'';}
-function setDeviceVisualLoc(id,lid){vv().assign.devices[id]=lid;}
-function setHostVisualLoc(id,lid){vv().assign.hosts[id]=lid;}
+function deviceVisualLoc(id){
+  const d=devById(id); if(!d) return '';
+  const n=cleanStr(d.physicalLocation); if(!n) return '';
+  const loc=physLocByName(n);
+  return loc?loc.id:'';
+}
+function hostVisualLoc(id){
+  const h=S.hosts.find(x=>x.id===id); if(!h) return '';
+  const n=cleanStr(h.physicalLocation); if(!n) return '';
+  const loc=physLocByName(n);
+  return loc?loc.id:'';
+}
+function setDeviceVisualLoc(id,lid){
+  const d=devById(id); if(!d) return;
+  const loc=lid?physLocById(lid):null;
+  d.physicalLocation=loc?loc.name:null;
+}
+function setHostVisualLoc(id,lid){
+  const h=S.hosts.find(x=>x.id===id); if(!h) return;
+  const loc=lid?physLocById(lid):null;
+  h.physicalLocation=loc?loc.name:null;
+}
 function v5ApplyRefresh(sel){save();refresh();if(sel)selectV5(sel.t,sel.id);}
 function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;d[key]=val;if(key==='type'&&val==='switch'){d.internetEdge='no';d.wanIf=null;}v5ApplyRefresh({t:'device',id});}
 function v5UpdateHost(id,key,val){const h=S.hosts.find(x=>x.id===id);if(!h)return;h[key]=val;v5ApplyRefresh({t:'host',id});}
@@ -2525,31 +2581,36 @@ async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)r
 syncV5FullscreenState();}
 function ensureVisualModel(){
   const V=vv();
-  for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
-  for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
   for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
-  if(!V.locs.length){
-    V.locs=[
-      {id:uid('loc'),name:'Core / Perímetro',color:'#0f2744',x:60,y:70},
-      {id:uid('loc'),name:'Acceso / Usuarios',color:'#14263b',x:430,y:70},
-      {id:uid('loc'),name:'Servicios',color:'#2a1f3b',x:800,y:70},
-    ];
+  ensurePhysicalLocationModel();
+  for(const d of S.devices){ if(cleanStr(d.physicalLocation)) rememberPhysicalLocation(d.physicalLocation); }
+  for(const h of S.hosts){ if(cleanStr(h.physicalLocation)) rememberPhysicalLocation(h.physicalLocation); }
+  if(!(S.physicalLocations||[]).length){
+    S.physicalLocations.push(
+      {id:uid('pl'),name:'Core / Perímetro',type:'zone',parentId:'',distance:'',notes:''},
+      {id:uid('pl'),name:'Acceso / Usuarios',type:'zone',parentId:'',distance:'',notes:''},
+      {id:uid('pl'),name:'Servicios',type:'zone',parentId:'',distance:'',notes:''},
+    );
+    syncPhysicalLocationNames();
   }
-  const l0=V.locs[0]?.id||'',l1=V.locs[1]?.id||l0,l2=V.locs[2]?.id||l1;
+  const locs=vLocs();
+  const l0=locs[0]?.id||'',l1=locs[1]?.id||l0,l2=locs[2]?.id||l1;
   for(const d of S.devices){
-    if(!V.assign.devices[d.id]||!vLocById(V.assign.devices[d.id])){
+    if(!deviceVisualLoc(d.id)){
       let lid=l1;
       if(d.type==='firewall'||d.type==='router')lid=l0;
       else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
-      V.assign.devices[d.id]=lid;
+      setDeviceVisualLoc(d.id,lid);
     }
   }
   for(const h of S.hosts){
-    if(!V.assign.hosts[h.id]||!vLocById(V.assign.hosts[h.id])){
+    if(!hostVisualLoc(h.id)){
       const linkedId=hostConnectedDeviceId(h);
-      V.assign.hosts[h.id]=linkedId?deviceVisualLoc(linkedId):l1;
+      setHostVisualLoc(h.id,linkedId?deviceVisualLoc(linkedId):l1);
     }
   }
+  const validIds=new Set((S.physicalLocations||[]).map(l=>l.id));
+  for(const k of Object.keys(vLocStyles())) if(!validIds.has(k)) delete vLocStyles()[k];
 }
 function devsInVisualLoc(lid){return S.devices.filter(d=>deviceVisualLoc(d.id)===lid);}
 function hostsInVisualLoc(lid){return S.hosts.filter(h=>hostVisualLoc(h.id)===lid);}
@@ -2704,9 +2765,46 @@ function visualResizeHandleHit(wx,wy){
 function visualHit(wx,wy){const rh=visualResizeHandleHit(wx,wy);if(rh)return rh;for(const h of [...S.hosts].reverse()){const b=visualNodeBounds('host',h.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'host',id:h.id};}for(const d of [...S.devices].reverse()){const b=visualNodeBounds('dev',d.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'device',id:d.id};}for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'loc',id:loc.id};}return null;}
 function locAt(wx,wy){for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return loc;}return null;}
 function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
-function v5UpdateLocationSize(id,key,val){const l=vLocById(id);if(!l)return;const num=Math.max(key==='w'?330:160,Number(val)||0);l[key]=num;save();drawV5();}
-function addV5Location(){ensureVisualModel();const idx=vLocs().length+1;vLocs().push({id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)});save();renderV5Panel();drawV5();}
-function v5UpdateLocationMeta(id,key,val){const l=vLocById(id);if(!l)return;l[key]=val;save();drawV5();}
+function v5UpdateLocationSize(id,key,val){
+  const l=vLocById(id);if(!l)return;
+  const num=Math.max(key==='w'?330:160,Number(val)||0);
+  const st=vLocStyles()[id]||(vLocStyles()[id]={});
+  st[key]=num;
+  save();drawV5();
+}
+function addV5Location(){
+  ensureVisualModel();
+  const idx=vLocs().length+1;
+  let name='Ubicación '+idx;
+  while(physLocByName(name)) name+='*';
+  const id=uid('pl');
+  S.physicalLocations.push({id,name,type:'other',parentId:'',distance:'',notes:''});
+  vLocStyles()[id]={color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)};
+  syncPhysicalLocationNames();
+  save();renderPhysicalLocations();fillPhysicalLocationParentSel();fillHostPhysLocSel();renderV5Panel();drawV5();
+}
+function v5UpdateLocationMeta(id,key,val){
+  const l=vLocById(id);if(!l)return;
+  if(key==='name'){
+    const next=cleanStr(val);
+    if(!next) return;
+    const dup=S.physicalLocations.find(x=>x.id!==id && x.name.toLowerCase()===next.toLowerCase());
+    if(dup) return;
+    const loc=physLocById(id); if(!loc) return;
+    const old=loc.name;
+    loc.name=next;
+    (S.devices||[]).forEach(d=>{ if(cleanStr(d.physicalLocation).toLowerCase()===old.toLowerCase()) d.physicalLocation=next; });
+    (S.hosts||[]).forEach(h=>{ if(cleanStr(h.physicalLocation).toLowerCase()===old.toLowerCase()) h.physicalLocation=next; });
+    syncPhysicalLocationNames();
+    renderPhysicalLocations();fillPhysicalLocationParentSel();fillHostPhysLocSel();
+  }else if(key==='color'){
+    const st=vLocStyles()[id]||(vLocStyles()[id]={});
+    st.color=val;
+  }else if(key==='parentId'){
+    const loc=physLocById(id); if(loc) loc.parentId=val||'';
+  }
+  save();drawV5();
+}
 function renderPortEditorHtml(d){
   const vlanOptions=(selected)=>['<option value="">—</option>']
     .concat(S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}" ${selected===v.id?'selected':''}>VLAN ${v.vlanId} — ${esc(v.name)}</option>`))
