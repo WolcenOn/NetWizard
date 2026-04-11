@@ -562,6 +562,22 @@ body.v5-fs-lock{overflow:hidden}
           <button class="btn bs" id="btnCancelPortEdit" style="display:none;">Cancelar edición</button>
           <button class="btn bs" id="btnQuick24">⚡ Generar 24 GE (switch)</button>
         </div>
+        <hr class="sep"/>
+        <div class="card-t" style="font-size:12px;margin-bottom:8px;">⚡ Generación por nomenclatura</div>
+        <div class="row">
+          <div><label class="fl">Base nomenclatura</label><input id="pnBase" placeholder="GigabitEthernet0/"/></div>
+          <div><label class="fl">Medio</label><select id="pnMedia"><option value="GE">GE</option><option value="FE">FE</option><option value="SFP">SFP</option><option value="10GE">10GE</option></select></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Desde</label><input id="pnFrom" type="number" min="1" value="1"/></div>
+          <div><label class="fl">Hasta</label><input id="pnTo" type="number" min="1" value="24"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Modo</label><select id="pnMode"><option value="access">access</option><option value="trunk">trunk</option><option value="routed">routed</option></select></div>
+          <div><label class="fl">VLAN access</label><select id="pnVlan"></select></div>
+        </div>
+        <label class="fl">Descripción (opcional)</label><input id="pnDesc" placeholder="Alta masiva por nomenclatura"/>
+        <div class="brow"><button class="btn bg" id="btnPnGenerate">💾 Generar por nomenclatura</button></div>
       </div>
     </div>
     <div>
@@ -1773,6 +1789,7 @@ function updatePortRoleOpts(){
 
 $('pDev').onchange=()=>{updatePortRoleOpts();};
 $('pRole').onchange=()=>{const isSwitch=devById($('pDev').value)?.type==='switch';$('pVlanWrap').style.display=(isSwitch&&$('pRole').value==='access')?'':'none';};
+if($('pnMode'))$('pnMode').onchange=()=>{$('pnVlan').disabled=$('pnMode').value!=='access';};
 
 function clearPortForm(){ $('portEditId').value=''; $('pName').value=''; $('pDesc').value=''; $('btnAddPort').textContent='➕ Añadir'; $('btnCancelPortEdit').style.display='none'; $('pHint').textContent=''; $('pHint').className='hint'; updatePortRoleOpts(); }
 function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(d?.type==='switch'){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.role|| (p.mode==='trunk'?'lan':'routed'); } $('pDesc').value=p.desc||''; $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; $('pVlanWrap').style.display=(d?.type==='switch'&&$('pRole').value==='access')?'':'none'; navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
@@ -1819,6 +1836,28 @@ $('btnQuick24').onclick=()=>{
   }
   save();refresh();alert(`✓ ${added} puertos GE añadidos a ${d.name}.`);
 };
+$('btnPnGenerate').onclick=()=>{
+  const devId=$('pDev').value;if(!devId)return alert('Selecciona un dispositivo.');
+  const d=devById(devId);if(!d)return;
+  const base=($('pnBase').value||'').trim();
+  const from=parseInt($('pnFrom').value||'1',10);
+  const to=parseInt($('pnTo').value||'0',10);
+  const media=$('pnMedia').value||'GE';
+  const mode=$('pnMode').value||'access';
+  const accessVlanRef=$('pnVlan').value||S.vlans[0]?.id||null;
+  const desc=($('pnDesc').value||'').trim()||null;
+  if(!base)return alert('Indica la base de nomenclatura. Ej: GigabitEthernet0/');
+  if(!isFinite(from)||!isFinite(to)||from<1||to<from)return alert('Rango inválido.');
+  let added=0,updated=0;
+  for(let n=from;n<=to;n++){
+    const name=`${base}${n}`;
+    const existing=S.ports.find(p=>p.deviceId===devId&&p.name===name);
+    const payload={deviceId:devId,name,media,mode,accessVlanRef:mode==='access'?accessVlanRef:null,nativeVlanRef:null,allowedVlans:mode==='trunk'?S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b):[],desc,position:n,role:mode==='routed'?'routed':null};
+    if(existing){Object.assign(existing,payload);updated++;continue;}
+    S.ports.push({id:uid('port'),...payload});added++;
+  }
+  save();refresh();alert(`✓ Nomenclatura aplicada en ${d.name}: ${added} creados, ${updated} actualizados.`);
+};
 
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
@@ -1847,7 +1886,7 @@ $('portFiltDev').onchange=()=>renderPortsList();
 function fillVlanSels(){
   const opts=['<option value="">(ninguna)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)];
   const mgo=opts.join('');
-  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
+  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pnVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
   $('hVlan').innerHTML=['<option value="">(elige VLAN)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
   $('hFiltV').innerHTML=['<option value="">Todas</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
 }
