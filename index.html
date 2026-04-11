@@ -2134,15 +2134,16 @@ function buildLy(devId,selectedPos=null){
   const rows=seedLayoutRows(devId,total,base);
   d.layout={total,cols,base,slots:rows.map(r=>r.enabled?r.media:'EMPTY'),rows};save();
   el.innerHTML=`<div class="co co-ac"><b>Previsualización editable:</b> configura todos los puertos en tabla y luego pulsa <b>Guardar cambios</b>.</div>
-  <div class="tw"><table><thead><tr><th>#</th><th>Activo</th><th>Nombre</th><th>Medio</th><th>Modo</th><th>VLAN access</th><th>Descripción</th></tr></thead><tbody>
+  <div class="tw"><table><thead><tr><th>Dispositivo</th><th>#</th><th>Activo</th><th>Nombre</th><th>Medio</th><th>Modo</th><th>VLAN access</th><th>Descripción</th></tr></thead><tbody>
   ${rows.map((r,i)=>`<tr class="${selectedPos===i+1?'tr-sel':''}" data-r="${i}">
+    <td><span class="dev-tag" style="background:${devColor(d)};color:${txtForBg(devColor(d))};">${esc(d.name)}</span></td>
     <td class="mono">P${i+1}</td>
-    <td><input type="checkbox" data-k="enabled" data-r="${i}" ${r.enabled?'checked':''}/></td>
-    <td><input class="cell-input mono" data-k="name" data-r="${i}" value="${esc(r.name||'')}"/></td>
-    <td><select class="cell-select" data-k="media" data-r="${i}"><option value="FE" ${r.media==='FE'?'selected':''}>FE</option><option value="GE" ${r.media==='GE'?'selected':''}>GE</option><option value="SFP" ${r.media==='SFP'?'selected':''}>SFP</option><option value="10GE" ${r.media==='10GE'?'selected':''}>10GE</option></select></td>
-    <td><select class="cell-select" data-k="mode" data-r="${i}">${lyModeOptions(r.mode)}</select></td>
-    <td><select class="cell-select" data-k="accessVlanRef" data-r="${i}">${lyVlanOptions(r.accessVlanRef||null)}</select></td>
-    <td><input class="cell-input" data-k="desc" data-r="${i}" value="${esc(r.desc||'')}"/></td>
+    <td><input id="ly-enabled-${i}" type="checkbox" data-k="enabled" data-r="${i}" ${r.enabled?'checked':''}/></td>
+    <td><input id="ly-name-${i}" class="cell-input mono" data-k="name" data-r="${i}" value="${esc(r.name||'')}"/></td>
+    <td><select id="ly-media-${i}" class="cell-select" data-k="media" data-r="${i}"><option value="FE" ${r.media==='FE'?'selected':''}>FE</option><option value="GE" ${r.media==='GE'?'selected':''}>GE</option><option value="SFP" ${r.media==='SFP'?'selected':''}>SFP</option><option value="10GE" ${r.media==='10GE'?'selected':''}>10GE</option></select></td>
+    <td><select id="ly-mode-${i}" class="cell-select" data-k="mode" data-r="${i}">${lyModeOptions(r.mode)}</select></td>
+    <td><select id="ly-accessVlanRef-${i}" class="cell-select" data-k="accessVlanRef" data-r="${i}">${lyVlanOptions(r.accessVlanRef||null)}</select></td>
+    <td><input id="ly-desc-${i}" class="cell-input" data-k="desc" data-r="${i}" value="${esc(r.desc||'')}"/></td>
   </tr>`).join('')}
   </tbody></table></div>`;
   const sync=(i,k,v)=>{d.layout.rows[i][k]=v;d.layout.slots=d.layout.rows.map(x=>x.enabled?x.media:'EMPTY');save();};
@@ -2153,9 +2154,26 @@ function buildLy(devId,selectedPos=null){
     if(k==='media'&&d.vendorOs&&!d.layout.rows[i].name)d.layout.rows[i].name=buildPName(d.vendorOs,v||'GE',i+1,d.layout.base||'');
   });
 }
+function collectLyRowsFromTable(devId){
+  const d=devById(devId);if(!d?.layout?.rows?.length)return d?.layout?.rows||[];
+  const rows=d.layout.rows.map((r,i)=>{
+    const g=(k)=>$(`ly-${k}-${i}`);
+    return{
+      enabled:!!g('enabled')?.checked,
+      name:(g('name')?.value||'').trim(),
+      media:g('media')?.value||'GE',
+      mode:g('mode')?.value||'access',
+      accessVlanRef:g('accessVlanRef')?.value||null,
+      desc:(g('desc')?.value||'').trim()||null,
+      role:r.role||null,
+    };
+  });
+  d.layout.rows=rows;d.layout.slots=rows.map(x=>x.enabled?x.media:'EMPTY');save();
+  return rows;
+}
 function applyLy(devId){
   const d=devById(devId);if(!d?.layout?.rows?.length)return alert('Configura el layout primero.');
-  const mode=$('lyMode').value;const rows=d.layout.rows;
+  const mode=$('lyMode').value;const rows=collectLyRowsFromTable(devId);
   if(mode==='replace'){const old=S.ports.filter(p=>p.deviceId===devId).map(p=>p.id);S.links=S.links.filter(l=>!old.includes(l.aPortId)&&!old.includes(l.bPortId));S.hosts=S.hosts.map(h=>{if(old.includes(h.portRef))h.portRef=null;return h;});S.ports=S.ports.filter(p=>p.deviceId!==devId);}
   const existing=portsByDev(devId);
   for(let i=0;i<rows.length;i++){
