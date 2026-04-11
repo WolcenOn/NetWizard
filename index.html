@@ -556,6 +556,29 @@ body.v5-fs-lock{overflow:hidden}
           <button class="btn bs" id="btnQuick24">⚡ Generar 24 GE (switch)</button>
         </div>
       </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">🧩 Generación en bloque por nomenclatura</div>
+        <div class="row">
+          <div><label class="fl">Raíz del puerto</label><input id="pbRoot" placeholder="GigabitEthernet"/></div>
+          <div><label class="fl">Inicio</label><input id="pbStart" placeholder="0/0"/></div>
+          <div><label class="fl">Cantidad</label><input id="pbCount" type="number" min="1" max="256" value="8"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Medio</label><select id="pbMedia"><option value="GE">GE</option><option value="FE">FE</option><option value="SFP">SFP</option><option value="10GE">10GE</option></select></div>
+          <div><label class="fl">Modo por defecto</label><select id="pbMode"><option value="access">access</option><option value="trunk">trunk</option><option value="routed">routed</option></select></div>
+          <div><label class="fl">VLAN access (def.)</label><select id="pbVlan"></select></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">VLANs trunk (def.)</label><input id="pbAllowed" placeholder="10,20,30"/></div>
+          <div><label class="fl">Descripción base</label><input id="pbDesc" placeholder="Usuario / Uplink / AP"/></div>
+        </div>
+        <div class="brow">
+          <button class="btn bs" id="btnPreviewBulkPorts">👁 Previsualizar</button>
+          <button class="btn bp" id="btnApplyBulkPorts">✔ Crear en bloque</button>
+        </div>
+        <div class="hint" id="pbHint">Define formato, genera previsualización y ajusta los parámetros en tabla antes de crear.</div>
+        <div id="pbPreview" style="margin-top:8px;"></div>
+      </div>
     </div>
     <div>
       <div class="card">
@@ -1754,6 +1777,7 @@ function updatePortRoleOpts(){
   $('pVlanWrap').style.display=(!isRF&&$('pRole').value==='access')?'':'none';
   // Set placeholder
   if(d){$('pName').placeholder=d.vendorOs==='juniper_junos'?'ge-0/0/0':d.vendorOs==='aruba_aoss'?'1/1/1':d.type==='switch'?'GigabitEthernet0/1':'GigabitEthernet0/0';}
+  if(d && !$('pbRoot').value)$('pbRoot').value=inferBulkRootForDevice(d);
   // Update hint
   $('pHint').textContent=!d?'':`Dispositivo: ${d.name} (${d.type}) — vendor: ${d.vendorOs||'sin asignar'}`;
 }
@@ -1807,6 +1831,101 @@ $('btnQuick24').onclick=()=>{
   save();refresh();alert(`✓ ${added} puertos GE añadidos a ${d.name}.`);
 };
 
+let bulkPortRows=[];
+function parsePortStartToken(token){
+  const m=(token||'').trim().match(/^(.*?)(\d+)$/);
+  if(!m)return null;
+  return {prefix:m[1],start:parseInt(m[2],10)};
+}
+function inferBulkRootForDevice(d){
+  if(!d)return 'GigabitEthernet';
+  if(d.vendorOs==='juniper_junos')return 'ge-';
+  if(d.vendorOs==='aruba_aoss')return '';
+  return 'GigabitEthernet';
+}
+function previewBulkPorts(){
+  const devId=$('pDev').value;
+  const d=devById(devId);
+  if(!d)return alert('Selecciona un dispositivo.');
+  if(d.type!=='switch')return alert('La creación en bloque por nomenclatura está pensada para switches.');
+  const root=($('pbRoot').value||'').trim();
+  const startRaw=($('pbStart').value||'').trim();
+  const count=Math.max(1,Math.min(256,parseInt($('pbCount').value||'0',10)||0));
+  const parsed=parsePortStartToken(startRaw);
+  if(!root&&d.vendorOs!=='aruba_aoss')return alert('Define una raíz de nombre (ej. GigabitEthernet).');
+  if(!parsed)return alert('Inicio inválido. Ejemplos: 0/0, 1/1, 1/0/0.');
+  const media=$('pbMedia').value||'GE';
+  const mode=$('pbMode').value||'access';
+  const accessVlanRef=$('pbVlan').value||S.vlans[0]?.id||null;
+  const allowedVlans=parseAllowed($('pbAllowed').value||'');
+  const descBase=($('pbDesc').value||'').trim();
+  const defaultAllowed=allowedVlans.length?allowedVlans:S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);
+  bulkPortRows=[];
+  for(let i=0;i<count;i++){
+    const suffix=`${parsed.prefix}${parsed.start+i}`;
+    bulkPortRows.push({
+      name:`${root}${suffix}`,
+      media,
+      mode,
+      accessVlanRef:mode==='access'?accessVlanRef:null,
+      allowedVlans:mode==='trunk'?defaultAllowed.slice():[],
+      desc:descBase?`${descBase} ${i+1}`:null,
+      position:null
+    });
+  }
+  renderBulkPreview();
+}
+function renderBulkPreview(){
+  const el=$('pbPreview');
+  if(!bulkPortRows.length){el.innerHTML='';return;}
+  const vopts=['<option value="">(sin VLAN)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
+  el.innerHTML=`<div class="tw"><table><thead><tr><th>#</th><th>Nombre final</th><th>Modo</th><th>VLAN access</th><th>VLANs trunk</th><th>Descripción</th></tr></thead><tbody>
+    ${bulkPortRows.map((r,i)=>`<tr>
+      <td>${i+1}</td>
+      <td class="mono"><b>${esc(r.name)}</b></td>
+      <td><select data-bpm="${i}" style="font-size:11px;padding:4px;"><option value="access" ${r.mode==='access'?'selected':''}>access</option><option value="trunk" ${r.mode==='trunk'?'selected':''}>trunk</option><option value="routed" ${r.mode==='routed'?'selected':''}>routed</option></select></td>
+      <td><select data-bpv="${i}" style="font-size:11px;padding:4px;">${vopts}</select></td>
+      <td><input data-bpa="${i}" value="${esc((r.allowedVlans||[]).join(','))}" placeholder="10,20,30" style="font-size:11px;padding:4px;"/></td>
+      <td><input data-bpd="${i}" value="${esc(r.desc||'')}" placeholder="Descripción" style="font-size:11px;padding:4px;"/></td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+  bulkPortRows.forEach((r,i)=>{const sv=el.querySelector(`[data-bpv="${i}"]`);if(sv)sv.value=r.accessVlanRef||'';});
+  el.querySelectorAll('[data-bpm]').forEach(s=>s.onchange=()=>{const i=+s.dataset.bpm;bulkPortRows[i].mode=s.value;if(s.value!=='access')bulkPortRows[i].accessVlanRef=null;if(s.value!=='trunk')bulkPortRows[i].allowedVlans=[];});
+  el.querySelectorAll('[data-bpv]').forEach(s=>s.onchange=()=>{bulkPortRows[+s.dataset.bpv].accessVlanRef=s.value||null;});
+  el.querySelectorAll('[data-bpa]').forEach(inp=>inp.oninput=()=>{bulkPortRows[+inp.dataset.bpa].allowedVlans=parseAllowed(inp.value||'');});
+  el.querySelectorAll('[data-bpd]').forEach(inp=>inp.oninput=()=>{bulkPortRows[+inp.dataset.bpd].desc=(inp.value||'').trim()||null;});
+}
+function applyBulkPorts(){
+  const devId=$('pDev').value;
+  const d=devById(devId);
+  if(!d)return alert('Selecciona un dispositivo.');
+  if(!bulkPortRows.length)return alert('Primero genera la previsualización.');
+  let added=0,skipped=0;
+  for(const r of bulkPortRows){
+    if(S.ports.some(p=>p.deviceId===devId&&p.name===r.name)){skipped++;continue;}
+    S.ports.push({
+      id:uid('port'),
+      deviceId:devId,
+      name:r.name,
+      media:r.media||'GE',
+      mode:r.mode||'access',
+      accessVlanRef:r.mode==='access'?(r.accessVlanRef||null):null,
+      nativeVlanRef:null,
+      allowedVlans:r.mode==='trunk'?(r.allowedVlans||[]):[],
+      desc:r.desc||null,
+      position:r.position??null,
+      role:null
+    });
+    added++;
+  }
+  save();refresh();
+  $('pbHint').textContent=`✓ Creación en bloque completada en ${d.name}: ${added} creados${skipped?`, ${skipped} omitidos por duplicado`:''}.`;
+  $('pbHint').className='hint ok';
+}
+
+$('btnPreviewBulkPorts').onclick=()=>previewBulkPorts();
+$('btnApplyBulkPorts').onclick=()=>applyBulkPorts();
+
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
   let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId),va=vByRef(a.accessVlanRef),vb=vByRef(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
@@ -1833,7 +1952,7 @@ $('portFiltDev').onchange=()=>renderPortsList();
 function fillVlanSels(){
   const opts=['<option value="">(ninguna)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)];
   const mgo=opts.join('');
-  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
+  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pbVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
   $('hVlan').innerHTML=['<option value="">(elige VLAN)</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
   $('hFiltV').innerHTML=['<option value="">Todas</option>',...S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>`<option value="${v.id}">${v.vlanId} — ${esc(v.name)}</option>`)].join('');
 }
