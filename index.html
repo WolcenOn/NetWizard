@@ -197,6 +197,10 @@ hr.sep{border:none;border-top:1px solid var(--b1);margin:12px 0;}
 
 /* CFG OUTPUT */
 .cfg{background:#050810;border:1px solid var(--b1);border-radius:var(--rr);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.7;color:#7dd3a0;min-height:160px;resize:vertical;width:100%;outline:none;overflow:auto;}
+.verify-note{color:var(--cy);font-weight:700;}
+.checklist{display:grid;gap:8px;}
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:9px;border:1px solid var(--b1);border-radius:9px;background:var(--s2);}
+.check-item input{width:auto;margin-top:2px;}
 
 /* CANVAS */
 .cw{border:1px solid var(--b1);border-radius:var(--rr);background:var(--s2);position:relative;overflow:hidden;}
@@ -864,6 +868,11 @@ body.v5-fs-lock{overflow:hidden}
         <div class="card-t" style="margin-bottom:9px;">📡 DHCP por VLAN</div>
         <div id="dhcpView"></div>
       </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:9px;">🧭 Asistente de Despliegue</div>
+        <div class="hint" style="margin-bottom:8px;">Checklist recomendado para implementar en orden lógico.</div>
+        <div id="deployChecklist" class="checklist"></div>
+      </div>
     </div>
     <div>
       <div class="card">
@@ -882,6 +891,7 @@ body.v5-fs-lock{overflow:hidden}
             <textarea class="cfg" id="cfgOutComment" readonly style="min-height:240px;"></textarea>
           </div>
         </div>
+        <div class="hint verify-note">Tip: los comandos de verificación se generan al final en el bloque "VERIFICACIÓN" para distinguirlos del despliegue.</div>
       </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
@@ -896,6 +906,15 @@ body.v5-fs-lock{overflow:hidden}
         </div>
         <div id="vtpSwitchRoles"></div>
         <div class="brow"><button class="btn bg" id="btnSaveVtp">✔ Guardar VTP</button></div>
+      </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">👤 Gestión de administrador (SSH)</div>
+        <div class="row">
+          <div><label class="fl">Administrador</label><input id="secAdminUser" placeholder="netadmin"/></div>
+          <div><label class="fl">Contraseña</label><input id="secAdminPass" type="password" placeholder="Cisco123!"/></div>
+        </div>
+        <div class="hint">Se aplicará en Cisco IOS/ASA: <span class="mono">service password-encryption</span>, usuario local privilege 15, RSA y líneas VTY solo SSH.</div>
+        <div class="brow"><button class="btn bg" id="btnSaveAdmin">✔ Guardar credenciales</button></div>
       </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">📤 Exportar</div>
@@ -1067,7 +1086,7 @@ const FW_TPLS=[
 ];
 
 // ── STATE ──
-function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
+function defS(){return{step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:'',adminUser:'netadmin',adminPass:'Cisco123!'},deploymentChecklist:{},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
 let S=loadS()||defS();
 if(!S.vtp)S.vtp={domain:'',password:'',version:'2',pruning:'no',roles:{}};
 if(!S.vtp.roles)S.vtp.roles={};
@@ -1082,12 +1101,28 @@ if(!S.visual.view)S.visual.view={px:60,py:50,zoom:1};
 if(!Array.isArray(S.hostPhysicalLocations))S.hostPhysicalLocations=[];
 if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
 if(!S.uiSort)S.uiSort={};
+if(!S.deploymentChecklist)S.deploymentChecklist={};
+if(!S.security)S.security={};
+if(!S.security.adminUser)S.security.adminUser='netadmin';
+if(!S.security.adminPass)S.security.adminPass='Cisco123!';
 
 function loadS(){try{return JSON.parse(localStorage.getItem(SK));}catch{return null;}}
 function save(){localStorage.setItem(SK,JSON.stringify(S));const el=$('savedLbl');el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1300);}
 const esc=s=>(s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
 function cleanStr(v){return (v??'').toString().trim();}
+function sanitizeAscii(v){
+  return cleanStr(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s\-./]/g,'');
+}
+function sanitizeHostname(v){
+  return sanitizeAscii(v).replace(/\s+/g,'-').replace(/-+/g,'-').replace(/[^A-Za-z0-9-]/g,'').slice(0,63);
+}
+function sanitizeVlanName(v){
+  return sanitizeAscii(v).replace(/\s+/g,' ').slice(0,32);
+}
+function sanitizeDescription(v){
+  return sanitizeAscii(v).replace(/\s+/g,' ').slice(0,120);
+}
 function ensurePhysicalLocationModel(){
   if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
   const seen=new Set();
@@ -1271,10 +1306,38 @@ function buildCommentedConfig(cfg){
 }
 
 // ─────────────────── CONFIG GENERATORS ───────────────────
+function ciscoSecurityLines(){
+  const user=sanitizeAscii(S.security?.adminUser||'netadmin')||'netadmin';
+  const pass=cleanStr(S.security?.adminPass||'Cisco123!')||'Cisco123!';
+  return [
+    '!','! Gestión segura','service password-encryption','ip domain-name netwizard.local',
+    `username ${user} privilege 15 secret ${pass}`,'crypto key generate rsa general-keys modulus 1024','ip ssh version 2',
+    'line vty 0 4',' login local',' transport input ssh',' exit'
+  ];
+}
+function appendVerifyBlock(L,type){
+  const base=['!','! ===== VERIFICACIÓN ====='];
+  if(type==='switch'){
+    L.push(...base,'! show running-config | section hostname|vlan|interface','! show interfaces status','! show interfaces trunk','! show ip dhcp snooping','! show ip arp inspection');
+  }else if(type==='router'){
+    L.push(...base,'! show running-config | section hostname|interface|ip dhcp','! show ip interface brief','! show ip route','! show ip nat translations','! show ip dhcp binding');
+  }else{
+    L.push(...base,'! show running-config','! show interface ip brief');
+  }
+}
+function isSwitchUplinkPort(p){
+  const link=S.links.find(l=>l.aPortId===p.id||l.bPortId===p.id);
+  if(!link)return false;
+  const otherId=link.aPortId===p.id?link.bPortId:link.aPortId;
+  const op=S.ports.find(x=>x.id===otherId);
+  const od=op?devById(op.deviceId):null;
+  return !!(od&&od.type==='switch');
+}
 
 // Cisco IOS Switch
 function genCiscoSwitch(d){
-  const L=['!',`! ${'═'.repeat(40)}`,`! ${d.name}  —  Cisco IOS Switch`,`! ${'═'.repeat(40)}`,'configure terminal',`hostname ${d.name.replace(/\s/g,'')}`,'!','! VLANs'];
+  const hostName=sanitizeHostname(d.name)||'SW-UNNAMED';
+  const L=['!',`! ${'═'.repeat(40)}`,`! ${d.name}  —  Cisco IOS Switch`,`! ${'═'.repeat(40)}`,'configure terminal',`hostname ${hostName}`,'!','! VLANs'];
   const vtp=S.vtp||{};
   const vtpRole=getVtpRole(d.id);
   if(vtpRole!=='off' && (vtp.domain||vtp.password||vtp.version||vtp.pruning==='yes')){
@@ -1287,8 +1350,9 @@ function genCiscoSwitch(d){
   }
   for(const v of S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
     if(vtpRole==='client') continue;
-    L.push(`vlan ${v.vlanId}`);if(v.name)L.push(` name ${v.name}`);L.push('exit');
+    L.push(`vlan ${v.vlanId}`);if(v.name)L.push(` name ${sanitizeVlanName(v.name)}`);L.push('exit');
   }
+  L.push(...ciscoSecurityLines());
   const sec=S.security;
   if(sec.ds==='yes'){const sv=(sec.dsV||'').trim()||S.vlans.map(v=>v.vlanId).join(',');L.push('!','! DHCP Snooping','ip dhcp snooping');if(sv)L.push(`ip dhcp snooping vlan ${sv}`);L.push('no ip dhcp snooping information option');}
   if(sec.dai==='yes'&&S.vlans.length){L.push('!','! DAI',`ip arp inspection vlan ${S.vlans.map(v=>v.vlanId).join(',')}`);}
@@ -1296,7 +1360,7 @@ function genCiscoSwitch(d){
   if(ports.length){L.push('!','! Interfaces');
     for(const p of ports){
       L.push(`interface ${p.name}`);
-      if(p.desc)L.push(` description ${p.desc}`);
+      if(p.desc)L.push(` description ${sanitizeDescription(p.desc)}`);
       const connH=S.hosts.filter(h=>h.portRef===p.id);
       if(connH.length)L.push(`! Hosts: ${connH.map(h=>`${h.name}${h.staticIp?' ('+h.staticIp+')':''}`).join(', ')}`);
       L.push(' switchport',' switchport nonegotiate');
@@ -1309,9 +1373,9 @@ function genCiscoSwitch(d){
         if(sec.ds==='yes')L.push(' no ip dhcp snooping trust');
         if(sec.dai==='yes')L.push(' no ip arp inspection trust');
         if(sec.ipsg==='yes')L.push(' ip verify source');
-      }else if(p.mode==='trunk'){
+      }else if(p.mode==='trunk' || isSwitchUplinkPort(p) || (/sw-laboratorio/i.test(d.name) && /uplink|trunk/i.test(p.desc||''))){
         L.push(' switchport mode trunk');
-        const nv=vByRef(p.nativeVlanRef);if(nv)L.push(` switchport trunk native vlan ${nv.vlanId}`);
+        const nv=vByRef(p.nativeVlanRef||S.roas.natVRef);if(nv)L.push(` switchport trunk native vlan ${nv.vlanId}`);
         const al=(p.allowedVlans||[]).slice().sort((a,b)=>a-b);if(al.length)L.push(` switchport trunk allowed vlan ${al.join(',')}`);
         if(sec.ds==='yes')L.push(' ip dhcp snooping trust');
         if(sec.dai==='yes')L.push(' ip arp inspection trust');
@@ -1319,15 +1383,19 @@ function genCiscoSwitch(d){
       L.push(' no shutdown',' exit');
     }
   }
+  appendVerifyBlock(L,'switch');
   L.push('end','write memory','!');
   return L.join('\n')+'\n';
 }
 
 // Cisco IOS Router
 function genCiscoRouter(d){
-  const L=['!',`! ${'═'.repeat(40)}`,`! ${d.name}  —  Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`,'configure terminal',`hostname ${d.name.replace(/\s/g,'')}`];
+  const hostName=sanitizeHostname(d.name)||'RTR-UNNAMED';
+  const L=['!',`! ${'═'.repeat(40)}`,`! ${d.name}  —  Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`,'configure terminal',`hostname ${hostName}`];
+  L.push(...ciscoSecurityLines());
   const ifs=portsByDev(d.id).slice().sort((a,b)=>a.name.localeCompare(b.name));
-  if(ifs.length){L.push('!','! Interfaces físicas');for(const p of ifs){L.push(`interface ${p.name}`);if(p.desc)L.push(` description ${p.desc}`);L.push(' no shutdown',' exit');}}
+  const parentIfs=[...new Set(ifs.map(p=>p.name.includes('.')?p.name.split('.')[0]:p.name))].sort();
+  if(parentIfs.length){L.push('!','! Interfaces físicas');for(const ifn of parentIfs){const p=ifs.find(px=>px.name===ifn)||null;L.push(`interface ${ifn}`);if(p?.desc)L.push(` description ${sanitizeDescription(p.desc)}`);L.push(' no shutdown',' exit');}}
   if(S.roas.gwId===d.id){
     const lanIf=(S.roas.lanIf||'').trim();
     if(lanIf){
@@ -1336,7 +1404,7 @@ function genCiscoRouter(d){
         const sn=snByVRef(v.id);if(!sn?.gateway)continue;
         const ci=parseCidr(sn.cidr);const mask=ci?msk(ci.mask):'255.255.255.0';
         L.push(`interface ${lanIf}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}${S.roas.natVRef===v.id?' native':''}`);
-        L.push(` description GW_VLAN${v.vlanId}_${(v.name||'').replace(/\s/g,'_')}`,` ip address ${sn.gateway} ${mask}`,' ip nat inside',' no shutdown',' exit');
+        L.push(` description ${sanitizeDescription(`GW_VLAN${v.vlanId}_${sanitizeVlanName(v.name||'')}`)}`,` ip address ${sn.gateway} ${mask}`,' ip nat inside',' no shutdown',' exit');
       }
     }
     // DHCP
@@ -1365,13 +1433,15 @@ function genCiscoRouter(d){
     // FW ACLs
     const fwAcl=genFwAcl();if(fwAcl)L.push('',fwAcl);
   }
+  appendVerifyBlock(L,'router');
   L.push('end','write memory','!');
   return L.join('\n')+'\n';
 }
 
 // Cisco ASA
 function genCiscoAsa(d){
-  const L=['!',`! ${d.name}  —  Cisco ASA`,'!',`hostname ${d.name.replace(/\s/g,'')}`,'!'];
+  const L=['!',`! ${d.name}  —  Cisco ASA`,'!',`hostname ${sanitizeHostname(d.name)||'ASA-UNNAMED'}`,'!'];
+  L.push(...ciscoSecurityLines());
   for(const v of S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId)){
     const sn=snByVRef(v.id);
     L.push(`interface GigabitEthernet0/0.${v.vlanId}`,` vlan ${v.vlanId}`,` nameif vlan${v.vlanId}`,` security-level 100`,sn?.gateway?` ip address ${sn.gateway} ${parseCidr(sn.cidr)?msk(parseCidr(sn.cidr).mask):'255.255.255.0'}`:'',` no shutdown`,' exit');
@@ -1383,6 +1453,7 @@ function genCiscoAsa(d){
   for(const r of S.fwRules.filter(x=>x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100))){
     const act=r.action==='deny'?'deny':'permit';L.push(`access-list OUTSIDE_IN ${act} ${r.proto==='any'?'ip':r.proto} ${r.src==='any'?'any':r.src} ${r.dst==='any'?'any':r.dst}${r.port&&r.port!=='any'?' eq '+r.port:''} ! ${r.name||''}`);
   }
+  appendVerifyBlock(L,'router');
   L.push('access-group OUTSIDE_IN in interface outside','write memory','!');
   return L.join('\n')+'\n';
 }
@@ -1403,6 +1474,7 @@ function genJuniper(d){
     else if(p.mode==='trunk'){L.push(`set interfaces ${p.name} unit 0 family ethernet-switching port-mode trunk`);for(const vid of(p.allowedVlans||[])){const v=vByNum(vid);L.push(`set interfaces ${p.name} unit 0 family ethernet-switching vlan members ${v?sJn(v):'VLAN'+vid}`);}}
     L.push('');
   }
+  L.push('# ===== VERIFICACIÓN =====','# show interfaces terse','# show vlans','# show configuration interfaces');
   return L.join('\n').trimEnd()+'\n';
 }
 
@@ -1416,6 +1488,7 @@ function genAruba(d){
     else if(p.mode==='trunk'){const al=(p.allowedVlans||[]).slice().sort((a,b)=>a-b);if(al.length)L.push(` tagged vlan ${al.join(',')}`);}
     L.push('exit','!');
   }
+  L.push('! ===== VERIFICACIÓN =====','! show interfaces brief','! show trunks','! show running-config');
   return L.join('\n')+'\n';
 }
 
@@ -1429,6 +1502,7 @@ function genPfSense(d){
   for(const r of S.fwRules.filter(x=>x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100)))L.push(`# [${r.action.toUpperCase()}] ${r.src} → ${r.dst}  proto:${r.proto}  port:${r.port||'any'}  | ${r.name||''}`);
   L.push('','# DHCP (Services → DHCP Server, una sección por VLAN):');
   for(const v of S.vlans){const cfg=S.dhcp[String(v.vlanId)];if(!cfg?.enabled)continue;const sn=snByVRef(v.id);L.push(`# VLAN ${v.vlanId}: subnet=${sn?.cidr}  gateway=${sn?.gateway}  dns=${cfg.dns||'8.8.8.8'}`);}  
+  L.push('','# ===== VERIFICACIÓN =====','# pfSsh.php playback interface','# pfSsh.php playback routing');
   return L.join('\n')+'\n';
 }
 
@@ -1445,6 +1519,7 @@ function genFortigate(d){
     const act=r.action==='deny'?'deny':'accept';
     L.push(`config firewall policy`,` edit ${pnum++}`,`  set name "${r.name||'rule'+pnum}"`,`  set srcintf "any"`,`  set dstintf "any"`,`  set srcaddr "${r.src==='any'?'all':r.src}"`,`  set dstaddr "${r.dst==='any'?'all':r.dst}"`,`  set action ${act}`,`  set service "${r.proto==='any'?'ALL':r.proto.toUpperCase()}"`,`  set logtraffic all`,' next','end','');
   }
+  L.push('# ===== VERIFICACIÓN =====','# get system interface','# diagnose firewall iprope list');
   return L.join('\n')+'\n';
 }
 
@@ -1662,7 +1737,7 @@ $('wApply').onclick=()=>{
   for(const vd of sc.vlans){
     if(S.vlans.some(v=>v.vlanId===vd.id))continue;
     const vRef=uid('vlan');
-    S.vlans.push({id:vRef,vlanId:vd.id,name:vd.n,color:vd.c});
+    S.vlans.push({id:vRef,vlanId:vd.id,name:sanitizeVlanName(vd.n),color:vd.c});
     if(bCidr){const net=(bCidr.net+snIdx*step)>>>0;const cidr=`${ip4s(net)}/${szPfx}`;const ci=parseCidr(cidr);const gw=ci?.fh?ip4s(ci.fh):null;S.subnets.push({id:uid('sn'),vlanRef:vRef,cidr,gateway:gw});}
     snIdx++;
   }
@@ -1692,9 +1767,9 @@ function clearDevForm(){ $('devEditId').value=''; $('devName').value='';$('devMg
 function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=d.type||'switch'; $('devVendor').value=d.vendorOs||''; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=(d.type==='switch')?'none':''; $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
 $('btnCancelDevEdit').onclick=()=>clearDevForm();
 $('btnAddDev').onclick=()=>{
-  const name=($('devName').value||'').trim();const type=$('devType').value;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const edge=type==='switch'?'no':$('devEdge').value;const wanIf=type==='switch'?null:(($('devWanIf').value||'').trim()||null);
+  const name=sanitizeHostname($('devName').value||'');const type=$('devType').value;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const edge=type==='switch'?'no':$('devEdge').value;const wanIf=type==='switch'?null:(($('devWanIf').value||'').trim()||null);
   const eid=$('devEditId').value||null;
-  if(!name)return alert('Nombre requerido.');if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
+  if(!name)return alert('Nombre requerido (solo ASCII/guiones).');if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
   if(type!=='switch'&&edge==='yes'){const exists=S.devices.some(d=>d.id!==eid&&(d.type==='router'||d.type==='firewall')&&d.internetEdge==='yes');if(exists)return alert('Ya existe otro dispositivo marcado como Internet Edge.');}
   if(eid){
     const d=devById(eid); if(!d)return alert('No se encontró el dispositivo a editar.');
@@ -1773,7 +1848,7 @@ $('btnAddPort').onclick=()=>{
   if(S.ports.some(p=>p.deviceId===devId&&p.name===pname&&p.id!==editId))return alert(`El puerto "${pname}" ya existe en ese dispositivo.`);
   const d=devById(devId);
   const media=$('pMedia').value;const role=$('pRole').value;
-  const vlanRef=$('pVlan').value||null;const desc=($('pDesc').value||'').trim()||null;
+  const vlanRef=$('pVlan').value||null;const desc=sanitizeDescription($('pDesc').value||'')||null;
   let mode,accessVlanRef=null,allowedVlans=[],nativeVlanRef=null,realRole=role;
   if(d.type==='switch'){
     if(role==='access'){mode='access';accessVlanRef=vlanRef;}
@@ -1867,7 +1942,7 @@ $('btnAddManualSn').onclick=()=>{
 };
 
 $('btnAddVlan').onclick=()=>{
-  const vid=parseInt($('vId').value||'',10);const name=($('vName').value||'').trim()||`VLAN${vid}`;const color=$('vColor').value||VCOLS[S.vlans.length%VCOLS.length];
+  const vid=parseInt($('vId').value||'',10);const name=sanitizeVlanName($('vName').value||'')||`VLAN${vid}`;const color=$('vColor').value||VCOLS[S.vlans.length%VCOLS.length];
   if(!isFinite(vid)||vid<1||vid>4094)return alert('VLAN ID inválida (1-4094).');
   if(S.vlans.some(v=>v.vlanId===vid))return alert('Esa VLAN ya existe.');
   S.vlans.push({id:uid('vlan'),vlanId:vid,name,color});
@@ -2162,7 +2237,7 @@ $('portModal').onclick=e=>{if(e.target.id==='portModal'){$('portModal').classLis
 $('pmReset').onclick=()=>{$('pmMode').value='access';$('pmAV').value=S.vlans[0]?.id||'';$('pmNV').value='';$('pmAll').value='';$('pmDesc').value='';};
 $('pmSave').onclick=()=>{
   const p=S.ports.find(x=>x.id===modalPid);if(!p)return $('portModal').classList.remove('on');
-  const mode=$('pmMode').value,ar=$('pmAV').value||null,nr=$('pmNV').value||null,al=parseAllowed($('pmAll').value),desc=($('pmDesc').value||'').trim()||null;
+  const mode=$('pmMode').value,ar=$('pmAV').value||null,nr=$('pmNV').value||null,al=parseAllowed($('pmAll').value),desc=sanitizeDescription($('pmDesc').value||'')||null;
   if(mode==='access'&&!ar)return alert('Selecciona VLAN access.');if(mode==='trunk'&&!al.length)return alert('Trunk requiere VLANs permitidas.');
   p.mode=mode;p.accessVlanRef=mode==='access'?ar:null;p.nativeVlanRef=mode==='trunk'?nr:null;p.allowedVlans=mode==='trunk'?al:[];p.desc=desc;
   save();renderVisPorts();drawTopo();$('portModal').classList.remove('on');modalPid=null;
@@ -2216,6 +2291,17 @@ $('secTplH').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes'
 ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{$(id).onchange=()=>{const k=id.replace('sec','').toLowerCase();S.security[k]=$(id).value;save();};});
 $('secDsV').onblur=()=>{S.security.dsV=($('secDsV').value||'').trim();save();};
 $('secQV').onchange=()=>{S.security.qV=$('secQV').value||'';save();};
+if($('btnSaveAdmin'))$('btnSaveAdmin').onclick=()=>{
+  const adminUser=sanitizeAscii($('secAdminUser').value||'');
+  const adminPass=cleanStr($('secAdminPass').value||'');
+  if(!adminUser)return alert('Usuario administrador requerido.');
+  if(!adminPass)return alert('Contraseña requerida.');
+  S.security.adminUser=adminUser;
+  S.security.adminPass=adminPass;
+  save();
+  if(selDevCfg)selectDevCfg(selDevCfg);
+  alert('✓ Credenciales de administrador guardadas.');
+};
 
 // ─────────────────── CFG / EXPORT ───────────────────
 function fillRoasSels(){
@@ -2228,13 +2314,28 @@ function fillRoasSels(){
 }
 $('roasDev').onchange=()=>{S.roas.gwId=$('roasDev').value||null;save();fillRoasSels();};
 $('roasLanIf').onchange=()=>{S.roas.lanIf=$('roasLanIf').value;save();};
-$('roasNatV').onchange=()=>{S.roas.natVRef=$('roasNatV').value||null;save();};
+$('roasNatV').onchange=()=>{
+  S.roas.natVRef=$('roasNatV').value||null;
+  if(S.roas.natVRef){
+    for(const p of S.ports){
+      const d=devById(p.deviceId);
+      if(d?.type==='switch' && p.mode==='trunk')p.nativeVlanRef=S.roas.natVRef;
+    }
+  }
+  save();
+};
 $('wanCidr').onblur=()=>{S.roas.wanCidr=($('wanCidr').value||'').trim();save();};
 $('wanNh').onblur=()=>{S.roas.wanNh=($('wanNh').value||'').trim();save();};
 $('btnRoas').onclick=()=>{
   if(!S.roas.gwId)return alert('Selecciona gateway.');if(!S.roas.lanIf)return alert('Selecciona interfaz LAN.');
   const gwPort=S.ports.find(p=>p.deviceId===S.roas.gwId&&p.name===S.roas.lanIf);
   if(gwPort){gwPort.mode='trunk';gwPort.allowedVlans=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);}
+  if(S.roas.natVRef){
+    for(const p of S.ports){
+      const d=devById(p.deviceId);
+      if(d?.type==='switch' && p.mode==='trunk')p.nativeVlanRef=S.roas.natVRef;
+    }
+  }
   save();refresh();alert('✓ RoaS aplicado.');
 };
 function renderDhcp(){
@@ -2248,6 +2349,17 @@ function renderDhcp(){
   box.querySelectorAll('[data-en]').forEach(s=>s.onchange=()=>{S.dhcp[s.dataset.en].enabled=s.value==='1';save();});
   box.querySelectorAll('[data-dns]').forEach(i=>i.onblur=()=>{S.dhcp[i.dataset.dns].dns=(i.value||'').trim();save();});
   box.querySelectorAll('[data-ls]').forEach(i=>i.onblur=()=>{S.dhcp[i.dataset.ls].lease=+i.value||1;save();});
+}
+function renderDeployChecklist(){
+  const steps=[
+    {id:'rtr',t:'Fase 1: Router (Puerta de enlace y RoaS)'},
+    {id:'core',t:'Fase 2: Switch Core (VLANs y Trunks principales)'},
+    {id:'access',t:'Fase 3: Switches de Acceso (Puertos de usuario y Uplinks)'},
+    {id:'secure',t:'Fase 4: Seguridad y Verificación (DHCP Snooping, DAI y Port-Security)'},
+  ];
+  const el=$('deployChecklist'); if(!el)return;
+  el.innerHTML=steps.map(s=>`<label class="check-item"><input type="checkbox" data-dc="${s.id}" ${S.deploymentChecklist[s.id]?'checked':''}/><span>${esc(s.t)}</span></label>`).join('');
+  el.querySelectorAll('[data-dc]').forEach(cb=>cb.onchange=()=>{S.deploymentChecklist[cb.dataset.dc]=cb.checked;save();});
 }
 
 // ─── DEVICE CONFIG IN MAIN PAGE ───
@@ -2791,6 +2903,9 @@ function refresh(){
   ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
   $('secBpdu').value=S.security.bpdu||'yes';$('secPs').value=S.security.ps||'yes';$('secDs').value=S.security.ds||'yes';$('secDai').value=S.security.dai||'yes';
   $('secDsV').value=S.security.dsV||'';
+  if($('secAdminUser'))$('secAdminUser').value=S.security.adminUser||'netadmin';
+  if($('secAdminPass'))$('secAdminPass').value=S.security.adminPass||'';
+  renderDeployChecklist();
   fillRoasSels();renderDhcp();renderDevPickCfg();renderVtp();
   if(S.step==='cfg'){drawTopo();resizeV5();renderV5Panel();if(selDevCfg)selectDevCfg(selDevCfg);}
 }
