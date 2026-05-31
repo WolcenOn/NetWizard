@@ -1,0 +1,10 @@
+{
+  "categoria": "Redes",
+  "icono": "🌐",
+  "etiquetas": ["redes", "networking", "herramienta", "ASIR"],
+  "descripcion": "Herramienta relacionada con redes informáticas, configuración o apoyo al aprendizaje de networking.",
+  "demo": "",
+  "destacado": true,
+  "orden": 5,
+  "ocultar": false
+}
