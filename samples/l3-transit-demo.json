@@ -1,0 +1,190 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.28.0",
+  "exportedAt": "2026-05-25T00:00:00.000Z",
+  "project": {
+    "_schemaVersion": "3.28.0",
+    "step": "dash",
+    "selected": null,
+    "vlanMatrix": {},
+    "security": {},
+    "roas": {},
+    "vtp": {
+      "roles": {}
+    },
+    "topo": {
+      "pos": {}
+    },
+    "visual": {
+      "locs": [],
+      "assign": {
+        "devices": {},
+        "hosts": {}
+      },
+      "pos": {},
+      "view": {}
+    },
+    "physicalLocations": [],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {}
+      }
+    },
+    "projName": "Sample · L3 Transit Demo",
+    "devices": [
+      {
+        "id": "r1",
+        "name": "R1",
+        "type": "router",
+        "vendorOs": "cisco_ios"
+      },
+      {
+        "id": "r2",
+        "name": "R2",
+        "type": "router",
+        "vendorOs": "cisco_ios"
+      },
+      {
+        "id": "sw1",
+        "name": "SW-LAN",
+        "type": "switch",
+        "vendorOs": "cisco_ios"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "v10",
+        "vlanId": 10,
+        "name": "LAN-A",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 40,
+          "growthHosts": 10,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "medium"
+        }
+      },
+      {
+        "id": "v99",
+        "vlanId": 99,
+        "name": "Transit-R1-R2",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "s10",
+        "vlanRef": "v10",
+        "cidr": "10.3.10.0/24",
+        "gateway": "10.3.10.1"
+      },
+      {
+        "id": "s99",
+        "vlanRef": "v99",
+        "cidr": "10.255.99.0/30",
+        "gateway": "10.255.99.1"
+      }
+    ],
+    "ports": [
+      {
+        "id": "r1_lan",
+        "deviceId": "r1",
+        "name": "Gi0/0",
+        "mode": "trunk",
+        "allowedVlans": [
+          10
+        ],
+        "nativeVlanRef": "v10",
+        "uplink": true
+      },
+      {
+        "id": "sw_r1",
+        "deviceId": "sw1",
+        "name": "Gi0/24",
+        "mode": "trunk",
+        "allowedVlans": [
+          10
+        ],
+        "nativeVlanRef": "v10",
+        "uplink": true
+      },
+      {
+        "id": "r1_r2",
+        "deviceId": "r1",
+        "name": "Gi0/1",
+        "mode": "routed",
+        "l3Ip": "10.255.99.1",
+        "l3Cidr": "10.255.99.0/30",
+        "transitVlanRef": "v99"
+      },
+      {
+        "id": "r2_r1",
+        "deviceId": "r2",
+        "name": "Gi0/1",
+        "mode": "routed",
+        "l3Ip": "10.255.99.2",
+        "l3Cidr": "10.255.99.0/30",
+        "transitVlanRef": "v99"
+      }
+    ],
+    "links": [
+      {
+        "id": "l1",
+        "aPortId": "r1_lan",
+        "bPortId": "sw_r1",
+        "medium": "copper",
+        "cableType": "cat6",
+        "lengthM": 10,
+        "speed": "1G"
+      },
+      {
+        "id": "l2",
+        "aPortId": "r1_r2",
+        "bPortId": "r2_r1",
+        "transitVlanRef": "v99",
+        "medium": "copper",
+        "cableType": "cat6",
+        "lengthM": 2,
+        "speed": "1G"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "pc1",
+        "name": "LAN-A-PC",
+        "type": "pc",
+        "vlanRef": "v10",
+        "portRef": "",
+        "ipMode": "dhcp",
+        "staticIp": ""
+      }
+    ],
+    "dhcp": {
+      "10": {
+        "enabled": true,
+        "start": "10.3.10.50",
+        "end": "10.3.10.200",
+        "dns": "8.8.8.8",
+        "domain": "transit.local",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "fwRules": []
+  }
+}

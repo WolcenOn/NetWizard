@@ -1,0 +1,278 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.28.0",
+  "exportedAt": "2026-05-25T00:00:00.000Z",
+  "project": {
+    "_schemaVersion": "3.28.0",
+    "step": "dash",
+    "selected": null,
+    "vlanMatrix": {},
+    "security": {},
+    "roas": {},
+    "vtp": {
+      "roles": {}
+    },
+    "topo": {
+      "pos": {}
+    },
+    "visual": {
+      "locs": [],
+      "assign": {
+        "devices": {},
+        "hosts": {}
+      },
+      "pos": {},
+      "view": {}
+    },
+    "physicalLocations": [],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {}
+      }
+    },
+    "projName": "Sample · School Network",
+    "devices": [
+      {
+        "id": "fw1",
+        "name": "Firewall",
+        "type": "firewall",
+        "vendorOs": "fortigate"
+      },
+      {
+        "id": "core1",
+        "name": "Core-L3",
+        "type": "l3switch",
+        "vendorOs": "cisco_ios",
+        "poeBudgetW": 0
+      },
+      {
+        "id": "sw_a",
+        "name": "SW-Classrooms",
+        "type": "switch",
+        "vendorOs": "cisco_ios",
+        "poeBudgetW": 370
+      }
+    ],
+    "vlans": [
+      {
+        "id": "v10",
+        "vlanId": 10,
+        "name": "Staff",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 80,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "v20",
+        "vlanId": 20,
+        "name": "Students",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 250,
+          "growthHosts": 50,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "restricted",
+          "criticality": "medium"
+        }
+      },
+      {
+        "id": "v30",
+        "vlanId": 30,
+        "name": "Guests",
+        "intent": {
+          "type": "guests",
+          "expectedHosts": 150,
+          "growthHosts": 50,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "v40",
+        "vlanId": 40,
+        "name": "Management",
+        "intent": {
+          "type": "management",
+          "expectedHosts": 20,
+          "growthHosts": 5,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "s10",
+        "vlanRef": "v10",
+        "cidr": "10.1.10.0/24",
+        "gateway": "10.1.10.1"
+      },
+      {
+        "id": "s20",
+        "vlanRef": "v20",
+        "cidr": "10.1.20.0/23",
+        "gateway": "10.1.20.1"
+      },
+      {
+        "id": "s30",
+        "vlanRef": "v30",
+        "cidr": "10.1.30.0/23",
+        "gateway": "10.1.30.1"
+      },
+      {
+        "id": "s40",
+        "vlanRef": "v40",
+        "cidr": "10.1.40.0/24",
+        "gateway": "10.1.40.1"
+      }
+    ],
+    "ports": [
+      {
+        "id": "core_fw",
+        "deviceId": "core1",
+        "name": "Gi1/0/48",
+        "mode": "trunk",
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40
+        ],
+        "nativeVlanRef": "v40",
+        "uplink": true,
+        "portFast": false,
+        "bpduGuard": false
+      },
+      {
+        "id": "fw_core",
+        "deviceId": "fw1",
+        "name": "port2",
+        "mode": "trunk",
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40
+        ],
+        "nativeVlanRef": "v40",
+        "uplink": true
+      },
+      {
+        "id": "core_swa",
+        "deviceId": "core1",
+        "name": "Gi1/0/1",
+        "mode": "trunk",
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40
+        ],
+        "nativeVlanRef": "v40",
+        "uplink": true
+      },
+      {
+        "id": "swa_core",
+        "deviceId": "sw_a",
+        "name": "Gi0/24",
+        "mode": "trunk",
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40
+        ],
+        "nativeVlanRef": "v40",
+        "uplink": true
+      },
+      {
+        "id": "swa_1",
+        "deviceId": "sw_a",
+        "name": "Gi0/1",
+        "mode": "access",
+        "accessVlanRef": "v20",
+        "portFast": true,
+        "bpduGuard": true
+      }
+    ],
+    "links": [
+      {
+        "id": "l1",
+        "aPortId": "core_fw",
+        "bPortId": "fw_core",
+        "medium": "fiber",
+        "cableType": "OM4",
+        "lengthM": 80,
+        "speed": "10G"
+      },
+      {
+        "id": "l2",
+        "aPortId": "core_swa",
+        "bPortId": "swa_core",
+        "medium": "fiber",
+        "cableType": "OM4",
+        "lengthM": 120,
+        "speed": "10G"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "student_pc_01",
+        "name": "Student-PC-01",
+        "type": "pc",
+        "vlanRef": "v20",
+        "portRef": "swa_1",
+        "ipMode": "dhcp",
+        "staticIp": ""
+      }
+    ],
+    "dhcp": {
+      "10": {
+        "enabled": true,
+        "start": "10.1.10.50",
+        "end": "10.1.10.220",
+        "dns": "10.1.40.10",
+        "domain": "school.local",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "20": {
+        "enabled": true,
+        "start": "10.1.20.50",
+        "end": "10.1.21.240",
+        "dns": "10.1.40.10",
+        "domain": "school.local",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "30": {
+        "enabled": true,
+        "start": "10.1.30.50",
+        "end": "10.1.31.240",
+        "dns": "1.1.1.1",
+        "domain": "guest.school",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "fwRules": []
+  }
+}

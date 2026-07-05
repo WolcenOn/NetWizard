@@ -1,0 +1,254 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.28.0",
+  "exportedAt": "2026-05-25T00:00:00.000Z",
+  "project": {
+    "_schemaVersion": "3.28.0",
+    "step": "dash",
+    "selected": null,
+    "vlanMatrix": {},
+    "security": {},
+    "roas": {},
+    "vtp": {
+      "roles": {}
+    },
+    "topo": {
+      "pos": {}
+    },
+    "visual": {
+      "locs": [],
+      "assign": {
+        "devices": {},
+        "hosts": {}
+      },
+      "pos": {},
+      "view": {}
+    },
+    "physicalLocations": [],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "iot": {
+      "accessNodes": [
+        {
+          "id": "gw1",
+          "name": "MQTT-GW",
+          "type": "mqtt_gateway",
+          "parentDeviceId": "sw1",
+          "parentPortId": "sw_nvr",
+          "serviceVlanRef": "v60",
+          "mgmtVlanRef": "v70",
+          "mgmtIp": "10.2.70.20"
+        }
+      ],
+      "devices": [
+        {
+          "id": "sensor1",
+          "name": "Temp-Sensor-01",
+          "type": "sensor",
+          "protocol": "mqtt",
+          "accessNodeId": "gw1",
+          "vlanRef": "v60"
+        }
+      ],
+      "map": {
+        "show": {}
+      }
+    },
+    "projName": "Sample · IoT Cameras",
+    "devices": [
+      {
+        "id": "fw1",
+        "name": "FW-IoT",
+        "type": "firewall",
+        "vendorOs": "fortigate"
+      },
+      {
+        "id": "sw1",
+        "name": "PoE-Cameras",
+        "type": "switch",
+        "vendorOs": "cisco_ios",
+        "poeBudgetW": 740
+      }
+    ],
+    "vlans": [
+      {
+        "id": "v50",
+        "vlanId": 50,
+        "name": "Cameras",
+        "intent": {
+          "type": "cameras",
+          "expectedHosts": 64,
+          "growthHosts": 16,
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "v60",
+        "vlanId": 60,
+        "name": "IoT Sensors",
+        "intent": {
+          "type": "iot",
+          "expectedHosts": 120,
+          "growthHosts": 80,
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "medium"
+        }
+      },
+      {
+        "id": "v70",
+        "vlanId": 70,
+        "name": "Servers-NVR",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 8,
+          "growthHosts": 2,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "s50",
+        "vlanRef": "v50",
+        "cidr": "10.2.50.0/24",
+        "gateway": "10.2.50.1"
+      },
+      {
+        "id": "s60",
+        "vlanRef": "v60",
+        "cidr": "10.2.60.0/23",
+        "gateway": "10.2.60.1"
+      },
+      {
+        "id": "s70",
+        "vlanRef": "v70",
+        "cidr": "10.2.70.0/24",
+        "gateway": "10.2.70.1"
+      }
+    ],
+    "ports": [
+      {
+        "id": "fw_sw",
+        "deviceId": "fw1",
+        "name": "port3",
+        "mode": "trunk",
+        "allowedVlans": [
+          50,
+          60,
+          70
+        ],
+        "nativeVlanRef": "v70",
+        "uplink": true
+      },
+      {
+        "id": "sw_fw",
+        "deviceId": "sw1",
+        "name": "Gi0/48",
+        "mode": "trunk",
+        "allowedVlans": [
+          50,
+          60,
+          70
+        ],
+        "nativeVlanRef": "v70",
+        "uplink": true
+      },
+      {
+        "id": "sw_cam1",
+        "deviceId": "sw1",
+        "name": "Gi0/1",
+        "mode": "access",
+        "accessVlanRef": "v50",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30
+      },
+      {
+        "id": "sw_nvr",
+        "deviceId": "sw1",
+        "name": "Gi0/2",
+        "mode": "access",
+        "accessVlanRef": "v70",
+        "portFast": true,
+        "bpduGuard": true
+      }
+    ],
+    "links": [
+      {
+        "id": "l1",
+        "aPortId": "fw_sw",
+        "bPortId": "sw_fw",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 20,
+        "speed": "10G"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "cam1",
+        "name": "CAM-Entrance",
+        "type": "camera",
+        "vlanRef": "v50",
+        "portRef": "sw_cam1",
+        "ipMode": "dhcp",
+        "staticIp": "",
+        "poeRequired": true,
+        "poeWatts": 14
+      },
+      {
+        "id": "nvr1",
+        "name": "NVR-01",
+        "type": "server",
+        "vlanRef": "v70",
+        "portRef": "sw_nvr",
+        "ipMode": "static",
+        "staticIp": "10.2.70.10",
+        "poeRequired": false,
+        "poeWatts": null
+      }
+    ],
+    "dhcp": {
+      "50": {
+        "enabled": true,
+        "start": "10.2.50.50",
+        "end": "10.2.50.220",
+        "dns": "10.2.70.10",
+        "domain": "iot.local",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "60": {
+        "enabled": true,
+        "start": "10.2.60.50",
+        "end": "10.2.61.230",
+        "dns": "10.2.70.10",
+        "domain": "iot.local",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "fwRules": [
+      {
+        "id": "cam_to_nvr",
+        "name": "Cameras to NVR",
+        "src": "VLAN50",
+        "dst": "10.2.70.10",
+        "proto": "tcp",
+        "port": "554,443",
+        "action": "allow"
+      }
+    ]
+  }
+}
