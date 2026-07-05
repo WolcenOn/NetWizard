@@ -1,0 +1,309 @@
+# Auditoría de textos hardcoded i18n
+
+Fecha: 2026-05-25T16:22:59.468Z
+Candidatos detectados: 906
+
+Estos candidatos no son necesariamente errores. Sirven para convertir progresivamente textos visibles a claves i18n.
+
+- index.html:85 · >💻 Hosts por VLAN</div></div><div id=
+- index.html:122 · >Básica (Lab)</option><option value=
+- index.html:142 · >📍 Ubicaciones físicas</div><span class=
+- index.html:161 · >Ubicación superior</label><select id=
+- index.html:164 · Jerarquía física, observaciones, tramo, etc.
+- index.html:215 · >IP gestión</label><input id=
+- index.html:219 · >Rol inalámbrico</label><select id=
+- index.html:232 · Modelo, rack, ubicación…
+- index.html:234 · >➕ Añadir dispositivo</button><button class=
+- index.html:289 · >VLAN nativa (trunk)</label><select id=
+- index.html:293 · >Sí</option><option value=
+- index.html:294 · >Protección access</label><select id=
+- index.html:330 · >VLAN ID</label><input id=
+- index.html:331 · Producción
+- index.html:339 · >VLAN</label><select id=
+- index.html:394 · >VLAN</label><select id=
+- index.html:398 · >IP estática</label><input id=
+- index.html:403 · >Ubicación en esquema</label><select id=
+- index.html:406 · >Ubicación física / puesto</label><select id=
+- index.html:410 · >Asignación de puerto</label><select id=
+- index.html:410 · >Automática</option><option value=
+- index.html:411 · >Puerto del equipo</label><select id=
+- index.html:413 · >Resumen conexión</label><input id=
+- index.html:425 · >VLAN</label><select id=
+- index.html:427 · >Cámara</option><option value=
+- index.html:433 · >🗺 Mapa IP por VLAN</div></div><div id=
+- index.html:476 · >📄 Plan de configuración IoT</div><button class=
+- index.html:494 · 0/  ó  0/0/  ó  1/1/
+- index.html:497 · >VLAN access por defecto</label><select id=
+- index.html:509 · >Puerto A</label><select id=
+- index.html:510 · >Puerto B</label><select id=
+- index.html:514 · >Medio físico</label><select id=
+- index.html:515 · >Tipo/categoría</label><select id=
+- index.html:521 · >Red/VLAN de tránsito L3 (opcional)</label><select id=
+- index.html:558 · >Descripción</label><input id=
+- index.html:571 · >Puerto destino</label><input id=
+- index.html:574 · >Dirección</label><select id=
+- index.html:599 · >Matriz inter-VLAN</div></div><div id=
+- index.html:606 · >Port-Security (máx 2 MACs)</label><select id=
+- index.html:608 · vacío=todas
+- index.html:610 · >VLAN quarantine (puertos sin uso)</label><select id=
+- index.html:614 · >Mínima — Lab/Home</div><div class=
+- index.html:615 · >Media — Empresa pequeña</div><div class=
+- index.html:616 · >Alta — Producción</div><div class=
+- index.html:670 · >🗺 Topología física y enlaces</div><span class=
+- index.html:697 · >VLAN nativa</label><select id=
+- index.html:731 · >Contraseña VTP</label><input id=
+- index.html:749 · Descarga el snapshot + grafo unificado para pruebas de integración
+- index.html:752 · Pega JSON aquí para importar…
+- index.html:784 · >Puerto</h3><button class=
+- index.html:789 · >Access VLAN</label><select id=
+- index.html:790 · >Native VLAN (trunk)</label><select id=
+- index.html:793 · >Sí</option><option value=
+- index.html:794 · >Sí</option><option value=
+- index.html:796 · >Sí</option><option value=
+- index.html:797 · >Descripción</label><input id=
+- index.html:823 · >Cancelar</button><button class=
+- index.html:866 · AP Almacén / Gateway LoRa / Coordinador Zigbee
+- index.html:874 · >IP gestión</label><input id=
+- index.html:875 · >Segmento/VLAN gestión</label><select id=
+- index.html:879 · >Puerto físico NetWizard</label><select id=
+- index.html:882 · >Ubicación física</label><select id=
+- index.html:886 · >VLAN/segmento de servicio</label><select id=
+- index.html:887 · >Rol en ubicación</label><input id=
+- index.html:889 · >Notas de configuración</label><textarea id=
+- index.html:889 · Canal Zigbee, región LoRaWAN, aislamiento de clientes, AP group, ACL topics...
+- index.html:890 · >Cancelar</button><button class=
+- index.html:896 · >Dispositivo IoT</h3><button class=
+- index.html:899 · Sensor temperatura / Cámara entrada
+- index.html:903 · >Tecnología</label><select id=
+- index.html:908 · >Segmento/VLAN</label><select id=
+- index.html:911 · >Ubicación física</label><select id=
+- index.html:912 · >Rol / posición</label><input id=
+- index.html:912 · estantería, aula 2, zona cámara...
+- index.html:914 · >Parámetros / credencial alias</label><input id=
+- index.html:915 · Pairing, QR Matter, canal, topics MQTT, ubicación...
+- index.html:916 · >Cancelar</button><button class=
+- js/netwizard-audit.js:70 · Producción:
+- js/netwizard-audit.js:117 · 🛡️ Modo de ejecución
+- js/netwizard-audit.js:118 · Demo permite diseños incompletos. Producción bloquea exportaciones y acciones si hay errores críticos.
+- js/netwizard-audit.js:120 · Demo / formación
+- js/netwizard-audit.js:120 · Producción
+- js/netwizard-audit.js:133 · Modo producción activo: las validaciones críticas pueden bloquear exportación/aplicación.
+- js/netwizard-audit.js:134 · Modo demo activo: útil para diseñar y aprender aunque falten datos.
+- js/netwizard-bridge-ui.js:43 · Bridge no disponible. Comprueba que netwizard-bridge.js carga después de netwizard.js.
+- js/netwizard-bridge-ui.js:61 · Sin título
+- js/netwizard-bridge.js:78 · VLAN ${vlanNumber || getVlanRef(vlan)}
+- js/netwizard-bridge.js:176 · VLAN ${vlanNumber || ref}
+- js/netwizard-bridge.js:182 · La VLAN ${vlan.name || vlanNumber || ref} no tiene subnet asociada.
+- js/netwizard-bridge.js:268 · El host ${host.name || host.id} no tiene VLAN asociada.
+- js/netwizard-bridge.js:269 · Host IoT candidato detectado: ${host.name || host.id}. IoTWizard podrá enriquecerlo.
+- js/netwizard-broadcast-utils.js:18 · VLAN ?
+- js/netwizard-broadcast-utils.js:137 · ${label}: subred muy grande (${usable} hosts útiles). Riesgo de dominio broadcast amplio; considera segmentar o usar VLSM más ajustado.
+- js/netwizard-broadcast-utils.js:138 · ${label}: subred grande (${usable} hosts útiles). Revisa ARP/broadcast y segmentación.
+- js/netwizard-broadcast-utils.js:139 · ${label}: subred mediana-grande (${usable} hosts útiles). Vigila crecimiento y tráfico broadcast.
+- js/netwizard-broadcast-utils.js:141 · ${label}: sin subnet definida; no se puede estimar tamaño del dominio broadcast.
+- js/netwizard-broadcast-utils.js:143 · ${label}: ${endpoints} endpoints previstos/encontrados. Considera dividir por función, planta, SSID o zona.
+- js/netwizard-broadcast-utils.js:145 · ${label}: ${endpoints} endpoints. Tamaño razonable, pero conviene vigilar crecimiento.
+- js/netwizard-broadcast-utils.js:147 · ${label}: muchos dispositivos IoT (${s.iotCount}). Se recomienda VLAN IoT dedicada, mDNS/SSDP controlado y ACLs restrictivas.
+- js/netwizard-broadcast-utils.js:148 · ${label}: muchas cámaras (${s.cameraCount}). Se recomienda VLAN de cámaras dedicada y tráfico solo hacia NVR/gestión.
+- js/netwizard-broadcast-utils.js:149 · ${label}: voz/telefonía numerosa (${s.voiceCount}). Revisa VLAN de voz, QoS y DHCP options.
+- js/netwizard-broadcast-utils.js:151 · ${label}: mezcla IoT/cámaras con una VLAN no especializada. Puede aumentar broadcast/multicast y superficie de ataque.
+- js/netwizard-broadcast-utils.js:153 · ${label}: aparece en ${s.allVlanTrunks} trunks que parecen transportar todas las VLANs. Limita VLANs permitidas en trunks para reducir propagación innecesaria.
+- js/netwizard-broadcast-utils.js:156 · Segmentar la VLAN o reducir el tamaño de subnet.
+- js/netwizard-broadcast-utils.js:156 · Separar IoT/cámaras/voz si están mezclados.
+- js/netwizard-broadcast-utils.js:157 · Revisar crecimiento, trunks y separación por función.
+- js/netwizard-broadcast-utils.js:158 · Sin señales fuertes de riesgo broadcast; mantener monitorización.
+- js/netwizard-broadcast-utils.js:185 · Auditoría de dominios broadcast
+- js/netwizard-broadcast-utils.js:187 · · subnet útil
+- js/netwizard-broadcast-utils.js:188 · Recomendación:
+- js/netwizard-broadcast-utils.js:211 · >Estima dominios broadcast grandes o poco eficientes por VLAN: tamaño de subnet, endpoints, IoT/cámaras/voz y trunks demasiado abiertos.</div><div class=
+- js/netwizard-cabling-utils.js:126 · ${label}: el enlace está marcado como fibra pero al menos un puerto parece RJ45/cobre.
+- js/netwizard-cabling-utils.js:130 · ${label}: el enlace está marcado como cobre pero al menos un puerto parece SFP/fibra.
+- js/netwizard-cabling-utils.js:139 · ${label}: longitud no definida; no se puede comprobar el límite del medio.
+- js/netwizard-cabling-utils.js:142 · Cableado físico: sin datos de cableado que auditar o sin incompatibilidades evidentes.
+- js/netwizard-change-plan.js:46 · Módulo no disponible o acción no seleccionada.
+- js/netwizard-change-plan.js:76 · Plan VLSM inválido.
+- js/netwizard-change-plan.js:98 · IPs L3 de tránsito
+- js/netwizard-change-plan.js:102 · IPs L3 de tránsito
+- js/netwizard-change-plan.js:109 · Políticas firewall/ACL
+- js/netwizard-change-plan.js:113 · Políticas firewall/ACL
+- js/netwizard-change-plan.js:126 · No se pudo ejecutar la auditoría final:
+- js/netwizard-change-plan.js:135 · Plan común de cambios
+- js/netwizard-change-plan.js:139 · ! ... ${plan.warnings.length-40} avisos más
+- js/netwizard-change-plan.js:144 · No se aplicarían cambios.
+- js/netwizard-change-plan.js:155 · Auditoría final estimada: ${errors} errores · ${warnings} avisos
+- js/netwizard-change-plan.js:156 · Modo producción: quedan errores bloqueantes tras el plan. No se aplicará mientras esté activa la opción de bloqueo.
+- js/netwizard-change-plan.js:163 · Plan inválido.
+- js/netwizard-change-plan.js:164 · Modo producción: el plan dejaría errores bloqueantes. Revisa la auditoría antes de aplicar.
+- js/netwizard-change-plan.js:179 · >🧭 Plan común de cambios</div><button class=
+- js/netwizard-change-plan.js:185 · >Solo estáticos sin IP</option><option value=
+- js/netwizard-change-plan.js:185 · >Todos los hosts de VLAN</option><option value=
+- js/netwizard-change-plan.js:227 · \n\n¿Aplicar este plan de cambios?
+- js/netwizard-change-plan.js:228 · Antes de aplicar plan común
+- js/netwizard-change-plan.js:232 · Antes de aplicar plan común
+- js/netwizard-change-preview.js:49 · + Añadir
+- js/netwizard-change-preview.js:61 · ${label[0]} ... ${items.length - 80} cambios más
+- js/netwizard-change-preview.js:64 · No se aplicarían cambios.
+- js/netwizard-change-preview.js:76 · Módulo VLSM no disponible.
+- js/netwizard-change-preview.js:77 · Plan VLSM inválido o no calculado.
+- js/netwizard-change-preview.js:120 · Módulo de asignación L3 no disponible.
+- js/netwizard-change-preview.js:139 · Módulo DHCP no disponible.
+- js/netwizard-change-preview.js:149 · VLAN ${key}
+- js/netwizard-connectivity-checker.js:18 · VLAN ${vlan.vlanId} ${vlan.name}
+- js/netwizard-connectivity-checker.js:18 · sin VLAN
+- js/netwizard-connectivity-checker.js:25 · VLAN ${vlan.vlanId} ${vlan.name}
+- js/netwizard-connectivity-checker.js:25 · sin VLAN
+- js/netwizard-connectivity-checker.js:39 · Dispositivo no cableado o IoT: se valida por VLAN lógica/acceso IoT.
+- js/netwizard-connectivity-checker.js:41 · Host sin puerto físico asignado.
+- js/netwizard-connectivity-checker.js:43 · El puerto ${p.name} no está en modo access.
+- js/netwizard-connectivity-checker.js:44 · El puerto ${p.name} no tiene la VLAN del host.
+- js/netwizard-connectivity-checker.js:63 · VLAN ${va?.vlanId}
+- js/netwizard-connectivity-checker.js:63 · VLAN ${vb?.vlanId}
+- js/netwizard-connectivity-checker.js:79 · Falta VLAN en origen o destino.
+- js/netwizard-connectivity-checker.js:82 · ${ep.name}: no hay IP concreta; se valida parcialmente por VLAN/subnet.
+- js/netwizard-connectivity-checker.js:85 · Misma VLAN/subnet: debería haber conectividad L2 si ambos puertos/accesos están bien.
+- js/netwizard-connectivity-checker.js:86 · Misma VLAN pero las IP no parecen pertenecer a la misma subnet.
+- js/netwizard-connectivity-checker.js:88 · Inter-VLAN requiere gateway/subnet en ambas VLANs.
+- js/netwizard-connectivity-checker.js:89 · Gateways de VLAN presentes para routing inter-VLAN.
+- js/netwizard-connectivity-checker.js:90 · La matriz inter-VLAN bloquea este flujo.
+- js/netwizard-connectivity-checker.js:91 · La matriz inter-VLAN permite este flujo.
+- js/netwizard-connectivity-checker.js:93 · Reglas firewall: no se detecta bloqueo ICMP explícito.
+- js/netwizard-connectivity-checker.js:109 · Simula un ping lógico entre dos endpoints usando IP/subnet, VLAN, puerto access, matriz inter-VLAN y reglas ICMP/firewall. No envía tráfico real.
+- js/netwizard-core-utils.js:62 · maskToString requiere una función ip4s
+- js/netwizard-dhcp-utils.js:121 · VLAN ${vlan.vlanId}: DHCP actualizado${proposed ?
+- js/netwizard-dhcp-utils.js:121 · Activar DHCP en VLAN ${vlan.vlanId}${proposed ?
+- js/netwizard-dhcp-utils.js:124 · VLAN ${vlan.vlanId}: DHCP desactivado por intención ${type}.
+- js/netwizard-dhcp-utils.js:129 · VLAN ${vlan.vlanId}: pool DHCP completado (${after.start} - ${after.end}).
+- js/netwizard-dhcp-utils.js:148 · Scope DHCP para VLAN ${key} sin VLAN existente.
+- js/netwizard-dhcp-utils.js:151 · VLAN ${vlan.vlanId}: DHCP activo sin subnet válida.
+- js/netwizard-dhcp-utils.js:154 · VLAN ${vlan.vlanId}: rango DHCP inválido o incompleto.
+- js/netwizard-dhcp-utils.js:155 · VLAN ${vlan.vlanId}: inicio del pool DHCP posterior al final.
+- js/netwizard-dhcp-utils.js:156 · VLAN ${vlan.vlanId}: pool DHCP fuera de la subnet ${ci.cidr}.
+- js/netwizard-dhcp-utils.js:158 · VLAN ${vlan.vlanId}: el pool DHCP incluye el gateway ${sn.gateway}.
+- js/netwizard-dhcp-utils.js:161 · VLAN ${vlan.vlanId}: el pool DHCP incluye IP estática ${h.staticIp} (${h.name || h.id}).
+- js/netwizard-dhcp-utils.js:165 · VLAN ${vlan.vlanId}: exclusión DHCP inválida ${ex.start}${ex.end?
+- js/netwizard-dhcp-utils.js:166 · VLAN ${vlan.vlanId}: exclusión fuera de subnet ${ex.start}${ex.end?
+- js/netwizard-dhcp-utils.js:170 · VLAN ${vlan.vlanId}: reserva DHCP fuera de subnet (${r.ip}).
+- js/netwizard-documentation-utils.js:13 · ... {count} filas más. Descarga CSV para ver todo.
+- js/netwizard-documentation-utils.js:14 · Documentación NetWizard — {project}
+- js/netwizard-documentation-utils.js:16 · Firewall
+- js/netwizard-documentation-utils.js:17 · Esta documentación es una ayuda de diseño y debe revisarse antes de producción.
+- js/netwizard-documentation-utils.js:20 · DNS, HTTP, HTTPS según política
+- js/netwizard-documentation-utils.js:23 · según necesidad
+- js/netwizard-documentation-utils.js:24 · Intención VLAN permite Internet
+- js/netwizard-documentation-utils.js:25 · Intención VLAN no declara Internet
+- js/netwizard-documentation-utils.js:26 · Tráfico dentro de la misma VLAN
+- js/netwizard-documentation-utils.js:27 · Matriz inter-VLAN marcada como bloqueada
+- js/netwizard-documentation-utils.js:28 · Regla firewall explícita
+- js/netwizard-documentation-utils.js:29 · Intención {type} recomienda aislamiento lateral
+- js/netwizard-documentation-utils.js:30 · VLAN de gestión; confirmar alcance administrativo
+- js/netwizard-documentation-utils.js:31 · Sin regla explícita; revisar antes de producción
+- js/netwizard-documentation-utils.js:77 · Firewall
+- js/netwizard-documentation-utils.js:83 · VLAN${v.vlanId}
+- js/netwizard-documentation-utils.js:84 · VLAN${src.vlanId}
+- js/netwizard-documentation-utils.js:84 · VLAN${dst.vlanId}
+- js/netwizard-documentation-utils.js:100 · Proyecto sin título
+- js/netwizard-documentation-utils.js:103 · Firewall
+- js/netwizard-graph-viewer.js:230 · VLAN
+- js/netwizard-graph-viewer.js:286 · VLAN
+- js/netwizard-history.js:74 · NetWizardState no está disponible
+- js/netwizard-history.js:79 · Snapshot inválido
+- js/netwizard-history.js:102 · ${s.devices||0} dev · ${s.vlans||0} VLAN · ${s.hosts||0} hosts · ${s.links||0} enlaces · ${s.iotDevices||0} IoT
+- js/netwizard-history.js:112 · Guarda puntos de restauración antes de cambios importantes. Se conservan los últimos 20 snapshots en localStorage.
+- js/netwizard-history.js:113 · Antes de cambios de VLAN / diseño base
+- js/netwizard-history.js:128 · ¿Vaciar todo el historial local de snapshots?
+- js/netwizard-history.js:143 · Sin snapshots todavía.
+- js/netwizard-history.js:161 · ¿Restaurar este snapshot? Se creará una copia del estado actual antes de restaurar.
+- js/netwizard-i18n.js:19 · Español
+- js/netwizard-i18n.js:20 · Español
+- js/netwizard-i18n.js:37 · ⬆ Exportar
+- js/netwizard-i18n.js:40 · Español
+- js/netwizard-i18n.js:44 · Visualización
+- js/netwizard-i18n.js:47 · Exportar
+- js/netwizard-i18n.js:57 · Vistas gráficas
+- js/netwizard-i18n.js:59 · Firewall
+- js/netwizard-i18n.js:60 · Configuración
+- js/netwizard-i18n.js:64 · Guardar
+- js/netwizard-i18n.js:65 · Cancelar
+- js/netwizard-i18n.js:67 · Descargar
+- js/netwizard-i18n.js:68 · 📑 Inventario, documentación y matriz
+- js/netwizard-i18n.js:70 · Exporta un inventario operativo del proyecto y revisa una matriz de conectividad entre VLANs antes de producción.
+- js/netwizard-i18n.js:72 · Descargar inventario CSV
+- js/netwizard-i18n.js:73 · Descargar matriz CSV
+- js/netwizard-i18n.js:74 · Descargar documentación Markdown
+- js/netwizard-i18n.js:77 · ... {count} filas más. Descarga CSV para ver todo.
+- js/netwizard-i18n.js:78 · Documentación NetWizard — {project}
+- js/netwizard-i18n.js:87 · Firewall
+- js/netwizard-i18n.js:90 · Esta documentación es una ayuda de diseño y debe revisarse antes de producción.
+- js/netwizard-i18n.js:93 · 🚦 Puerta de producción
+- js/netwizard-i18n.js:95 · Validación final agregada antes de exportar o aplicar cambios. Incluye guía de corrección priorizada y checklist exportable.
+- js/netwizard-i18n.js:96 · Perfil estricto de producción
+- js/netwizard-i18n.js:97 · Mostrar guía de corrección
+- js/netwizard-i18n.js:99 · Guía de corrección
+- js/netwizard-i18n.js:100 · Descargar checklist
+- js/netwizard-i18n.js:101 · Ir a exportación
+- js/netwizard-i18n.js:102 · ✅ No hay incidencias que requieran corrección con los filtros actuales.
+- js/netwizard-i18n.js:103 · Guía de corrección priorizada
+- js/netwizard-i18n.js:104 · Sección recomendada
+- js/netwizard-i18n.js:105 · Por qué importa
+- js/netwizard-i18n.js:106 · Cómo corregir
+- js/netwizard-i18n.js:112 · REQUIERE REVISIÓN
+- js/netwizard-i18n.js:114 · producción
+- js/netwizard-i18n.js:117 · Checklist de producción NetWizard
+- js/netwizard-i18n.js:124 · Resumen por categoría
+- js/netwizard-i18n.js:129 · Sección
+- js/netwizard-i18n.js:130 · Por qué importa
+- js/netwizard-i18n.js:133 · La puerta de producción no está BLOQUEADA.
+- js/netwizard-i18n.js:138 · DNS, HTTP, HTTPS según política
+- js/netwizard-i18n.js:141 · según necesidad
+- js/netwizard-i18n.js:142 · Intención VLAN permite Internet
+- js/netwizard-i18n.js:143 · Intención VLAN no declara Internet
+- js/netwizard-i18n.js:144 · Tráfico dentro de la misma VLAN
+- js/netwizard-i18n.js:145 · Matriz inter-VLAN marcada como bloqueada
+- js/netwizard-i18n.js:146 · Regla firewall explícita
+- js/netwizard-i18n.js:147 · Intención {type} recomienda aislamiento lateral
+- js/netwizard-i18n.js:148 · VLAN de gestión; confirmar alcance administrativo
+- js/netwizard-i18n.js:149 · Sin regla explícita; revisar antes de producción
+- js/netwizard-i18n.js:151 · Checklist de producción
+- js/netwizard-i18n.js:153 · Añadir
+- js/netwizard-i18n.js:155 · Eliminar
+- js/netwizard-i18n.js:156 · Aplicar
+- js/netwizard-i18n.js:159 · Validar
+- js/netwizard-i18n.js:169 · Sin título
+- js/netwizard-i18n.js:180 · Descripción
+- js/netwizard-i18n.js:181 · Dispositivo
+- js/netwizard-i18n.js:182 · Puerto
+- js/netwizard-i18n.js:184 · VLAN/Info
+- js/netwizard-i18n.js:190 · Acción
+- js/netwizard-i18n.js:199 · Firewall
+- js/netwizard-i18n.js:202 · Configuración
+- js/netwizard-i18n.js:203 · Cobertura de traducción
+- js/netwizard-i18n.js:204 · Traducción progresiva de interfaz, formularios, informes y mensajes. Las claves internas del proyecto no se traducen.
+- js/netwizard-i18n.js:206 · text.Proyecto
+- js/netwizard-i18n.js:206 · Proyecto:
+- js/netwizard-i18n.js:209 · text.Exportar
+- js/netwizard-i18n.js:209 · ⬆ Exportar
+- js/netwizard-i18n.js:218 · Vistas gráficas
+- js/netwizard-i18n.js:220 · text.Firewall
+- js/netwizard-i18n.js:220 · Firewall
+- js/netwizard-i18n.js:221 · Configuración
+- js/netwizard-i18n.js:225 · text.Guardar
+- js/netwizard-i18n.js:225 · Guardar
+- js/netwizard-i18n.js:226 · text.Cancelar
+- js/netwizard-i18n.js:226 · Cancelar
+- js/netwizard-i18n.js:228 · text.Descargar
+- js/netwizard-i18n.js:228 · Descargar
+- js/netwizard-i18n.js:234 · Descripción
+- js/netwizard-i18n.js:235 · text.Dispositivo
+- js/netwizard-i18n.js:235 · Dispositivo
+- js/netwizard-i18n.js:236 · text.Puerto
+- js/netwizard-i18n.js:236 · Puerto
+- js/netwizard-i18n.js:238 · VLAN/Info
+- js/netwizard-i18n.js:243 · Acción
+- js/netwizard-i18n.js:248 · Sin título
+- js/netwizard-i18n.js:257 · Añadir
+- js/netwizard-i18n.js:258 · Guardar cambios
+- js/netwizard-i18n.js:259 · Añadir dispositivo
+- js/netwizard-i18n.js:260 · Añadir puerto
+- js/netwizard-i18n.js:261 · Añadir VLAN
+
+... 606 candidatos adicionales omitidos.

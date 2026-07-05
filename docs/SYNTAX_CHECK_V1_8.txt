@@ -1,0 +1,20 @@
+netwizard-bridge-ui.js: OK
+
+
+netwizard-bridge.js: OK
+
+
+netwizard-graph-viewer.js: OK
+
+
+netwizard-iot-embedded.js: OK
+
+
+netwizard-iot-publisher.js: OK
+
+
+netwizard-unified-config-map.js: OK
+
+
+netwizard.js: OK
+

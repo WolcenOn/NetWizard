@@ -1,0 +1,63 @@
+
+> netwizard-pro-static@3.40.0 audit:xss
+> node scripts/audit-xss.js
+
+XSS audit: 91 HTML sinks reviewed, 58 patterns require manual review.
+js/netwizard-audit.js:117: card.innerHTML = '<div class="card-t">🛡️ Modo de ejecución</div>'+
+js/netwizard-change-plan.js:179: card.innerHTML = '<div class="card-h"><div class="card-t">🧭 Plan común de cambios</div><button class="btn bs bsm" id="btnPlanPreview">Previsualizar</button></div>'+
+js/netwizard-iot-embedded.js:86: function opts(obj,val){return Object.entries(obj).map(([k,v])=>`<option value="${k}" ${k===val?'selected':''}>${v.icon?`${v.icon} `:''}${esc(v.label||v)}</option>`).join('');}
+js/netwizard-iot-embedded.js:87: function vendorOpts(val){return VENDORS.map(v=>`<option value="${v}" ${v===val?'selected':''}>${esc(v)}</option>`).join('');}
+js/netwizard-iot-embedded.js:126: function renderStats(){const byTech={};state.devices.forEach(d=>byTech[d.tech]=(byTech[d.tech]||0)+1);$('iotStats').innerHTML=`
+js/netwizard-iot-embedded.js:149: function openDevice(id){const d=normalizeIotLoc(state.devices.find(x=>x.id===id)||{});$('iotDeviceTitle').textContent=id?'Editar dispositivo IoT':'Añadir dispositivo IoT';$('iotDeviceId').value=d.id||'';$('iotDeviceName'
+js/netwizard-iot-embedded.js:172: $('iotAccessParentDevice')?.addEventListener('change',e=>{$('iotAccessParentPort').innerHTML=portOpts('',e.target.value);});$('iotDeviceTech')?.addEventListener('change',e=>{$('iotDeviceAccess').innerHTML=accessOpts('',e
+js/netwizard-poe-utils.js:177: rows.push(`<tr><td><b>${escapeHtml(d.name || d.id)}</b></td><td>${round1(devLoads[d.id] || 0)} W</td><td><input data-poe-dev="${escapeHtml(d.id)}" type="number" min="0" step="1" value="${d.poeBudgetW ?? ''}" placeholder=
+js/netwizard-poe-utils.js:180: const hostRows = poeHosts.map(h => `<tr><td><b>${escapeHtml(h.name || h.id)}</b><div class="hint">${escapeHtml(h.type || '')}</div></td><td><select data-poe-host-mode="${escapeHtml(h.id)}"><option value="auto" ${!h.poeMo
+js/netwizard-poe-utils.js:182: const portRows = poePorts.map(p => `<tr><td><b>${escapeHtml(labelPort(project,p))}</b></td><td>${round1(audit.loadsByPort[p.id] || 0)} W</td><td><select data-poe-port-mode="${escapeHtml(p.id)}"><option value="auto" ${!p.
+js/netwizard-poe-utils.js:205: mount.innerHTML = renderPoePanel(project);
+js/netwizard-production-gate.js:396: card.innerHTML = '<div class="card-h"><div class="card-t">🚦 Puerta de producción</div><span class="b bac">v3.40 RC</span></div>'+
+js/netwizard-unified-config-map.js:47: card.innerHTML = `
+js/netwizard-unified-config-map.js:90: function filter(k,label){return `<label><input type="checkbox" data-nwu-filter="${k}"> ${label}</label>`;}
+js/netwizard-vendor-hardening.js:177: card.innerHTML = '<div class="card-t">🧱 Hardening exportación vendor</div>'+
+js/netwizard-vlan-intent.js:177: card.innerHTML = '<div class="card-h"><div class="card-t">🎯 Intención por VLAN</div><button class="btn bs bsm" id="btnIntentInfer">Inferir</button></div>'+
+js/netwizard-vlan-intent.js:189: typeSel.innerHTML = Object.entries(TYPES).map(([id,t])=>`<option value="${id}">${esc(t.label)}</option>`).join('');
+js/netwizard-vlsm-physical-planner.js:494: card.innerHTML = '<div class="card-t" style="margin-bottom:11px;">🧮 VLSM automático por necesidad</div>'+
+js/netwizard-vlsm-physical-planner.js:511: card.innerHTML = '<div class="card-h"><div class="card-t">✅ Preparación para producción</div><button class="btn bs bsm" id="btnReadinessAudit">Auditar</button></div>'+
+js/netwizard-vlsm-physical-planner.js:526: card.innerHTML = '<div class="card-h"><div class="card-t">🧪 Auditoría capa 1</div><button class="btn bs bsm" id="btnPhyAudit">Auditar</button></div>'+
+js/netwizard.js:262: if(!items.length){ el.innerHTML='<div class="hint">Aún no hay ubicaciones físicas definidas.</div>'; return; }
+js/netwizard.js:946: $('sbD').innerHTML=`<b>${S.devices.length}</b> dispositivos`;
+js/netwizard.js:947: $('sbV').innerHTML=`<b>${S.vlans.length}</b> VLANs`;
+js/netwizard.js:948: $('sbH').innerHTML=`<b>${S.hosts.length}</b> hosts`;
+js/netwizard.js:952: $('sbIOT').innerHTML=`<b>${iotCount}</b> IoT`;
+js/netwizard.js:954: $('sbFW').innerHTML=`<b>${S.fwRules.length}</b> reglas FW`;
+js/netwizard.js:963: $('dStats').innerHTML=`
+js/netwizard.js:968: $('dDevs').innerHTML=S.devices.length?`<div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Vendor</th><th>Pts</th></tr></thead><tbody>
+js/netwizard.js:973: $('dHosts').innerHTML=dh||`<div class="empty"><div class="ei">💻</div><p>Sin hosts</p></div>`;
+js/netwizard.js:980: $('scGrid').innerHTML=SCENARIOS.map(sc=>`<div class="sccard${wScene===sc.id?' on':''}" data-sc="${sc.id}"><div class="scico">${sc.ico}</div><div class="scn">${sc.name}</div><div class="scd">${sc.desc}</div></div>`).join(
+js/netwizard.js:980: $('scGrid').innerHTML=SCENARIOS.map(sc=>`<div class="sccard${wScene===sc.id?' on':''}" data-sc="${sc.id}"><div class="scico">${sc.ico}</div><div class="scn">${sc.name}</div><div class="scd">${sc.desc}</div></div>`).join(
+js/netwizard.js:982: $('devPicker').innerHTML=DEV_PICKER.map(d=>`<div class="dpcard${wDevSel.has(d.id)?' on':''}" data-dp="${d.id}"><div class="dpico">${d.ico}</div><div class="dpn">${d.n}</div><div class="dpc">${d.d}</div></div>`).join('');
+js/netwizard.js:982: $('devPicker').innerHTML=DEV_PICKER.map(d=>`<div class="dpcard${wDevSel.has(d.id)?' on':''}" data-dp="${d.id}"><div class="dpico">${d.ico}</div><div class="dpn">${d.n}</div><div class="dpc">${d.d}</div></div>`).join('');
+js/netwizard.js:986: $('devPicker').innerHTML=DEV_PICKER.map(d=>`<div class="dpcard${wDevSel.has(d.id)?' on':''}" data-dp="${d.id}"><div class="dpico">${d.ico}</div><div class="dpn">${d.n}</div><div class="dpc">${d.d}</div></div>`).join('');
+js/netwizard.js:986: $('devPicker').innerHTML=DEV_PICKER.map(d=>`<div class="dpcard${wDevSel.has(d.id)?' on':''}" data-dp="${d.id}"><div class="dpico">${d.ico}</div><div class="dpn">${d.n}</div><div class="dpc">${d.d}</div></div>`).join('');
+js/netwizard.js:998: $('wPreview').innerHTML=txt;
+js/netwizard.js:1180: $('pDev').innerHTML=opts||'<option value="">— añade un dispositivo primero —</option>';
+js/netwizard.js:1189: $('pRole').innerHTML=!isRF?
+js/netwizard.js:1313: ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan'].forEach(id=>{if($(id))$(id).innerHTML=mgo;});
+js/netwizard.js:1530: const opts=['<option value="">— Sin equipo —</option>'].concat(connectableDevices().map(d=>`<option value="${d.id}">${esc(d.name)} · ${esc(d.type||'equipo')}</option>`));
+js/netwizard.js:1531: $('hConnDev').innerHTML=opts.join('');
+js/netwizard.js:1714: $('lyDev').innerHTML=opts||'<option value="">Sin switches</option>';
+js/netwizard.js:1715: $('visDev').innerHTML=opts||'<option value="">Sin switches</option>';
+js/netwizard.js:1720: $('lnkA').innerHTML=opts||'<option>Sin puertos</option>';$('lnkB').innerHTML=opts||'<option>Sin puertos</option>';
+js/netwizard.js:1727: $('lnkTransit').innerHTML='<option value="">— sin tránsito L3 —</option>'+candidates.map(v=>`<option value="${v.id}">VLAN ${v.vlanId} · ${esc(v.name||'')}</option>`).join('');
+js/netwizard.js:1734: const d=devById(devId);const el=$('lyEditor');if(!d){el.innerHTML='';return;}
+js/netwizard.js:1735: const total=+($('lyTotal').value||0);if(!total){el.innerHTML='<div class="hint">Indica el total de puertos y pulsa "Ver layout".</div>';return;}
+js/netwizard.js:1739: el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;">${prev.map((t,i)=>{const pos=i+1;const nm=t!=='EMPTY'&&d.vendorOs?buildPName(d.vendorOs,t,pos,base):'—';return`<div style="backgr
+js/netwizard.js:1754: if(!devId){grid.innerHTML='<div class="hint">Sin switches.</div>';return;}
+js/netwizard.js:1756: if(!d?.layout?.total){grid.innerHTML=`<div class="hint">Este switch no tiene layout. Usa "Layout switch" o añade puertos en la sección Puertos.</div>`;return;}
+js/netwizard.js:1763: cells.push(`<div class="pport ${p?p.mode:'access'} ${lnk?'linked':''}" ${p?`data-pp="${p.id}"`:''}><div class="pn">${esc(label)}</div><div class="pm">${esc(slot)} P${pos}${p?.desc?'<br>'+esc(p.desc.substring(0,16)):''}</
+js/netwizard.js:1765: grid.innerHTML=cells.join('');
+js/netwizard.js:2548: el.innerHTML=v5LinkTooltipHtml(dot);
+js/netwizard.js:2657: box.innerHTML=`<div class="card-t">Panel V5</div>
+js/netwizard.js:2671: <div class="v5-row3"><div><label class="fl">Ancho</label><input type="number" min="330" step="10" value="${Math.round(visualLocBounds(l).w)}" oninput="v5UpdateLocationSize('${jsq(l.id)}','w',this.value)"></div><div><labe
+js/netwizard.js:2681: <div class="v5-row3"><div><label class="fl">Tipo</label><select onchange="v5UpdateDevice('${jsq(d.id)}','type',this.value)"><option value="switch" ${d.type==='switch'?'selected':''}>switch</option><option value="router" 
+js/netwizard.js:2694: <div class="v5-row3"><div><label class="fl">Tipo</label><select onchange="v5UpdateHost('${jsq(h.id)}','type',this.value)">${Object.entries(HT).map(([k,v])=>`<option value="${k}" ${h.type===k?'selected':''}>${v.l}</option
+tests/run-tests.js:1127: const out = NWSec.html`<div data-x="${payload}">${payload}</div>`;

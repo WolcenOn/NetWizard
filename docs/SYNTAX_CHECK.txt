@@ -1,0 +1,4 @@
+node --check js/netwizard.js
+OK=True
+
+

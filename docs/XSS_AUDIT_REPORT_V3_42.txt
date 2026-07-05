@@ -1,0 +1,17 @@
+
+> netwizard-pro-static@3.43.0 audit:xss
+> node scripts/audit-xss.js
+
+XSS audit: 21 HTML sinks reviewed, 12 patterns require manual review.
+js/netwizard-audit.js:117: card.innerHTML = '<div class="card-t">🛡️ Modo de ejecución</div>'+
+js/netwizard-change-plan.js:179: card.innerHTML = '<div class="card-h"><div class="card-t">🧭 Plan común de cambios</div><button class="btn bs bsm" id="btnPlanPreview">Previsualizar</button></div>'+
+js/netwizard-production-gate.js:396: card.innerHTML = '<div class="card-h"><div class="card-t">🚦 Puerta de producción</div><span class="b bac">v3.43 RC</span></div>'+
+js/netwizard-unified-config-map.js:47: card.innerHTML = `
+js/netwizard-unified-config-map.js:90: function filter(k,label){return `<label><input type="checkbox" data-nwu-filter="${k}"> ${label}</label>`;}
+js/netwizard-vendor-hardening.js:177: card.innerHTML = '<div class="card-t">🧱 Hardening exportación vendor</div>'+
+js/netwizard-vlan-intent.js:177: card.innerHTML = '<div class="card-h"><div class="card-t">🎯 Intención por VLAN</div><button class="btn bs bsm" id="btnIntentInfer">Inferir</button></div>'+
+js/netwizard-vlan-intent.js:189: typeSel.innerHTML = Object.entries(TYPES).map(([id,t])=>`<option value="${id}">${esc(t.label)}</option>`).join('');
+js/netwizard-vlsm-physical-planner.js:494: card.innerHTML = '<div class="card-t" style="margin-bottom:11px;">🧮 VLSM automático por necesidad</div>'+
+js/netwizard-vlsm-physical-planner.js:511: card.innerHTML = '<div class="card-h"><div class="card-t">✅ Preparación para producción</div><button class="btn bs bsm" id="btnReadinessAudit">Auditar</button></div>'+
+js/netwizard-vlsm-physical-planner.js:526: card.innerHTML = '<div class="card-h"><div class="card-t">🧪 Auditoría capa 1</div><button class="btn bs bsm" id="btnPhyAudit">Auditar</button></div>'+
+tests/run-tests.js:1127: const out = NWSec.html`<div data-x="${payload}">${payload}</div>`;

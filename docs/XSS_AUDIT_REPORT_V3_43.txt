@@ -1,0 +1,5 @@
+
+> netwizard-pro-static@3.43.0 audit:xss
+> node scripts/audit-xss.js
+
+XSS audit: 0 HTML sinks reviewed, 0 patterns require manual review.
