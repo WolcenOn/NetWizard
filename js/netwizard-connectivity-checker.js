@@ -3,6 +3,15 @@
    Simulación de reachability tipo ping: IP, VLAN, puerto access,
    gateway/subnet y matriz inter-VLAN. No envía tráfico real.
 ========================================================= */
+(function loadVendorGeneratorsIfNeeded(){
+  'use strict';
+  if(typeof window === 'undefined' || window.NetWizardVendorConfigGenerators) return;
+  const script = document.createElement('script');
+  script.src = './js/netwizard-vendor-config-generators.js';
+  script.defer = false;
+  document.head.appendChild(script);
+})();
+
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
