@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://netwizard.local/schemas/netwizard-project.schema.json",
+  "title": "NetWizard Project Export Payload",
+  "description": "Schema externo para validar exportaciones versionadas de NetWizard v3.48.",
+  "type": "object",
+  "required": ["format", "schemaVersion", "project"],
+  "additionalProperties": true,
+  "properties": {
+    "format": { "const": "netwizard-project" },
+    "schemaVersion": { "type": "string", "pattern": "^3\\.(28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48)\\.0$" },
+    "exportedAt": { "type": "string" },
+    "project": { "$ref": "#/$defs/project" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[A-Za-z0-9_:.\\-]+$" },
+    "idNullable": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "string", "maxLength": 0 }, { "type": "null" }] },
+    "ipv4": { "type": "string", "pattern": "^(|(?:(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.){3}(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}))$" },
+    "cidr": { "type": "string", "pattern": "^(|(?:(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.){3}(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})/(?:[0-9]|[12][0-9]|3[0-2]))$" },
+    "project": {
+      "type": "object",
+      "required": ["_schemaVersion", "devices", "ports", "vlans", "subnets", "hosts", "links", "fwRules", "dhcp", "iot"],
+      "additionalProperties": true,
+      "properties": {
+        "_schemaVersion": { "type": "string" },
+        "projName": { "type": "string", "maxLength": 160 },
+        "step": { "type": "string" },
+        "devices": { "type": "array", "items": { "$ref": "#/$defs/device" } },
+        "ports": { "type": "array", "items": { "$ref": "#/$defs/port" } },
+        "vlans": { "type": "array", "items": { "$ref": "#/$defs/vlan" } },
+        "subnets": { "type": "array", "items": { "$ref": "#/$defs/subnet" } },
+        "hosts": { "type": "array", "items": { "$ref": "#/$defs/host" } },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "fwRules": { "type": "array", "items": { "$ref": "#/$defs/fwRule" } },
+        "dhcp": { "type": "object", "additionalProperties": { "$ref": "#/$defs/dhcpScope" } },
+        "iot": { "$ref": "#/$defs/iot" },
+        "vlanMatrix": { "type": "object" },
+        "security": { "type": "object" },
+        "roas": { "type": "object" },
+        "vtp": { "type": "object" },
+        "topo": { "type": "object" },
+        "visual": { "type": "object" }
+      }
+    },
+    "device": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "type": { "type": "string", "maxLength": 40 },
+        "vendorOs": { "type": "string", "maxLength": 40 },
+        "poeBudgetW": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "port": {
+      "type": "object",
+      "required": ["id", "deviceId", "name", "mode"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "deviceId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "mode": { "type": "string", "enum": ["access", "trunk", "routed", "disabled"] },
+        "accessVlanRef": { "$ref": "#/$defs/idNullable" },
+        "nativeVlanRef": { "$ref": "#/$defs/idNullable" },
+        "allowedVlans": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 4094 }, "uniqueItems": true },
+        "l3Ip": { "$ref": "#/$defs/ipv4" },
+        "l3Cidr": { "$ref": "#/$defs/cidr" },
+        "portFast": { "type": "boolean" },
+        "bpduGuard": { "type": "boolean" },
+        "uplink": { "type": "boolean" },
+        "poeMode": { "type": "string" },
+        "poeWattsMax": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "vlan": {
+      "type": "object",
+      "required": ["id", "vlanId", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "vlanId": { "type": "integer", "minimum": 1, "maximum": 4094 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "intent": { "$ref": "#/$defs/vlanIntent" }
+      }
+    },
+    "vlanIntent": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "maxLength": 40 },
+        "expectedHosts": { "type": "integer", "minimum": 0 },
+        "growthHosts": { "type": "integer", "minimum": 0 },
+        "dhcp": { "type": "boolean" },
+        "internet": { "type": "boolean" },
+        "isolation": { "type": "string" },
+        "criticality": { "type": "string" }
+      }
+    },
+    "subnet": {
+      "type": "object",
+      "required": ["id", "vlanRef", "cidr", "gateway"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "vlanRef": { "$ref": "#/$defs/id" },
+        "cidr": { "$ref": "#/$defs/cidr" },
+        "gateway": { "$ref": "#/$defs/ipv4" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "required": ["id", "name", "type", "vlanRef"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "type": { "type": "string", "maxLength": 40 },
+        "vlanRef": { "$ref": "#/$defs/id" },
+        "portRef": { "$ref": "#/$defs/idNullable" },
+        "ipMode": { "type": "string", "enum": ["dhcp", "static"] },
+        "staticIp": { "$ref": "#/$defs/ipv4" },
+        "poeRequired": { "type": ["boolean", "null"] },
+        "poeWatts": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": ["id", "aPortId", "bPortId"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "aPortId": { "$ref": "#/$defs/id" },
+        "bPortId": { "$ref": "#/$defs/id" },
+        "transitVlanRef": { "$ref": "#/$defs/idNullable" },
+        "medium": { "type": "string" },
+        "cableType": { "type": "string" },
+        "lengthM": { "type": ["number", "null"], "minimum": 0 },
+        "speed": { "type": "string" }
+      }
+    },
+    "fwRule": {
+      "type": "object",
+      "required": ["id", "name", "src", "dst", "action"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "src": { "type": "string" },
+        "dst": { "type": "string" },
+        "proto": { "type": "string" },
+        "port": { "type": "string" },
+        "action": { "type": "string", "enum": ["allow", "deny", "reject"] }
+      }
+    },
+    "dhcpScope": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "start": { "$ref": "#/$defs/ipv4" },
+        "end": { "$ref": "#/$defs/ipv4" },
+        "dns": { "type": "string" },
+        "domain": { "type": "string" },
+        "lease": { "type": "integer", "minimum": 1, "maximum": 365 },
+        "exclusions": { "type": "array", "items": { "type": "object" } },
+        "reservations": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "iot": {
+      "type": "object",
+      "required": ["accessNodes", "devices", "map"],
+      "additionalProperties": true,
+      "properties": {
+        "accessNodes": { "type": "array", "items": { "type": "object" } },
+        "devices": { "type": "array", "items": { "type": "object" } },
+        "map": { "type": "object" }
+      }
+    }
+  }
+}

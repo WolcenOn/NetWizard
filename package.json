@@ -1,0 +1,25 @@
+{
+  "name": "netwizard-pro-static",
+  "version": "3.48.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-tests.js",
+    "check:syntax": "node --check js/netwizard-core-utils.js && node --check js/netwizard-security-utils.js && node --check js/netwizard-i18n.js && node --check js/netwizard-network-utils.js && node --check js/netwizard-project-schema.js && node --check js/netwizard-audit.js && node --check js/netwizard-cabling-utils.js && node --check js/netwizard-poe-utils.js && node --check js/netwizard-l3-config-utils.js && node --check js/netwizard-routing-utils.js && node --check js/netwizard-dhcp-utils.js && node --check js/netwizard-change-preview.js && node --check js/netwizard-change-plan.js && node --check js/netwizard-documentation-utils.js && node --check js/netwizard-vendor-hardening.js && node --check js/netwizard-l2-utils.js && node --check js/netwizard-production-gate.js && node --check js/netwizard-policy-utils.js && node --check js/netwizard-history.js && node --check js/netwizard.js && node --check js/netwizard-broadcast-utils.js && node --check js/netwizard-vlsm-physical-planner.js && node --check js/netwizard-vlan-intent.js && node --check js/netwizard-bridge.js && node --check js/netwizard-bridge-ui.js && node --check js/netwizard-graph-viewer.js && node --check js/netwizard-iot-publisher.js && node --check js/netwizard-iot-embedded.js && node --check js/netwizard-unified-config-map.js && node --check js/netwizard-v5-iot-extension.js && node --check js/netwizard-v5-layout-manager.js && node --check js/netwizard-connectivity-checker.js",
+    "test:e2e": "npx playwright test",
+    "test:e2e:install": "npx playwright install chromium",
+    "serve": "npx http-server . -p 4173 -s -c-1",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:report": "npx playwright show-report",
+    "build:zip": "node scripts/build-zip.js",
+    "release:check": "npm run i18n:check && npm test && npm run check:syntax && npm run audit:xss",
+    "audit:xss": "node scripts/audit-xss.js",
+    "i18n:check": "node scripts/i18n-check.js",
+    "i18n:sync": "node scripts/i18n-sync.js",
+    "i18n:new": "node scripts/i18n-new-locale.js",
+    "i18n:audit": "node scripts/i18n-audit-hardcoded.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "http-server": "^14.1.1"
+  }
+}
