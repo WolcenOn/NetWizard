@@ -1,11 +1,11 @@
 /* =========================================================
-   NetWizard Vendor Config Generators v3.49
-   Generación y planes de configuración por fabricante.
+   NetWizard Vendor Config Generators v3.50
+   Generación de configuración por fabricante.
 
    Mantenimiento:
-   - El módulo solo devuelve texto para textarea/descarga; no inyecta HTML.
+   - Solo devuelve texto para textarea/descarga; no inyecta HTML.
    - Cisco IOS conserva el generador principal cuando RoaS está configurado.
-   - Los fabricantes cloud/controlador generan plan neutral, no CLI inventada.
+   - Para controladores cloud se genera procedimiento aplicable, no CLI inventada.
    - API Node/browser para tests: createEnhancedGenConfig() e install().
 ========================================================= */
 (function initNetWizardVendorConfigGenerators(root){
@@ -39,7 +39,8 @@
       const ip=((parts[0]<<24)>>>0)+(parts[1]<<16)+(parts[2]<<8)+parts[3];
       const pfx=Number(m[2]); if(pfx<0||pfx>32) return null;
       const mask=pfx===0?0:(0xffffffff<<(32-pfx))>>>0;
-      return {ip:ip>>>0,pfx,mask,net:(ip&mask)>>>0,cidr:clean(cidr)};
+      const bc=(ip&mask)|(~mask>>>0);
+      return {ip:ip>>>0,pfx,mask,net:(ip&mask)>>>0,bc:bc>>>0,cidr:clean(cidr)};
     }
     function ip4(n){
       if(typeof net.ip4s === 'function') return net.ip4s(n>>>0);
@@ -51,8 +52,16 @@
     }
     function cidrIp(cidr){ const c=parseC(cidr); return c ? ip4(c.ip) : ''; }
     function cidrNet(cidr){ const c=parseC(cidr); return c ? ip4(c.net) : ''; }
+    function prefix(cidr){ const c=parseC(cidr); return c ? c.pfx : 24; }
+    function firstUsable(cidr,offset){ const c=parseC(cidr); if(!c) return ''; return ip4((c.net + (offset || 1)) >>> 0); }
+    function lastUsable(cidr,offset){ const c=parseC(cidr); if(!c) return ''; return ip4((c.bc - (offset || 1)) >>> 0); }
     function vendor(d){ return clean(d&&d.vendorOs) || 'cisco_ios'; }
     function isRouterLike(d){ return /router|firewall|gateway/i.test(clean(d&&d.type)); }
+    function vlanName(v){ return cliToken((v && v.name) || ('VLAN'+(v && v.vlanId || '')), 'VLAN', 32); }
+    function enabledDhcp(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return !!raw.enabled; }
+    function dhcpDns(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return clean(Array.isArray(raw.dns) ? raw.dns.join(' ') : raw.dns)||'8.8.8.8 1.1.1.1'; }
+    function dhcpLease(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return raw.lease || 1; }
+    function vlanComment(v,sn){ return `VLAN ${v.vlanId} ${cliText(v.name||'',48)}${sn&&sn.cidr?' · '+sn.cidr:''}`; }
     function inferLanPort(p,d){
       const roas=p.roas||{};
       if(roas.gwId===d.id && roas.lanIf) return roas.lanIf;
@@ -68,13 +77,8 @@
       const byRole=ports.find(x=>/wan|outside/i.test(clean(x.role||x.desc||x.name)));
       return byRole ? byRole.name : 'GigabitEthernet0/0';
     }
-    function enabledDhcp(p,v){
-      const raw=(p.dhcp||{})[String(v.vlanId)] || {};
-      return !!raw.enabled;
-    }
-    function dhcpDns(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return clean(raw.dns)||'8.8.8.8 1.1.1.1'; }
-    function dhcpLease(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return raw.lease || 1; }
-    function vlanComment(v,sn){ return `VLAN ${v.vlanId} ${cliText(v.name||'',48)}${sn&&sn.cidr?' · '+sn.cidr:''}`; }
+    function originalOrEmpty(devId,format){ return originalGenConfig ? originalGenConfig(devId,format) : ''; }
+    function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^# Vendor\/OS todavía no implementado/i.test(out||''); }
 
     function genCiscoRouterAuto(d){
       const p=project();
@@ -91,10 +95,10 @@
         });
       }
       if(lanIf && arr(p.vlans).length){
-        L.push('!','! RoaS — subinterfaces VLAN inferidas',`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
+        L.push('!','! RoaS — subinterfaces VLAN',`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
         arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
           const sn=subnetByVlan(p,v.id); if(!sn||!sn.gateway||!sn.cidr) return;
-          L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}`,` description GW_VLAN${v.vlanId}_${cliToken(v.name||'VLAN','VLAN',32)}`,` ip address ${cliText(sn.gateway,40)} ${mask(sn.cidr)}`,' ip nat inside',' no shutdown',' exit');
+          L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}`,` description GW_VLAN${v.vlanId}_${vlanName(v)}`,` ip address ${cliText(sn.gateway,40)} ${mask(sn.cidr)}`,' ip nat inside',' no shutdown',' exit');
         });
       }
       const dh=[];
@@ -120,15 +124,15 @@
 
     function genMikrotik(d){
       const p=project(), lanBridge='bridge-lan', wanIf=inferWanPort(p,d);
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — MikroTik RouterOS`,`# ${'═'.repeat(40)}`,'# Plan generado desde NetWizard. Revisar nombres de interfaz antes de aplicar.','/system identity set name="'+quote(d.name||'router',64)+'"','/interface bridge add name='+lanBridge+' vlan-filtering=yes comment="LAN VLAN bridge"'];
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — MikroTik RouterOS`,`# ${'═'.repeat(40)}`,'# Revisar nombres de interfaz antes de aplicar.','/system identity set name="'+quote(d.name||'router',64)+'"','/interface bridge add name='+lanBridge+' vlan-filtering=yes comment="LAN VLAN bridge"'];
       portsByDev(p,d.id).forEach(pt=>{ if(pt.name!==wanIf) L.push(`/interface bridge port add bridge=${lanBridge} interface=${quote(pt.name,64)}`); });
       arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
         const sn=subnetByVlan(p,v.id);
         L.push(`# ${vlanComment(v,sn)}`);
         L.push(`/interface vlan add name=vlan${v.vlanId} vlan-id=${v.vlanId} interface=${lanBridge}`);
-        if(sn&&sn.gateway&&sn.cidr){ const c=parseC(sn.cidr); L.push(`/ip address add address=${sn.gateway}/${c?c.pfx:24} interface=vlan${v.vlanId} comment="${quote(v.name||'VLAN',80)}"`); }
+        if(sn&&sn.gateway&&sn.cidr) L.push(`/ip address add address=${sn.gateway}/${prefix(sn.cidr)} interface=vlan${v.vlanId} comment="${quote(v.name||'VLAN',80)}"`);
         L.push(`/interface bridge vlan add bridge=${lanBridge} vlan-ids=${v.vlanId} tagged=${lanBridge}`);
-        if(enabledDhcp(p,v)&&sn&&sn.cidr) L.push(`/ip pool add name=pool_vlan${v.vlanId} ranges=${cidrNet(sn.cidr)}-${cidrNet(sn.cidr)}  # Ajustar rango DHCP`, `/ip dhcp-server add name=dhcp_vlan${v.vlanId} interface=vlan${v.vlanId} address-pool=pool_vlan${v.vlanId} disabled=no`, `/ip dhcp-server network add address=${sn.cidr} gateway=${sn.gateway||''} dns-server=${dhcpDns(p,v).replace(/\s+/g,',')}`);
+        if(enabledDhcp(p,v)&&sn&&sn.cidr) L.push(`/ip pool add name=pool_vlan${v.vlanId} ranges=${firstUsable(sn.cidr,20)}-${lastUsable(sn.cidr,1)}`, `/ip dhcp-server add name=dhcp_vlan${v.vlanId} interface=vlan${v.vlanId} address-pool=pool_vlan${v.vlanId} disabled=no`, `/ip dhcp-server network add address=${sn.cidr} gateway=${sn.gateway||''} dns-server=${dhcpDns(p,v).replace(/\s+/g,',')}`);
       });
       if(d.internetEdge==='yes') L.push('# WAN / NAT',`/ip dhcp-client add interface=${quote(wanIf,64)} disabled=no`,`/ip firewall nat add chain=srcnat out-interface=${quote(wanIf,64)} action=masquerade comment="NetWizard NAT Internet"`);
       L.push('# Seguridad mínima recomendada','/ip service disable telnet,ftp,www,api,api-ssl','/ip service set ssh address=0.0.0.0/0  # Limitar a VLAN de gestión en producción');
@@ -143,45 +147,89 @@
       arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
         const sn=subnetByVlan(p,v.id); L.push(`interface Vlanif${v.vlanId}`);
         if(sn&&sn.gateway&&sn.cidr) L.push(` description ${cliText(v.name||'VLAN',80)}`,` ip address ${sn.gateway} ${mask(sn.cidr)}`);
+        if(enabledDhcp(p,v)) L.push(' dhcp select interface');
         L.push('quit');
       });
+      if(vids.length) L.push('dhcp enable');
       if(lanIf){ L.push(`interface ${cliText(lanIf,80)}`,' port link-type trunk'); if(vids.length)L.push(` port trunk allow-pass vlan ${vids.join(' ')}`); L.push('quit'); }
       if(d.internetEdge==='yes') L.push(`# WAN: revisar interfaz ${wanIf}`,'# NAT/route pueden variar según modelo/licencia VRP.',`ip route-static 0.0.0.0 0.0.0.0 ${(p.roas||{}).wanNh||'NEXT_HOP_WAN'}`);
-      arr(p.vlans).forEach(v=>{ if(enabledDhcp(p,v)){ const sn=subnetByVlan(p,v.id); if(sn&&sn.gateway) L.push('dhcp enable',`interface Vlanif${v.vlanId}`,' dhcp select interface','quit'); } });
       L.push('return'); return L.join('\n')+'\n';
+    }
+
+    function genFortinet(d){
+      const p=project(), lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Fortinet FortiGate CLI`,`# ${'═'.repeat(40)}`,'config system global',` set hostname ${cliToken(d.name,'FGT')}`,'end','config system interface'];
+      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(` edit "VLAN${v.vlanId}_${vlanName(v)}"`,`  set interface "${quote(lanIf,60)}"`,`  set vlanid ${v.vlanId}`); if(sn&&sn.gateway&&sn.cidr)L.push(`  set ip ${sn.gateway} ${mask(sn.cidr)}`); L.push('  set allowaccess ping https ssh',' next'); });
+      L.push('end');
+      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); if(enabledDhcp(p,v)&&sn&&sn.cidr){ L.push('config system dhcp server',' edit 0',`  set interface "VLAN${v.vlanId}_${vlanName(v)}"`,`  set default-gateway ${sn.gateway||firstUsable(sn.cidr,1)}`,'  config ip-range','   edit 1',`    set start-ip ${firstUsable(sn.cidr,20)}`,`    set end-ip ${lastUsable(sn.cidr,1)}`,'   next','  end',' next','end'); } });
+      L.push('config firewall address');
+      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); if(sn&&sn.cidr)L.push(` edit "NET_VLAN${v.vlanId}_${vlanName(v)}"`,`  set subnet ${cidrNet(sn.cidr)} ${mask(sn.cidr)}`,' next'); });
+      L.push('end');
+      if(d.internetEdge==='yes') L.push('config firewall policy',' edit 0','  set name "LAN_to_Internet"','  set srcintf "any"',`  set dstintf "${quote(wanIf,60)}"`,'  set srcaddr "all"','  set dstaddr "all"','  set action accept','  set schedule "always"','  set service "ALL"','  set nat enable',' next','end');
+      return L.join('\n')+'\n';
+    }
+
+    function genJuniper(d){
+      const p=project(), lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Juniper Junos set commands`,`# ${'═'.repeat(40)}`,`set system host-name ${cliToken(d.name,'router')}`];
+      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`set vlans ${vlanName(v)} vlan-id ${v.vlanId}`,`set vlans ${vlanName(v)} l3-interface irb.${v.vlanId}`,`set interfaces ${lanIf} unit 0 family ethernet-switching interface-mode trunk`,`set interfaces ${lanIf} unit 0 family ethernet-switching vlan members ${vlanName(v)}`); if(sn&&sn.gateway&&sn.cidr)L.push(`set interfaces irb unit ${v.vlanId} family inet address ${sn.gateway}/${prefix(sn.cidr)}`); });
+      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); if(enabledDhcp(p,v)&&sn&&sn.cidr)L.push(`set access address-assignment pool VLAN${v.vlanId} family inet network ${sn.cidr}`,`set access address-assignment pool VLAN${v.vlanId} family inet range DHCP low ${firstUsable(sn.cidr,20)}`,`set access address-assignment pool VLAN${v.vlanId} family inet range DHCP high ${lastUsable(sn.cidr,1)}`,`set access address-assignment pool VLAN${v.vlanId} family inet dhcp-attributes router ${sn.gateway}`); });
+      if(d.internetEdge==='yes') L.push(`set security nat source rule-set LAN-to-WAN from zone trust`,`set security nat source rule-set LAN-to-WAN to zone untrust`,`set security nat source rule-set LAN-to-WAN rule SRC-NAT match source-address 0.0.0.0/0`,`set security nat source rule-set LAN-to-WAN rule SRC-NAT then source-nat interface`,`set interfaces ${wanIf} unit 0 family inet dhcp`);
+      return L.join('\n')+'\n';
+    }
+
+    function genAruba(d){
+      const p=project();
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Aruba AOS-Switch`,`# ${'═'.repeat(40)}`,`hostname "${quote(d.name||'aruba',64)}"`];
+      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`vlan ${v.vlanId}`,`   name "${quote(v.name||('VLAN'+v.vlanId),64)}"`); const access=portsByDev(p,d.id).filter(pt=>pt.mode==='access'&&pt.accessVlanRef===v.id).map(pt=>pt.name); const trunks=portsByDev(p,d.id).filter(pt=>pt.mode==='trunk'&&arr(pt.allowedVlans).includes(v.vlanId)).map(pt=>pt.name); if(access.length)L.push(`   untagged ${access.join(',')}`); if(trunks.length)L.push(`   tagged ${trunks.join(',')}`); if(sn&&sn.gateway&&sn.cidr)L.push(`   ip address ${sn.gateway} ${mask(sn.cidr)}`); L.push('   exit'); });
+      L.push('write memory'); return L.join('\n')+'\n';
+    }
+
+    function genPfsense(d){
+      const p=project();
+      const lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — pfSense CE/Plus configuration artifact`,`# ${'═'.repeat(40)}`,'# pfSense no tiene una CLI universal para crear toda la config persistente.','# Este bloque documenta los cambios a aplicar en GUI/API/config.xml.'];
+      L.push(`WAN interface: ${wanIf}`,`LAN parent interface for VLANs: ${lanIf}`);
+      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push('',`# VLAN ${v.vlanId} ${cliText(v.name||'',64)}`,'<vlan>','  <if>'+cliText(lanIf,80)+'</if>','  <tag>'+v.vlanId+'</tag>','  <descr>VLAN'+v.vlanId+'_'+vlanName(v)+'</descr>','</vlan>'); if(sn&&sn.gateway&&sn.cidr)L.push('Interface IP: '+sn.gateway+'/'+prefix(sn.cidr)); if(enabledDhcp(p,v)&&sn&&sn.cidr)L.push('DHCP range: '+firstUsable(sn.cidr,20)+' - '+lastUsable(sn.cidr,1)); });
+      L.push('','Firewall/NAT: crear reglas por VLAN según matriz NetWizard; activar outbound NAT para VLANs con salida Internet.');
+      return L.join('\n')+'\n';
     }
 
     function genCloudPlan(d,label){
       const p=project(), ports=portsByDev(p,d.id), uplink=ports.find(x=>x.mode==='trunk')||ports[0];
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — ${label}`,`# ${'═'.repeat(40)}`,'# Plan neutral. No es CLI directa: aplicar en el controlador/cloud del fabricante.'];
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — ${label}`,`# ${'═'.repeat(40)}`,'# Configuración de controlador/cloud. Aplicar en la consola del fabricante.'];
       L.push(`# Modelo: ${cliText(d.model||'—',80)}`,`# Gestión: ${cliText(d.mgmtIp||'sin IP gestión',80)}`,`# Uplink recomendado: ${uplink?cliText(uplink.name,80):'definir puerto uplink'}${uplink&&uplink.mode==='trunk'?' trunk':' trunk recomendado'}`);
       const allowed=(uplink&&arr(uplink.allowedVlans).length)?arr(uplink.allowedVlans):arr(p.vlans).map(v=>v.vlanId);
       L.push(`# VLANs a transportar: ${allowed.join(', ')||'definir'}`);
       arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`- Crear/usar red VLAN ${v.vlanId} "${cliText(v.name||'VLAN',80)}"${sn?` (${sn.cidr}, GW ${sn.gateway||'—'})`:''}`); });
-      L.push('- Para SSID IoT: asociar SSID a VLAN IoT, activar aislamiento de clientes y limitar acceso a LAN por firewall.','- Para SSID invitados: VLAN dedicada, solo salida a Internet, sin acceso a redes internas.','- Guardar credenciales como alias/secretAlias, nunca como contraseñas reales dentro del proyecto.');
+      L.push('- SSID IoT: VLAN IoT, aislamiento de clientes, acceso solo a broker/controlador/DNS/NTP.','- SSID invitados: VLAN dedicada, solo Internet, sin acceso lateral a LAN.','- Guardar credenciales como alias/secretAlias; no exportar contraseñas reales.');
       return L.join('\n')+'\n';
     }
 
     function genGenericPlan(d){
       const p=project();
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Plan genérico de configuración`,`# ${'═'.repeat(40)}`,`# Vendor/OS todavía no implementado directamente: ${vendor(d)}`,'# NetWizard genera una guía segura para no dejar el dispositivo sin salida útil.'];
-      portsByDev(p,d.id).forEach(pt=>{ L.push(`- Puerto ${cliText(pt.name,80)}: modo=${pt.mode||'—'} rol=${pt.role||'—'} VLAN access=${(vlanByRef(p,pt.accessVlanRef)||{}).vlanId||'—'} allowed=${arr(pt.allowedVlans).join(',')||'—'}`); });
-      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`- VLAN ${v.vlanId} ${cliText(v.name||'',60)}: ${sn?sn.cidr:'sin subnet'} GW=${sn&&sn.gateway?sn.gateway:'—'}`); });
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Configuración genérica`,`# ${'═'.repeat(40)}`,`# Vendor/OS no implementado directamente: ${vendor(d)}`];
+      portsByDev(p,d.id).forEach(pt=>{ L.push(`interface ${cliText(pt.name,80)}`,` description ${cliText(pt.desc||pt.role||'',80)}`,` mode ${pt.mode||'—'}`,` access-vlan ${(vlanByRef(p,pt.accessVlanRef)||{}).vlanId||'—'}`,` allowed-vlans ${arr(pt.allowedVlans).join(',')||'—'}`,' exit'); });
+      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`vlan ${v.vlanId} name ${cliText(v.name||'',60)} ${sn?sn.cidr:'sin-subnet'} gw=${sn&&sn.gateway?sn.gateway:'—'}`); });
       return L.join('\n')+'\n';
     }
 
     function enhancedGenConfig(devId,format){
       const p=project(); const d=devById(p,devId);
-      if(!d) return originalGenConfig ? originalGenConfig(devId,format) : '';
+      if(!d) return originalOrEmpty(devId,format);
       const vo=format||d.vendorOs||'cisco_ios';
       if(vo==='cisco_ios' && isRouterLike(d) && !(p.roas&&p.roas.gwId===d.id)) return genCiscoRouterAuto(d);
       if(vo==='mikrotik_routeros') return genMikrotik(d);
       if(vo==='huawei_vrp') return genHuawei(d);
+      if(vo==='fortinet') return genFortinet(d);
+      if(vo==='juniper_junos') return genJuniper(d);
+      if(vo==='aruba_aoss') return genAruba(d);
+      if(vo==='pfsense') return genPfsense(d);
       if(vo==='ubiquiti_unifi') return genCloudPlan(d,'Ubiquiti UniFi');
       if(vo==='tplink_omada') return genCloudPlan(d,'TP-Link Omada');
       if(vo==='galgus_cloud') return genCloudPlan(d,'Galgus Cloud');
-      const out=originalGenConfig ? originalGenConfig(devId,format) : '';
-      if(/^! Sin vendor asignado:/i.test(out||'')) return genGenericPlan(d);
+      const out=originalOrEmpty(devId,format);
+      if(isUnsupported(out)) return genGenericPlan(d);
       return out;
     }
 
@@ -211,7 +259,7 @@
     return enhanced;
   }
 
-  const api = { version:'netwizard-vendor-config-generators-v3.49', createEnhancedGenConfig, install };
+  const api = { version:'netwizard-vendor-config-generators-v3.50', createEnhancedGenConfig, install };
   root.NetWizardVendorConfigGenerators = api;
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
 
