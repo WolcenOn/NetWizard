@@ -6,6 +6,26 @@
 (function initNetWizardCoreUtils(root){
   'use strict';
 
+  // Compatibilidad con scripts clásicos: algunas secciones legacy usan
+  // identificadores globales no declarados desde netwizard.js. Definirlos
+  // aquí evita ReferenceError en navegadores en modo strict sin tocar el
+  // flujo de generación de configuración.
+  if(typeof root.selDevCfg === 'undefined') root.selDevCfg = null;
+  if(typeof root.selVendorCfg === 'undefined') root.selVendorCfg = null;
+
+  // Compatibilidad i18n: algunos módulos llaman applyI18n(cardElement).
+  // Document tiene getElementById, Element no. Esta pequeña extensión permite
+  // aplicar traducciones en un subárbol sin romper ensureSelector().
+  if(root.Element && root.Element.prototype && !root.Element.prototype.getElementById){
+    Object.defineProperty(root.Element.prototype, 'getElementById', {
+      configurable: true,
+      value: function scopedGetElementById(id){
+        const safe = String(id || '').replace(/([ #;?%&,.+*~\':"!^$[\]()=>|/@])/g, '\\$1');
+        return this.querySelector('#' + safe);
+      }
+    });
+  }
+
   function escapeHtml(value){
     return (value ?? '').toString().replace(/[&<>"']/g, c => ({
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
