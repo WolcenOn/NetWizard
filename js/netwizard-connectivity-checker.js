@@ -3,6 +3,28 @@
    Simulación de reachability tipo ping: IP, VLAN, puerto access,
    gateway/subnet y matriz inter-VLAN. No envía tráfico real.
 ========================================================= */
+(function ensureVendorSelectorCompatibility(){
+  'use strict';
+  if(typeof window === 'undefined') return;
+  if(!Array.isArray(window.ALL_VENDORS)){
+    window.ALL_VENDORS=[
+      {id:'cisco_ios',l:'Cisco IOS'},
+      {id:'cisco_asa',l:'Cisco ASA'},
+      {id:'fortinet',l:'Fortinet FortiGate'},
+      {id:'pfsense',l:'pfSense'},
+      {id:'mikrotik_routeros',l:'MikroTik RouterOS'},
+      {id:'huawei_vrp',l:'Huawei VRP'},
+      {id:'juniper_junos',l:'Juniper Junos'},
+      {id:'aruba_aoss',l:'Aruba AOS-Switch'},
+      {id:'ubiquiti_unifi',l:'Ubiquiti UniFi'},
+      {id:'tplink_omada',l:'TP-Link Omada'},
+      {id:'galgus_cloud',l:'Galgus Cloud'},
+      {id:'windows',l:'Windows'},
+      {id:'linux',l:'Linux'}
+    ];
+  }
+})();
+
 (function loadVendorGeneratorsIfNeeded(){
   'use strict';
   if(typeof window === 'undefined' || window.NetWizardVendorConfigGenerators) return;
