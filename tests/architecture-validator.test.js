@@ -61,4 +61,57 @@ test('Architecture validator ignora temporalmente enlaces con referencias incomp
   assert.strictEqual(report.issues.length, 0);
 });
 
+test('Architecture validator bloquea direcciones IP duplicadas entre interfaces', () => {
+  const project = {
+    devices:[
+      {id:'fw1', name:'FW-EDGE-HQ', type:'firewall'},
+      {id:'r1', name:'RTR-HQ-CORE', type:'router'}
+    ],
+    ports:[
+      {id:'fw-wan', deviceId:'fw1', name:'wan1', mode:'routed', l3Cidr:'203.0.113.2/30'},
+      {id:'r-wan', deviceId:'r1', name:'GigabitEthernet0/0', mode:'routed', l3Ip:'203.0.113.2'}
+    ],
+    links:[]
+  };
+  const report = ArchitectureValidator.validate(project);
+  const issue = report.issues.find(item => item.code === 'NW-IP-001');
+  assert.ok(issue);
+  assert.strictEqual(issue.blocking, true);
+  assert.ok(issue.message.includes('203.0.113.2'));
+  assert.ok(issue.message.includes('FW-EDGE-HQ / wan1'));
+  assert.ok(issue.message.includes('RTR-HQ-CORE / GigabitEthernet0/0'));
+  assert.ok(issue.suggestions[0].steps.length >= 3);
+});
+
+test('Architecture validator avisa cuando existen varios bordes de Internet', () => {
+  const project = {
+    devices:[
+      {id:'fw1', name:'FW-EDGE-HQ', type:'firewall', internetEdge:'yes'},
+      {id:'r1', name:'RTR-HQ-CORE', type:'router', internetEdge:'yes'}
+    ],
+    ports:[],
+    links:[]
+  };
+  const report = ArchitectureValidator.validate(project);
+  const issue = report.issues.find(item => item.code === 'NW-ARCH-002');
+  assert.ok(issue);
+  assert.strictEqual(issue.severity, 'warning');
+  assert.strictEqual(issue.blocking, false);
+  assert.ok(issue.why.includes('alta disponibilidad'));
+  assert.strictEqual(issue.suggestions.length, 2);
+});
+
+test('Architecture validator acepta un único borde de Internet', () => {
+  const project = {
+    devices:[
+      {id:'fw1', name:'FW-EDGE-HQ', type:'firewall', internetEdge:'yes'},
+      {id:'r1', name:'RTR-HQ-CORE', type:'router', internetEdge:'no'}
+    ],
+    ports:[],
+    links:[]
+  };
+  const report = ArchitectureValidator.validate(project);
+  assert.strictEqual(report.issues.some(item => item.code === 'NW-ARCH-002'), false);
+});
+
 console.log('\nTests architecture validator completados.');
