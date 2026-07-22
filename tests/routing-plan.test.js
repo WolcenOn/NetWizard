@@ -23,8 +23,8 @@ function project(strategy){
       {id:'v20', vlanId:20, name:'Branch Users'}
     ],
     subnets:[
-      {id:'s10', vlanRef:'v10', cidr:'10.10.10.0/24', gateway:'10.10.10.1'},
-      {id:'s20', vlanRef:'v20', cidr:'10.20.20.0/24', gateway:'10.20.20.1'}
+      {id:'s10', vlanRef:'v10', cidr:'10.10.10.0/24', gateway:'10.10.10.1', gatewayDeviceRef:'r1'},
+      {id:'s20', vlanRef:'v20', cidr:'10.20.20.0/24', gateway:'10.20.20.1', gatewayDeviceRef:'r2'}
     ],
     ports:[
       {id:'r1-wan', deviceId:'r1', name:'Gi0/0', mode:'routed', l3Ip:'172.16.0.1', l3Cidr:'172.16.0.1/30'},
@@ -41,7 +41,7 @@ test('Routing plan estático devuelve planes neutrales y next-hop del vecino', (
   assert.strictEqual(plan.devices.length, 2);
   const hq = plan.devices.find(item => item.deviceId === 'r1');
   assert.ok(hq.interfaces.some(item => item.ip === '172.16.0.1'));
-  assert.ok(hq.staticRoutes.some(route => route.nextHop === '172.16.0.2'));
+  assert.ok(hq.staticRoutes.some(route => route.destination === '10.20.20.0/24' && route.nextHop === '172.16.0.2'));
 });
 
 test('Routing plan OSPF conserva intención, router-id y redes neutrales', () => {
@@ -52,6 +52,7 @@ test('Routing plan OSPF conserva intención, router-id y redes neutrales', () =>
   assert.strictEqual(hq.ospf.routerId, '1.1.1.1');
   assert.ok(hq.ospf.networks.some(network => network.cidr === '172.16.0.0/30'));
   assert.ok(hq.ospf.networks.some(network => network.cidr === '10.10.10.0/24' && network.passive));
+  assert.strictEqual(hq.ospf.networks.some(network => network.cidr === '10.20.20.0/24'), false);
 });
 
 test('Routing plan no inventa estrategia cuando falta declaración', () => {
