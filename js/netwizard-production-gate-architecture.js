@@ -18,6 +18,11 @@
     script.src = './js/netwizard-routing-plan.js';
     script.dataset.netwizardRoutingPlan = '1';
     script.defer = false;
+    script.onload = () => {
+      try{
+        if(root.dispatchEvent && root.CustomEvent) root.dispatchEvent(new root.CustomEvent('nw:routing-plan:ready'));
+      }catch(_e){}
+    };
     root.document.head.appendChild(script);
   }
 
@@ -102,6 +107,7 @@
     button.onclick = runEnhanced;
     root.document.addEventListener('nw:project:changed', () => { try{ runEnhanced(); }catch(_e){} });
     root.addEventListener && root.addEventListener('nw:mode:changed', () => { try{ runEnhanced(); }catch(_e){} });
+    root.addEventListener && root.addEventListener('nw:routing-plan:ready', () => { try{ runEnhanced(); }catch(_e){} });
     try{ runEnhanced(); }catch(_e){}
   }
 
