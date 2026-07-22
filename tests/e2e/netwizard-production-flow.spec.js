@@ -36,7 +36,7 @@ test('samples oficiales se importan en navegador, pasan schema y generan auditor
       }, payload);
       await expect(page.locator('#productionGateCard')).toBeVisible();
       await page.click('#btnProductionGate');
-      await expect(page.locator('#productionGateOut')).toContainText(/Puerta de producción|Estado:/);
+      await expect(page.locator('#productionGateOut')).toContainText(/Puerta de producción|Production gate|Estado:|Status:/i);
 
       const result = await page.evaluate(() => {
         const project = window.NetWizardState.getSnapshot();
@@ -116,7 +116,7 @@ test('documentación y matriz funcionan desde la UI y producen descargas', async
   }, payload);
   await expect(page.locator('#nwDocCard')).toBeVisible();
   await page.click('#btnDocMatrix');
-  await expect(page.locator('#nwDocOut')).toContainText('Matriz de conectividad');
+  await expect(page.locator('#nwDocOut')).toContainText(/Matriz de conectividad|VLAN connectivity matrix/i);
 
   const mdDownload = page.waitForEvent('download');
   await page.click('#btnDocMd');
@@ -148,5 +148,5 @@ test('puerta de producción bloquea un diseño incompleto antes de exportar', as
 
   const gate = await page.evaluate(() => window.NetWizardProductionGate.runProductionGate(window.NetWizardState.getSnapshot(), { productionMode:true, strict:true }));
   expect(gate.status).toBe('blocked');
-  expect(gate.blockingCount).toBeGreaterThan(0);
+  expect(gate.counts.blocking).toBeGreaterThan(0);
 });
