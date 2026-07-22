@@ -37,6 +37,12 @@
     return mode;
   }
 
+  function ipOnly(value){
+    const raw = clean(value);
+    if(!raw) return '';
+    return raw.split('/')[0].trim();
+  }
+
   function validateLinkCompatibility(project){
     const p = project || {};
     const portsById = new Map(arr(p.ports).map(port => [port.id, port]));
@@ -88,6 +94,90 @@
       }));
     }
 
+    return issues;
+  }
+
+  function validateDuplicateInterfaceIps(project){
+    const p = project || {};
+    const devicesById = new Map(arr(p.devices).map(device => [device.id, device]));
+    const ownersByIp = new Map();
+    const issues = [];
+
+    for(const port of arr(p.ports)){
+      const ip = ipOnly(port.l3Ip || port.routedIp || port.l3Cidr || port.routedCidr);
+      if(!ip || ip === '0.0.0.0') continue;
+      if(!ownersByIp.has(ip)) ownersByIp.set(ip, []);
+      ownersByIp.get(ip).push(port);
+    }
+
+    for(const [ip, owners] of ownersByIp.entries()){
+      if(owners.length < 2) continue;
+      const labels = owners.map(port => endpointLabel(port, devicesById));
+      issues.push(makeIssue({
+        code:'NW-IP-001',
+        severity:'error',
+        blocking:true,
+        category:'ip',
+        title:'Dirección IP duplicada en interfaces',
+        message:`La dirección ${ip} está asignada a ${labels.join(' y ')}.`,
+        why:'Dos interfaces del mismo proyecto no deben utilizar la misma dirección IP dentro del mismo dominio de routing.',
+        impact:'Puede provocar conflictos ARP, rutas inestables y pérdida intermitente o total de conectividad.',
+        affectedObjects:owners.map(port => clean(port.id)).filter(Boolean),
+        suggestions:[{
+          label:'Asignar direcciones únicas',
+          steps:[
+            'Identifica qué interfaz debe conservar la dirección.',
+            'Asigna a la otra interfaz una IP libre perteneciente a su subnet.',
+            'Revisa rutas, gateways y referencias que utilicen la dirección anterior.'
+          ]
+        }]
+      }));
+    }
+    return issues;
+  }
+
+  function validateInternetEdges(project){
+    const p = project || {};
+    const edges = arr(p.devices).filter(device => clean(device.internetEdge).toLowerCase() === 'yes' || device.internetEdge === true);
+    if(edges.length <= 1) return [];
+
+    const names = edges.map(device => clean(device.name) || clean(device.id) || 'dispositivo sin nombre');
+    return [makeIssue({
+      code:'NW-ARCH-002',
+      severity:'warning',
+      blocking:false,
+      category:'architecture',
+      title:'Varios bordes de Internet declarados',
+      message:`Hay ${edges.length} dispositivos marcados como borde de Internet: ${names.join(', ')}.`,
+      why:'Más de un borde puede ser válido con alta disponibilidad o multihoming, pero requiere declarar roles, prioridades y routing de salida explícitos.',
+      impact:'Sin una arquitectura de redundancia definida, pueden generarse rutas por defecto, NAT o políticas contradictorias.',
+      affectedObjects:edges.map(device => clean(device.id)).filter(Boolean),
+      suggestions:[
+        {
+          label:'Mantener un único borde',
+          steps:[
+            'Selecciona el firewall o router que conecta realmente con el ISP.',
+            'Desmarca internetEdge en los equipos internos.',
+            'Configura en los routers internos una ruta por defecto hacia el borde.'
+          ]
+        },
+        {
+          label:'Documentar redundancia o multihoming',
+          steps:[
+            'Define el protocolo de redundancia o routing utilizado.',
+            'Asigna prioridades, tracking y rutas por defecto coherentes.',
+            'Verifica NAT y políticas en todos los bordes.'
+          ]
+        }
+      ]
+    })];
+  }
+
+  function validate(project){
+    const issues = []
+      .concat(validateLinkCompatibility(project))
+      .concat(validateDuplicateInterfaceIps(project))
+      .concat(validateInternetEdges(project));
     return {
       ok: !issues.some(issue => issue.blocking || issue.severity === 'error'),
       issues,
@@ -96,20 +186,12 @@
     };
   }
 
-  function validate(project){
-    const linkReport = validateLinkCompatibility(project);
-    return {
-      ok: linkReport.ok,
-      issues: linkReport.issues,
-      errors: linkReport.errors,
-      warnings: linkReport.warnings
-    };
-  }
-
   const api = {
-    version:'netwizard-architecture-validator-v1',
+    version:'netwizard-architecture-validator-v2',
     validate,
-    validateLinkCompatibility
+    validateLinkCompatibility,
+    validateDuplicateInterfaceIps,
+    validateInternetEdges
   };
 
   root.NetWizardArchitectureValidator = api;
