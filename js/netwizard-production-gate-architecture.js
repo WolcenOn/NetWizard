@@ -19,9 +19,7 @@
     script.dataset.netwizardRoutingPlan = '1';
     script.defer = false;
     script.onload = () => {
-      try{
-        if(root.dispatchEvent && root.CustomEvent) root.dispatchEvent(new root.CustomEvent('nw:routing-plan:ready'));
-      }catch(_e){}
+      try{ if(root.dispatchEvent && root.CustomEvent) root.dispatchEvent(new root.CustomEvent('nw:routing-plan:ready')); }catch(_e){}
     };
     root.document.head.appendChild(script);
   }
@@ -31,6 +29,15 @@
     const script = root.document.createElement('script');
     script.src = './js/netwizard-cisco-routing-integration.js';
     script.dataset.netwizardCiscoRoutingIntegration = '1';
+    script.defer = false;
+    root.document.head.appendChild(script);
+  }
+
+  function ensureMultivendorRoutingIntegrationScript(){
+    if(!root.document || root.NetWizardMultivendorRoutingIntegration || root.document.querySelector('script[data-netwizard-multivendor-routing-integration]')) return;
+    const script = root.document.createElement('script');
+    script.src = './js/netwizard-multivendor-routing-integration.js';
+    script.dataset.netwizardMultivendorRoutingIntegration = '1';
     script.defer = false;
     root.document.head.appendChild(script);
   }
@@ -81,6 +88,7 @@
   function install(){
     ensureRoutingPlanScript();
     ensureCiscoRoutingIntegrationScript();
+    ensureMultivendorRoutingIntegrationScript();
     const gate = baseGate();
     if(!gate || gate.__architectureExtensionInstalled) return gate;
     const originalRun = gate.runProductionGate.bind(gate);
@@ -97,6 +105,7 @@
     if(!root.document) return;
     ensureRoutingPlanScript();
     ensureCiscoRoutingIntegrationScript();
+    ensureMultivendorRoutingIntegrationScript();
     const gate = install();
     const state = root.NetWizardState;
     const button = root.document.getElementById('btnProductionGate');
@@ -122,12 +131,12 @@
     try{ runEnhanced(); }catch(_e){}
   }
 
-  const api = {version:'netwizard-production-gate-architecture-v3', install, enhanceReport, mergeIssues, ensureRoutingPlanScript, ensureCiscoRoutingIntegrationScript};
+  const api = {
+    version:'netwizard-production-gate-architecture-v4', install, enhanceReport, mergeIssues,
+    ensureRoutingPlanScript, ensureCiscoRoutingIntegrationScript, ensureMultivendorRoutingIntegrationScript
+  };
   root.NetWizardProductionGateArchitecture = api;
-  if(typeof module !== 'undefined' && module.exports){
-    install();
-    module.exports = api;
-  }
+  if(typeof module !== 'undefined' && module.exports){ install(); module.exports = api; }
   if(root.document){
     if(root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', () => bindBrowserUi(0));
     else bindBrowserUi(0);
