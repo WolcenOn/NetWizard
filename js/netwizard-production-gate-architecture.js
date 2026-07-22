@@ -10,6 +10,16 @@
   function tryRequire(p){ try { return require(p); } catch { return null; } }
   function baseGate(){ return root.NetWizardProductionGate || (typeof require === 'function' ? tryRequire('./netwizard-production-gate.js') : null); }
   function validator(){ return root.NetWizardArchitectureValidator || (typeof require === 'function' ? tryRequire('./netwizard-architecture-validator.js') : null); }
+  function routingPlan(){ return root.NetWizardRoutingPlan || (typeof require === 'function' ? tryRequire('./netwizard-routing-plan.js') : null); }
+
+  function ensureRoutingPlanScript(){
+    if(!root.document || root.NetWizardRoutingPlan || root.document.querySelector('script[data-netwizard-routing-plan]')) return;
+    const script = root.document.createElement('script');
+    script.src = './js/netwizard-routing-plan.js';
+    script.dataset.netwizardRoutingPlan = '1';
+    script.defer = false;
+    root.document.head.appendChild(script);
+  }
 
   function mergeIssues(baseIssues, architectureIssues){
     const seen = new Set();
@@ -40,6 +50,8 @@
     };
     const blocking = issues.filter(i => i && (i.blocking || i.severity === 'error'));
     const status = blocking.length ? 'blocked' : (counts.warnings > 0 ? 'review' : 'ready');
+    const RP = routingPlan();
+    const neutralRoutingPlan = RP && typeof RP.build === 'function' ? RP.build(project || {}) : null;
     return Object.assign({}, report, {
       ok:blocking.length === 0,
       ready:status === 'ready',
@@ -47,11 +59,13 @@
       status,
       issues,
       counts,
-      architecture:architectureReport
+      architecture:architectureReport,
+      routingPlan:neutralRoutingPlan
     });
   }
 
   function install(){
+    ensureRoutingPlanScript();
     const gate = baseGate();
     if(!gate || gate.__architectureExtensionInstalled) return gate;
     const originalRun = gate.runProductionGate.bind(gate);
@@ -66,6 +80,7 @@
 
   function bindBrowserUi(attempt){
     if(!root.document) return;
+    ensureRoutingPlanScript();
     const gate = install();
     const state = root.NetWizardState;
     const button = root.document.getElementById('btnProductionGate');
@@ -90,7 +105,7 @@
     try{ runEnhanced(); }catch(_e){}
   }
 
-  const api = {version:'netwizard-production-gate-architecture-v1', install, enhanceReport, mergeIssues};
+  const api = {version:'netwizard-production-gate-architecture-v2', install, enhanceReport, mergeIssues, ensureRoutingPlanScript};
   root.NetWizardProductionGateArchitecture = api;
   if(typeof module !== 'undefined' && module.exports){
     install();
