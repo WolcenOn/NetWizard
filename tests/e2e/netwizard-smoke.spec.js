@@ -60,7 +60,7 @@ test('aplica VLSM, exporta payload versionado y reimporta datos equivalentes', a
     const next = window.NetWizardPlanner.applyVlsmPlan(project, plan, {assignMode:'static_only'});
     window.NetWizardState.replaceProject(next, {source:'e2e'});
   });
-  const payload = await page.evaluate(() => window.NetWizardProjectSchema.exportProject(window.NetWizardState.getSnapshot()));
+  const payload = await page.evaluate(() => window.NetWizardProjectSchema.prepareExport(window.NetWizardState.getSnapshot()));
   expect(payload.format).toBe('netwizard-project');
   expect(payload.project.subnets[0].cidr).toBe('10.50.0.0/28');
   expect(payload.project.hosts[0].staticIp).toBe('10.50.0.2');
@@ -97,26 +97,33 @@ test('flujo UI crea VLAN, dispositivo, puerto, host, snapshot y restaura', async
   await page.fill('#vId', '10');
   await page.fill('#vName', 'Usuarios');
   await page.click('#btnAddVlan');
+  await expect.poll(() => page.evaluate(() => window.NetWizardState.getSnapshot().vlans.length)).toBe(1);
 
   await page.click('[data-step="dev"]');
   await page.fill('#devName', 'SW-E2E-01');
   await page.selectOption('#devType', 'switch');
+  await page.selectOption('#devVendor', 'cisco_ios');
   await page.click('#btnAddDev');
+  await expect.poll(() => page.evaluate(() => window.NetWizardState.getSnapshot().devices.length)).toBe(1);
+  const deviceId = await page.evaluate(() => window.NetWizardState.getSnapshot().devices[0].id);
 
   await page.click('[data-step="ports"]');
-  await page.selectOption('#pDev', { index: 1 });
+  await expect(page.locator(`#pDev option[value="${deviceId}"]`)).toHaveCount(1);
+  await page.selectOption('#pDev', deviceId);
   await page.fill('#pName', 'GigabitEthernet0/1');
   await page.selectOption('#pMedia', 'GE');
   await page.selectOption('#pRole', 'access');
   await page.selectOption('#pVlan', { index: 1 });
   await page.click('#btnAddPort');
+  await expect.poll(() => page.evaluate(() => window.NetWizardState.getSnapshot().ports.length)).toBe(1);
 
   await page.click('[data-step="hosts"]');
   await page.fill('#hName', 'PC-E2E-01');
   await page.selectOption('#hVlan', { index: 1 });
-  await page.selectOption('#hConnDev', { index: 1 });
+  await page.selectOption('#hConnDev', deviceId);
   await page.selectOption('#hPortMode', 'auto');
   await page.click('#btnAddHost');
+  await expect.poll(() => page.evaluate(() => window.NetWizardState.getSnapshot().hosts.length)).toBe(1);
 
   const before = await page.evaluate(() => window.NetWizardState.getSnapshot());
   expect(before.vlans).toHaveLength(1);
