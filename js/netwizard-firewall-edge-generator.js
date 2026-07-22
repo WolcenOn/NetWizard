@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Firewall Edge Generator v0.1
+   NetWizard Firewall Edge Generator v0.2
    Traduce el proyecto y el plan neutral a configuraciones de borde.
    FortiGate: CLI ejecutable prudente. pfSense: plan aplicable/revisable.
 ========================================================= */
@@ -7,7 +7,6 @@
   'use strict';
 
   function arr(v){ return Array.isArray(v) ? v : []; }
-  function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function token(v, fallback){ return (clean(v || fallback).replace(/[^A-Za-z0-9_.-]/g,'_').replace(/_+/g,'_').slice(0,63) || fallback); }
   function tryRequire(p){ try { return require(p); } catch { return null; } }
@@ -17,11 +16,9 @@
   function parse(cidr){ const n=networkUtils(); return n&&n.parseCidr?n.parseCidr(cidr):null; }
   function ip4(n){ const u=networkUtils(); return u&&u.ip4s?u.ip4s(n>>>0):[n>>>24&255,n>>>16&255,n>>>8&255,n&255].join('.'); }
   function mask(cidr){ const p=parse(cidr); return p?ip4(p.mask):''; }
-  function prefix(cidr){ const p=parse(cidr); return p?p.pfx:null; }
   function net(cidr){ const p=parse(cidr); return p?ip4(p.net):''; }
   function device(project,id){ return arr(project&&project.devices).find(d=>d.id===id)||null; }
   function ports(project,id){ return arr(project&&project.ports).filter(p=>p.deviceId===id); }
-  function vlan(project,ref){ return arr(project&&project.vlans).find(v=>v.id===ref)||null; }
   function subnet(project,ref){ return arr(project&&project.subnets).find(s=>s.vlanRef===ref)||null; }
   function planFor(project,id,supplied){ const plan=supplied||(routingPlan()&&routingPlan().build?routingPlan().build(project||{}):null); return plan&&arr(plan.devices).find(p=>p.deviceId===id)||null; }
 
@@ -63,13 +60,21 @@
 
   function fortiRouting(project,dev,plan){
     const lines=[];
-    if(plan&&plan.strategy==='static'&&arr(plan.staticRoutes).length){
+    const staticRoutes=plan&&plan.strategy==='static'?arr(plan.staticRoutes):[];
+    const defaultNextHop=clean((project.roas||{}).wanNh||dev.defaultGateway||dev.wanGateway);
+    const isInternetEdge=clean(dev.internetEdge).toLowerCase()==='yes'||dev.internetEdge===true;
+
+    if((plan&&plan.strategy==='static')&&(staticRoutes.length||(isInternetEdge&&defaultNextHop))){
       lines.push('config router static'); let seq=10;
-      for(const r of arr(plan.staticRoutes)){
-        if(!r.destination||!r.nextHop) continue;
-        lines.push(` edit ${seq}`,`  set dst ${r.destination}`,`  set gateway ${r.nextHop}`,' next'); seq+=10;
+      for(const r of staticRoutes){
+        const destination=clean(r.destination||r.destinationCidr||r.cidr);
+        const nextHop=clean(r.nextHop||r.gateway);
+        if(!destination||!nextHop) continue;
+        lines.push(` edit ${seq}`,`  set dst ${destination}`,`  set gateway ${nextHop}`,' next'); seq+=10;
       }
-      const nh=clean((project.roas||{}).wanNh); if(clean(dev.internetEdge).toLowerCase()==='yes'&&nh){ lines.push(` edit ${seq}`,'  set dst 0.0.0.0/0',`  set gateway ${nh}`,' next'); }
+      if(isInternetEdge&&defaultNextHop){
+        lines.push(` edit ${seq}`,'  set dst 0.0.0.0/0',`  set gateway ${defaultNextHop}`,' next');
+      }
       lines.push('end');
     } else if(plan&&plan.strategy==='ospf'&&plan.ospf){
       lines.push('config router ospf');
@@ -119,7 +124,7 @@
       lines.push(`- VLAN ${v.vlanId} ${clean(v.name)}: ${sn.cidr}, gateway ${sn.gateway||'definir'}`);
     }
     lines.push('','Routing:');
-    if(plan&&plan.strategy==='static') arr(plan.staticRoutes).forEach(r=>lines.push(`- Ruta estática ${r.destination} vía ${r.nextHop}`));
+    if(plan&&plan.strategy==='static') arr(plan.staticRoutes).forEach(r=>lines.push(`- Ruta estática ${r.destination||r.destinationCidr} vía ${r.nextHop}`));
     else if(plan&&plan.strategy==='ospf') lines.push('- Instalar/configurar FRR y crear OSPF según el plan neutral.','- Router ID: '+clean(plan.ospf&&plan.ospf.routerId),' - Área: '+clean(plan.ospf&&plan.ospf.area||'0'));
     else lines.push('- Estrategia no declarada.');
     lines.push('','Firewall/NAT:','- Crear aliases por subnet/VLAN.','- Aplicar reglas en la interfaz origen; pfSense filtra inbound por interfaz.','- Activar Outbound NAT híbrido o automático solo para redes internas aprobadas.','- Mantener invitados/IoT aislados de redes privadas salvo servicios explícitos.','- Registrar bloqueos relevantes y validar el orden de reglas.');
@@ -133,7 +138,7 @@
     return '';
   }
 
-  const api={version:'netwizard-firewall-edge-generator-v1',render,renderFortiGate,renderPfsensePlan,fortiInterfaces,fortiAddresses,fortiRouting,fortiPolicies};
+  const api={version:'netwizard-firewall-edge-generator-v2',render,renderFortiGate,renderPfsensePlan,fortiInterfaces,fortiAddresses,fortiRouting,fortiPolicies};
   root.NetWizardFirewallEdgeGenerator=api;
   if(typeof module!=='undefined'&&module.exports) module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
