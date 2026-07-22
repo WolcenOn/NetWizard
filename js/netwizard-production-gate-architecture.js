@@ -26,6 +26,15 @@
     root.document.head.appendChild(script);
   }
 
+  function ensureCiscoRoutingIntegrationScript(){
+    if(!root.document || root.NetWizardCiscoRoutingIntegration || root.document.querySelector('script[data-netwizard-cisco-routing-integration]')) return;
+    const script = root.document.createElement('script');
+    script.src = './js/netwizard-cisco-routing-integration.js';
+    script.dataset.netwizardCiscoRoutingIntegration = '1';
+    script.defer = false;
+    root.document.head.appendChild(script);
+  }
+
   function mergeIssues(baseIssues, architectureIssues){
     const seen = new Set();
     const out = [];
@@ -71,6 +80,7 @@
 
   function install(){
     ensureRoutingPlanScript();
+    ensureCiscoRoutingIntegrationScript();
     const gate = baseGate();
     if(!gate || gate.__architectureExtensionInstalled) return gate;
     const originalRun = gate.runProductionGate.bind(gate);
@@ -86,6 +96,7 @@
   function bindBrowserUi(attempt){
     if(!root.document) return;
     ensureRoutingPlanScript();
+    ensureCiscoRoutingIntegrationScript();
     const gate = install();
     const state = root.NetWizardState;
     const button = root.document.getElementById('btnProductionGate');
@@ -111,7 +122,7 @@
     try{ runEnhanced(); }catch(_e){}
   }
 
-  const api = {version:'netwizard-production-gate-architecture-v2', install, enhanceReport, mergeIssues, ensureRoutingPlanScript};
+  const api = {version:'netwizard-production-gate-architecture-v3', install, enhanceReport, mergeIssues, ensureRoutingPlanScript, ensureCiscoRoutingIntegrationScript};
   root.NetWizardProductionGateArchitecture = api;
   if(typeof module !== 'undefined' && module.exports){
     install();
