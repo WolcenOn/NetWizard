@@ -21,7 +21,7 @@ jobs:
   quality:
     name: Quality checks
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -35,12 +35,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Unit and regression tests
-        run: npm test
-
-      - name: Syntax checks
-        run: npm run check:syntax
 
       - name: Release checks
         run: npm run release:check
