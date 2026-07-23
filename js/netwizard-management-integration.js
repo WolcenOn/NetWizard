@@ -1,0 +1,7 @@
+/* NetWizard Management Integration v0.1 */
+(function initNetWizardManagementIntegration(root){
+'use strict';
+function ensure(src,attr){if(!root.document||root.document.querySelector(`script[${attr}]`))return;const s=root.document.createElement('script');s.src=src;s.setAttribute(attr,'1');s.defer=false;root.document.head.appendChild(s);}
+function install(attempt){if(!root.document)return false;ensure('./js/netwizard-management-plan.js','data-netwizard-management-plan');ensure('./js/netwizard-management-generator.js','data-netwizard-management-generator');if(root.__netwizardManagementInstalled)return true;const original=root.genConfig,g=root.NetWizardManagementGenerator,state=root.NetWizardState;if(typeof original!=='function'||!g||!state||typeof state.getSnapshot!=='function'){if((attempt||0)<80&&root.setTimeout)root.setTimeout(()=>install((attempt||0)+1),100);return false;}root.genConfig=function managementGenConfig(deviceId,format){const project=state.getSnapshot();const d=(project.devices||[]).find(x=>x.id===deviceId);const vendor=format||(d&&d.vendorOs)||'';return g.append(original(deviceId,format),project,deviceId,vendor);};root.__netwizardManagementInstalled=true;return true;}
+const api={version:'netwizard-management-integration-v1',install};root.NetWizardManagementIntegration=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>install(0));else install(0);}
+})(typeof window!=='undefined'?window:globalThis);

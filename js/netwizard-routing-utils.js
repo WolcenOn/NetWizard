@@ -53,6 +53,10 @@
     });
   }
 
+  function subnetOwnerRef(subnet){
+    return clean(subnet && (subnet.gatewayDeviceRef || subnet.gatewayDeviceId || subnet.ownerDeviceRef || subnet.routingDeviceRef));
+  }
+
   function collectLocalNetworks(project, deviceId, options){
     const p = project || {};
     const dev = deviceById(p, deviceId);
@@ -62,15 +66,16 @@
       const cidr = normCidr(it.cidr);
       if(cidr) out.push({ cidr, type:'connected-l3', vlanRef:it.vlanRef || '', vlanId:it.vlanId || null, source:'interface', portId:it.portId });
     }
-    const ownsVlans = (p && p.roas && p.roas.gwId === deviceId) || isFirewallLike(dev) || clean(dev && dev.vlanGateway).toLowerCase() === 'yes';
-    if(ownsVlans){
-      for(const sn of arr(p.subnets)){
-        const v = vlanByRef(p, sn.vlanRef);
-        if(!sn || !sn.cidr) continue;
-        if(!opts.includeTransit && v && isTransitVlan(v)) continue;
-        const cidr = normCidr(sn.cidr);
-        if(cidr) out.push({ cidr, type:'local-vlan', vlanRef:sn.vlanRef || '', vlanId:v ? v.vlanId : null, source:'vlan-gateway' });
-      }
+    const ownsVlansLegacy = (p && p.roas && p.roas.gwId === deviceId) || isFirewallLike(dev) || clean(dev && dev.vlanGateway).toLowerCase() === 'yes';
+    for(const sn of arr(p.subnets)){
+      const v = vlanByRef(p, sn && sn.vlanRef);
+      if(!sn || !sn.cidr) continue;
+      if(!opts.includeTransit && v && isTransitVlan(v)) continue;
+      const explicitOwner = subnetOwnerRef(sn);
+      if(explicitOwner && explicitOwner !== deviceId) continue;
+      if(!explicitOwner && !ownsVlansLegacy) continue;
+      const cidr = normCidr(sn.cidr);
+      if(cidr) out.push({ cidr, type:'local-vlan', vlanRef:sn.vlanRef || '', vlanId:v ? v.vlanId : null, source:explicitOwner ? 'subnet-owner' : 'vlan-gateway', gatewayDeviceRef:explicitOwner || deviceId });
     }
     const seen = new Set();
     return out.filter(n => {
@@ -131,7 +136,7 @@
     return rs.map(r => `${r.destination} vía ${r.nextHop}${r.peerDeviceName ? ' ('+r.peerDeviceName+')' : ''}`).join('\n');
   }
 
-  const api = { version:'netwizard-routing-utils-v1', collectLocalNetworks, inferStaticRoutes, summarizeRoutes, maskFor, networkFor, prefixFor };
+  const api = { version:'netwizard-routing-utils-v2', collectLocalNetworks, inferStaticRoutes, summarizeRoutes, maskFor, networkFor, prefixFor, subnetOwnerRef };
   root.NetWizardRoutingUtils = api;
-  if(typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
+  if(typeof module!=='undefined' && module.exports) module.exports = api;
+})(typeof window!=='undefined'?window:globalThis);
