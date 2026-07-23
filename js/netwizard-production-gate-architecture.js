@@ -1,75 +1,67 @@
-/* =========================================================
-   NetWizard Production Gate Architecture Extension v3.49-dev
-   Integra diagnósticos arquitectónicos, compatibilidad, inventario físico, resiliencia, WAN, capacidad, servicios, Wi-Fi, IPv6/VRF y simulación de fallos.
-   Cargable en navegador clásico y en Node.js.
-========================================================= */
+/* NetWizard Production Gate Architecture Extension v3.49-dev */
 (function initNetWizardProductionGateArchitecture(root){
-  'use strict';
-  function arr(v){ return Array.isArray(v) ? v : []; }
-  function tryRequire(p){ try { return require(p); } catch { return null; } }
-  function baseGate(){ return root.NetWizardProductionGate || (typeof require === 'function' ? tryRequire('./netwizard-production-gate.js') : null); }
-  function validator(){ return root.NetWizardArchitectureValidator || (typeof require === 'function' ? tryRequire('./netwizard-architecture-validator.js') : null); }
-  function capabilityRegistry(){ return root.NetWizardCapabilityRegistry || (typeof require === 'function' ? tryRequire('./netwizard-capability-registry.js') : null); }
-  function physicalInventory(){ return root.NetWizardPhysicalInventory || (typeof require === 'function' ? tryRequire('./netwizard-physical-inventory.js') : null); }
-  function resilienceTopology(){ return root.NetWizardResilienceTopology || (typeof require === 'function' ? tryRequire('./netwizard-resilience-topology.js') : null); }
-  function wanCircuits(){ return root.NetWizardWanCircuits || (typeof require === 'function' ? tryRequire('./netwizard-wan-circuits.js') : null); }
-  function trafficCapacity(){ return root.NetWizardTrafficCapacity || (typeof require === 'function' ? tryRequire('./netwizard-traffic-capacity.js') : null); }
-  function internalServices(){ return root.NetWizardInternalServices || (typeof require === 'function' ? tryRequire('./netwizard-internal-services.js') : null); }
-  function wifiPlanning(){ return root.NetWizardWifiPlanning || (typeof require === 'function' ? tryRequire('./netwizard-wifi-planning.js') : null); }
-  function ipv6Vrf(){ return root.NetWizardIpv6Vrf || (typeof require === 'function' ? tryRequire('./netwizard-ipv6-vrf.js') : null); }
-  function failureSimulation(){ return root.NetWizardFailureSimulation || (typeof require === 'function' ? tryRequire('./netwizard-failure-simulation.js') : null); }
-  function routingPlan(){ return root.NetWizardRoutingPlan || (typeof require === 'function' ? tryRequire('./netwizard-routing-plan.js') : null); }
-  function ensureScript(src,selector,datasetKey){ if(!root.document||root.document.querySelector(selector))return; const s=root.document.createElement('script');s.src=src;s.dataset[datasetKey]='1';s.defer=false;root.document.head.appendChild(s); }
-  function ensureRoutingPlanScript(){ if(!root.NetWizardRoutingPlan)ensureScript('./js/netwizard-routing-plan.js','script[data-netwizard-routing-plan]','netwizardRoutingPlan'); }
-  function ensureCapabilityRegistryScript(){ if(!root.NetWizardCapabilityRegistry)ensureScript('./js/netwizard-capability-registry.js','script[data-netwizard-capability-registry]','netwizardCapabilityRegistry'); }
-  function ensureCapabilityUiScript(){ if(!root.NetWizardCapabilityUi)ensureScript('./js/netwizard-capability-ui.js','script[data-netwizard-capability-ui]','netwizardCapabilityUi'); }
-  function ensureDeviceCapabilityFormScript(){ if(!root.NetWizardDeviceCapabilityForm)ensureScript('./js/netwizard-device-capability-form.js','script[data-netwizard-device-capability-form]','netwizardDeviceCapabilityForm'); }
-  function ensurePhysicalInventoryScript(){ if(!root.NetWizardPhysicalInventory)ensureScript('./js/netwizard-physical-inventory.js','script[data-netwizard-physical-inventory]','netwizardPhysicalInventory'); }
-  function ensurePhysicalInventoryUiScript(){ if(!root.NetWizardPhysicalInventoryUi)ensureScript('./js/netwizard-physical-inventory-ui.js','script[data-netwizard-physical-inventory-ui]','netwizardPhysicalInventoryUi'); }
-  function ensureResilienceTopologyScript(){ if(!root.NetWizardResilienceTopology)ensureScript('./js/netwizard-resilience-topology.js','script[data-netwizard-resilience-topology]','netwizardResilienceTopology'); }
-  function ensureResilienceUiScript(){ if(!root.NetWizardResilienceUi)ensureScript('./js/netwizard-resilience-ui.js','script[data-netwizard-resilience-ui]','netwizardResilienceUi'); }
-  function ensureWanCircuitsScript(){ if(!root.NetWizardWanCircuits)ensureScript('./js/netwizard-wan-circuits.js','script[data-netwizard-wan-circuits]','netwizardWanCircuits'); }
-  function ensureWanCircuitsUiScript(){ if(!root.NetWizardWanCircuitsUi)ensureScript('./js/netwizard-wan-circuits-ui.js','script[data-netwizard-wan-circuits-ui]','netwizardWanCircuitsUi'); }
-  function ensureTrafficCapacityScript(){ if(!root.NetWizardTrafficCapacity)ensureScript('./js/netwizard-traffic-capacity.js','script[data-netwizard-traffic-capacity]','netwizardTrafficCapacity'); }
-  function ensureTrafficCapacityUiScript(){ if(!root.NetWizardTrafficCapacityUi)ensureScript('./js/netwizard-traffic-capacity-ui.js','script[data-netwizard-traffic-capacity-ui]','netwizardTrafficCapacityUi'); }
-  function ensureInternalServicesScript(){ if(!root.NetWizardInternalServices)ensureScript('./js/netwizard-internal-services.js','script[data-netwizard-internal-services]','netwizardInternalServices'); }
-  function ensureInternalServicesUiScript(){ if(!root.NetWizardInternalServicesUi)ensureScript('./js/netwizard-internal-services-ui.js','script[data-netwizard-internal-services-ui]','netwizardInternalServicesUi'); }
-  function ensureWifiPlanningScript(){ if(!root.NetWizardWifiPlanning)ensureScript('./js/netwizard-wifi-planning.js','script[data-netwizard-wifi-planning]','netwizardWifiPlanning'); }
-  function ensureWifiPlanningUiScript(){ if(!root.NetWizardWifiPlanningUi)ensureScript('./js/netwizard-wifi-planning-ui.js','script[data-netwizard-wifi-planning-ui]','netwizardWifiPlanningUi'); }
-  function ensureIpv6VrfScript(){ if(!root.NetWizardIpv6Vrf)ensureScript('./js/netwizard-ipv6-vrf.js','script[data-netwizard-ipv6-vrf]','netwizardIpv6Vrf'); }
-  function ensureIpv6VrfUiScript(){ if(!root.NetWizardIpv6VrfUi)ensureScript('./js/netwizard-ipv6-vrf-ui.js','script[data-netwizard-ipv6-vrf-ui]','netwizardIpv6VrfUi'); }
-  function ensureFailureSimulationScript(){ if(!root.NetWizardFailureSimulation)ensureScript('./js/netwizard-failure-simulation.js','script[data-netwizard-failure-simulation]','netwizardFailureSimulation'); }
-  function ensureFailureSimulationUiScript(){ if(!root.NetWizardFailureSimulationUi)ensureScript('./js/netwizard-failure-simulation-ui.js','script[data-netwizard-failure-simulation-ui]','netwizardFailureSimulationUi'); }
-  function ensureCiscoRoutingIntegrationScript(){ if(!root.NetWizardCiscoRoutingIntegration)ensureScript('./js/netwizard-cisco-routing-integration.js','script[data-netwizard-cisco-routing-integration]','netwizardCiscoRoutingIntegration'); }
-  function ensureMultivendorRoutingIntegrationScript(){ if(!root.NetWizardMultivendorRoutingIntegration)ensureScript('./js/netwizard-multivendor-routing-integration.js','script[data-netwizard-multivendor-routing-integration]','netwizardMultivendorRoutingIntegration'); }
-  function ensureFirewallEdgeIntegrationScript(){ if(!root.NetWizardFirewallEdgeIntegration)ensureScript('./js/netwizard-firewall-edge-integration.js','script[data-netwizard-firewall-edge-integration]','netwizardFirewallEdgeIntegration'); }
-  function ensureSwitchingIntegrationScript(){ if(!root.NetWizardSwitchingIntegration)ensureScript('./js/netwizard-switching-integration.js','script[data-netwizard-switching-integration]','netwizardSwitchingIntegration'); }
-  function ensureAccessSecurityIntegrationScript(){ if(!root.NetWizardAccessSecurityIntegration)ensureScript('./js/netwizard-access-security-integration.js','script[data-netwizard-access-security-integration]','netwizardAccessSecurityIntegration'); }
-  function ensureManagementIntegrationScript(){ if(!root.NetWizardManagementIntegration)ensureScript('./js/netwizard-management-integration.js','script[data-netwizard-management-integration]','netwizardManagementIntegration'); }
-  function ensureHaServicesIntegrationScript(){ if(!root.NetWizardHaServicesIntegration)ensureScript('./js/netwizard-ha-services-integration.js','script[data-netwizard-ha-services-integration]','netwizardHaServicesIntegration'); }
-  function mergeIssues(){const seen=new Set(),out=[];for(const group of arguments)for(const issue of arr(group)){const key=[issue&&issue.code,issue&&issue.severity,issue&&issue.category,issue&&issue.deviceId,issue&&issue.portId,issue&&issue.linkId,issue&&issue.circuitId,issue&&issue.profileId,issue&&issue.serviceId,issue&&issue.apId,issue&&issue.ssidId,issue&&issue.networkId,issue&&issue.vrfId,issue&&issue.scenarioId,issue&&issue.capability,issue&&issue.message].join('\u0001');if(seen.has(key))continue;seen.add(key);out.push(issue);}return out;}
-  function enhanceReport(project,options,baseReport){
-    const gate=baseGate(),architecture=validator(),registry=capabilityRegistry(),physical=physicalInventory(),resilience=resilienceTopology(),wan=wanCircuits(),capacity=trafficCapacity(),services=internalServices(),wifi=wifiPlanning(),ip=ipv6Vrf(),failure=failureSimulation();
-    const report=baseReport||(gate&&gate.runProductionGate?gate.runProductionGate(project,options||{}):{issues:[]});
-    const architectureReport=architecture&&typeof architecture.validate==='function'?architecture.validate(project||{}):{issues:[]};
-    const compatibilityReport=registry&&typeof registry.validateProject==='function'?registry.validateProject(project||{}):{issues:[],ok:true};
-    const physicalReport=physical&&typeof physical.validateProject==='function'?physical.validateProject(project||{}):{issues:[],ok:true};
-    const resilienceReport=resilience&&typeof resilience.validateProject==='function'?resilience.validateProject(project||{}):{issues:[],ok:true};
-    const wanReport=wan&&typeof wan.validateProject==='function'?wan.validateProject(project||{}):{issues:[],ok:true};
-    const capacityReport=capacity&&typeof capacity.validateProject==='function'?capacity.validateProject(project||{}):{issues:[],ok:true};
-    const servicesReport=services&&typeof services.validateProject==='function'?services.validateProject(project||{}):{issues:[],ok:true};
-    const wifiReport=wifi&&typeof wifi.validateProject==='function'?wifi.validateProject(project||{}):{issues:[],ok:true};
-    const ipv6VrfReport=ip&&typeof ip.validateProject==='function'?ip.validateProject(project||{}):{issues:[],ok:true};
-    const failureReport=failure&&typeof failure.validateProject==='function'?failure.validateProject(project||{}):{issues:[],ok:true,scenarios:[]};
-    const issues=mergeIssues(report.issues,architectureReport.issues,compatibilityReport.issues,physicalReport.issues,resilienceReport.issues,wanReport.issues,capacityReport.issues,servicesReport.issues,wifiReport.issues,ipv6VrfReport.issues,failureReport.issues);
-    const counts=gate&&gate.summarizeCounts?gate.summarizeCounts(issues):{errors:issues.filter(i=>i&&i.severity==='error').length,warnings:issues.filter(i=>i&&i.severity==='warning').length,info:issues.filter(i=>i&&i.severity==='info').length,blocking:issues.filter(i=>i&&(i.blocking||i.severity==='error')).length,byCategory:{}};
-    const blocking=issues.filter(i=>i&&(i.blocking||i.severity==='error'));
-    const status=blocking.length?'blocked':(counts.warnings>0?'review':'ready');
-    const RP=routingPlan(),neutralRoutingPlan=RP&&typeof RP.build==='function'?RP.build(project||{}):null;
-    return Object.assign({},report,{ok:blocking.length===0,ready:status==='ready',canExport:blocking.length===0,status,issues,counts,architecture:architectureReport,compatibility:compatibilityReport,physicalInventory:physicalReport,resilience:resilienceReport,wan:wanReport,capacity:capacityReport,services:servicesReport,wifi:wifiReport,ipv6Vrf:ipv6VrfReport,failureSimulation:failureReport,routingPlan:neutralRoutingPlan});
-  }
-  function ensureIntegrations(){ensureRoutingPlanScript();ensureCapabilityRegistryScript();ensureCapabilityUiScript();ensureDeviceCapabilityFormScript();ensurePhysicalInventoryScript();ensurePhysicalInventoryUiScript();ensureResilienceTopologyScript();ensureResilienceUiScript();ensureWanCircuitsScript();ensureWanCircuitsUiScript();ensureTrafficCapacityScript();ensureTrafficCapacityUiScript();ensureInternalServicesScript();ensureInternalServicesUiScript();ensureWifiPlanningScript();ensureWifiPlanningUiScript();ensureIpv6VrfScript();ensureIpv6VrfUiScript();ensureFailureSimulationScript();ensureFailureSimulationUiScript();ensureCiscoRoutingIntegrationScript();ensureMultivendorRoutingIntegrationScript();ensureFirewallEdgeIntegrationScript();ensureSwitchingIntegrationScript();ensureAccessSecurityIntegrationScript();ensureManagementIntegrationScript();ensureHaServicesIntegrationScript();}
-  function install(){ensureIntegrations();const gate=baseGate();if(!gate||gate.__architectureExtensionInstalled)return gate;const originalRun=gate.runProductionGate.bind(gate);gate.runProductionGate=function(project,options){return enhanceReport(project,options,originalRun(project,options));};gate.__architectureExtensionInstalled=true;gate.enhanceArchitectureReport=enhanceReport;root.NetWizardProductionGate=gate;return gate;}
-  function bindBrowserUi(attempt){if(!root.document)return;ensureIntegrations();const gate=install(),state=root.NetWizardState;const button=root.document.getElementById('btnProductionGate'),output=root.document.getElementById('productionGateOut');if(!gate||!state||!button||!output){if((attempt||0)<50&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),120);return;}function runEnhanced(){const productionMode=root.NetWizardAudit&&root.NetWizardAudit.isProduction?root.NetWizardAudit.isProduction():false;const strict=!!root.document.getElementById('pgateStrict')?.checked;const snapshot=state.getSnapshot();const report=gate.runProductionGate(snapshot,{productionMode,strict});output.textContent=gate.summarizeGate(report,{limit:80,remediationPreview:root.document.getElementById('pgateShowGuide')?.checked?6:0});root.NetWizardLastProductionGateReport=report;if(root.NetWizardCapabilityUi&&typeof root.NetWizardCapabilityUi.inject==='function')root.NetWizardCapabilityUi.inject();if(root.NetWizardResilienceUi&&typeof root.NetWizardResilienceUi.inject==='function')root.NetWizardResilienceUi.inject();if(root.NetWizardWanCircuitsUi&&typeof root.NetWizardWanCircuitsUi.inject==='function')root.NetWizardWanCircuitsUi.inject();if(root.NetWizardTrafficCapacityUi&&typeof root.NetWizardTrafficCapacityUi.inject==='function')root.NetWizardTrafficCapacityUi.inject();if(root.NetWizardInternalServicesUi&&typeof root.NetWizardInternalServicesUi.inject==='function')root.NetWizardInternalServicesUi.inject();if(root.NetWizardWifiPlanningUi&&typeof root.NetWizardWifiPlanningUi.inject==='function')root.NetWizardWifiPlanningUi.inject();if(root.NetWizardIpv6VrfUi&&typeof root.NetWizardIpv6VrfUi.inject==='function')root.NetWizardIpv6VrfUi.inject();if(root.NetWizardFailureSimulationUi&&typeof root.NetWizardFailureSimulationUi.inject==='function')root.NetWizardFailureSimulationUi.inject();return report;}button.onclick=runEnhanced;root.document.addEventListener('nw:project:changed',()=>{try{runEnhanced();}catch(_e){}});root.addEventListener&&root.addEventListener('nw:mode:changed',()=>{try{runEnhanced();}catch(_e){}});try{runEnhanced();}catch(_e){}}
-  const api={version:'netwizard-production-gate-architecture-v20',install,enhanceReport,mergeIssues,ensureRoutingPlanScript,ensureCapabilityRegistryScript,ensureCapabilityUiScript,ensureDeviceCapabilityFormScript,ensurePhysicalInventoryScript,ensurePhysicalInventoryUiScript,ensureResilienceTopologyScript,ensureResilienceUiScript,ensureWanCircuitsScript,ensureWanCircuitsUiScript,ensureTrafficCapacityScript,ensureTrafficCapacityUiScript,ensureInternalServicesScript,ensureInternalServicesUiScript,ensureWifiPlanningScript,ensureWifiPlanningUiScript,ensureIpv6VrfScript,ensureIpv6VrfUiScript,ensureFailureSimulationScript,ensureFailureSimulationUiScript,ensureCiscoRoutingIntegrationScript,ensureMultivendorRoutingIntegrationScript,ensureFirewallEdgeIntegrationScript,ensureSwitchingIntegrationScript,ensureAccessSecurityIntegrationScript,ensureManagementIntegrationScript,ensureHaServicesIntegrationScript};root.NetWizardProductionGateArchitecture=api;if(typeof module!=='undefined'&&module.exports){install();module.exports=api;}if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>bindBrowserUi(0));else bindBrowserUi(0);}
+'use strict';
+function arr(v){return Array.isArray(v)?v:[];}
+function tryRequire(p){try{return require(p);}catch{return null;}}
+function load(globalName,file){return root[globalName]||(typeof require==='function'?tryRequire(file):null);}
+function baseGate(){return load('NetWizardProductionGate','./netwizard-production-gate.js');}
+function routingPlan(){return load('NetWizardRoutingPlan','./netwizard-routing-plan.js');}
+function ensureScript(src,selector,key){if(!root.document||root.document.querySelector(selector))return;const s=root.document.createElement('script');s.src=src;s.dataset[key]='1';s.defer=false;root.document.head.appendChild(s);}
+const integrations=[
+['NetWizardRoutingPlan','./js/netwizard-routing-plan.js','netwizard-routing-plan','netwizardRoutingPlan'],
+['NetWizardCapabilityRegistry','./js/netwizard-capability-registry.js','netwizard-capability-registry','netwizardCapabilityRegistry'],
+['NetWizardCapabilityUi','./js/netwizard-capability-ui.js','netwizard-capability-ui','netwizardCapabilityUi'],
+['NetWizardDeviceCapabilityForm','./js/netwizard-device-capability-form.js','netwizard-device-capability-form','netwizardDeviceCapabilityForm'],
+['NetWizardPhysicalInventory','./js/netwizard-physical-inventory.js','netwizard-physical-inventory','netwizardPhysicalInventory'],
+['NetWizardPhysicalInventoryUi','./js/netwizard-physical-inventory-ui.js','netwizard-physical-inventory-ui','netwizardPhysicalInventoryUi'],
+['NetWizardResilienceTopology','./js/netwizard-resilience-topology.js','netwizard-resilience-topology','netwizardResilienceTopology'],
+['NetWizardResilienceUi','./js/netwizard-resilience-ui.js','netwizard-resilience-ui','netwizardResilienceUi'],
+['NetWizardWanCircuits','./js/netwizard-wan-circuits.js','netwizard-wan-circuits','netwizardWanCircuits'],
+['NetWizardWanCircuitsUi','./js/netwizard-wan-circuits-ui.js','netwizard-wan-circuits-ui','netwizardWanCircuitsUi'],
+['NetWizardTrafficCapacity','./js/netwizard-traffic-capacity.js','netwizard-traffic-capacity','netwizardTrafficCapacity'],
+['NetWizardTrafficCapacityUi','./js/netwizard-traffic-capacity-ui.js','netwizard-traffic-capacity-ui','netwizardTrafficCapacityUi'],
+['NetWizardInternalServices','./js/netwizard-internal-services.js','netwizard-internal-services','netwizardInternalServices'],
+['NetWizardInternalServicesUi','./js/netwizard-internal-services-ui.js','netwizard-internal-services-ui','netwizardInternalServicesUi'],
+['NetWizardWifiPlanning','./js/netwizard-wifi-planning.js','netwizard-wifi-planning','netwizardWifiPlanning'],
+['NetWizardWifiPlanningUi','./js/netwizard-wifi-planning-ui.js','netwizard-wifi-planning-ui','netwizardWifiPlanningUi'],
+['NetWizardIpv6Vrf','./js/netwizard-ipv6-vrf.js','netwizard-ipv6-vrf','netwizardIpv6Vrf'],
+['NetWizardIpv6VrfUi','./js/netwizard-ipv6-vrf-ui.js','netwizard-ipv6-vrf-ui','netwizardIpv6VrfUi'],
+['NetWizardFailureSimulation','./js/netwizard-failure-simulation.js','netwizard-failure-simulation','netwizardFailureSimulation'],
+['NetWizardFailureSimulationUi','./js/netwizard-failure-simulation-ui.js','netwizard-failure-simulation-ui','netwizardFailureSimulationUi'],
+['NetWizardObservedDrift','./js/netwizard-observed-drift.js','netwizard-observed-drift','netwizardObservedDrift'],
+['NetWizardObservedDriftUi','./js/netwizard-observed-drift-ui.js','netwizard-observed-drift-ui','netwizardObservedDriftUi'],
+['NetWizardCiscoRoutingIntegration','./js/netwizard-cisco-routing-integration.js','netwizard-cisco-routing-integration','netwizardCiscoRoutingIntegration'],
+['NetWizardMultivendorRoutingIntegration','./js/netwizard-multivendor-routing-integration.js','netwizard-multivendor-routing-integration','netwizardMultivendorRoutingIntegration'],
+['NetWizardFirewallEdgeIntegration','./js/netwizard-firewall-edge-integration.js','netwizard-firewall-edge-integration','netwizardFirewallEdgeIntegration'],
+['NetWizardSwitchingIntegration','./js/netwizard-switching-integration.js','netwizard-switching-integration','netwizardSwitchingIntegration'],
+['NetWizardAccessSecurityIntegration','./js/netwizard-access-security-integration.js','netwizard-access-security-integration','netwizardAccessSecurityIntegration'],
+['NetWizardManagementIntegration','./js/netwizard-management-integration.js','netwizard-management-integration','netwizardManagementIntegration'],
+['NetWizardHaServicesIntegration','./js/netwizard-ha-services-integration.js','netwizard-ha-services-integration','netwizardHaServicesIntegration']
+];
+function ensureIntegrations(){for(const [name,src,tag,key] of integrations)if(!root[name])ensureScript(src,`script[data-${tag}]`,key);}
+function mergeIssues(){const seen=new Set(),out=[];for(const group of arguments)for(const issue of arr(group)){const key=[issue&&issue.code,issue&&issue.severity,issue&&issue.category,issue&&issue.deviceId,issue&&issue.portId,issue&&issue.linkId,issue&&issue.circuitId,issue&&issue.profileId,issue&&issue.serviceId,issue&&issue.apId,issue&&issue.ssidId,issue&&issue.networkId,issue&&issue.vrfId,issue&&issue.scenarioId,issue&&issue.resourceKind,issue&&issue.resourceId,issue&&issue.field,issue&&issue.message].join('\u0001');if(seen.has(key))continue;seen.add(key);out.push(issue);}return out;}
+function runModule(name,file,project,fallback){const mod=load(name,file);return mod&&typeof mod.validateProject==='function'?mod.validateProject(project||{}):fallback;}
+function enhanceReport(project,options,baseReport){
+ const gate=baseGate(),report=baseReport||(gate&&gate.runProductionGate?gate.runProductionGate(project,options||{}):{issues:[]});
+ const architecture=runModule('NetWizardArchitectureValidator','./netwizard-architecture-validator.js',project,{issues:[]});
+ const compatibility=runModule('NetWizardCapabilityRegistry','./netwizard-capability-registry.js',project,{issues:[],ok:true});
+ const physicalInventory=runModule('NetWizardPhysicalInventory','./netwizard-physical-inventory.js',project,{issues:[],ok:true});
+ const resilience=runModule('NetWizardResilienceTopology','./netwizard-resilience-topology.js',project,{issues:[],ok:true});
+ const wan=runModule('NetWizardWanCircuits','./netwizard-wan-circuits.js',project,{issues:[],ok:true});
+ const capacity=runModule('NetWizardTrafficCapacity','./netwizard-traffic-capacity.js',project,{issues:[],ok:true});
+ const services=runModule('NetWizardInternalServices','./netwizard-internal-services.js',project,{issues:[],ok:true});
+ const wifi=runModule('NetWizardWifiPlanning','./netwizard-wifi-planning.js',project,{issues:[],ok:true});
+ const ipv6Vrf=runModule('NetWizardIpv6Vrf','./netwizard-ipv6-vrf.js',project,{issues:[],ok:true});
+ const failureSimulation=runModule('NetWizardFailureSimulation','./netwizard-failure-simulation.js',project,{issues:[],ok:true,scenarios:[]});
+ const observedDrift=runModule('NetWizardObservedDrift','./netwizard-observed-drift.js',project,{issues:[],ok:true,drift:[]});
+ const issues=mergeIssues(report.issues,architecture.issues,compatibility.issues,physicalInventory.issues,resilience.issues,wan.issues,capacity.issues,services.issues,wifi.issues,ipv6Vrf.issues,failureSimulation.issues,observedDrift.issues);
+ const counts=gate&&gate.summarizeCounts?gate.summarizeCounts(issues):{errors:issues.filter(i=>i&&i.severity==='error').length,warnings:issues.filter(i=>i&&i.severity==='warning').length,blocking:issues.filter(i=>i&&(i.blocking||i.severity==='error')).length,byCategory:{}};
+ const blocking=issues.filter(i=>i&&(i.blocking||i.severity==='error')),status=blocking.length?'blocked':(counts.warnings>0?'review':'ready');
+ const RP=routingPlan(),neutralRoutingPlan=RP&&typeof RP.build==='function'?RP.build(project||{}):null;
+ return Object.assign({},report,{ok:!blocking.length,ready:status==='ready',canExport:!blocking.length,status,issues,counts,architecture,compatibility,physicalInventory,resilience,wan,capacity,services,wifi,ipv6Vrf,failureSimulation,observedDrift,routingPlan:neutralRoutingPlan});
+}
+function install(){ensureIntegrations();const gate=baseGate();if(!gate||gate.__architectureExtensionInstalled)return gate;const originalRun=gate.runProductionGate.bind(gate);gate.runProductionGate=(project,options)=>enhanceReport(project,options,originalRun(project,options));gate.__architectureExtensionInstalled=true;gate.enhanceArchitectureReport=enhanceReport;root.NetWizardProductionGate=gate;return gate;}
+function injectPanels(){for(const name of ['NetWizardCapabilityUi','NetWizardResilienceUi','NetWizardWanCircuitsUi','NetWizardTrafficCapacityUi','NetWizardInternalServicesUi','NetWizardWifiPlanningUi','NetWizardIpv6VrfUi','NetWizardFailureSimulationUi','NetWizardObservedDriftUi']){const ui=root[name];if(ui&&typeof ui.inject==='function')ui.inject();}}
+function bindBrowserUi(attempt){if(!root.document)return;ensureIntegrations();const gate=install(),state=root.NetWizardState,button=root.document.getElementById('btnProductionGate'),output=root.document.getElementById('productionGateOut');if(!gate||!state||!button||!output){if((attempt||0)<50&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),120);return;}function runEnhanced(){const productionMode=root.NetWizardAudit&&root.NetWizardAudit.isProduction?root.NetWizardAudit.isProduction():false,strict=!!root.document.getElementById('pgateStrict')?.checked,report=gate.runProductionGate(state.getSnapshot(),{productionMode,strict});output.textContent=gate.summarizeGate(report,{limit:80,remediationPreview:root.document.getElementById('pgateShowGuide')?.checked?6:0});root.NetWizardLastProductionGateReport=report;injectPanels();return report;}button.onclick=runEnhanced;root.document.addEventListener('nw:project:changed',()=>{try{runEnhanced();}catch{}});root.addEventListener&&root.addEventListener('nw:mode:changed',()=>{try{runEnhanced();}catch{}});try{runEnhanced();}catch{}}
+const api={version:'netwizard-production-gate-architecture-v21',install,enhanceReport,mergeIssues,ensureIntegrations};root.NetWizardProductionGateArchitecture=api;if(typeof module!=='undefined'&&module.exports){install();module.exports=api;}if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>bindBrowserUi(0));else bindBrowserUi(0);}
 })(typeof window!=='undefined'?window:globalThis);
