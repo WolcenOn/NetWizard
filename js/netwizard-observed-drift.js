@@ -16,7 +16,7 @@ function compareCollection(kind,desiredItems,observedItems,options){
   for(const [id,actual] of observed){if(desired.has(id))continue;const item={category:'drift',resourceKind:kind,resourceId:id,code:'NW-DRIFT-003',severity:'warning',blocking:false,message:`${kind} ${id}: existe en el estado observado pero no en el diseño.`};issues.push(item);drift.push({...item,type:'unexpected',desired:null,observed:actual});}
   return{issues,drift};
 }
-function validateSnapshot(snapshot){const issues=[];if(!snapshot||typeof snapshot!=='object')issues.push({code:'NW-DRIFT-010',severity:'error',blocking:true,category:'drift',message:'Snapshot observado ausente o inválido.'});else if(!clean(snapshot.observedAt))issues.push({code:'NW-DRIFT-011',severity:'warning',blocking:false,category:'drift',message:'Snapshot observado sin fecha observedAt.'});return issues;}
+function validateSnapshot(snapshot){const issues=[];if(snapshot!=null&&typeof snapshot!=='object')issues.push({code:'NW-DRIFT-010',severity:'error',blocking:true,category:'drift',message:'Snapshot observado inválido.'});else if(snapshot&& !clean(snapshot.observedAt))issues.push({code:'NW-DRIFT-011',severity:'warning',blocking:false,category:'drift',message:'Snapshot observado sin fecha observedAt.'});return issues;}
 function validateProject(project,options){
   const snapshot=project&&project.observedState,issues=validateSnapshot(snapshot),drift=[];
   if(snapshot&&typeof snapshot==='object'){
