@@ -1,9 +1,10 @@
-# NetWizard v3.48 RC · sistema i18n ampliable
+# NetWizard v3.48.0 RC · sistema i18n ampliable
 
 > v3.48 convierte la traducción en un sistema ampliable: manifiesto de idiomas, validación de claves, sincronización de diccionarios y auditoría de textos hardcoded.
 
+NetWizard `3.48.0` es la **línea base canónica de estabilización** y una Release Candidate para uso local/controlado. Mantiene el hardening XSS y no modifica el schema interno ni las claves del modelo de proyecto.
 
-NetWizard v3.48 es una **Release Candidate para uso local/controlado** con i18n ES/EN ampliado a informes y auditorías principales. Mantiene el hardening XSS y no modifica el schema interno ni las claves del modelo de proyecto.
+La versión canónica se declara en `VERSION`. Los criterios de promoción a estable se documentan en `docs/STABLE_BASELINE_3_48.md`.
 
 ## Qué incluye esta rama
 
@@ -42,10 +43,10 @@ Para considerar una entrega lista en tu entorno, ejecuta también los E2E con Ch
 
 Esta versión queda como **candidata de producción local/controlada** cuando pasan:
 
-1. `npm test`
-2. `npm run check:syntax`
-3. `npm run test:e2e`
-4. Puerta de producción sin errores bloqueantes en el proyecto real
+1. `npm run release:check`
+2. `npm run test:e2e`
+3. Puerta de producción sin errores bloqueantes en el proyecto real
+4. Revisión manual de las exportaciones vendor utilizadas
 
 No es todavía una plataforma SaaS multiusuario: no incluye backend, autenticación, roles, logs centralizados ni backups remotos.
 
@@ -59,6 +60,7 @@ El ZIP se genera en `dist/`.
 
 ## Documentación clave
 
+- `docs/STABLE_BASELINE_3_48.md`
 - `docs/PRODUCTION_READINESS.md`
 - `docs/MAINTENANCE_GUIDE.md`
 - `docs/RELEASE_CHECKLIST.md`
@@ -78,7 +80,6 @@ npm run audit:xss
 ```
 
 El auditor es heurístico y marca puntos que requieren revisión manual, especialmente usos legacy de `innerHTML`.
-
 
 ## v3.48 · Sistema i18n ampliable
 

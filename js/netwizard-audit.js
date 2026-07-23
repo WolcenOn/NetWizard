@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Audit Core v3.9
+   NetWizard Audit Core v3.49-dev
    Severidades, códigos de auditoría y modo demo/producción.
    Cargable en navegador clásico y en Node.js para tests.
 ========================================================= */
@@ -11,6 +11,13 @@
   const SEVERITY = { INFO:'info', WARNING:'warning', ERROR:'error' };
 
   function cleanStr(v){ return String(v==null?'':v).trim(); }
+  function cleanList(v){ return Array.isArray(v) ? v.map(cleanStr).filter(Boolean) : []; }
+  function cleanSuggestions(v){
+    return (Array.isArray(v) ? v : []).map(item => ({
+      label: cleanStr(item && item.label),
+      steps: cleanList(item && item.steps)
+    })).filter(item => item.label || item.steps.length);
+  }
   function isBrowser(){ return !!(root && root.document); }
   function nowIso(){ try{return new Date().toISOString();}catch(_e){return '';} }
 
@@ -26,8 +33,13 @@
       code: cleanStr(i.code || 'NW-GEN-000'),
       severity,
       category: cleanStr(i.category || 'general'),
+      title: cleanStr(i.title || ''),
       message: cleanStr(i.message || i.msg || ''),
+      why: cleanStr(i.why || ''),
+      impact: cleanStr(i.impact || ''),
       blocking: i.blocking === true || severity === SEVERITY.ERROR,
+      affectedObjects: cleanList(i.affectedObjects),
+      suggestions: cleanSuggestions(i.suggestions),
       source: cleanStr(i.source || ''),
       createdAt: i.createdAt || nowIso()
     };
@@ -142,7 +154,7 @@
     });
   }
 
-  const api = {version:'netwizard-audit-v1', MODES, SEVERITY, createIssue, normalizeIssue, fromLegacyArrays, splitIssues, applyProductionPolicy, summarizeIssues, hasBlockingIssues, getMode, setMode, isProduction};
+  const api = {version:'netwizard-audit-v2', MODES, SEVERITY, createIssue, normalizeIssue, fromLegacyArrays, splitIssues, applyProductionPolicy, summarizeIssues, hasBlockingIssues, getMode, setMode, isProduction};
   root.NetWizardAudit = api;
   if(typeof module!=='undefined' && module.exports) module.exports = api;
   bindBrowserUi();

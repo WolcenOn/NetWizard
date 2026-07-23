@@ -71,7 +71,7 @@ test('UniFi genera plan neutral de controlador, no CLI falsa', () => {
   project.ports[1].mode = 'trunk';
   project.ports[1].allowedVlans = [10];
   const cfg = genFor(project)('r1', 'ubiquiti_unifi');
-  assert.ok(cfg.includes('Plan neutral'));
+  assert.ok(cfg.includes('Configuración de controlador/cloud'));
   assert.ok(cfg.includes('Ubiquiti UniFi'));
   assert.ok(cfg.includes('VLANs a transportar: 10'));
 });

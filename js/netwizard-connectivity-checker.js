@@ -34,6 +34,24 @@
   document.head.appendChild(script);
 })();
 
+(function loadArchitectureValidation(){
+  'use strict';
+  if(typeof window === 'undefined') return;
+  function load(src, ready){
+    const script = document.createElement('script');
+    script.src = src;
+    script.defer = false;
+    script.onload = ready || null;
+    document.head.appendChild(script);
+  }
+  function loadGateExtension(){
+    if(window.NetWizardProductionGateArchitecture) return;
+    load('./js/netwizard-production-gate-architecture.js');
+  }
+  if(window.NetWizardArchitectureValidator) loadGateExtension();
+  else load('./js/netwizard-architecture-validator.js', loadGateExtension);
+})();
+
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);

@@ -1,0 +1,9 @@
+/* NetWizard Observed Drift UI v1 */
+(function initNetWizardObservedDriftUi(root){
+'use strict';
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function model(report){const r=report&&report.observedDrift||{drift:[],counts:{}};return{observedAt:r.observedAt||null,counts:r.counts||{},rows:(r.drift||[]).map(d=>({kind:d.resourceKind,id:d.resourceId,type:d.type,field:d.field||'',blocking:!!d.blocking,message:d.message}))};}
+function render(report){const m=model(report);const rows=m.rows.map(r=>`<tr><td>${esc(r.kind)}</td><td>${esc(r.id)}</td><td>${esc(r.type)}</td><td>${esc(r.field)}</td><td>${r.blocking?'Bloqueante':'Revisión'}</td></tr>`).join('');return `<section class="nw-observed-drift"><h3>Estado observado y drift</h3><p>Snapshot: ${esc(m.observedAt||'sin fecha')} · Cambios: ${m.counts.changed||0} · Ausentes: ${m.counts.missing||0} · Inesperados: ${m.counts.unexpected||0}</p><table><thead><tr><th>Tipo</th><th>Recurso</th><th>Drift</th><th>Campo</th><th>Impacto</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Sin drift detectado</td></tr>'}</tbody></table></section>`;}
+function inject(){if(!root.document)return null;const report=root.NetWizardLastProductionGateReport;if(!report)return null;let host=root.document.getElementById('netwizardObservedDriftPanel');if(!host){host=root.document.createElement('div');host.id='netwizardObservedDriftPanel';const anchor=root.document.getElementById('productionGateOut');(anchor&&anchor.parentNode?anchor.parentNode:root.document.body).appendChild(host);}host.innerHTML=render(report);return host;}
+const api={version:'netwizard-observed-drift-ui-v1',model,render,inject};root.NetWizardObservedDriftUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
