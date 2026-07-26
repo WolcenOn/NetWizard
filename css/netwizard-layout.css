@@ -1,0 +1,79 @@
+/* NetWizard adaptive layout layer
+ * Complements netwizard.css without changing legacy selectors.
+ */
+
+/* A single section inside a two-column container must use the whole row. */
+.g2 > :only-child {
+  grid-column: 1 / -1;
+}
+
+/* Explicit utilities for dynamic panels and mixed card collections. */
+.g2.nw-grid-adaptive {
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  align-items: start;
+}
+
+.g2.nw-grid-fill-last > :last-child:nth-child(odd),
+.g2 > .card:last-child:nth-child(odd),
+.g2 > [data-layout-span="full"] {
+  grid-column: 1 / -1;
+}
+
+.nw-panel-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.nw-panel-stack > .card,
+.nw-panel-stack > .co,
+.nw-panel-stack > .g2 {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.nw-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.nw-card-grid > .card {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.nw-card-grid > .nw-card-wide,
+.nw-card-grid > :only-child,
+.nw-card-grid > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* Dynamic mounts behave like regular full-width page sections. */
+.pg > [id$="Mount"],
+.pg > [data-layout-section] {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Prevent long tables, labels and diagrams from forcing empty columns. */
+.g2 > *,
+.g3 > *,
+.g4 > *,
+.nw-card-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .nw-card-grid,
+  .g2.nw-grid-adaptive {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nw-card-grid > *,
+  .g2.nw-grid-fill-last > * {
+    grid-column: 1 / -1;
+  }
+}
