@@ -29,7 +29,7 @@ function validatePoe(project){
  }
  for(const [deviceId,watts] of Object.entries(data.loadsByDevice)){
   const device=byId(project.devices,deviceId);const budget=MODEL.devicePoeBudget(device).watts;
-  if(budget!==null&&watts>budget)push(errors,issue('NW-POE-008','error',`${labelDevice(device)}: carga PoE total ${round1(watts)} W supera presupuesto ${budget} W.`,{deviceId}));
+  if(budget!==null&&watts>budget)push(errors,issue('NW-POE-008','error',`${labelDevice(device)}: carga PoE total ${round1(watts)} W supera presupuesto del equipo ${budget} W.`,{deviceId}));
   else if(budget===null)push(info,issue('NW-POE-009','info',`${labelDevice(device)}: carga PoE estimada ${round1(watts)} W; define presupuesto del equipo para validar capacidad total.`,{deviceId}));
  }
  if(!errors.length&&!warnings.length&&!info.length)info.push('PoE: sin cargas PoE detectadas o sin incompatibilidades evidentes.');
