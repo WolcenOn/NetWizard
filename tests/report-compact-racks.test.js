@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('assert');
+const report=require('../js/netwizard-detailed-report.js');
+const gate={issues:[{code:'NW-RACK-001',severity:'error',blocking:true,category:'rack',message:'Rack HQ: colisión en U20.'}],counts:{blocking:1,errors:1,warnings:0}};
+const project={_schemaVersion:'3.48.0',projName:'Proyecto Rack',physicalLocations:[{id:'loc1',name:'CPD'}],racks:[{id:'rack1',name:'Rack HQ',locationId:'loc1',rackUnits:42,powerCapacityWatts:4000,coolingCapacityWatts:3500}],devices:[{id:'sw1',name:'SW-CORE',type:'switch',vendor:'Cisco',model:'C9300',rackId:'rack1',rackUnit:20,rackUnits:1,powerDrawWatts:180}],rackItems:[{id:'pp1',rackId:'rack1',type:'patch-panel',startUnit:22,heightUnits:1,label:'Patch panel Cat6A'}],pdus:[{id:'pdu1',rackId:'rack1',name:'PDU A',outletCount:12}],powerConnections:[],ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',media:'copper'}],links:[],hosts:[],vlans:[],wanCircuits:[]};
+const html=report.build(project,{gateReport:gate});
+assert.ok(html.includes('Informe técnico compacto'));
+assert.ok(html.includes('Conectividad y cableado'));
+assert.ok(html.includes('Inventario y materiales'));
+assert.ok(html.includes('Implantación física y racks'));
+assert.ok(html.includes('Rack HQ'));
+assert.ok(html.includes('Patch panel Cat6A'));
+assert.ok(html.includes('BLOQUEADO'));
+assert.ok(!html.includes('<h1>Proyecto <Rack></h1>'));
+console.log('✓ Informe compacto integra racks, materiales, conectividad y estado global');
