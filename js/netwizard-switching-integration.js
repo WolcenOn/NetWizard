@@ -1,10 +1,10 @@
 /* NetWizard Switching Integration v0.1 */
 (function initNetWizardSwitchingIntegration(root){
   'use strict';
-  function ensure(src,attr){ if(!root.document||root.document.querySelector(`script[${attr}]`))return; const s=root.document.createElement('script'); s.src=src; s.setAttribute(attr,'1'); s.defer=false; root.document.head.appendChild(s); }
+  function ensure(src,attr,globalName){ if(!root.document||root[globalName]||root.document.querySelector(`script[${attr}]`))return; const s=root.document.createElement('script'); s.src=src; s.setAttribute(attr,'1'); s.async=false; s.defer=false; root.document.head.appendChild(s); }
   function install(attempt){
     if(!root.document)return false;
-    ensure('./js/netwizard-switching-generator.js','data-netwizard-switching-generator');
+    ensure('./js/netwizard-switching-generator.js','data-netwizard-switching-generator','NetWizardSwitchingGenerator');
     if(root.__netwizardSwitchingInstalled)return true;
     const original=root.genConfig, state=root.NetWizardState, generator=root.NetWizardSwitchingGenerator;
     if(typeof original!=='function'||!state||!generator){ if((attempt||0)<80&&root.setTimeout)root.setTimeout(()=>install((attempt||0)+1),100); return false; }

@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Audit Core v3.49-dev
+   NetWizard Audit Core v3.48
    Severidades, códigos de auditoría y modo demo/producción.
    Cargable en navegador clásico y en Node.js para tests.
 ========================================================= */

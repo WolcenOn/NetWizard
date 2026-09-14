@@ -5,19 +5,20 @@
 (function initNetWizardMultivendorRoutingIntegration(root){
   'use strict';
 
-  function ensureScript(src, marker){
-    if(!root.document || root.document.querySelector(`script[${marker}]`)) return;
+  function ensureScript(src, marker, globalName){
+    if(!root.document || root[globalName] || root.document.querySelector(`script[${marker}]`)) return;
     const script = root.document.createElement('script');
     script.src = src;
     script.setAttribute(marker, '1');
+    script.async = false;
     script.defer = false;
     root.document.head.appendChild(script);
   }
 
   function install(attempt){
     if(!root.document) return false;
-    ensureScript('./js/netwizard-routing-plan.js', 'data-netwizard-routing-plan-multivendor');
-    ensureScript('./js/netwizard-multivendor-routing-generator.js', 'data-netwizard-multivendor-routing-generator');
+    ensureScript('./js/netwizard-routing-plan.js', 'data-netwizard-routing-plan-multivendor', 'NetWizardRoutingPlan');
+    ensureScript('./js/netwizard-multivendor-routing-generator.js', 'data-netwizard-multivendor-routing-generator', 'NetWizardMultivendorRoutingGenerator');
 
     if(root.__netwizardMultivendorRoutingInstalled) return true;
     const original = root.genConfig;

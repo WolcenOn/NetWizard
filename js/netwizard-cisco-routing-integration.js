@@ -5,19 +5,20 @@
 (function initNetWizardCiscoRoutingIntegration(root){
   'use strict';
 
-  function ensureScript(src, marker){
-    if(!root.document || root.document.querySelector(`script[${marker}]`)) return;
+  function ensureScript(src, marker, globalName){
+    if(!root.document || root[globalName] || root.document.querySelector(`script[${marker}]`)) return;
     const script = root.document.createElement('script');
     script.src = src;
     script.setAttribute(marker, '1');
+    script.async = false;
     script.defer = false;
     root.document.head.appendChild(script);
   }
 
   function install(attempt){
     if(!root.document) return false;
-    ensureScript('./js/netwizard-routing-plan.js', 'data-netwizard-routing-plan-browser');
-    ensureScript('./js/netwizard-cisco-routing-generator.js', 'data-netwizard-cisco-routing-generator');
+    ensureScript('./js/netwizard-routing-plan.js', 'data-netwizard-routing-plan-browser', 'NetWizardRoutingPlan');
+    ensureScript('./js/netwizard-cisco-routing-generator.js', 'data-netwizard-cisco-routing-generator', 'NetWizardCiscoRoutingGenerator');
 
     if(root.__netwizardCiscoRoutingInstalled) return true;
     const original = root.genConfig;

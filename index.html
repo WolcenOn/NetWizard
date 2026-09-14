@@ -19,7 +19,7 @@
   </div>
   <div class="proj-lbl"><span data-i18n="top.project">Proyecto:</span> <b id="projLbl">Sin título</b></div>
   <div class="saved" id="savedLbl" data-i18n="top.saved">✓ guardado</div>
-  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.45 RC</span></div>
+  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.48 RC</span></div>
   <div style="display:flex;gap:6px;">
     <button class="btn bs bsm" id="btnReset" data-i18n="top.new">🗑 Nuevo</button>
     <button class="btn bp bsm" id="btnExport" data-i18n="top.export">⬆ Exportar</button>
@@ -929,6 +929,8 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-change-preview.js"></script>
 <script src="./js/netwizard-policy-utils.js"></script>
 <script src="./js/netwizard.js"></script>
+<!-- Pipeline de configuración: renderer base multivendor primero; extensiones ordenadas más abajo. -->
+<script src="./js/netwizard-vendor-config-generators.js"></script>
 <script src="./js/netwizard-bridge.js"></script>
 <script src="./js/netwizard-bridge-ui.js"></script>
 <script src="./js/netwizard-graph-viewer.js"></script>
@@ -949,6 +951,55 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-vendor-hardening.js"></script>
 <script src="./js/netwizard-production-gate.js"></script>
 <script src="./js/netwizard-connectivity-checker.js"></script>
+
+<!-- Validación avanzada y paneles. El orden es deliberado: lógica antes que UI. -->
+<script src="./js/netwizard-architecture-validator.js"></script>
+<script src="./js/netwizard-routing-plan.js"></script>
+<script src="./js/netwizard-capability-registry.js"></script>
+<script src="./js/netwizard-capability-ui.js"></script>
+<script src="./js/netwizard-device-capability-form.js"></script>
+<script src="./js/netwizard-physical-inventory.js"></script>
+<script src="./js/netwizard-physical-inventory-ui.js"></script>
+<script src="./js/netwizard-resilience-topology.js"></script>
+<script src="./js/netwizard-resilience-ui.js"></script>
+<script src="./js/netwizard-wan-circuits.js"></script>
+<script src="./js/netwizard-wan-circuits-ui.js"></script>
+<script src="./js/netwizard-traffic-capacity.js"></script>
+<script src="./js/netwizard-traffic-capacity-ui.js"></script>
+<script src="./js/netwizard-internal-services.js"></script>
+<script src="./js/netwizard-internal-services-ui.js"></script>
+<script src="./js/netwizard-wifi-planning.js"></script>
+<script src="./js/netwizard-wifi-planning-ui.js"></script>
+<script src="./js/netwizard-ipv6-vrf.js"></script>
+<script src="./js/netwizard-ipv6-vrf-ui.js"></script>
+<script src="./js/netwizard-failure-simulation.js"></script>
+<script src="./js/netwizard-failure-simulation-ui.js"></script>
+<script src="./js/netwizard-observed-drift.js"></script>
+<script src="./js/netwizard-observed-drift-ui.js"></script>
+<script src="./js/netwizard-detailed-report-v2.js"></script>
+
+<!-- Generadores especializados y wrappers, registrados en un orden estable. -->
+<script src="./js/netwizard-cisco-routing-generator.js"></script>
+<script src="./js/netwizard-multivendor-routing-generator.js"></script>
+<script src="./js/netwizard-firewall-edge-generator.js"></script>
+<script src="./js/netwizard-switching-generator.js"></script>
+<script src="./js/netwizard-access-security-plan.js"></script>
+<script src="./js/netwizard-access-security-generator.js"></script>
+<script src="./js/netwizard-management-plan.js"></script>
+<script src="./js/netwizard-management-generator.js"></script>
+<script src="./js/netwizard-ha-services-plan.js"></script>
+<script src="./js/netwizard-ha-services-generator.js"></script>
+<script src="./js/netwizard-cisco-routing-integration.js"></script>
+<script src="./js/netwizard-multivendor-routing-integration.js"></script>
+<script src="./js/netwizard-firewall-edge-integration.js"></script>
+<script src="./js/netwizard-switching-integration.js"></script>
+<script src="./js/netwizard-access-security-integration.js"></script>
+<script src="./js/netwizard-management-integration.js"></script>
+<script src="./js/netwizard-ha-services-integration.js"></script>
+
+<!-- La puerta extendida se instala cuando todos sus validadores ya existen. -->
+<script src="./js/netwizard-production-gate-architecture.js"></script>
+<script src="./js/netwizard-runtime.js"></script>
 
 </body>
 </html>

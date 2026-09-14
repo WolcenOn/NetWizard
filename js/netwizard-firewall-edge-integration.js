@@ -5,15 +5,15 @@
 (function initNetWizardFirewallEdgeIntegration(root){
   'use strict';
 
-  function ensureScript(src, marker){
-    if(!root.document || root.document.querySelector(`script[${marker}]`)) return;
-    const script=root.document.createElement('script'); script.src=src; script.setAttribute(marker,'1'); script.defer=false; root.document.head.appendChild(script);
+  function ensureScript(src, marker, globalName){
+    if(!root.document || root[globalName] || root.document.querySelector(`script[${marker}]`)) return;
+    const script=root.document.createElement('script'); script.src=src; script.setAttribute(marker,'1'); script.async=false; script.defer=false; root.document.head.appendChild(script);
   }
 
   function install(attempt){
     if(!root.document) return false;
-    ensureScript('./js/netwizard-routing-plan.js','data-netwizard-routing-plan-edge');
-    ensureScript('./js/netwizard-firewall-edge-generator.js','data-netwizard-firewall-edge-generator');
+    ensureScript('./js/netwizard-routing-plan.js','data-netwizard-routing-plan-edge','NetWizardRoutingPlan');
+    ensureScript('./js/netwizard-firewall-edge-generator.js','data-netwizard-firewall-edge-generator','NetWizardFirewallEdgeGenerator');
     if(root.__netwizardFirewallEdgeInstalled) return true;
     const original=root.genConfig, generator=root.NetWizardFirewallEdgeGenerator, state=root.NetWizardState;
     if(typeof original!=='function'||!generator||!state||typeof state.getSnapshot!=='function'){

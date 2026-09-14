@@ -15,13 +15,69 @@ test('carga la aplicación sin errores JavaScript críticos', async ({ page }) =
   await resetStorage(page);
   await expect(page.locator('body')).toContainText('NetWizard');
   await expect.poll(() => errors, { timeout: 1000 }).toEqual([]);
+  await expect.poll(() => page.evaluate(() => window.NetWizardRuntime && window.NetWizardRuntime.status)).not.toBeNull();
   const apiStatus = await page.evaluate(() => ({
     state: !!window.NetWizardState,
     planner: !!window.NetWizardPlanner,
     schema: !!window.NetWizardProjectSchema,
-    bridge: !!window.NetWizardBridge
+    bridge: !!window.NetWizardBridge,
+    runtime: window.NetWizardRuntime.verify()
   }));
-  expect(apiStatus).toEqual({ state:true, planner:true, schema:true, bridge:true });
+  expect(apiStatus.state).toBe(true);
+  expect(apiStatus.planner).toBe(true);
+  expect(apiStatus.schema).toBe(true);
+  expect(apiStatus.bridge).toBe(true);
+  expect(apiStatus.runtime).toMatchObject({ ok:true, missing:[], duplicateScripts:[], missingPipelineStages:[], generatorReady:true, architectureReady:true });
+});
+
+test('genera configuración útil para todos los vendors ofrecidos por la UI', async ({ page }) => {
+  await resetStorage(page);
+  const matrix = await page.evaluate(() => {
+    const vendors = [
+      ['cisco_ios','router','Cisco IOS'],
+      ['cisco_asa','firewall','ASA'],
+      ['juniper_junos','router','Junos'],
+      ['aruba_aoss','switch','Aruba'],
+      ['pfsense','firewall','pfSense'],
+      ['fortinet','firewall','FortiGate'],
+      ['ubiquiti_unifi','access_point','UniFi'],
+      ['huawei_vrp','router','Huawei'],
+      ['galgus_cloud','wlan_controller','Galgus'],
+      ['tplink_omada','wlan_controller','Omada'],
+      ['mikrotik_routeros','router','MikroTik']
+    ];
+    const project = window.defS();
+    project.projName = 'E2E Vendor Matrix';
+    project.vlans = [{id:'v10', vlanId:10, name:'Usuarios'}];
+    project.subnets = [{id:'s10', vlanRef:'v10', cidr:'10.10.10.0/24', gateway:'10.10.10.1'}];
+    project.devices = vendors.map(([vendorOs,type,label], index) => ({
+      id:`dev-${index}`,
+      name:`${label}-01`,
+      type,
+      vendorOs,
+      internetEdge:type === 'router' || type === 'firewall' ? 'yes' : 'no',
+      wanIf:type === 'router' || type === 'firewall' ? 'wan0' : null
+    }));
+    project.ports = project.devices.flatMap((device, index) => [
+      {id:`p-${index}-lan`, deviceId:device.id, name:'lan0', mode:device.type === 'switch' ? 'trunk' : 'routed', allowedVlans:[10], role:'lan'},
+      {id:`p-${index}-wan`, deviceId:device.id, name:'wan0', mode:'routed', role:'wan'}
+    ]);
+    project.roas = {gwId:null, lanIf:'lan0', natVRef:'v10', wanCidr:'198.51.100.2/30', wanNh:'198.51.100.1'};
+    window.NetWizardState.replaceProject(project, {source:'e2e-vendor-matrix'});
+    return vendors.map(([vendorOs,,label], index) => {
+      const output = window.genConfig(`dev-${index}`, vendorOs);
+      return {vendorOs,label,output};
+    });
+  });
+
+  for(const row of matrix){
+    expect(row.output, `${row.vendorOs} debe generar salida`).toBeTruthy();
+    expect(row.output, `${row.vendorOs} no debe caer en el fallback roto`).not.toMatch(/Sin vendor asignado|todavía no implementado/i);
+    expect(row.output, `${row.vendorOs} debe generar una salida sustancial`).toMatch(/\S[\s\S]{30}/);
+  }
+
+  await page.evaluate(() => { window.navTo('cfg'); window.selectDevCfg('dev-10'); });
+  await expect(page.locator('#cfgOut')).toHaveValue(/MikroTik|RouterOS|system identity/i);
 });
 
 test('previsualiza VLSM desde la UI sin modificar el proyecto', async ({ page }) => {

@@ -39,7 +39,27 @@
         "roas": { "type": "object" },
         "vtp": { "type": "object" },
         "topo": { "type": "object" },
-        "visual": { "type": "object" }
+        "visual": { "type": "object" },
+        "routing": { "type": "object" },
+        "highAvailability": { "type": "object" },
+        "accessSecurity": { "type": "object" },
+        "management": { "type": "object" },
+        "observedState": { "type": ["object", "null"] },
+        "driftPolicy": { "type": "object" },
+        "vrfs": { "type": "array", "items": { "type": "object" } },
+        "wanCircuits": { "type": "array", "items": { "type": "object" } },
+        "trafficProfiles": { "type": "array", "items": { "type": "object" } },
+        "internalServices": { "type": "array", "items": { "type": "object" } },
+        "wifiControllers": { "type": "array", "items": { "type": "object" } },
+        "wifiAccessPoints": { "type": "array", "items": { "type": "object" } },
+        "wifiSsids": { "type": "array", "items": { "type": "object" } },
+        "ipv6Networks": { "type": "array", "items": { "type": "object" } },
+        "failureScenarios": { "type": "array", "items": { "type": "object" } },
+        "stacks": { "type": "array", "items": { "type": "object" } },
+        "mlagDomains": { "type": "array", "items": { "type": "object" } },
+        "haGroups": { "type": "array", "items": { "type": "object" } },
+        "diversityPolicies": { "type": "array", "items": { "type": "object" } },
+        "linkAggregations": { "type": "array", "items": { "type": "object" } }
       }
     },
     "device": {

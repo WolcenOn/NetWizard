@@ -23,6 +23,8 @@ npm run test:e2e:install
 npm run test:e2e
 ```
 
+El smoke test debe confirmar `NetWizardRuntime.status.ok === true`: ningún módulo requerido ausente, ningún script duplicado, puerta de arquitectura activa y todas las etapas del pipeline de configuración instaladas.
+
 4. Abrir el proyecto real en navegador y ejecutar:
 
 - Puerta de producción.
@@ -42,6 +44,19 @@ npm run test:e2e
 - Sin VLANs críticas sin gateway o sin continuidad L2.
 - Sin PoE/cableado fuera de especificación en elementos críticos.
 - Sin exportaciones vendor bloqueadas en modo producción.
+- Todos los vendors ofrecidos por la UI generan una salida no vacía y no caen en `Sin vendor asignado`.
+- El artefacto de Pages se construye con `npm run build:pages` sin recursos locales ausentes.
+
+## Publicación en GitHub Pages
+
+El workflow `NetWizard CI` empaqueta y despliega Pages únicamente después de superar `quality` y `e2e`. En la configuración del repositorio debe seleccionarse **GitHub Actions** como origen de Pages; no debe coexistir un despliegue independiente desde rama.
+
+La rama `main` debe protegerse exigiendo como comprobaciones obligatorias:
+
+- `Quality checks`
+- `Playwright E2E`
+
+El entorno `github-pages` puede protegerse adicionalmente para limitar despliegues a `main`.
 
 ## Alcance
 

@@ -11,7 +11,7 @@ const root = path.resolve(__dirname, '..');
 const files = [];
 function walk(dir){
   for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
-    if(['node_modules','.git','dist','original','tests'].includes(ent.name)) continue;
+    if(ent.name.startsWith('.') || ['node_modules','dist','original','tests'].includes(ent.name)) continue;
     const p = path.join(dir, ent.name);
     if(ent.isDirectory()) walk(p);
     else if(/\.(js|html)$/.test(ent.name)) files.push(p);

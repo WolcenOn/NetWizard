@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Architecture Validator v3.49-dev
+   NetWizard Architecture Validator v3.48
    Reglas de coherencia arquitectónica independientes del vendor.
    Cargable en navegador clásico y en Node.js.
 ========================================================= */

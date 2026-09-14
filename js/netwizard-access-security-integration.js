@@ -1,11 +1,11 @@
 /* NetWizard Access Security Integration v0.1 */
 (function initNetWizardAccessSecurityIntegration(root){
   'use strict';
-  function ensure(src,attr){if(!root.document||root.document.querySelector(`script[${attr}]`))return;const s=root.document.createElement('script');s.src=src;s.setAttribute(attr,'1');s.defer=false;root.document.head.appendChild(s);}
+  function ensure(src,attr,globalName){if(!root.document||root[globalName]||root.document.querySelector(`script[${attr}]`))return;const s=root.document.createElement('script');s.src=src;s.setAttribute(attr,'1');s.async=false;s.defer=false;root.document.head.appendChild(s);}
   function install(attempt){
     if(!root.document)return false;
-    ensure('./js/netwizard-access-security-plan.js','data-netwizard-access-security-plan');
-    ensure('./js/netwizard-access-security-generator.js','data-netwizard-access-security-generator');
+    ensure('./js/netwizard-access-security-plan.js','data-netwizard-access-security-plan','NetWizardAccessSecurityPlan');
+    ensure('./js/netwizard-access-security-generator.js','data-netwizard-access-security-generator','NetWizardAccessSecurityGenerator');
     if(root.__netwizardAccessSecurityInstalled)return true;
     const original=root.genConfig, gen=root.NetWizardAccessSecurityGenerator, state=root.NetWizardState;
     if(typeof original!=='function'||!gen||!state||typeof state.getSnapshot!=='function'){

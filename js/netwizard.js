@@ -98,7 +98,7 @@ const FW_TPLS=[
 // 01. ESTADO, MIGRACIONES LIGERAS Y STORAGE
 // Estado principal de la aplicación, carga/guardado local y compatibilidad con proyectos antiguos.
 // =========================================================
-function defS(){return{_schemaVersion:'3.48.0',step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],uiSort:{},iot:{accessNodes:[],devices:[],map:{show:{network:true,port:false,access:true,iot:true,wifi:true,lora:true,zigbee:true,thread:true,mqtt:true},scale:1,panX:0,panY:0},selected:null},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
+function defS(){return{_schemaVersion:'3.48.0',step:'dash',projName:'',devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],vlanMatrix:{},roas:{gwId:null,lanIf:'',natVRef:null,wanCidr:'',wanNh:''},dhcp:{},security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'',dai:'yes',ipsg:'no',qV:''},vtp:{domain:'',password:'',version:'2',pruning:'no',roles:{}},topo:{pos:{}},hostPhysicalLocations:[],physicalLocations:[],vrfs:[],wanCircuits:[],trafficProfiles:[],internalServices:[],wifiControllers:[],wifiAccessPoints:[],wifiSsids:[],ipv6Networks:[],failureScenarios:[],stacks:[],mlagDomains:[],haGroups:[],diversityPolicies:[],linkAggregations:[],routing:{},highAvailability:{},accessSecurity:{},management:{},observedState:null,driftPolicy:{},uiSort:{},iot:{accessNodes:[],devices:[],map:{show:{network:true,port:false,access:true,iot:true,wifi:true,lora:true,zigbee:true,thread:true,mqtt:true},scale:1,panX:0,panY:0},selected:null},visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}};}
 const normalizeProjectShape=NWCore.normalizeProjectShape||((project,defaults)=>({...defaults(),...(project||{})}));
 function normalizeProject(project){
   const shaped=normalizeProjectShape(project,defS);
@@ -1103,8 +1103,6 @@ $('wApply').onclick=()=>{
   if(wDevSel.has('fw')||wDevSel.has('router')||sc.id!=='custom'){fwId=addDev(fwN,wDevSel.has('fw')?'firewall':'router','cisco_ios','yes','GigabitEthernet0/0');S.ports.push({id:uid('port'),deviceId:fwId,name:'GigabitEthernet0/1',media:'GE',mode:'trunk',accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'LAN trunk',position:null,role:'lan'});S.ports.push({id:uid('port'),deviceId:fwId,name:'GigabitEthernet0/0',media:'GE',mode:'routed',accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'WAN',position:null,role:'wan'});}
   if(wDevSel.has('coreSw')||sc.id!=='custom'){swId=addDev(swN,'switch','cisco_ios');}
   if(wDevSel.has('accSw')&&swId){const id2=addDev('SW-ACC-01','switch','cisco_ios');S.topo.pos[id2]={x:200,y:320};}
-  // Servers
-  if(wDevSel.has('server')){const srvId=addDev('SRV-01','switch','cisco_ios');/* Servers are hosts, but also can be devices */}
   // VLANs
   for(const vd of sc.vlans){
     if(S.vlans.some(v=>v.vlanId===vd.id))continue;

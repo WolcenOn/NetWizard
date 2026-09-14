@@ -13,7 +13,7 @@ module.exports = defineConfig({
     trace: 'retain-on-failure'
   },
   webServer: {
-    command: 'npx http-server . -p 4173 -s -c-1',
+    command: 'node scripts/serve-static.js',
     url: 'http://127.0.0.1:4173/index.html',
     reuseExistingServer: !process.env.CI,
     timeout: 20000
