@@ -14,7 +14,8 @@
   function allowed(project,p){ const explicit=vids(p.allowedVlans); return explicit.length?explicit:arr(project&&project.vlans).map(v=>Number(v.vlanId)).filter(Number.isFinite).sort((a,b)=>a-b); }
   function accessVid(project,p){ const v=vlan(project,p.accessVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.accessVlan||1); }
   function nativeVid(project,p){ const v=vlan(project,p.nativeVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.nativeVlan||999); }
-  function isSwitch(d){ return !!d && /switch/i.test(clean(d.type)); }
+  function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
+  function isSwitch(d){ const model=deviceModel(); return !!d && (model ? model.isSwitching(d) : /switch/i.test(clean(d.kind||d.type))); }
   function cisco(project,d){
     const L=['!','! NetWizard switching profesional','configure terminal',`hostname ${token(d.name,'switch')}`,'spanning-tree mode rapid-pvst','spanning-tree portfast default','spanning-tree bpduguard default','no ip http server','ip ssh version 2'];
     arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>L.push(`vlan ${v.vlanId}`,` name ${token(v.name,'VLAN'+v.vlanId)}`,' exit'));

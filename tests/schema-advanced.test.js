@@ -30,6 +30,28 @@ assert.strictEqual(schema.model.version, '3.50.0');
 assert.ok(schema.model.deviceKinds.includes('wlan_controller'));
 assert.ok(schema.model.advancedArrays.includes('wanCircuits'));
 
+const legacyDevices = schema.prepareImport({
+  devices:[
+    {id:'legacy-ap',name:'AP antiguo',type:'switch',wifiRole:'ap',vendorOs:'ubiquiti_unifi'},
+    {id:'legacy-server',name:'Servidor antiguo',type:'servidor',vendorOs:'linux'}
+  ],
+  ports:[],vlans:[{id:'v99',vlanId:99,name:'Gestión'}],subnets:[],
+  hosts:[{id:'h-ap',name:'Gestión AP',type:'ap',vlanRef:'v99',deviceRef:'legacy-ap'}],
+  links:[],fwRules:[]
+});
+assert.strictEqual(legacyDevices.project.devices[0].kind, 'access_point');
+assert.strictEqual(legacyDevices.project.devices[0].type, 'access_point');
+assert.strictEqual(legacyDevices.project.devices[1].kind, 'server');
+assert.strictEqual(legacyDevices.project.hosts[0].deviceRef, 'legacy-ap');
+assert.strictEqual(legacyDevices.ok, true);
+
+const brokenDeviceRef = schema.prepareImport({
+  devices:[],ports:[],vlans:[{id:'v1',vlanId:1,name:'LAN'}],subnets:[],
+  hosts:[{id:'h1',name:'Host',type:'pc',vlanRef:'v1',deviceRef:'missing'}],links:[],fwRules:[]
+});
+assert.strictEqual(brokenDeviceRef.ok, false);
+assert.ok(brokenDeviceRef.errors.some(message=>message.includes('deviceRef inexistente')));
+
 const generatedId = schema.prepareImport({devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],wanCircuits:[{name:'WAN'}]});
 assert.strictEqual(generatedId.project.wanCircuits[0].id, 'wanCircuits_1');
 

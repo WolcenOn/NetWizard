@@ -36,6 +36,12 @@ const NWSchema=window.NetWizardProjectSchema||null;
 const NWL3=window.NetWizardL3ConfigUtils||{};
 const NWR=window.NetWizardRoutingUtils||{};
 const NWPOL=window.NetWizardPolicyUtils||{};
+const NWDevice=window.NetWizardDeviceModel||null;
+const devKind=d=>NWDevice?NWDevice.normalizeKind(d):(d?.kind||d?.type||'appliance');
+const isSwitchDevice=d=>NWDevice?NWDevice.isSwitching(d):devKind(d)==='switch';
+const isEdgeDevice=d=>NWDevice?NWDevice.isEdgeCapable(d):['router','firewall'].includes(devKind(d));
+const devIcon=d=>NWDevice?NWDevice.icon(d):(devKind(d)==='switch'?'🔀':devKind(d)==='router'?'🌐':devKind(d)==='firewall'?'🛡':'🧩');
+const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 
 // ── CONSTANTS ──
 const STEP_ORDER=['dash','wiz','loc','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
@@ -917,7 +923,7 @@ function genHostCsv(){
 function genConfig(devId,format){
   const d=devById(devId);if(!d)return'';
   const vo=format||d.vendorOs;
-  if(vo==='cisco_ios')return d.type==='switch'?genCiscoSwitch(d):genCiscoRouter(d);
+  if(vo==='cisco_ios')return isSwitchDevice(d)?genCiscoSwitch(d):genCiscoRouter(d);
   if(vo==='cisco_asa')return genCiscoAsa(d);
   if(vo==='juniper_junos')return genJuniper(d);
   if(vo==='aruba_aoss')return genAruba(d);
@@ -1008,7 +1014,7 @@ function renderDash(){
     S.devices.forEach(d=>{
       const tr=document.createElement('tr');
       const tdName=document.createElement('td'); const b=document.createElement('b'); b.textContent=d.name||''; tdName.appendChild(b); tr.appendChild(tdName);
-      const tdType=document.createElement('td'); const sp=makeEl('span',`dtype dtype-${(d.type||'xx').slice(0,2)}`); sp.textContent=`${d.type==='switch'?'🔀':d.type==='router'?'🌐':'🛡'} ${d.type||''}`; tdType.appendChild(sp); tr.appendChild(tdType);
+      const tdType=document.createElement('td'); const sp=makeEl('span',`dtype dtype-${devKind(d).slice(0,2)}`); sp.textContent=`${devIcon(d)} ${devLabel(d)}`; tdType.appendChild(sp); tr.appendChild(tdType);
       const tdVendor=document.createElement('td'); tdVendor.appendChild(makeEl('span','b bac',d.vendorOs||'-')); tr.appendChild(tdVendor);
       tr.appendChild(makeEl('td','',portsByDev(d.id).length));
       tbody.appendChild(tr);
@@ -1098,11 +1104,38 @@ $('wApply').onclick=()=>{
   if(!confirm(`¿Aplicar escenario "${sc.name}"? Se añadirá al proyecto actual.`))return;
   const bCidr=parseCidr(base);const step=2**(32-szPfx);let snIdx=0;
   // Devices
-  let fwId=null,swId=null;
-  const addDev=(name,type,vo,edge,wanIf)=>{if(S.devices.some(d=>d.name===name))return S.devices.find(d=>d.name===name).id;const id=uid('dev');S.devices.push({id,name,type,vendorOs:vo,mgmtIp:null,notes:sc.name,internetEdge:edge||'no',wanIf:wanIf||null,layout:null});S.topo.pos[id]={x:100+Math.random()*500,y:80+Math.random()*240};return id;};
-  if(wDevSel.has('fw')||wDevSel.has('router')||sc.id!=='custom'){fwId=addDev(fwN,wDevSel.has('fw')?'firewall':'router','cisco_ios','yes','GigabitEthernet0/0');S.ports.push({id:uid('port'),deviceId:fwId,name:'GigabitEthernet0/1',media:'GE',mode:'trunk',accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'LAN trunk',position:null,role:'lan'});S.ports.push({id:uid('port'),deviceId:fwId,name:'GigabitEthernet0/0',media:'GE',mode:'routed',accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'WAN',position:null,role:'wan'});}
-  if(wDevSel.has('coreSw')||sc.id!=='custom'){swId=addDev(swN,'switch','cisco_ios');}
-  if(wDevSel.has('accSw')&&swId){const id2=addDev('SW-ACC-01','switch','cisco_ios');S.topo.pos[id2]={x:200,y:320};}
+  let fwId=null,swId=null,apId=null;
+  const addDev=(name,kind,vendorOs,edge,wanIf,extra={})=>{
+    const existing=S.devices.find(d=>d.name===name);
+    if(existing)return existing.id;
+    const id=uid('dev');
+    const raw={id,name,kind,type:kind,vendorOs,mgmtIp:null,notes:sc.name,internetEdge:edge||'no',wanIf:wanIf||null,layout:null,...extra};
+    S.devices.push(NWDevice?NWDevice.normalizeDevice(raw):raw);
+    S.topo.pos[id]={x:100+Math.random()*500,y:80+Math.random()*240};
+    return id;
+  };
+  const addPort=(deviceId,name,mode,role,desc)=>{
+    if(!deviceId||S.ports.some(p=>p.deviceId===deviceId&&p.name===name))return;
+    S.ports.push({id:uid('port'),deviceId,name,media:'GE',mode,accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc,position:null,role});
+  };
+  if(wDevSel.has('fw')){
+    fwId=addDev(fwN,'firewall','cisco_asa','yes','GigabitEthernet0/0');
+    addPort(fwId,'GigabitEthernet0/1','trunk','lan','LAN trunk');
+    addPort(fwId,'GigabitEthernet0/0','routed','wan','WAN');
+  }
+  if(wDevSel.has('router')||(!wDevSel.has('fw')&&sc.id!=='custom')){
+    const routerName=wDevSel.has('fw')?'RTR-WAN-01':fwN;
+    const routerId=addDev(routerName,'router','cisco_ios',wDevSel.has('fw')?'no':'yes',wDevSel.has('fw')?null:'GigabitEthernet0/0');
+    addPort(routerId,'GigabitEthernet0/1','trunk','lan','LAN trunk');
+    if(!wDevSel.has('fw'))addPort(routerId,'GigabitEthernet0/0','routed','wan','WAN');
+    if(!fwId)fwId=routerId;
+  }
+  if(wDevSel.has('coreSw')||sc.id!=='custom')swId=addDev(swN,'switch','cisco_ios');
+  if(wDevSel.has('accSw')){const id2=addDev('SW-ACC-01','switch','cisco_ios');S.topo.pos[id2]={x:200,y:320};}
+  if(wDevSel.has('ap')){
+    apId=addDev('AP-01','access_point','generic_network','no',null,{wifiRole:'ap',hasWifi:true});
+    addPort(apId,'eth0','trunk','uplink','Uplink AP / SSID VLANs');
+  }
   // VLANs
   for(const vd of sc.vlans){
     if(S.vlans.some(v=>v.vlanId===vd.id))continue;
@@ -1112,12 +1145,23 @@ $('wApply').onclick=()=>{
     snIdx++;
   }
   // Hosts from picker
-  const hostVlan=S.vlans[0]?.id||null;
-  if(wDevSel.has('server')&&S.vlans.find(v=>v.name==='Servidores'||v.name==='Backend'||v.name==='DB')){const sv=S.vlans.find(v=>v.name==='Servidores'||v.name==='Backend');if(sv){const sn=snByVRef(sv.id);const ci=sn?parseCidr(sn.cidr):null;const ip=ci?.fh?ip4s(ci.fh+1):null;S.hosts.push({id:uid('h'),name:'SRV-Web',type:'server',vlanRef:sv.id,ipMode:'static',staticIp:ip,mac:null,portRef:null,notes:'Generado por asistente'});}}
-  if(wDevSel.has('camera')){const cv=S.vlans.find(v=>v.name==='Cámaras')||S.vlans[0];if(cv)S.hosts.push({id:uid('h'),name:'CAM-01',type:'camera',vlanRef:cv?.id||null,ipMode:'dhcp',staticIp:null,mac:null,portRef:null,notes:'Generado por asistente'});}
-  if(wDevSel.has('ap')){const wv=S.vlans.find(v=>v.name==='WiFi'||v.name.includes('WiFi'))||S.vlans[0];if(wv)S.hosts.push({id:uid('h'),name:'AP-01',type:'ap',vlanRef:wv?.id||null,ipMode:'dhcp',staticIp:null,mac:null,portRef:null,notes:'Generado por asistente'});}
-  if(wDevSel.has('printer')){const uv=S.vlans.find(v=>v.name==='Usuarios'||v.name==='Empleados')||S.vlans[0];if(uv)S.hosts.push({id:uid('h'),name:'PRINTER-01',type:'printer',vlanRef:uv?.id||null,ipMode:'dhcp',staticIp:null,mac:null,portRef:null,notes:'Generado por asistente'});}
-  if(wDevSel.has('phone')){const vv=S.vlans[0];if(vv)S.hosts.push({id:uid('h'),name:'PHONE-01',type:'phone',vlanRef:vv?.id||null,ipMode:'dhcp',staticIp:null,mac:null,portRef:null,notes:'Generado por asistente'});}
+  const pickVlan=(pattern)=>S.vlans.find(v=>pattern.test(v.name||''))||S.vlans[0]||null;
+  const addHost=(name,type,vlan,extra={})=>{
+    if(S.hosts.some(h=>h.name===name))return null;
+    const host={id:uid('h'),name,type,vlanRef:vlan?.id||null,ipMode:'dhcp',staticIp:null,mac:null,portRef:null,notes:'Generado por asistente',...extra};
+    S.hosts.push(host);return host;
+  };
+  if(wDevSel.has('server')){
+    const sv=pickVlan(/servidor|backend|database|\bdb\b|frontend/i);
+    const sn=sv?snByVRef(sv.id):null;const ci=sn?parseCidr(sn.cidr):null;addHost('SRV-Web','server',sv,{ipMode:'static',staticIp:ci?.fh?ip4s(ci.fh+1):null});
+  }
+  if(wDevSel.has('camera'))addHost('CAM-01','camera',pickVlan(/cámara|camara|video/i));
+  if(wDevSel.has('ap'))addHost('AP-01','ap',pickVlan(/wifi|wlan|gestión|gestion/i),{deviceRef:apId});
+  if(wDevSel.has('printer'))addHost('PRINTER-01','printer',pickVlan(/usuario|empleado|lan/i));
+  if(wDevSel.has('pc'))addHost('PC-01','pc',pickVlan(/usuario|empleado|lan|dirección|direccion/i));
+  if(wDevSel.has('phone'))addHost('PHONE-01','phone',pickVlan(/voz|voice|voip|usuario/i));
+  if(wDevSel.has('iot'))addHost('IOT-01','iot',pickVlan(/iot|sensor/i));
+  if(wDevSel.has('nvr'))addHost('NVR-01','server',pickVlan(/cámara|camara|video|servidor/i));
   // Security
   if(secLevel==='low')Object.assign(S.security,{bpdu:'no',ps:'no',ds:'no',dai:'no',ipsg:'no'});
   else if(secLevel==='med')Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'no',ipsg:'no'});
@@ -1132,7 +1176,7 @@ $('wApply').onclick=()=>{
 };
 
 // ─────────────────── DEVICES ───────────────────
-$('devType').onchange=()=>{const t=$('devType').value;$('devEdgeSec').style.display=(t==='router'||t==='firewall')?'':'none';};
+$('devType').onchange=()=>{const kind=$('devType').value;$('devEdgeSec').style.display=isEdgeDevice({kind})?'':'none';};
 if($('devModel')) $('devModel').oninput=()=>renderDeviceModelHint();
 if($('btnApplyModelCaps')) $('btnApplyModelCaps').onclick=()=>applyDeviceModelToForm();
 
@@ -1144,16 +1188,16 @@ if($('btnApplyModelCaps')) $('btnApplyModelCaps').onclick=()=>applyDeviceModelTo
 // y generar puertos aproximados sin borrar configuración existente.
 // =========================================================
 const DEVICE_MODEL_CATALOG={
-  'Cisco ISR 1121-8P':{vendorOs:'cisco_ios',type:'router',ports:[['GigabitEthernet0/0/0','wan'],['GigabitEthernet0/0/1','lan'],['GigabitEthernet0/1/0','lan'],['GigabitEthernet0/1/1','lan'],['GigabitEthernet0/1/2','lan'],['GigabitEthernet0/1/3','lan'],['GigabitEthernet0/1/4','lan'],['GigabitEthernet0/1/5','lan'],['GigabitEthernet0/1/6','lan'],['GigabitEthernet0/1/7','lan']],wifi:false,notes:'ISR branch router con variante de 8 puertos LAN.'},
-  'Cisco ISR 1121-4P':{vendorOs:'cisco_ios',type:'router',ports:[['GigabitEthernet0/0/0','wan'],['GigabitEthernet0/0/1','lan'],['GigabitEthernet0/1/0','lan'],['GigabitEthernet0/1/1','lan'],['GigabitEthernet0/1/2','lan'],['GigabitEthernet0/1/3','lan']],wifi:false,notes:'ISR branch router con variante de 4 puertos LAN.'},
-  'Cisco 886VAW':{vendorOs:'cisco_ios',type:'router',ports:[['FastEthernet0','lan'],['FastEthernet1','lan'],['FastEthernet2','lan'],['FastEthernet3','lan'],['Vlan1','lan'],['ATM0','wan']],wifi:true,wifiStandards:['802.11n'],wifiRole:'integrated_router_wifi',notes:'Router ISR 880 con WLAN integrada según variante.'},
-  'Cisco IR1800':{vendorOs:'cisco_ios',type:'router',ports:[['GigabitEthernet0/0','wan'],['GigabitEthernet0/1','lan'],['Cellular0/1/0','wan']],wifi:true,wifiStandards:['Wi‑Fi 6 opcional'],wifiRole:'integrated_router_wifi',notes:'Router industrial con opciones 5G/LTE/Wi‑Fi según módulo.'},
-  'UniFi U6 Pro':{vendorOs:'ubiquiti_unifi',type:'switch',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi 6'],wifiRole:'ap',notes:'AP Wi‑Fi 6. Uplink normalmente trunk hacia VLANs de SSID y gestión.'},
-  'UniFi U7 Pro':{vendorOs:'ubiquiti_unifi',type:'switch',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi 7'],wifiRole:'ap',notes:'AP Wi‑Fi 7. Uplink trunk recomendado para múltiples SSID/VLAN.'},
-  'Huawei AP generic':{vendorOs:'huawei_vrp',type:'switch',ports:[['GE0/0/1','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Huawei gestionado por controlador/AC o cloud según modelo.'},
-  'Galgus AP generic':{vendorOs:'galgus_cloud',type:'switch',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Galgus gestionado por plataforma/cloud.'},
-  'TP-Link Omada AP generic':{vendorOs:'tplink_omada',type:'switch',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Omada con SSID/VLAN desde controlador.'},
-  'MikroTik hAP ax3':{vendorOs:'mikrotik_routeros',type:'router',ports:[['ether1','wan'],['ether2','lan'],['ether3','lan'],['ether4','lan'],['ether5','lan']],wifi:true,wifiStandards:['Wi‑Fi 6'],wifiRole:'integrated_router_wifi',notes:'Router con Wi‑Fi integrado y puertos Ethernet.'}
+  'Cisco ISR 1121-8P':{vendorOs:'cisco_ios',kind:'router',ports:[['GigabitEthernet0/0/0','wan'],['GigabitEthernet0/0/1','lan'],['GigabitEthernet0/1/0','lan'],['GigabitEthernet0/1/1','lan'],['GigabitEthernet0/1/2','lan'],['GigabitEthernet0/1/3','lan'],['GigabitEthernet0/1/4','lan'],['GigabitEthernet0/1/5','lan'],['GigabitEthernet0/1/6','lan'],['GigabitEthernet0/1/7','lan']],wifi:false,notes:'ISR branch router con variante de 8 puertos LAN.'},
+  'Cisco ISR 1121-4P':{vendorOs:'cisco_ios',kind:'router',ports:[['GigabitEthernet0/0/0','wan'],['GigabitEthernet0/0/1','lan'],['GigabitEthernet0/1/0','lan'],['GigabitEthernet0/1/1','lan'],['GigabitEthernet0/1/2','lan'],['GigabitEthernet0/1/3','lan']],wifi:false,notes:'ISR branch router con variante de 4 puertos LAN.'},
+  'Cisco 886VAW':{vendorOs:'cisco_ios',kind:'router',ports:[['FastEthernet0','lan'],['FastEthernet1','lan'],['FastEthernet2','lan'],['FastEthernet3','lan'],['Vlan1','lan'],['ATM0','wan']],wifi:true,wifiStandards:['802.11n'],wifiRole:'integrated_router_wifi',notes:'Router ISR 880 con WLAN integrada según variante.'},
+  'Cisco IR1800':{vendorOs:'cisco_ios',kind:'router',ports:[['GigabitEthernet0/0','wan'],['GigabitEthernet0/1','lan'],['Cellular0/1/0','wan']],wifi:true,wifiStandards:['Wi‑Fi 6 opcional'],wifiRole:'integrated_router_wifi',notes:'Router industrial con opciones 5G/LTE/Wi‑Fi según módulo.'},
+  'UniFi U6 Pro':{vendorOs:'ubiquiti_unifi',kind:'access_point',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi 6'],wifiRole:'ap',notes:'AP Wi‑Fi 6. Uplink normalmente trunk hacia VLANs de SSID y gestión.'},
+  'UniFi U7 Pro':{vendorOs:'ubiquiti_unifi',kind:'access_point',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi 7'],wifiRole:'ap',notes:'AP Wi‑Fi 7. Uplink trunk recomendado para múltiples SSID/VLAN.'},
+  'Huawei AP generic':{vendorOs:'huawei_vrp',kind:'access_point',ports:[['GE0/0/1','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Huawei gestionado por controlador/AC o cloud según modelo.'},
+  'Galgus AP generic':{vendorOs:'galgus_cloud',kind:'access_point',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Galgus gestionado por plataforma/cloud.'},
+  'TP-Link Omada AP generic':{vendorOs:'tplink_omada',kind:'access_point',ports:[['eth0','trunk']],wifi:true,wifiStandards:['Wi‑Fi'],wifiRole:'ap',notes:'AP Omada con SSID/VLAN desde controlador.'},
+  'MikroTik hAP ax3':{vendorOs:'mikrotik_routeros',kind:'router',ports:[['ether1','wan'],['ether2','lan'],['ether3','lan'],['ether4','lan'],['ether5','lan']],wifi:true,wifiStandards:['Wi‑Fi 6'],wifiRole:'integrated_router_wifi',notes:'Router con Wi‑Fi integrado y puertos Ethernet.'}
 };
 function modelKeyByName(name){const n=cleanStr(name).toLowerCase();return Object.keys(DEVICE_MODEL_CATALOG).find(k=>k.toLowerCase()===n)||'';}
 function selectedDeviceModel(){const key=modelKeyByName($('devModel')?.value||'');return key?DEVICE_MODEL_CATALOG[key]:null;}
@@ -1161,37 +1205,51 @@ function initDeviceModelList(){
   const dl=$('devModelList'); if(!dl)return; clearNode(dl);
   Object.keys(DEVICE_MODEL_CATALOG).forEach(k=>dl.appendChild(makeOption(k,'')));
 }
+function initDeviceVendorSelect(){
+  const select=$('devVendor');if(!select)return;
+  const current=select.value;
+  const vendors=NWDevice?NWDevice.vendors():(Array.isArray(window.ALL_VENDORS)?window.ALL_VENDORS:[]);
+  setOptions(select,[makeOption('','— selecciona —'),...vendors.map(v=>makeOption(v.id,v.l))]);
+  if(vendors.some(v=>v.id===current))select.value=current;
+}
+function initDeviceKindSelect(){
+  const select=$('devType');if(!select)return;
+  const current=select.value||'switch';
+  const options=NWDevice?NWDevice.kindOptions():[{value:'switch',label:'🔀 Switch'},{value:'router',label:'🌐 Router'},{value:'firewall',label:'🛡 Firewall'}];
+  setOptions(select,options.map(item=>makeOption(item.value,item.label)));
+  select.value=options.some(item=>item.value===current)?current:'switch';
+}
 function renderDeviceModelHint(){
   const hint=$('devModelHint');if(!hint)return;const m=selectedDeviceModel();
   clearNode(hint);
   if(!m){hint.style.display='none';return;}
   hint.style.display='';
   const b=document.createElement('b'); b.textContent=$('devModel').value||''; hint.appendChild(b); hint.appendChild(document.createElement('br'));
-  appendText(hint,`Tipo sugerido: ${m.type} · Vendor: ${m.vendorOs||'—'} · Puertos plantilla: ${m.ports?.length||0} · Wi‑Fi/AP: ${m.wifi?((m.wifiStandards||[]).join(', ')||'sí'):'no'}`);
+  appendText(hint,`Tipo sugerido: ${m.kind} · Vendor: ${m.vendorOs||'—'} · Puertos plantilla: ${m.ports?.length||0} · Wi‑Fi/AP: ${m.wifi?((m.wifiStandards||[]).join(', ')||'sí'):'no'}`);
   hint.appendChild(document.createElement('br')); appendText(hint,m.notes||'');
 }
-function applyDeviceModelToForm(){const key=modelKeyByName($('devModel')?.value||'');if(!key)return alert('Selecciona un modelo del catálogo o escribe uno y guárdalo como texto libre.');const m=DEVICE_MODEL_CATALOG[key];if(m.vendorOs)$('devVendor').value=m.vendorOs;if(m.type)$('devType').value=m.type;if($('devWifiRole'))$('devWifiRole').value=m.wifiRole||'none';$('devType').dispatchEvent(new Event('change'));renderDeviceModelHint();}
-function ensurePortsFromModel(deviceId){const d=devById(deviceId);if(!d||!d.model)return 0;const key=modelKeyByName(d.model);const m=key?DEVICE_MODEL_CATALOG[key]:null;if(!m||!Array.isArray(m.ports))return 0;let added=0;for(const [name,role] of m.ports){if(S.ports.some(p=>p.deviceId===deviceId&&cleanStr(p.name).toLowerCase()===cleanStr(name).toLowerCase()))continue;const isSwitch=d.type==='switch';S.ports.push({id:uid('port'),deviceId,name,media:name.toLowerCase().includes('fast')?'FE':'GE',mode:isSwitch?(role==='trunk'?'trunk':'access'):(role==='wan'?'routed':'routed'),accessVlanRef:null,nativeVlanRef:null,allowedVlans:role==='trunk'?S.vlans.map(v=>v.vlanId):[],desc:m.wifiRole==='ap'?'Uplink AP / SSID VLANs':null,position:S.ports.filter(p=>p.deviceId===deviceId).length+1,role:role||null});added++;}return added;}
+function applyDeviceModelToForm(){const key=modelKeyByName($('devModel')?.value||'');if(!key)return alert('Selecciona un modelo del catálogo o escribe uno y guárdalo como texto libre.');const m=DEVICE_MODEL_CATALOG[key];if(m.vendorOs)$('devVendor').value=m.vendorOs;if(m.kind)$('devType').value=m.kind;if($('devWifiRole'))$('devWifiRole').value=m.wifiRole||'none';$('devType').dispatchEvent(new Event('change'));renderDeviceModelHint();}
+function ensurePortsFromModel(deviceId){const d=devById(deviceId);if(!d||!d.model)return 0;const key=modelKeyByName(d.model);const m=key?DEVICE_MODEL_CATALOG[key]:null;if(!m||!Array.isArray(m.ports))return 0;let added=0;for(const [name,role] of m.ports){if(S.ports.some(p=>p.deviceId===deviceId&&cleanStr(p.name).toLowerCase()===cleanStr(name).toLowerCase()))continue;const isSwitch=isSwitchDevice(d);const mode=role==='trunk'?'trunk':isSwitch?'access':'routed';S.ports.push({id:uid('port'),deviceId,name,media:name.toLowerCase().includes('fast')?'FE':'GE',mode,accessVlanRef:null,nativeVlanRef:null,allowedVlans:role==='trunk'?S.vlans.map(v=>v.vlanId):[],desc:m.wifiRole==='ap'?'Uplink AP / SSID VLANs':null,position:S.ports.filter(p=>p.deviceId===deviceId).length+1,role:role||null});added++;}return added;}
 
 // =========================================================
 // 06. DISPOSITIVOS
 // Alta, edición, borrado y renderizado de dispositivos de infraestructura.
 // =========================================================
 function clearDevForm(){ $('devEditId').value=''; $('devName').value='';$('devMgmt').value='';$('devNotes').value='';$('devVendor').value=''; if($('devModel'))$('devModel').value=''; if($('devWifiRole'))$('devWifiRole').value='none'; $('devType').value='switch';$('devEdge').value='no';$('devWanIf').value='';$('btnAddDev').textContent='➕ Añadir dispositivo';$('btnCancelDevEdit').style.display='none';$('devEdgeSec').style.display='none'; renderDeviceModelHint(); }
-function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=d.type||'switch'; $('devVendor').value=d.vendorOs||''; if($('devModel'))$('devModel').value=d.model||''; if($('devWifiRole'))$('devWifiRole').value=d.wifiRole||'none'; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=(d.type==='switch')?'none':''; renderDeviceModelHint(); $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
+function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=devKind(d); $('devVendor').value=d.vendorOs||''; if($('devModel'))$('devModel').value=d.model||''; if($('devWifiRole'))$('devWifiRole').value=d.wifiRole||'none'; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=isEdgeDevice(d)?'':'none'; renderDeviceModelHint(); $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
 $('btnCancelDevEdit').onclick=()=>clearDevForm();
 $('btnAddDev').onclick=()=>{
-  const name=($('devName').value||'').trim();const type=$('devType').value;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const model=($('devModel')?.value||'').trim()||null;const wifiRole=($('devWifiRole')?.value||'none');const edge=type==='switch'?'no':$('devEdge').value;const wanIf=type==='switch'?null:(($('devWanIf').value||'').trim()||null);
+  const name=($('devName').value||'').trim();const kind=$('devType').value;const type=kind;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const model=($('devModel')?.value||'').trim()||null;const wifiRole=($('devWifiRole')?.value||'none');const edge=isEdgeDevice({kind})?$('devEdge').value:'no';const wanIf=isEdgeDevice({kind})?(($('devWanIf').value||'').trim()||null):null;
   const eid=$('devEditId').value||null;
   if(!name)return alert('Nombre requerido.');if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
-  if(type!=='switch'&&edge==='yes'){const exists=S.devices.some(d=>d.id!==eid&&(d.type==='router'||d.type==='firewall')&&d.internetEdge==='yes');if(exists)return alert('Ya existe otro dispositivo marcado como Internet Edge.');}
+  if(isEdgeDevice({kind})&&edge==='yes'){const exists=S.devices.some(d=>d.id!==eid&&isEdgeDevice(d)&&d.internetEdge==='yes');if(exists)return alert('Ya existe otro dispositivo marcado como Internet Edge.');}
   if(eid){
     const d=devById(eid); if(!d)return alert('No se encontró el dispositivo a editar.');
-    Object.assign(d,{name,type,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf});
+    Object.assign(d,{name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf});
     ensurePortsFromModel(eid);
   }else{
     const id=uid('dev');
-    S.devices.push({id,name,type,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf,layout:null});
+    S.devices.push({id,name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf,layout:null});
     S.topo.pos[id]={x:80+Math.random()*540,y:60+Math.random()*280};
     ensurePortsFromModel(id);
   }
@@ -1220,9 +1278,9 @@ function renderDevs(){
     tr.appendChild(tdName);
 
     const tdType=document.createElement('td'); const typeBadge=document.createElement('span');
-    const type=(d.type==='router'||d.type==='firewall'||d.type==='switch')?d.type:'switch';
-    typeBadge.className='dtype dtype-'+(type==='switch'?'sw':type==='router'?'rt':'fw');
-    typeBadge.textContent=(type==='switch'?'🔀 ':type==='router'?'🌐 ':'🛡 ')+(d.type||'');
+    const type=devKind(d);
+    typeBadge.className='dtype dtype-'+(type==='switch'?'sw':type==='router'?'rt':type==='firewall'?'fw':'xx');
+    typeBadge.textContent=`${devIcon(d)} ${devLabel(d)}`;
     tdType.appendChild(typeBadge); tr.appendChild(tdType);
 
     const tdVendor=document.createElement('td'); tdVendor.appendChild(makeBadge(d.vendorOs||'-','b bac')); tr.appendChild(tdVendor);
@@ -1241,7 +1299,7 @@ function renderDevs(){
   el.querySelectorAll('[data-deldev]').forEach(btn=>btn.onclick=()=>{
     const id=btn.dataset.deldev;const pids=S.ports.filter(p=>p.deviceId===id).map(p=>p.id);
     S.links=S.links.filter(l=>!pids.includes(l.aPortId)&&!pids.includes(l.bPortId));
-    S.hosts=S.hosts.map(h=>{if(pids.includes(h.portRef))h.portRef=null;return h;});
+    S.hosts=S.hosts.map(h=>{if(pids.includes(h.portRef))h.portRef=null;if(h.deviceRef===id)h.deviceRef=null;if(h.connectedDeviceId===id)h.connectedDeviceId=null;return h;});
     S.ports=S.ports.filter(p=>p.deviceId!==id);S.devices=S.devices.filter(d=>d.id!==id);
     if(S.roas.gwId===id){S.roas.gwId=null;S.roas.lanIf='';}
     delete S.topo.pos[id];save();refresh();
@@ -1256,7 +1314,7 @@ function selectToBool(v){ return v === 'yes' ? true : v === 'no' ? false : null;
 function setBoolField(obj, key, val){ if(val === null){ delete obj[key]; } else obj[key] = val; }
 function updatePortL2Wrap(){
   const role = $('pRole') ? $('pRole').value : '';
-  const isSwitch = devById($('pDev')?.value)?.type === 'switch';
+  const isSwitch = isSwitchDevice(devById($('pDev')?.value));
   const isAccess = isSwitch && role === 'access';
   const isTrunk = (isSwitch && role === 'trunk') || (!isSwitch && role === 'lan');
   if($('pVlanWrap')) $('pVlanWrap').style.display = isAccess ? '' : 'none';
@@ -1279,7 +1337,7 @@ function fillPortDevSel(){
 
 function updatePortRoleOpts(){
   const devId=$('pDev').value;const d=devById(devId);
-  const isRF=!d||d.type!=='switch';
+  const isRF=!d||!isSwitchDevice(d);
   const role=$('pRole'); clearNode(role);
   if(!isRF){
     role.append(makeOption('access','access (usuario/host)'),makeOption('trunk','trunk (uplink/RoaS)'));
@@ -1287,15 +1345,15 @@ function updatePortRoleOpts(){
     role.append(makeOption('lan','LAN (trunk a switches)'),makeOption('wan','WAN (hacia ISP)'),makeOption('routed','routed (L3 directo)'));
   }
   updatePortL2Wrap();
-  if(d){$('pName').placeholder=d.vendorOs==='juniper_junos'?'ge-0/0/0':d.vendorOs==='aruba_aoss'?'1/1/1':d.type==='switch'?'GigabitEthernet0/1':'GigabitEthernet0/0';}
-  $('pHint').textContent=!d?'':`Dispositivo: ${d.name} (${d.type}) — vendor: ${d.vendorOs||'sin asignar'}`;
+  if(d){$('pName').placeholder=d.vendorOs==='juniper_junos'?'ge-0/0/0':d.vendorOs==='aruba_aoss'?'1/1/1':isSwitchDevice(d)?'GigabitEthernet0/1':'GigabitEthernet0/0';}
+  $('pHint').textContent=!d?'':`Dispositivo: ${d.name} (${devLabel(d)}) — vendor: ${d.vendorOs||'sin asignar'}`;
 }
 
 $('pDev').onchange=()=>{updatePortRoleOpts();};
 $('pRole').onchange=()=>{updatePortL2Wrap();};
 
 function clearPortForm(){ $('portEditId').value=''; $('pName').value=''; $('pDesc').value=''; if($('pAllowedVlans'))$('pAllowedVlans').value=''; if($('pNativeVlan'))$('pNativeVlan').value=''; if($('pUplink'))$('pUplink').value='auto'; if($('pAccessProtection'))$('pAccessProtection').value='default'; $('btnAddPort').textContent='➕ Añadir'; $('btnCancelPortEdit').style.display='none'; $('pHint').textContent=''; $('pHint').className='hint'; updatePortRoleOpts(); }
-function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(d?.type==='switch'){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.role|| (p.mode==='trunk'?'lan':'routed'); } if($('pNativeVlan'))$('pNativeVlan').value=p.nativeVlanRef||''; if($('pAllowedVlans'))$('pAllowedVlans').value=(p.allowedVlans||[]).join(','); if($('pUplink'))$('pUplink').value=boolToSelect(p.uplink); if($('pAccessProtection'))$('pAccessProtection').value=(p.portFast===false&&p.bpduGuard===false)?'off':(p.portFast===true&&p.bpduGuard===true)?'strict':'default'; $('pDesc').value=p.desc||''; $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; updatePortL2Wrap(); navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
+function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(isSwitchDevice(d)){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.mode==='trunk'?'lan':(p.role||'routed'); } if($('pNativeVlan'))$('pNativeVlan').value=p.nativeVlanRef||''; if($('pAllowedVlans'))$('pAllowedVlans').value=(p.allowedVlans||[]).join(','); if($('pUplink'))$('pUplink').value=boolToSelect(p.uplink); if($('pAccessProtection'))$('pAccessProtection').value=(p.portFast===false&&p.bpduGuard===false)?'off':(p.portFast===true&&p.bpduGuard===true)?'strict':'default'; $('pDesc').value=p.desc||''; $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; updatePortL2Wrap(); navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
 $('btnCancelPortEdit').onclick=()=>clearPortForm();
 $('btnAddPort').onclick=()=>{
   const devId=$('pDev').value;
@@ -1310,7 +1368,7 @@ $('btnAddPort').onclick=()=>{
   let mode,accessVlanRef=null,allowedVlans=[],nativeVlanRef=null,realRole=role;
   const explicitAllowed=$('pAllowedVlans')?parseAllowed($('pAllowedVlans').value):[];
   const explicitNative=$('pNativeVlan')?($('pNativeVlan').value||null):null;
-  if(d.type==='switch'){
+  if(isSwitchDevice(d)){
     if(role==='access'){mode='access';accessVlanRef=vlanRef;}
     else{mode='trunk';allowedVlans=explicitAllowed.length?explicitAllowed:S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);nativeVlanRef=explicitNative;}
     realRole=null;
@@ -1531,7 +1589,7 @@ function hostAssignablePorts(deviceId){
   if(!deviceId)return [];
   const d=devById(deviceId); if(!d) return [];
   const ports=portsByDev(deviceId).slice().sort((a,b)=>(a.position||999)-(b.position||999)||a.name.localeCompare(b.name));
-  if(d.type==='switch')return ports.filter(p=>p.mode!=='trunk' && (p.role||'')!=='wan');
+  if(isSwitchDevice(d))return ports.filter(p=>p.mode!=='trunk' && (p.role||'')!=='wan');
   return ports.filter(p=>(p.role||'')!=='wan');
 }
 function hostPortUsedByOther(portId,excludeHostId){return S.hosts.some(h=>h.id!==excludeHostId&&h.portRef===portId);}
@@ -1592,7 +1650,7 @@ function candidateDevicesForHostLocation(hostLocId){
     if(dLoc&&dLoc===hostLocId)score+=100;
     else if(sameOrNestedLocation(dLoc,hostLocId))score+=80;
     else if(locName && cleanStr(d.physicalLocation).toLowerCase()===locName.toLowerCase())score+=65;
-    if(d.type==='switch')score+=30;
+    if(isSwitchDevice(d))score+=30;
     if(d.type==='router')score+=12;
     if(d.wirelessRole&&d.wirelessRole!=='none')score+=8;
     const free=hostAssignablePorts(d.id).some(p=>!hostPortUsedByOther(p.id,''));
@@ -1817,7 +1875,7 @@ function renderIpMap(){
 // Layout visual de puertos, generación masiva, creación de enlaces y modal de puerto.
 // =========================================================
 function fillSwDevSels(){
-  const sw=S.devices.filter(d=>d.type==='switch');
+  const sw=S.devices.filter(isSwitchDevice);
   const opts=sw.map(d=>makeOption(d.id,d.name));
   setOptions($('lyDev'),opts,'Sin switches');
   setOptions($('visDev'),sw.map(d=>makeOption(d.id,d.name)),'Sin switches');
@@ -2137,8 +2195,8 @@ function renderDevPickCfg(){
   const devices=S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name));
   if(!devices.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent='Sin dispositivos.'; el.appendChild(hint); return; }
   devices.forEach(d=>{ const row=document.createElement('div'); row.className='hrow'; row.style.cursor='pointer'; row.style.marginBottom='4px'; row.dataset.dcfg=d.id;
-    const ico=document.createElement('div'); ico.className='hico'; ico.textContent=d.type==='switch'?'🔀':d.type==='router'?'🌐':'🛡'; row.appendChild(ico);
-    const info=document.createElement('div'); info.className='hinfo'; const hn=document.createElement('div'); hn.className='hn'; hn.textContent=d.name||''; const hm=document.createElement('div'); hm.className='hm'; hm.textContent=`${d.type||''} · ${d.vendorOs||'—'}`; info.append(hn,hm); row.appendChild(info);
+    const ico=document.createElement('div'); ico.className='hico'; ico.textContent=devIcon(d); row.appendChild(ico);
+    const info=document.createElement('div'); info.className='hinfo'; const hn=document.createElement('div'); hn.className='hn'; hn.textContent=d.name||''; const hm=document.createElement('div'); hm.className='hm'; hm.textContent=`${devLabel(d)} · ${d.vendorOs||'—'}`; info.append(hn,hm); row.appendChild(info);
     row.appendChild(makeBadge('⚙','b bac')); el.appendChild(row);
   });
   el.querySelectorAll('[data-dcfg]').forEach(el=>el.onclick=()=>selectDevCfg(el.dataset.dcfg));
@@ -2174,7 +2232,7 @@ function renderVtp(){
   if($('vtpPassword'))$('vtpPassword').value=S.vtp?.password||'';
   if($('vtpVersion'))$('vtpVersion').value=S.vtp?.version||'2';
   if($('vtpPruning'))$('vtpPruning').value=S.vtp?.pruning||'no';
-  const sws=S.devices.filter(d=>d.type==='switch' && (d.vendorOs||'cisco_ios')==='cisco_ios').sort((a,b)=>a.name.localeCompare(b.name));
+  const sws=S.devices.filter(d=>isSwitchDevice(d) && (d.vendorOs||'cisco_ios')==='cisco_ios').sort((a,b)=>a.name.localeCompare(b.name));
   const el=$('vtpSwitchRoles'); el.textContent='';
   if(!sws.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent='Añade switches Cisco IOS para poder usar VTP.'; el.appendChild(hint); return; }
   sws.forEach(d=>{ const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
@@ -2337,7 +2395,7 @@ function v5HostFilterKey(h){
   return 'hosts';
 }
 function v5ShowDevice(d){return v5FilterOn((d.type||'switch').toLowerCase());}
-function v5ShowHost(h){return v5FilterOn('hosts') && v5FilterOn(v5HostFilterKey(h));}
+function v5ShowHost(h){return !(h.deviceRef&&devById(h.deviceRef)) && v5FilterOn('hosts') && v5FilterOn(v5HostFilterKey(h));}
 function v5SyncFilterInputs(){document.querySelectorAll('[data-v5-filter]').forEach(cb=>{cb.checked=v5FilterOn(cb.dataset.v5Filter);});}
 function vLocChildren(id){return vLocs().filter(l=>(l.parentId||'')===id);}
 function vLocRoots(){return vLocs().filter(l=>!l.parentId||!vLocById(l.parentId));}
@@ -2471,7 +2529,7 @@ function hostVisualLoc(id){return vv().assign.hosts[id]||'';}
 function setDeviceVisualLoc(id,lid){vv().assign.devices[id]=lid;}
 function setHostVisualLoc(id,lid){vv().assign.hosts[id]=lid;}
 function v5ApplyRefresh(sel){save();refresh();if(sel)selectV5(sel.t,sel.id);}
-function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;d[key]=val;if(key==='type'&&val==='switch'){d.internetEdge='no';d.wanIf=null;}v5ApplyRefresh({t:'device',id});}
+function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;if(key==='type'||key==='kind'){d.type=val;d.kind=val;if(!isEdgeDevice(d)){d.internetEdge='no';d.wanIf=null;}}else d[key]=val;v5ApplyRefresh({t:'device',id});}
 function v5UpdateHost(id,key,val){const h=S.hosts.find(x=>x.id===id);if(!h)return;h[key]=val;v5ApplyRefresh({t:'host',id});}
 function v5UpdateHostPort(id,portId){const h=S.hosts.find(x=>x.id===id);if(!h)return;h.portRef=portId||null;if(portId){const p=S.ports.find(pp=>pp.id===portId);if(p){h.connectedDeviceId=p.deviceId;setHostVisualLoc(id,deviceVisualLoc(p.deviceId));}}v5ApplyRefresh({t:'host',id});}
 function v5UpdatePort(portId,key,val){const p=S.ports.find(x=>x.id===portId);if(!p)return;p[key]=val;if(key==='mode'&&val!=='access'&&p.accessVlanRef)p.accessVlanRef=null;v5ApplyRefresh(vv().sel||null);}
@@ -2869,12 +2927,12 @@ function renderV5Panel(){
       v5Field('Ubicación visual',v5Select(vLocs().map(l=>({value:l.id,label:l.name})),deviceVisualLoc(d.id),v=>{setDeviceVisualLoc(d.id,v);vv().pos[d.id]=nextNodePositionInLoc(v,'device',d.id);v5ApplyRefresh({t:'device',id:d.id});}))
     ));
     box.appendChild(v5Row('v5-row3',
-      v5Field('Tipo',v5Select([{value:'switch',label:'switch'},{value:'router',label:'router'},{value:'firewall',label:'firewall'}],d.type||'switch',v=>v5UpdateDevice(d.id,'type',v))),
+      v5Field('Tipo',v5Select((NWDevice?NWDevice.kindOptions():[{value:'switch',label:'Switch'},{value:'router',label:'Router'},{value:'firewall',label:'Firewall'}]),devKind(d),v=>v5UpdateDevice(d.id,'kind',v))),
       v5Field('Gestión',v5Input(d.mgmtIp||'',v=>v5UpdateDevice(d.id,'mgmtIp',v))),
       v5Field('Vendor/OS',v5Select(ALL_VENDORS.map(v=>({value:v.id,label:v.l})),d.vendorOs||'',v=>v5UpdateDevice(d.id,'vendorOs',v)))
     ));
     box.appendChild(v5Row('v5-row2',v5Field('Internet edge',v5Select([{value:'no',label:'No'},{value:'yes',label:'Sí'}],d.internetEdge==='yes'?'yes':'no',v=>v5UpdateDevice(d.id,'internetEdge',v))),v5Field('WAN IF',v5Input(d.wanIf||'',v=>v5UpdateDevice(d.id,'wanIf',v||null)))));
-    box.append(v5Field('Notas',v5Input(d.notes||'',v=>v5UpdateDevice(d.id,'notes',v))),v5Meta(['b bac',d.type||''],['b bgr',`${portsByDev(d.id).length} puertos`],['b bgr',d.vendorOs||'—']),makeEl('div','v5-note','Todos los cambios aquí alimentan la configuración generada en la V4.'),makeEl('div','card-t','Puertos del equipo'),renderPortEditorDom(d));
+    box.append(v5Field('Notas',v5Input(d.notes||'',v=>v5UpdateDevice(d.id,'notes',v))),v5Meta(['b bac',devLabel(d)],['b bgr',`${portsByDev(d.id).length} puertos`],['b bgr',d.vendorOs||'—']),makeEl('div','v5-note','Todos los cambios aquí alimentan la configuración generada en la V4.'),makeEl('div','card-t','Puertos del equipo'),renderPortEditorDom(d));
     return;
   }
   if(sel.t==='host'){
@@ -3029,6 +3087,8 @@ window.addEventListener('resize',()=>{if(S.step==='graphs')resizeV5();});
 // =========================================================
 function refresh(){
   initDeviceModelList();
+  initDeviceKindSelect();
+  initDeviceVendorSelect();
   renderNav();
   renderDash();
   renderWizard();

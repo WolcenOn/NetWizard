@@ -56,7 +56,7 @@
     function firstUsable(cidr,offset){ const c=parseC(cidr); if(!c) return ''; return ip4((c.net + (offset || 1)) >>> 0); }
     function lastUsable(cidr,offset){ const c=parseC(cidr); if(!c) return ''; return ip4((c.bc - (offset || 1)) >>> 0); }
     function vendor(d){ return clean(d&&d.vendorOs) || 'cisco_ios'; }
-    function isRouterLike(d){ return /router|firewall|gateway/i.test(clean(d&&d.type)); }
+    function isRouterLike(d){ let model=root.NetWizardDeviceModel;try{if(!model&&typeof require==='function')model=require('./netwizard-device-model.js');}catch{}return model ? model.isEdgeCapable(d) : /router|firewall|gateway/i.test(clean(d&&(d.kind||d.type))); }
     function vlanName(v){ return cliToken((v && v.name) || ('VLAN'+(v && v.vlanId || '')), 'VLAN', 32); }
     function enabledDhcp(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return !!raw.enabled; }
     function dhcpDns(p,v){ const raw=(p.dhcp||{})[String(v.vlanId)] || {}; return clean(Array.isArray(raw.dns) ? raw.dns.join(' ') : raw.dns)||'8.8.8.8 1.1.1.1'; }

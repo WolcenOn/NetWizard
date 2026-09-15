@@ -35,19 +35,12 @@ test('carga la aplicación sin errores JavaScript críticos', async ({ page }) =
 test('genera configuración útil para todos los vendors ofrecidos por la UI', async ({ page }) => {
   await resetStorage(page);
   const matrix = await page.evaluate(() => {
-    const vendors = [
-      ['cisco_ios','router','Cisco IOS'],
-      ['cisco_asa','firewall','ASA'],
-      ['juniper_junos','router','Junos'],
-      ['aruba_aoss','switch','Aruba'],
-      ['pfsense','firewall','pfSense'],
-      ['fortinet','firewall','FortiGate'],
-      ['ubiquiti_unifi','access_point','UniFi'],
-      ['huawei_vrp','router','Huawei'],
-      ['galgus_cloud','wlan_controller','Galgus'],
-      ['tplink_omada','wlan_controller','Omada'],
-      ['mikrotik_routeros','router','MikroTik']
-    ];
+    const vendorKinds = {
+      generic_network:'appliance',cisco_ios:'router',cisco_asa:'firewall',fortinet:'firewall',pfsense:'firewall',
+      mikrotik_routeros:'router',huawei_vrp:'router',juniper_junos:'router',aruba_aoss:'switch',
+      ubiquiti_unifi:'access_point',tplink_omada:'wlan_controller',galgus_cloud:'wlan_controller',windows:'server',linux:'server'
+    };
+    const vendors = window.ALL_VENDORS.map(vendor => [vendor.id,vendorKinds[vendor.id]||'appliance',vendor.l]);
     const project = window.defS();
     project.projName = 'E2E Vendor Matrix';
     project.vlans = [{id:'v10', vlanId:10, name:'Usuarios'}];
@@ -78,8 +71,42 @@ test('genera configuración útil para todos los vendors ofrecidos por la UI', a
     expect(row.output, `${row.vendorOs} debe generar una salida sustancial`).toMatch(/\S[\s\S]{30}/);
   }
 
-  await page.evaluate(() => { window.navTo('cfg'); window.selectDevCfg('dev-10'); });
+  const formVendorIds=await page.locator('#devVendor option').evaluateAll(options=>options.map(option=>option.value).filter(Boolean));
+  expect(formVendorIds.slice().sort()).toEqual(matrix.map(row=>row.vendorOs).sort());
+
+  await page.evaluate(() => { const d=window.NetWizardState.getSnapshot().devices.find(item=>item.vendorOs==='mikrotik_routeros'); window.navTo('cfg'); window.selectDevCfg(d.id); });
   await expect(page.locator('#cfgOut')).toHaveValue(/MikroTik|RouterOS|system identity/i);
+});
+
+test('el asistente separa infraestructura gestionada y endpoints sin switches ficticios', async ({ page }) => {
+  await resetStorage(page);
+  page.on('dialog', dialog => dialog.accept());
+  await page.click('[data-step="wiz"]');
+  await page.click('[data-sc="office"]');
+  for(const id of ['server','ap','pc','iot','nvr']) await page.click(`[data-dp="${id}"]`);
+  await page.click('#wNext2');
+  await page.click('#wApply');
+
+  const result=await page.evaluate(() => {
+    const project=window.NetWizardState.getSnapshot();
+    const ap=project.devices.find(device=>device.kind==='access_point');
+    return {
+      devices:project.devices.map(({name,kind,type,vendorOs})=>({name,kind,type,vendorOs})),
+      hosts:project.hosts.map(({name,type,deviceRef})=>({name,type,deviceRef})),
+      apPort:ap&&project.ports.find(port=>port.deviceId===ap.id),
+      apConfig:ap&&window.genConfig(ap.id,ap.vendorOs)
+    };
+  });
+
+  const ap=result.devices.find(device=>device.name==='AP-01');
+  expect(ap).toMatchObject({kind:'access_point',type:'access_point',vendorOs:'generic_network'});
+  expect(result.devices.some(device=>device.name==='SRV-Web')).toBe(false);
+  expect(result.devices.every(device=>device.kind===device.type)).toBe(true);
+  expect(result.apPort).toMatchObject({name:'eth0',mode:'trunk'});
+  expect(result.apConfig).toMatch(/Configuración genérica|Vendor\/OS no implementado directamente/i);
+  for(const name of ['SRV-Web','AP-01','PC-01','IOT-01','NVR-01']) expect(result.hosts.some(host=>host.name===name), `${name} debe existir`).toBe(true);
+  const apHost=result.hosts.find(host=>host.name==='AP-01');
+  expect(apHost.deviceRef).toBeTruthy();
 });
 
 test('previsualiza VLSM desde la UI sin modificar el proyecto', async ({ page }) => {

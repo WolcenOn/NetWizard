@@ -8,6 +8,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const scripts = Array.from(html.matchAll(/<script\s+[^>]*src=["']\.\/(js\/[^"']+)["'][^>]*><\/script>/g), match => match[1]);
 const required = [
+  'js/netwizard-device-model.js',
   'js/netwizard.js',
   'js/netwizard-config-pipeline.js',
   'js/netwizard-vendor-config-generators.js',
@@ -53,6 +54,8 @@ function before(first, second){
   assert.ok(scripts.indexOf(first) < scripts.indexOf(second), `${first} debe cargarse antes que ${second}`);
 }
 
+before('js/netwizard-device-model.js', 'js/netwizard-project-schema.js');
+before('js/netwizard-project-schema.js', 'js/netwizard.js');
 before('js/netwizard.js', 'js/netwizard-vendor-config-generators.js');
 before('js/netwizard.js', 'js/netwizard-config-pipeline.js');
 before('js/netwizard-config-pipeline.js', 'js/netwizard-vendor-config-generators.js');
