@@ -14,6 +14,8 @@ const {createPipeline}=require('../js/netwizard-config-pipeline.js');
 const VendorGenerator=require('../js/netwizard-vendor-config-generators.js');
 const SwitchingGenerator=require('../js/netwizard-switching-generator.js');
 const FirewallGenerator=require('../js/netwizard-firewall-edge-generator.js');
+const Documentation=require('../js/netwizard-documentation-utils.js');
+const DeploymentBundle=require('../js/netwizard-deployment-bundle.js');
 require('../js/netwizard-production-gate-architecture.js');
 const Gate=global.NetWizardProductionGate;
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'samples','production-scenarios.json'),'utf8'));
@@ -71,6 +73,16 @@ for(const scenario of manifest.scenarios){
     assert.ok(!/Sin vendor asignado|todavía no implementado/i.test(output),`${scenario.id}/${expected.deviceId}: fallback inválido`);
     for(const signature of expected.signatures) assert.ok(output.includes(signature),`${scenario.id}/${expected.deviceId}: falta ${signature}`);
   }
+
+  const bundle=DeploymentBundle.buildDeploymentPackage(prepared.project,{
+    generatedAt:'2026-09-15T00:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,
+    generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)
+  });
+  assert.strictEqual(bundle.ok,true,`${scenario.id}: el paquete quedó bloqueado: ${(bundle.issues||[]).map(issue=>issue.code).join(', ')}`);
+  assert.strictEqual(bundle.manifest.productionStatus,scenario.expectedStatus);
+  assert.strictEqual(bundle.manifest.counts.devices,prepared.project.devices.length);
+  assert.strictEqual(bundle.files.filter(file=>file.path.startsWith('configs/')).length,prepared.project.devices.length);
+  assert.ok(DeploymentBundle.encodeZip(bundle).length>1000,`${scenario.id}: ZIP vacío`);
 }
 
 const rejected=Gate.evaluateReleaseCriteria({issues:[{code:'NW-X',severity:'warning',message:'nuevo aviso'}]},{allowReview:true,allowedWarningCodes:[]});

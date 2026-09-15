@@ -26,6 +26,8 @@ npm run test:e2e
 - [ ] Ejecutar Plan común de cambios.
 - [ ] Ejecutar Puerta de Producción.
 - [ ] Exportar configuraciones.
+- [ ] Exportar el paquete de despliegue ZIP y revisar su manifiesto, configuraciones e informes.
+- [ ] Confirmar que un proyecto con errores bloqueantes no puede descargar el paquete de despliegue.
 - [ ] Exportar inventario CSV.
 - [ ] Exportar documentación Markdown.
 - [ ] Crear y restaurar snapshot.

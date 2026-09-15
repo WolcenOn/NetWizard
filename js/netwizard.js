@@ -2306,7 +2306,7 @@ $('impJson').onclick=()=>{
   }catch(e){alert('JSON inválido: '+e.message);}
 };
 $('btnReset').onclick=()=>{if(!confirm('¿Borrar todo el proyecto?'))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
-$('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>$('expBundle').click(),200);};
+$('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>{const target=$('expDeploymentPackage')||$('expBundle');if(target)target.click();},200);};
 
 // ─────────────────── TOPOLOGY ───────────────────
 const canvas=$('topo');const ctx=canvas.getContext('2d');
