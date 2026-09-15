@@ -42,7 +42,8 @@ const VENDORS = [
     signatures: [
       /Aruba AOS-Switch/,
       /vlan 10/,
-      /tagged lan0/,
+      /interface lan0/,
+      /tagged vlan 10/,
       /write memory/
     ]
   },
@@ -51,10 +52,10 @@ const VENDORS = [
     label: 'pfSense',
     type: 'firewall',
     signatures: [
-      /pfSense CE\/Plus configuration artifact/,
-      /<vlan>/,
-      /<tag>10<\/tag>/,
-      /Interface IP: 10\.10\.10\.1\/24/
+      /NetWizard pfSense deployment plan/,
+      /no es XML importable universal/,
+      /VLAN 10 Usuarios: 10\.10\.10\.0\/24, gateway 10\.10\.10\.1/,
+      /Outbound NAT híbrido o automático/
     ]
   },
   {
@@ -62,7 +63,7 @@ const VENDORS = [
     label: 'Fortinet FortiGate',
     type: 'firewall',
     signatures: [
-      /Fortinet FortiGate CLI/,
+      /NetWizard FortiGate edge configuration/,
       /config system interface/,
       /set vlanid 10/,
       /config firewall policy/
