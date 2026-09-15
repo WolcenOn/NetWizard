@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.50.0 · Runbook de despliegue y rollback
+
+- Añadido un motor que ordena equipos por dependencias físicas, función y relaciones controlador/AP.
+- Formalizada la rama `project.deployment` para ticket, ventana, aprobador, observación y overrides por dispositivo.
+- Los ciclos o dependencias inexistentes bloquean la creación del paquete.
+- Los miembros HA/MLAG se marcan para ejecución serial y validación del peer.
+- Añadidos prechecks, criterios de parada, validaciones por fabricante y rollback en orden inverso.
+- El ZIP incorpora `deployment/plan.json`, `deployment/runbook.md` y `deployment/rollback-checklist.md`.
+
 ## 3.50.0 · Paquete de despliegue verificable
 
 - Añadido un ZIP autocontenido con configuraciones por dispositivo, snapshot canónico, inventario, matriz, documentación y checklist.

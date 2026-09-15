@@ -22,8 +22,13 @@ reports/production-checklist.md
 reports/inventory.csv
 reports/connectivity-matrix.csv
 reports/documentation.md
+deployment/plan.json
+deployment/runbook.md
+deployment/rollback-checklist.md
 ```
 
 `manifest.json` identifica la versión de schema, el estado de producción y cada archivo de payload mediante ruta, tamaño y CRC32. El ZIP usa almacenamiento sin compresión para mantener una implementación estática, auditable y sin dependencias remotas; el CRC32 del propio formato permite detectar corrupción de cada entrada.
 
 El paquete debe tratarse como información sensible porque puede contener direccionamiento, nombres internos y configuraciones de infraestructura.
+
+La secuencia y reversión se documentan en `docs/V3_50_DEPLOYMENT_RUNBOOK.md`.

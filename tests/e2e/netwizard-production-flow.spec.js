@@ -172,6 +172,10 @@ test('paquete de despliegue descarga un ZIP completo tras superar la puerta estr
   expect(zip.includes(Buffer.from('manifest.json'))).toBeTruthy();
   expect(zip.includes(Buffer.from('project/netwizard-project.json'))).toBeTruthy();
   expect(zip.includes(Buffer.from('reports/production-checklist.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('deployment/plan.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('deployment/runbook.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('deployment/rollback-checklist.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('NO es un backup'))).toBeTruthy();
   expect(zip.includes(Buffer.from('netwizard-deployment-bundle'))).toBeTruthy();
   await expect(page.locator('#deploymentPackageStatus')).toContainText(/Paquete preparado|Package prepared/i);
 });

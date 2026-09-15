@@ -24,7 +24,7 @@ Mantenimiento:
     'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
     'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
   ];
-  const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy'];
+  const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy','deployment'];
 
   function clone(value){
     return JSON.parse(JSON.stringify(value == null ? null : value));

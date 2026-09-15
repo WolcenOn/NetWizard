@@ -25,8 +25,13 @@ const fakeDocs={
   buildMarkdownDocument(_project,options){return `# Documentación\n\n${options.generatedAt}`;},
   toCsv(rows,columns){return [columns.join(','),...rows.map(row=>columns.map(key=>row[key]||'').join(','))].join('\n');}
 };
+const fakeRunbook={
+  buildDeploymentPlan(value,options){return{ok:true,format:'netwizard-deployment-plan',version:'3.50.0',projectName:value.projName,generatedAt:options.generatedAt,strategy:'staged',observationMinutes:15,phases:[{id:'edge',steps:['deploy-01']}],steps:value.devices.map((device,index)=>({id:`deploy-${index+1}`,deviceId:device.id,deviceName:device.name,configPath:options.configPaths[device.id]})),issues:[],warnings:[],prechecks:[],stopCriteria:[],postchecks:[],rollbackPlan:[],snapshotWarning:'NO es un backup'};},
+  buildMarkdown(){return'# Runbook\n';},
+  buildRollbackMarkdown(){return'# Rollback\n';}
+};
 function generateConfig(id,vendor){return `! ${vendor}\nhostname ${id}\ninterface ethernet1\n description deployment-test\n`;}
-function build(extra){return Bundle.buildDeploymentPackage(project,Object.assign({generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,generateConfig},extra||{}));}
+function build(extra){return Bundle.buildDeploymentPackage(project,Object.assign({generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,generateConfig},extra||{}));}
 
 const pkg=build();
 assert.strictEqual(pkg.ok,true);
@@ -39,10 +44,11 @@ assert.strictEqual(pkg.manifest.counts.devices,2);
 assert.strictEqual(pkg.manifest.counts.files,pkg.files.length);
 assert.ok(pkg.files.some(file=>file.path==='configs/01-FW-Edge-fw1-fortinet.conf'));
 assert.ok(pkg.files.some(file=>file.path==='configs/02-SW-Core-sw1-cisco_ios.cfg'));
-for(const required of ['manifest.json','README.md','project/netwizard-project.json','reports/production-gate.json','reports/production-checklist.md','reports/inventory.csv','reports/connectivity-matrix.csv','reports/documentation.md']){
+for(const required of ['manifest.json','README.md','project/netwizard-project.json','reports/production-gate.json','reports/production-checklist.md','reports/inventory.csv','reports/connectivity-matrix.csv','reports/documentation.md','deployment/plan.json','deployment/runbook.md','deployment/rollback-checklist.md']){
   assert.ok(pkg.files.some(file=>file.path===required),`Falta ${required}`);
 }
 assert.ok(pkg.manifest.files.every(file=>/^[0-9a-f]{8}$/.test(file.crc32)));
+assert.strictEqual(pkg.manifest.deployment.steps,2);
 assert.strictEqual(Bundle.crc32('123456789').toString(16),'cbf43926');
 assert.strictEqual(Bundle.configExtension('aruba_aoss'),'cfg');
 assert.strictEqual(Bundle.configExtension('windows'),'ps1');
@@ -96,5 +102,9 @@ assert.strictEqual(schemaFailure.issues[0].code,'NW-BUNDLE-002');
 const docsFailure=build({documentation:Object.assign({},fakeDocs,{buildMarkdownDocument(){throw new Error('docs rotas');}})});
 assert.strictEqual(docsFailure.ok,false);
 assert.strictEqual(docsFailure.issues[0].code,'NW-BUNDLE-020');
+
+const runbookFailure=build({runbook:Object.assign({},fakeRunbook,{buildDeploymentPlan(){return{ok:false,issues:[{code:'NW-RUNBOOK-001',severity:'error',blocking:true,message:'ciclo'}]};}})});
+assert.strictEqual(runbookFailure.ok,false);
+assert.strictEqual(runbookFailure.issues[0].code,'NW-RUNBOOK-001');
 
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');

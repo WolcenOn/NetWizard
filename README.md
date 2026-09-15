@@ -15,7 +15,8 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Cableado, longitudes, PoE y riesgo broadcast.
 - Auditoría L1/L2/L3/IP/DHCP/PoE/políticas/vendor.
 - Puerta de producción con guía de corrección y checklist Markdown.
-- Paquete de despliegue ZIP con puerta estricta, configuraciones por dispositivo, snapshot 3.50, inventario, matriz, documentación, checklist y manifiesto CRC32.
+- Paquete de despliegue ZIP con puerta estricta, configuraciones por dispositivo, snapshot 3.50, inventario, matriz, documentación, checklist, manifiesto CRC32 y runbook reversible.
+- Secuenciación operativa por dependencias: borde, core, acceso, servicios/controladores y APs; incluye protección HA/MLAG, criterios de parada y rollback inverso.
 - Exportaciones individuales de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
 - Matriz de escenarios de producción 3.50: oficina, campus, IoT/cámaras y tránsito L3 con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
@@ -71,6 +72,7 @@ El ZIP se genera en `dist/`.
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/V3_50_PRODUCTION_SCENARIOS.md`
 - `docs/V3_50_DEPLOYMENT_BUNDLE.md`
+- `docs/V3_50_DEPLOYMENT_RUNBOOK.md`
 - `docs/LIMITATIONS_KNOWN.md`
 - `docs/V3_42_LEGACY_RENDER_MIGRATION_V.md`
 - `docs/V3_38_LEGACY_RENDER_MIGRATION.md`
@@ -95,6 +97,8 @@ El runtime expone `NetWizardConfigPipeline.inspect()` para comprobar los rendere
 Los proyectos de `samples/` ya están exportados nativamente como 3.50. `samples/production-scenarios.json` define su contrato automático de aceptación. La puerta expone `NetWizardProductionGate.evaluateReleaseCriteria(report, policy)` para distinguir entre un aviso expresamente aceptado y una regresión nueva. Los samples también forman parte del artefacto publicado en Pages.
 
 La acción principal **Exportar** genera ahora el paquete de despliegue ZIP. Esta ruta siempre usa la puerta estricta de producción aunque la interfaz esté en modo demo: los errores bloquean la descarga y los avisos se conservan dentro del informe y del checklist.
+
+El paquete incorpora `deployment/plan.json`, `deployment/runbook.md` y `deployment/rollback-checklist.md`. El snapshot de NetWizard documenta el diseño deseado, pero no reemplaza el backup real de cada equipo.
 
 ## v3.48 · Sistema i18n ampliable
 
