@@ -25,5 +25,12 @@ assert.ok(Array.isArray(exported.project.ipv6Networks));
 assert.ok(Array.isArray(exported.project.failureScenarios));
 assert.ok(exported.project.highAvailability && typeof exported.project.highAvailability === 'object');
 assert.strictEqual(exported.project.observedState, null);
+assert.strictEqual(exported.schemaVersion, '3.50.0');
+assert.strictEqual(schema.model.version, '3.50.0');
+assert.ok(schema.model.deviceKinds.includes('wlan_controller'));
+assert.ok(schema.model.advancedArrays.includes('wanCircuits'));
 
-console.log('✓ Schema 3.48 normaliza y sanea las ramas avanzadas sin romper compatibilidad');
+const generatedId = schema.prepareImport({devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],wanCircuits:[{name:'WAN'}]});
+assert.strictEqual(generatedId.project.wanCircuits[0].id, 'wanCircuits_1');
+
+console.log('✓ Schema 3.50 normaliza y sanea las ramas avanzadas sin romper compatibilidad');

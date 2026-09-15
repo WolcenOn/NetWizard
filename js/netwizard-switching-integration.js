@@ -6,8 +6,14 @@
     if(!root.document)return false;
     ensure('./js/netwizard-switching-generator.js','data-netwizard-switching-generator','NetWizardSwitchingGenerator');
     if(root.__netwizardSwitchingInstalled)return true;
+    const pipeline=root.NetWizardConfigPipeline;
     const original=root.genConfig, state=root.NetWizardState, generator=root.NetWizardSwitchingGenerator;
-    if(typeof original!=='function'||!state||!generator){ if((attempt||0)<80&&root.setTimeout)root.setTimeout(()=>install((attempt||0)+1),100); return false; }
+    if(!generator||(!pipeline&&(typeof original!=='function'||!state))){ if((attempt||0)<80&&root.setTimeout)root.setTimeout(()=>install((attempt||0)+1),100); return false; }
+    if(pipeline&&typeof pipeline.registerRenderer==='function'){
+      pipeline.registerRenderer({id:'device.switching',priority:250,description:'Renderer especializado para switches.',supports(ctx){return !!(ctx.device&&/switch/i.test(String(ctx.device.type||'')));},render(ctx){return generator.render(ctx.project,ctx.deviceId,ctx.vendor);}});
+      root.__netwizardSwitchingInstalled=true;
+      return true;
+    }
     root.genConfig=function netwizardSwitchingGenConfig(deviceId,format){ const project=state.getSnapshot(); const d=(project.devices||[]).find(x=>x.id===deviceId); if(d&&/switch/i.test(String(d.type||''))){ const out=generator.render(project,deviceId,format||d.vendorOs); if(out)return out; } return original(deviceId,format); };
     root.__netwizardSwitchingInstalled=true; return true;
   }

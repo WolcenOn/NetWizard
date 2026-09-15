@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://netwizard.local/schemas/netwizard-project.schema.json",
   "title": "NetWizard Project Export Payload",
-  "description": "Schema externo para validar exportaciones versionadas de NetWizard v3.48.",
+  "description": "Contrato externo de importación/exportación de NetWizard v3.50, compatible con proyectos 3.28-3.50.",
   "type": "object",
   "required": ["format", "schemaVersion", "project"],
   "additionalProperties": true,
   "properties": {
     "format": { "const": "netwizard-project" },
-    "schemaVersion": { "type": "string", "pattern": "^3\\.(28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48)\\.0$" },
+    "schemaVersion": { "type": "string", "pattern": "^3\\.(28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50)\\.0$" },
     "exportedAt": { "type": "string" },
     "project": { "$ref": "#/$defs/project" }
   },
@@ -22,7 +22,7 @@
       "required": ["_schemaVersion", "devices", "ports", "vlans", "subnets", "hosts", "links", "fwRules", "dhcp", "iot"],
       "additionalProperties": true,
       "properties": {
-        "_schemaVersion": { "type": "string" },
+        "_schemaVersion": { "type": "string", "pattern": "^3\\.(28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50)\\.0$" },
         "projName": { "type": "string", "maxLength": 160 },
         "step": { "type": "string" },
         "devices": { "type": "array", "items": { "$ref": "#/$defs/device" } },
@@ -40,26 +40,26 @@
         "vtp": { "type": "object" },
         "topo": { "type": "object" },
         "visual": { "type": "object" },
-        "routing": { "type": "object" },
-        "highAvailability": { "type": "object" },
-        "accessSecurity": { "type": "object" },
-        "management": { "type": "object" },
-        "observedState": { "type": ["object", "null"] },
-        "driftPolicy": { "type": "object" },
-        "vrfs": { "type": "array", "items": { "type": "object" } },
-        "wanCircuits": { "type": "array", "items": { "type": "object" } },
-        "trafficProfiles": { "type": "array", "items": { "type": "object" } },
-        "internalServices": { "type": "array", "items": { "type": "object" } },
-        "wifiControllers": { "type": "array", "items": { "type": "object" } },
-        "wifiAccessPoints": { "type": "array", "items": { "type": "object" } },
-        "wifiSsids": { "type": "array", "items": { "type": "object" } },
-        "ipv6Networks": { "type": "array", "items": { "type": "object" } },
-        "failureScenarios": { "type": "array", "items": { "type": "object" } },
-        "stacks": { "type": "array", "items": { "type": "object" } },
-        "mlagDomains": { "type": "array", "items": { "type": "object" } },
-        "haGroups": { "type": "array", "items": { "type": "object" } },
-        "diversityPolicies": { "type": "array", "items": { "type": "object" } },
-        "linkAggregations": { "type": "array", "items": { "type": "object" } }
+        "routing": { "$ref": "#/$defs/routing" },
+        "highAvailability": { "$ref": "#/$defs/highAvailability" },
+        "accessSecurity": { "$ref": "#/$defs/accessSecurity" },
+        "management": { "$ref": "#/$defs/management" },
+        "observedState": { "anyOf": [{ "$ref": "#/$defs/observedState" }, { "type": "null" }] },
+        "driftPolicy": { "$ref": "#/$defs/driftPolicy" },
+        "vrfs": { "type": "array", "items": { "$ref": "#/$defs/vrf" } },
+        "wanCircuits": { "type": "array", "items": { "$ref": "#/$defs/wanCircuit" } },
+        "trafficProfiles": { "type": "array", "items": { "$ref": "#/$defs/trafficProfile" } },
+        "internalServices": { "type": "array", "items": { "$ref": "#/$defs/internalService" } },
+        "wifiControllers": { "type": "array", "items": { "$ref": "#/$defs/wifiController" } },
+        "wifiAccessPoints": { "type": "array", "items": { "$ref": "#/$defs/wifiAccessPoint" } },
+        "wifiSsids": { "type": "array", "items": { "$ref": "#/$defs/wifiSsid" } },
+        "ipv6Networks": { "type": "array", "items": { "$ref": "#/$defs/ipv6Network" } },
+        "failureScenarios": { "type": "array", "items": { "$ref": "#/$defs/failureScenario" } },
+        "stacks": { "type": "array", "items": { "$ref": "#/$defs/stack" } },
+        "mlagDomains": { "type": "array", "items": { "$ref": "#/$defs/mlagDomain" } },
+        "haGroups": { "type": "array", "items": { "$ref": "#/$defs/haGroup" } },
+        "diversityPolicies": { "type": "array", "items": { "$ref": "#/$defs/diversityPolicy" } },
+        "linkAggregations": { "type": "array", "items": { "$ref": "#/$defs/linkAggregation" } }
       }
     },
     "device": {
@@ -70,6 +70,7 @@
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string", "minLength": 1, "maxLength": 80 },
         "type": { "type": "string", "maxLength": 40 },
+        "kind": { "type": "string", "enum": ["switch", "router", "firewall", "access_point", "wlan_controller", "server", "appliance"] },
         "vendorOs": { "type": "string", "maxLength": 40 },
         "poeBudgetW": { "type": ["number", "null"], "minimum": 0 }
       }
@@ -187,6 +188,237 @@
         "lease": { "type": "integer", "minimum": 1, "maximum": 365 },
         "exclusions": { "type": "array", "items": { "type": "object" } },
         "reservations": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "strategy": { "type": "string", "enum": ["", "static", "ospf", "bgp", "mixed"] },
+        "protocol": { "type": "string" },
+        "area": { "type": ["string", "number"] },
+        "processId": { "type": ["integer", "string"] },
+        "routerIds": { "type": "object", "additionalProperties": { "$ref": "#/$defs/ipv4" } },
+        "staticRoutes": { "type": "array", "items": { "type": "object" } },
+        "ospf": { "type": "object" },
+        "bgp": { "type": "object" }
+      }
+    },
+    "highAvailability": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "dhcpRelayServers": { "type": "array", "items": { "type": "string" } },
+        "firstHopGroups": { "type": "array", "items": { "type": "object" } },
+        "defaultRoutes": { "type": "array", "items": { "type": "object" } },
+        "tracking": { "type": "array", "items": { "type": "object" } },
+        "devices": { "type": "object" }
+      }
+    },
+    "accessSecurity": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "dhcpSnooping": { "type": "boolean" },
+        "arpInspection": { "type": "boolean" },
+        "portSecurity": { "type": "boolean" },
+        "maxMac": { "type": "integer", "minimum": 1 },
+        "sticky": { "type": "boolean" }
+      }
+    },
+    "management": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "domain": { "type": "string" },
+        "aaa": { "type": "boolean" },
+        "aaaProtocol": { "type": "string" },
+        "aaaServers": { "type": "array", "items": { "type": "object" } },
+        "snmpv3": { "type": "boolean" },
+        "syslogServers": { "type": "array", "items": { "type": "string" } },
+        "ntpServers": { "type": "array", "items": { "type": "string" } },
+        "dnsServers": { "type": "array", "items": { "type": "string" } },
+        "devices": { "type": "object" }
+      }
+    },
+    "observedState": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "observedAt": { "type": "string" },
+        "devices": { "type": "array", "items": { "type": "object" } },
+        "ports": { "type": "array", "items": { "type": "object" } },
+        "links": { "type": "array", "items": { "type": "object" } },
+        "vlans": { "type": "array", "items": { "type": "object" } },
+        "wanCircuits": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "driftPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "criticalKinds": { "type": "array", "items": { "type": "string" } },
+        "blockingFields": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "vrf": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "routeDistinguisher": { "type": "string" },
+        "leakTo": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "wanCircuit": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "deviceId": { "$ref": "#/$defs/idNullable" },
+        "portId": { "$ref": "#/$defs/idNullable" },
+        "provider": { "type": "string" },
+        "role": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "bandwidthDownMbps": { "type": "number", "minimum": 0 },
+        "bandwidthUpMbps": { "type": "number", "minimum": 0 },
+        "expectedPeakMbps": { "type": "number", "minimum": 0 }
+      }
+    },
+    "trafficProfile": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "circuitRef": { "$ref": "#/$defs/idNullable" },
+        "linkRef": { "$ref": "#/$defs/idNullable" },
+        "averageMbps": { "type": "number", "minimum": 0 },
+        "peakMbps": { "type": "number", "minimum": 0 },
+        "criticalMbps": { "type": "number", "minimum": 0 }
+      }
+    },
+    "internalService": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "critical": { "type": "boolean" },
+        "dependsOn": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "endpoints": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "wifiController": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "deviceId": { "$ref": "#/$defs/idNullable" },
+        "critical": { "type": "boolean" },
+        "peerControllerRefs": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "wifiAccessPoint": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "deviceId": { "$ref": "#/$defs/idNullable" },
+        "uplinkPortRef": { "$ref": "#/$defs/idNullable" },
+        "controllerRef": { "$ref": "#/$defs/idNullable" },
+        "locationRef": { "$ref": "#/$defs/idNullable" },
+        "poeWatts": { "type": "number", "minimum": 0 },
+        "ssidRefs": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "radios": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "wifiSsid": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "vlanRef": { "$ref": "#/$defs/idNullable" },
+        "security": { "type": "string" },
+        "radiusServiceRef": { "$ref": "#/$defs/idNullable" }
+      }
+    },
+    "ipv6Network": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "prefix": { "type": "string" },
+        "vrfRef": { "$ref": "#/$defs/idNullable" },
+        "vlanRef": { "$ref": "#/$defs/idNullable" },
+        "slaac": { "type": "boolean" },
+        "dhcpv6": { "type": "boolean" },
+        "routerAdvertisement": { "type": "boolean" }
+      }
+    },
+    "failureScenario": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "events": { "type": "array", "items": { "type": "object" } },
+        "mustSurvive": { "type": "array", "items": { "type": "object" } },
+        "requireWan": { "type": "boolean" }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": { "id": { "$ref": "#/$defs/id" }, "members": { "type": "array", "items": { "type": "object" } } }
+    },
+    "mlagDomain": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": { "id": { "$ref": "#/$defs/id" }, "peerDeviceIds": { "type": "array", "items": { "$ref": "#/$defs/id" } }, "peerLinkRef": { "$ref": "#/$defs/idNullable" } }
+    },
+    "haGroup": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": { "id": { "$ref": "#/$defs/id" }, "mode": { "type": "string" }, "memberDeviceIds": { "type": "array", "items": { "$ref": "#/$defs/id" } }, "heartbeatLinkRef": { "$ref": "#/$defs/idNullable" } }
+    },
+    "diversityPolicy": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": { "id": { "$ref": "#/$defs/id" }, "deviceIds": { "type": "array", "items": { "$ref": "#/$defs/id" } }, "requiredDistinct": { "type": "array", "items": { "type": "string" } } }
+    },
+    "linkAggregation": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "number": { "type": "integer", "minimum": 1 },
+        "protocol": { "type": "string" },
+        "mode": { "type": "string" },
+        "memberPortIds": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "allowedVlans": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 4094 }, "uniqueItems": true }
       }
     },
     "iot": {

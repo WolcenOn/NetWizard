@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Project Schema v3.48
+   NetWizard Project Schema v3.50
    Validación, migración ligera y sanitización centralizada del proyecto.
    Cargable tanto en navegador clásico como en Node.js.
 ========================================================= */
@@ -15,8 +15,15 @@ Mantenimiento:
 (function initNetWizardProjectSchema(root){
   'use strict';
 
-  const SCHEMA_VERSION = '3.48.0';
+  const SCHEMA_VERSION = '3.50.0';
   const FORMAT = 'netwizard-project';
+  const SUPPORTED_SCHEMA = /^3\.(?:2[89]|3\d|4\d|50)\.0$/;
+  const DEVICE_KINDS = ['switch','router','firewall','access_point','wlan_controller','server','appliance'];
+  const ADVANCED_ARRAY_KEYS = [
+    'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
+    'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
+  ];
+  const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy'];
 
   function clone(value){
     return JSON.parse(JSON.stringify(value == null ? null : value));
@@ -41,6 +48,18 @@ Mantenimiento:
     return Number.isFinite(n) ? n : fallback;
   }
 
+  function normalizeDeviceKind(value){
+    const raw=cleanText(value || '', 40).toLowerCase();
+    if(DEVICE_KINDS.includes(raw)) return raw;
+    if(raw.includes('switch')) return 'switch';
+    if(raw.includes('router') || raw.includes('gateway')) return 'router';
+    if(raw.includes('firewall')) return 'firewall';
+    if(raw === 'ap' || raw.includes('access_point')) return 'access_point';
+    if(raw.includes('controller') || raw.includes('wlc')) return 'wlan_controller';
+    if(raw.includes('server') || raw.includes('servidor')) return 'server';
+    return 'appliance';
+  }
+
   function asObject(value){
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -58,11 +77,10 @@ Mantenimiento:
     const p = { ...def, ...asObject(project) };
     const arrayKeys = [
       'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations',
-      'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
-      'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
+      ...ADVANCED_ARRAY_KEYS
     ];
     for(const key of arrayKeys) p[key] = asArray(p[key]);
-    for(const key of ['routing','highAvailability','accessSecurity','management','driftPolicy']) p[key] = asObject(p[key]);
+    for(const key of ADVANCED_OBJECT_KEYS) p[key] = asObject(p[key]);
     p.observedState = p.observedState && typeof p.observedState === 'object' && !Array.isArray(p.observedState) ? p.observedState : null;
     p.vlanMatrix = asObject(p.vlanMatrix);
     p.dhcp = asObject(p.dhcp);
@@ -155,6 +173,7 @@ Mantenimiento:
       x.id = cleanId(x.id, `dev_${idx+1}`);
       x.name = cleanText(x.name || `Dispositivo ${idx+1}`, 80);
       x.type = cleanText(x.type || 'switch', 40);
+      x.kind = normalizeDeviceKind(x.kind || x.type);
       x.vendorOs = cleanText(x.vendorOs || 'cisco_ios', 40);
       x.notes = cleanText(x.notes, 1000);
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
@@ -312,12 +331,13 @@ Mantenimiento:
       return x;
     });
 
-    const advancedArrays = [
-      'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
-      'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
-    ];
-    for(const key of advancedArrays) p[key] = sanitizeLooseValue(p[key], 1000);
-    for(const key of ['routing','highAvailability','accessSecurity','management','driftPolicy']) p[key] = sanitizeLooseValue(p[key], 1000);
+    for(const key of ADVANCED_ARRAY_KEYS){
+      p[key] = sanitizeLooseValue(p[key], 1000).filter(item => item && typeof item === 'object' && !Array.isArray(item)).map((item, idx) => {
+        item.id = cleanId(item.id, `${key}_${idx+1}`);
+        return item;
+      });
+    }
+    for(const key of ADVANCED_OBJECT_KEYS) p[key] = sanitizeLooseValue(p[key], 1000);
     p.observedState = p.observedState ? sanitizeLooseValue(p.observedState, 1000) : null;
 
     return { project: p, warnings: [] };
@@ -344,11 +364,20 @@ Mantenimiento:
     checkIds(p.vlans, 'vlans');
     checkIds(p.subnets, 'subnets');
     checkIds(p.hosts, 'hosts');
+    for(const key of ADVANCED_ARRAY_KEYS) checkIds(p[key], key);
 
     const devIds = new Set(p.devices.map(x=>x.id));
     const portIds = new Set(p.ports.map(x=>x.id));
     const vlanIds = new Set(p.vlans.map(x=>x.id));
+    const vrfIds = new Set(p.vrfs.map(x=>x.id));
+    const circuitIds = new Set(p.wanCircuits.map(x=>x.id));
+    const controllerIds = new Set(p.wifiControllers.map(x=>x.id));
     const subnetCidrs = [];
+
+    for(const device of p.devices){
+      const kind=device.kind || device.type;
+      if(kind && !DEVICE_KINDS.includes(kind)) warnings.push(`Dispositivo ${device.name || device.id}: kind no normalizado (${kind}).`);
+    }
 
     for(const vlan of p.vlans){
       if(!Number.isFinite(parseInt(vlan.vlanId, 10)) || vlan.vlanId < 1 || vlan.vlanId > 4094) errors.push(`VLAN ${vlan.name || vlan.id}: vlanId fuera de rango 1-4094.`);
@@ -392,6 +421,30 @@ Mantenimiento:
       if(transitRef && !vlanIds.has(transitRef)) errors.push(`Enlace ${link.id}: VLAN de tránsito inexistente.`);
     }
 
+    for(const circuit of p.wanCircuits){
+      if(circuit.deviceId && !devIds.has(circuit.deviceId)) errors.push(`Circuito WAN ${circuit.name || circuit.id}: dispositivo inexistente.`);
+      if(circuit.portId && !portIds.has(circuit.portId)) errors.push(`Circuito WAN ${circuit.name || circuit.id}: puerto inexistente.`);
+    }
+    for(const profile of p.trafficProfiles){
+      if(profile.circuitRef && !circuitIds.has(profile.circuitRef)) errors.push(`Perfil de tráfico ${profile.name || profile.id}: circuito WAN inexistente.`);
+      if(profile.linkRef && !p.links.some(link => link.id === profile.linkRef)) errors.push(`Perfil de tráfico ${profile.name || profile.id}: enlace inexistente.`);
+    }
+    for(const ap of p.wifiAccessPoints){
+      if(ap.deviceId && !devIds.has(ap.deviceId)) errors.push(`AP ${ap.name || ap.id}: dispositivo inexistente.`);
+      if(ap.uplinkPortRef && !portIds.has(ap.uplinkPortRef)) errors.push(`AP ${ap.name || ap.id}: puerto uplink inexistente.`);
+      if(ap.controllerRef && !controllerIds.has(ap.controllerRef)) errors.push(`AP ${ap.name || ap.id}: controlador inexistente.`);
+    }
+    for(const network of p.ipv6Networks){
+      if(network.vrfRef && !vrfIds.has(network.vrfRef)) errors.push(`Red IPv6 ${network.name || network.id}: VRF inexistente.`);
+      if(network.vlanRef && !vlanIds.has(network.vlanRef)) errors.push(`Red IPv6 ${network.name || network.id}: VLAN inexistente.`);
+    }
+    for(const aggregation of p.linkAggregations){
+      for(const portRef of asArray(aggregation.memberPortIds)) if(!portIds.has(portRef)) errors.push(`Agregación ${aggregation.name || aggregation.id}: puerto miembro inexistente (${portRef}).`);
+    }
+    for(const service of p.internalServices){
+      for(const endpoint of asArray(service.endpoints)) if(endpoint.deviceId && !devIds.has(endpoint.deviceId)) errors.push(`Servicio ${service.name || service.id}: dispositivo endpoint inexistente (${endpoint.deviceId}).`);
+    }
+
     return { ok: errors.length === 0, errors, warnings, infos };
   }
 
@@ -402,30 +455,31 @@ Mantenimiento:
   function migrateProject(raw, options){
     const warnings = [];
     const migrations = [];
+    const errors = [];
     const wrapped = raw && raw.project && typeof raw.project === 'object' ? raw.project : raw;
     const p = clone(wrapped || {});
-    if(!p._schemaVersion){
-      p._schemaVersion = 'legacy';
-      migrations.push('legacy->3.48.0');
-    }
+    const sourceSchemaVersion = cleanText(p._schemaVersion || (raw && raw.schemaVersion) || 'legacy', 40) || 'legacy';
+    if(sourceSchemaVersion !== 'legacy' && !SUPPORTED_SCHEMA.test(sourceSchemaVersion)) errors.push(`Versión de schema no soportada: ${sourceSchemaVersion}.`);
+    if(sourceSchemaVersion !== SCHEMA_VERSION) migrations.push(`${sourceSchemaVersion}->${SCHEMA_VERSION}`);
     if(!p.iot && raw && raw.iot && typeof raw.iot === 'object'){
       p.iot = clone(raw.iot);
       migrations.push('external-iot->project.iot');
     }
     const sanitized = sanitizeProject(p, options || {});
-    return { project: sanitized.project, warnings: warnings.concat(sanitized.warnings || []), migrations };
+    return { project: sanitized.project, warnings: warnings.concat(sanitized.warnings || []), errors, migrations, sourceSchemaVersion };
   }
 
   function prepareImport(raw, options){
     const migrated = migrateProject(raw, options || {});
     const validation = validateProject(migrated.project, options || {});
     return {
-      ok: validation.ok,
+      ok: validation.ok && !migrated.errors.length,
       project: migrated.project,
-      errors: validation.errors,
+      errors: migrated.errors.concat(validation.errors),
       warnings: migrated.warnings.concat(validation.warnings || []),
       infos: validation.infos || [],
-      migrations: migrated.migrations
+      migrations: migrated.migrations,
+      sourceSchemaVersion: migrated.sourceSchemaVersion
     };
   }
 
@@ -440,8 +494,14 @@ Mantenimiento:
   }
 
   const api = {
-    version: 'netwizard-project-schema-v3.48',
+    version: 'netwizard-project-schema-v3.50',
     schemaVersion: SCHEMA_VERSION,
+    model: {
+      version:SCHEMA_VERSION,
+      deviceKinds:DEVICE_KINDS.slice(),
+      advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
+      advancedObjects:ADVANCED_OBJECT_KEYS.slice()
+    },
     cleanText,
     cleanId,
     sanitizeProject,

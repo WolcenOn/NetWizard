@@ -9,6 +9,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const scripts = Array.from(html.matchAll(/<script\s+[^>]*src=["']\.\/(js\/[^"']+)["'][^>]*><\/script>/g), match => match[1]);
 const required = [
   'js/netwizard.js',
+  'js/netwizard-config-pipeline.js',
   'js/netwizard-vendor-config-generators.js',
   'js/netwizard-architecture-validator.js',
   'js/netwizard-routing-plan.js',
@@ -53,6 +54,8 @@ function before(first, second){
 }
 
 before('js/netwizard.js', 'js/netwizard-vendor-config-generators.js');
+before('js/netwizard.js', 'js/netwizard-config-pipeline.js');
+before('js/netwizard-config-pipeline.js', 'js/netwizard-vendor-config-generators.js');
 before('js/netwizard-vendor-config-generators.js', 'js/netwizard-cisco-routing-integration.js');
 before('js/netwizard-routing-plan.js', 'js/netwizard-cisco-routing-generator.js');
 before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-integration.js');

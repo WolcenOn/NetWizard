@@ -7,10 +7,16 @@
     ensure('./js/netwizard-access-security-plan.js','data-netwizard-access-security-plan','NetWizardAccessSecurityPlan');
     ensure('./js/netwizard-access-security-generator.js','data-netwizard-access-security-generator','NetWizardAccessSecurityGenerator');
     if(root.__netwizardAccessSecurityInstalled)return true;
+    const pipeline=root.NetWizardConfigPipeline;
     const original=root.genConfig, gen=root.NetWizardAccessSecurityGenerator, state=root.NetWizardState;
-    if(typeof original!=='function'||!gen||!state||typeof state.getSnapshot!=='function'){
+    if(!gen||(!pipeline&&(typeof original!=='function'||!state||typeof state.getSnapshot!=='function'))){
       if((attempt||0)<80&&root.setTimeout)root.setTimeout(()=>install((attempt||0)+1),100);
       return false;
+    }
+    if(pipeline&&typeof pipeline.registerStage==='function'){
+      pipeline.registerStage({id:'security.access',order:200,description:'Añade hardening de acceso a switches.',supports(ctx){return !!(ctx.device&&/switch/i.test(String(ctx.device.type||'')));},apply(config,ctx){return gen.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}});
+      root.__netwizardAccessSecurityInstalled=true;
+      return true;
     }
     root.genConfig=function netwizardAccessSecurityGenConfig(deviceId,format){
       const project=state.getSnapshot();

@@ -14,7 +14,7 @@ async function setProject(page, project){
     const prepared = window.NetWizardProjectSchema.prepareImport(payload, { defaults: window.defS });
     if(!prepared.ok) throw new Error(prepared.errors.join('\n'));
     window.NetWizardState.replaceProject(prepared.project, { source:'e2e-set-project' });
-  }, { format:'netwizard-project', schemaVersion:'3.48.0', project });
+  }, { format:'netwizard-project', schemaVersion:'3.50.0', project });
 }
 
 function samplePayload(name){
@@ -55,7 +55,7 @@ test('samples oficiales se importan en navegador, pasan schema y generan auditor
           markdownHasTitle: md.includes('# NetWizard') || md.includes('# Documentación')
         };
       });
-      expect(result.schemaVersion).toBe('3.48.0');
+      expect(result.schemaVersion).toBe('3.50.0');
       expect(result.devices).toBeGreaterThan(0);
       expect(result.vlans).toBeGreaterThan(0);
       expect(['ready','review','blocked']).toContain(result.gateStatus);
