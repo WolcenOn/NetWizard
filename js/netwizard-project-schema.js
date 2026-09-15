@@ -18,7 +18,8 @@ Mantenimiento:
   const SCHEMA_VERSION = '3.50.0';
   const FORMAT = 'netwizard-project';
   const SUPPORTED_SCHEMA = /^3\.(?:2[89]|3\d|4\d|50)\.0$/;
-  const DEVICE_KINDS = ['switch','router','firewall','access_point','wlan_controller','server','appliance'];
+  const DEVICE_MODEL = root.NetWizardDeviceModel || (typeof require === 'function' ? tryRequireDeviceModel() : null);
+  const DEVICE_KINDS = DEVICE_MODEL ? DEVICE_MODEL.kinds.slice() : ['switch','router','firewall','access_point','wlan_controller','server','appliance'];
   const ADVANCED_ARRAY_KEYS = [
     'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
     'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
@@ -49,7 +50,8 @@ Mantenimiento:
   }
 
   function normalizeDeviceKind(value){
-    const raw=cleanText(value || '', 40).toLowerCase();
+    if(DEVICE_MODEL) return DEVICE_MODEL.normalizeKind(value);
+    const raw=cleanText(value && typeof value === 'object' ? (value.kind || value.type || '') : value || '', 40).toLowerCase();
     if(DEVICE_KINDS.includes(raw)) return raw;
     if(raw.includes('switch')) return 'switch';
     if(raw.includes('router') || raw.includes('gateway')) return 'router';
@@ -58,6 +60,10 @@ Mantenimiento:
     if(raw.includes('controller') || raw.includes('wlc')) return 'wlan_controller';
     if(raw.includes('server') || raw.includes('servidor')) return 'server';
     return 'appliance';
+  }
+
+  function tryRequireDeviceModel(){
+    try { return require('./netwizard-device-model.js'); } catch { return null; }
   }
 
   function asObject(value){
@@ -172,8 +178,8 @@ Mantenimiento:
       const x = sanitizeObjectStrings(d, 500);
       x.id = cleanId(x.id, `dev_${idx+1}`);
       x.name = cleanText(x.name || `Dispositivo ${idx+1}`, 80);
-      x.type = cleanText(x.type || 'switch', 40);
-      x.kind = normalizeDeviceKind(x.kind || x.type);
+      x.kind = normalizeDeviceKind(x);
+      x.type = x.kind;
       x.vendorOs = cleanText(x.vendorOs || 'cisco_ios', 40);
       x.notes = cleanText(x.notes, 1000);
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
@@ -248,6 +254,7 @@ Mantenimiento:
       x.type = cleanText(x.type || 'pc', 40);
       x.vlanRef = cleanId(x.vlanRef, '');
       x.portRef = cleanId(x.portRef, '');
+      x.deviceRef = cleanId(x.deviceRef, '');
       x.ipMode = cleanText(x.ipMode || 'dhcp', 20);
       x.staticIp = cleanText(x.staticIp, 80);
       x.notes = cleanText(x.notes, 1000);
@@ -409,6 +416,7 @@ Mantenimiento:
     for(const host of p.hosts){
       if(host.vlanRef && !vlanIds.has(host.vlanRef)) warnings.push(`Host ${host.name || host.id}: VLAN inexistente.`);
       if(host.portRef && !portIds.has(host.portRef)) errors.push(`Host ${host.name || host.id}: puerto inexistente.`);
+      if(host.deviceRef && !devIds.has(host.deviceRef)) errors.push(`Host ${host.name || host.id}: deviceRef inexistente.`);
     }
 
     for(const link of p.links){
@@ -502,6 +510,7 @@ Mantenimiento:
       advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
       advancedObjects:ADVANCED_OBJECT_KEYS.slice()
     },
+    normalizeDeviceKind,
     cleanText,
     cleanId,
     sanitizeProject,

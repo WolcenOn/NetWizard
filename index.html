@@ -190,8 +190,6 @@
           <div><label class="fl">Tipo</label>
             <select id="devType">
               <option value="switch">🔀 Switch</option>
-              <option value="router">🌐 Router</option>
-              <option value="firewall">🛡 Firewall</option>
             </select>
           </div>
         </div>
@@ -199,17 +197,6 @@
           <div><label class="fl">Vendor / OS</label>
             <select id="devVendor">
               <option value="">— selecciona —</option>
-              <option value="cisco_ios">Cisco IOS</option>
-              <option value="cisco_asa">Cisco ASA</option>
-              <option value="juniper_junos">Juniper Junos</option>
-              <option value="aruba_aoss">Aruba AOS-S</option>
-              <option value="pfsense">pfSense</option>
-              <option value="fortinet">FortiGate</option>
-              <option value="ubiquiti_unifi">Ubiquiti UniFi</option>
-              <option value="huawei_vrp">Huawei VRP</option>
-              <option value="galgus_cloud">Galgus Cloud</option>
-              <option value="tplink_omada">TP-Link Omada</option>
-              <option value="mikrotik_routeros">MikroTik RouterOS</option>
             </select>
           </div>
           <div><label class="fl">IP gestión</label><input id="devMgmt" placeholder="10.0.99.1"/></div>
@@ -921,6 +908,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-security-utils.js"></script>
 <script src="./js/netwizard-i18n.js"></script>
 <script src="./js/netwizard-network-utils.js"></script>
+<script src="./js/netwizard-device-model.js"></script>
 <script src="./js/netwizard-project-schema.js"></script>
 <script src="./js/netwizard-audit.js"></script>
 <script src="./js/netwizard-l3-config-utils.js"></script>

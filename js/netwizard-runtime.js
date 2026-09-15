@@ -5,6 +5,7 @@
   const requiredGlobals = [
     'NetWizardState',
     'NetWizardPlanner',
+    'NetWizardDeviceModel',
     'NetWizardProjectSchema',
     'NetWizardConfigPipeline',
     'NetWizardVendorConfigGenerators',

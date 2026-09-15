@@ -198,9 +198,12 @@ test('NetWizardBridge lee desde NetWizardState y genera grafo con IoT', () => {
     projName: 'Test',
     vlans: [{ id:'v10', vlanId:10, name:'LAN' }],
     subnets: [{ id:'sn10', vlanRef:'v10', cidr:'10.0.10.0/24', gateway:'10.0.10.1' }],
-    devices: [{ id:'sw1', name:'SW1', type:'switch' }],
+    devices: [{ id:'sw1', name:'SW1', type:'switch' }, {id:'ap1',name:'AP1',kind:'access_point',type:'access_point'}],
     ports: [{ id:'p1', deviceId:'sw1', name:'Gi0/1', mode:'access', accessVlanRef:'v10' }],
-    hosts: [{ id:'h1', name:'PC1', type:'pc', vlanRef:'v10', portRef:'p1', ipMode:'static', staticIp:'10.0.10.10' }],
+    hosts: [
+      { id:'h1', name:'PC1', type:'pc', vlanRef:'v10', portRef:'p1', ipMode:'static', staticIp:'10.0.10.10' },
+      { id:'h-ap', name:'AP1', type:'ap', vlanRef:'v10', deviceRef:'ap1', ipMode:'dhcp', staticIp:'' }
+    ],
     links: [],
     iot: {
       accessNodes: [{ id:'ia1', name:'MQTT GW', type:'mqtt_gateway', parentDeviceId:'sw1', parentPortId:'p1' }],
@@ -215,6 +218,8 @@ test('NetWizardBridge lee desde NetWizardState y genera grafo con IoT', () => {
   assert.strictEqual(graph.ok, true);
   assert.ok(graph.nodes.some(n => n.id === 'ia1' && n.kind === 'iot_access'));
   assert.ok(graph.nodes.some(n => n.id === 'id1' && n.kind === 'iot_device'));
+  assert.ok(graph.nodes.some(n => n.id === 'ap1' && n.type === 'access_point'));
+  assert.ok(!graph.nodes.some(n => n.id === 'h-ap'), 'La identidad IP de un dispositivo no debe duplicar el nodo gestionado');
   assert.ok(graph.links.some(l => l.from === 'ia1' && l.to === 'id1')); 
 });
 

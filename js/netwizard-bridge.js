@@ -88,8 +88,10 @@
     ) || null;
   }
 
-  function normalizeDeviceType(type){
-    const t = (type || '').toString().toLowerCase();
+  function normalizeDeviceType(value){
+    const model = window.NetWizardDeviceModel;
+    if(model) return model.normalizeKind(value);
+    const t = ((value && typeof value === 'object') ? (value.kind || value.type) : value || '').toString().toLowerCase();
     if (t.includes('switch')) return 'switch';
     if (t.includes('router')) return 'router';
     if (t.includes('firewall') || t.includes('fw')) return 'firewall';
@@ -187,11 +189,11 @@
         id: device.id,
         source: 'netwizard',
         kind: 'network',
-        type: normalizeDeviceType(device.type),
+        type: normalizeDeviceType(device),
         name: device.name || device.id,
         mgmtIp: device.mgmt || device.mgmtIp || '',
         locationId: device.physLocId || device.locationId || '',
-        icon: normalizeDeviceType(device.type),
+        icon: normalizeDeviceType(device),
         meta: deepClone(device)
       });
     });
@@ -228,6 +230,9 @@
     });
 
     safeArray(project.hosts).forEach(host => {
+      // deviceRef enlaza la identidad IP con el mismo equipo gestionado; no se
+      // dibuja un segundo nodo topológico para ese registro de direccionamiento.
+      if(host.deviceRef && safeArray(project.devices).some(device=>device.id===host.deviceRef)) return;
       const vlanRef = host.vlanRef ?? host.vlanId ?? host.vlan ?? '';
       const hostPort = getPortIdFromHost(host);
       const inferredPort = hostPort ? portsById.get(hostPort) : null;

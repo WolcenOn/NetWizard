@@ -18,6 +18,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Exportaciones de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
 - Registro inspeccionable de renderers y etapas de configuración, sin wrappers globales dependientes del orden de carga.
+- Registro canónico de dispositivos y fabricantes: `kind` distingue switch, router, firewall, AP, controlador WLAN, servidor gestionado y appliance; `type` se conserva como espejo compatible durante 3.50.
 - Modelo 3.50 para routing, HA, seguridad, gestión, WAN, Wi-Fi, IPv6/VRF, resiliencia, capacidad, servicios y drift.
 - `package-lock.json`, licencia, changelog y script de empaquetado reproducible.
 
@@ -85,7 +86,7 @@ El auditor es heurístico y marca puntos que requieren revisión manual, especia
 
 ## v3.50 · Registro de configuración y schema
 
-El runtime expone `NetWizardConfigPipeline.inspect()` para comprobar los renderers y etapas activos. `NetWizardProjectSchema.prepareImport()` migra proyectos compatibles a 3.50 y devuelve `sourceSchemaVersion` y la lista `migrations`; `prepareExport()` produce siempre el contrato canónico 3.50.
+El runtime expone `NetWizardConfigPipeline.inspect()` para comprobar los renderers y etapas activos. `NetWizardDeviceModel` centraliza tipos, capacidades básicas, iconos y fabricantes. `NetWizardProjectSchema.prepareImport()` migra proyectos compatibles a 3.50 —incluidos AP antiguos representados como switches— y devuelve `sourceSchemaVersion` y la lista `migrations`; `prepareExport()` produce siempre el contrato canónico 3.50.
 
 ## v3.48 · Sistema i18n ampliable
 
