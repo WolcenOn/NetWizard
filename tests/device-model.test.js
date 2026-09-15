@@ -28,5 +28,12 @@ assert.strictEqual(new Set(vendorIds).size, vendorIds.length);
 assert.ok(vendorIds.includes('generic_network'));
 assert.ok(vendorIds.includes('windows'));
 assert.ok(vendorIds.includes('linux'));
+assert.strictEqual(model.normalizeVendor('fortigate'), 'fortinet');
+assert.strictEqual(model.normalizeVendor('JUNOS'), 'juniper_junos');
+assert.strictEqual(model.normalizeVendor('unifi'), 'ubiquiti_unifi');
+assert.strictEqual(model.normalizeVendor('unknown-os'), 'unknown-os');
+assert.strictEqual(model.normalizeDevice({type:'firewall',vendorOs:'fortigate'}).vendorOs, 'fortinet');
+assert.strictEqual(model.normalizeDevice({type:'appliance',vendorOs:'future_network_os'}).vendorOs, 'future_network_os');
+assert.strictEqual(model.hasVendor('fortios'), true);
 
 console.log('✓ Modelo 3.50 centraliza kinds, compatibilidad legacy y vendors');

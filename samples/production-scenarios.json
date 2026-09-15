@@ -1,0 +1,49 @@
+{
+  "version": "3.50.0",
+  "description": "Contratos de aceptación de los proyectos de referencia de NetWizard.",
+  "scenarios": [
+    {
+      "id": "small-office",
+      "file": "small-office.json",
+      "expectedStatus": "ready",
+      "allowedWarningCodes": [],
+      "configs": [
+        { "deviceId": "fw1", "vendor": "fortinet", "signatures": ["NetWizard FortiGate edge configuration", "config system interface"] },
+        { "deviceId": "sw1", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname SW-Access"] },
+        { "deviceId": "ap1", "vendor": "ubiquiti_unifi", "signatures": ["Ubiquiti UniFi", "Configuración de controlador/cloud"] }
+      ]
+    },
+    {
+      "id": "school-network",
+      "file": "school-network.json",
+      "expectedStatus": "review",
+      "allowedWarningCodes": ["NW-BCAST-004", "NW-BCAST-005"],
+      "configs": [
+        { "deviceId": "fw1", "vendor": "fortinet", "signatures": ["NetWizard FortiGate edge configuration", "config firewall policy"] },
+        { "deviceId": "core1", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname Core-L3"] },
+        { "deviceId": "sw_a", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname SW-Classrooms"] }
+      ]
+    },
+    {
+      "id": "iot-cameras",
+      "file": "iot-cameras.json",
+      "expectedStatus": "review",
+      "allowedWarningCodes": ["NW-BCAST-005", "NW-BCAST-020", "NW-BCAST-023"],
+      "configs": [
+        { "deviceId": "fw1", "vendor": "fortinet", "signatures": ["NetWizard FortiGate edge configuration", "config firewall policy"] },
+        { "deviceId": "sw1", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname PoE-Cameras"] }
+      ]
+    },
+    {
+      "id": "l3-transit",
+      "file": "l3-transit-demo.json",
+      "expectedStatus": "ready",
+      "allowedWarningCodes": [],
+      "configs": [
+        { "deviceId": "r1", "vendor": "cisco_ios", "signatures": ["Cisco IOS Router/Firewall", "hostname R1"] },
+        { "deviceId": "r2", "vendor": "cisco_ios", "signatures": ["Cisco IOS Router/Firewall", "hostname R2"] },
+        { "deviceId": "sw1", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname SW-LAN"] }
+      ]
+    }
+  ]
+}

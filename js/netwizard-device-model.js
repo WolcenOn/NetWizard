@@ -33,6 +33,21 @@
     Object.freeze({id:'linux',l:'Linux'})
   ]);
 
+  const VENDOR_ALIASES = Object.freeze({
+    generic:'generic_network', generic_network:'generic_network',
+    ios:'cisco_ios', iosxe:'cisco_ios', cisco_ios:'cisco_ios',
+    asa:'cisco_asa', cisco_asa:'cisco_asa',
+    fortigate:'fortinet', fortios:'fortinet', fortinet:'fortinet',
+    pfsense:'pfsense', routeros:'mikrotik_routeros', mikrotik:'mikrotik_routeros', mikrotik_routeros:'mikrotik_routeros',
+    vrp:'huawei_vrp', huawei:'huawei_vrp', huawei_vrp:'huawei_vrp',
+    junos:'juniper_junos', juniper:'juniper_junos', juniper_junos:'juniper_junos',
+    'aos-switch':'aruba_aoss', aruba:'aruba_aoss', aruba_aoss:'aruba_aoss',
+    unifi:'ubiquiti_unifi', ubiquiti:'ubiquiti_unifi', ubiquiti_unifi:'ubiquiti_unifi',
+    omada:'tplink_omada', 'tp-link_omada':'tplink_omada', tplink_omada:'tplink_omada',
+    galgus:'galgus_cloud', galgus_cloud:'galgus_cloud',
+    windows_server:'windows', windows:'windows', linux:'linux'
+  });
+
   const byKind = new Map(KINDS.map(item => [item.id,item]));
   const kindIds = KINDS.map(item => item.id);
 
@@ -58,6 +73,13 @@
     return 'appliance';
   }
 
+  function normalizeVendor(value, fallback){
+    const raw=clean(value);
+    if(VENDOR_ALIASES[raw]) return VENDOR_ALIASES[raw];
+    if(VENDORS.some(item => item.id===raw)) return raw;
+    return fallback === undefined ? raw : fallback;
+  }
+
   function definition(value){ return byKind.get(normalizeKind(value)) || byKind.get('appliance'); }
   function label(value){ return definition(value).label; }
   function icon(value){ return definition(value).icon; }
@@ -72,6 +94,7 @@
     out.kind=kind;
     // type se conserva durante 3.50 como espejo compatible para módulos y proyectos antiguos.
     out.type=kind;
+    out.vendorOs=normalizeVendor(out.vendorOs || out.platform || out.os || 'generic_network');
     if(!isEdgeCapable(kind)){
       out.internetEdge='no';
       out.wanIf=null;
@@ -80,14 +103,14 @@
   }
   function kindOptions(){ return KINDS.map(item => ({value:item.id,label:`${item.icon} ${item.label}`})); }
   function vendors(){ return VENDORS.map(item => ({id:item.id,l:item.l})); }
-  function hasVendor(value){ return VENDORS.some(item => item.id===value); }
+  function hasVendor(value){ return VENDORS.some(item => item.id===normalizeVendor(value)); }
 
   const api=Object.freeze({
     version:'netwizard-device-model-v3.50',
     kinds:kindIds.slice(),
     definitions:KINDS,
     vendorDefinitions:VENDORS,
-    normalizeKind,normalizeDevice,definition,label,icon,isSwitching,isEdgeCapable,isWireless,isEndpointKind,usesUplinkPorts,kindOptions,vendors,hasVendor
+    normalizeKind,normalizeVendor,normalizeDevice,definition,label,icon,isSwitching,isEdgeCapable,isWireless,isEndpointKind,usesUplinkPorts,kindOptions,vendors,hasVendor
   });
   root.NetWizardDeviceModel=api;
   if(!Array.isArray(root.ALL_VENDORS)) root.ALL_VENDORS=vendors();

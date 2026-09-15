@@ -257,6 +257,35 @@ test('VLSM avisa si el bloque base no tiene capacidad suficiente', () => {
   assert.strictEqual(plan.code, 'base_too_small');
 });
 
+test('Un trunk de servicio switch-router no se confunde con tránsito L3', () => {
+  const project = {
+    devices:[{id:'fw1',name:'FW1',type:'firewall'},{id:'sw1',name:'SW1',type:'switch'}],
+    ports:[
+      {id:'fw-lan',deviceId:'fw1',name:'port1',mode:'trunk',allowedVlans:[10]},
+      {id:'sw-up',deviceId:'sw1',name:'Gi0/24',mode:'trunk',allowedVlans:[10]}
+    ],
+    links:[{id:'l1',aPortId:'fw-lan',bPortId:'sw-up'}],
+    vlans:[{id:'v10',vlanId:10,name:'Users'}],
+    subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1'}],
+    hosts:[],fwRules:[],dhcp:{},iot:{accessNodes:[],devices:[],map:{show:{}}}
+  };
+  const audit = NWP.readinessAudit(project, {productionMode:true});
+  assert.ok(!audit.issues.some(i => ['NW-L3-010','NW-L1-100'].includes(i.code) && /tránsito|transito/.test(i.message)));
+});
+
+test('La identidad IP de un dispositivo gestionado puede referenciar su trunk PoE', () => {
+  const project = {
+    devices:[{id:'sw1',name:'SW1',type:'switch',poeBudgetW:120},{id:'ap1',name:'AP1',type:'access_point'}],
+    ports:[{id:'p1',deviceId:'sw1',name:'Gi0/1',mode:'trunk',allowedVlans:[10],poeMode:'at',poeWattsMax:30}],
+    links:[],vlans:[{id:'v10',vlanId:10,name:'WiFi'}],subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1'}],
+    hosts:[{id:'ap-ip',name:'AP1',type:'ap',deviceRef:'ap1',portRef:'p1',vlanRef:'v10',ipMode:'dhcp',poeRequired:true,poeWatts:12}],
+    fwRules:[],dhcp:{'10':{enabled:true,start:'10.10.10.20',end:'10.10.10.200'}},iot:{accessNodes:[],devices:[],map:{show:{}}}
+  };
+  const audit = NWP.readinessAudit(project, {productionMode:true});
+  assert.ok(!audit.errors.some(message => /conectado a un puerto trunk/.test(message)));
+  assert.ok(!audit.errors.some(message => /presupuesto del equipo 0 W/.test(message)));
+});
+
 test('Auditoría capa 1 detecta host en puerto trunk y VLAN inconsistente', () => {
   const project = {
     devices:[{id:'sw1',name:'SW1',type:'switch'}],
@@ -1039,7 +1068,7 @@ test('JSON Schema externo valida exportaciones preparadas por NetWizardProjectSc
 test('Samples oficiales cumplen JSON Schema externo y prepareImport', () => {
   const schema = JSON.parse(fs.readFileSync(path.join(root, 'schemas', 'netwizard-project.schema.json'), 'utf8'));
   const sampleDir = path.join(root, 'samples');
-  const files = fs.readdirSync(sampleDir).filter(f => f.endsWith('.json')).sort();
+  const files = fs.readdirSync(sampleDir).filter(f => f.endsWith('.json') && f !== 'production-scenarios.json').sort();
   assert.ok(files.length >= 4);
   const defaults = () => ({ devices:[], ports:[], vlans:[], subnets:[], hosts:[], links:[], fwRules:[], vlanMatrix:{}, dhcp:{}, security:{}, roas:{}, vtp:{roles:{}}, topo:{pos:{}}, visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{}}, iot:{accessNodes:[],devices:[],map:{show:{}}}, physicalLocations:[], hostPhysicalLocations:[], uiSort:{} });
   for(const file of files){
@@ -1051,7 +1080,7 @@ test('Samples oficiales cumplen JSON Schema externo y prepareImport', () => {
   }
 });
 
-console.log('\nTests schema externo y samples v3.48 completados.');
+console.log('\nTests schema externo y samples v3.50 completados.');
 
 const NWVH = require(path.join(root, 'js', 'netwizard-vendor-hardening.js'));
 const NWPG = require(path.join(root, 'js', 'netwizard-production-gate.js'));
