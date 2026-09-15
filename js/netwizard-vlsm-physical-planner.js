@@ -48,11 +48,9 @@ Mantenimiento:
   function isLayer3TransitLink(link, aPort, bPort, aDev, bDev){
     const modes = [String((aPort && aPort.mode) || 'access'), String((bPort && bPort.mode) || 'access')];
     if(modes.includes('routed')) return isL3Device(aDev) || isL3Device(bDev);
-    if(isL3Device(aDev) && isL3Device(bDev)) return true;
-    if((isL3Device(aDev) && isSwitch(bDev)) || (isL3Device(bDev) && isSwitch(aDev))){
-      return modes.includes('trunk') || !!linkTransitVlanRef(link, aPort, bPort);
-    }
-    return false;
+    // Un trunk switch-router/firewall suele ser router-on-a-stick y transporta
+    // VLANs de servicio; no es por sí solo una red punto a punto de tránsito.
+    return !!linkTransitVlanRef(link, aPort, bPort) && (isL3Device(aDev) || isL3Device(bDev));
   }
 
   function vlanLabel(project, vlanRef){
@@ -382,9 +380,12 @@ Mantenimiento:
       if(!h.portRef) continue;
       const p = portById(project,h.portRef);
       if(!p){ errors.push(`Host ${h.name}: puerto físico inexistente.`); continue; }
+      // Una fila host con deviceRef representa la identidad IP/PoE de un equipo
+      // gestionado (AP, servidor, appliance), no un endpoint access duplicado.
+      const managedIdentity=!!(h.deviceRef && devById(project,h.deviceRef));
       const d = devById(project,p.deviceId);
-      if(p.mode==='trunk') errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
-      if(p.mode==='routed') warnings.push(`Host ${h.name}: está conectado a un puerto routed; normalmente debería ser access.`);
+      if(p.mode==='trunk' && !managedIdentity) errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
+      if(p.mode==='routed' && !managedIdentity) warnings.push(`Host ${h.name}: está conectado a un puerto routed; normalmente debería ser access.`);
       if(h.vlanRef && p.accessVlanRef && h.vlanRef!==p.accessVlanRef){
         const hv = vlanByRef(project,h.vlanRef), pv = vlanByRef(project,p.accessVlanRef);
         errors.push(`Host ${h.name}: VLAN del host (${hv?.vlanId||'?'}) no coincide con la VLAN access del puerto (${pv?.vlanId||'?'}).`);

@@ -1,9 +1,9 @@
 {
   "format": "netwizard-project",
-  "schemaVersion": "3.28.0",
+  "schemaVersion": "3.50.0",
   "exportedAt": "2026-05-25T00:00:00.000Z",
   "project": {
-    "_schemaVersion": "3.28.0",
+    "_schemaVersion": "3.50.0",
     "step": "dash",
     "selected": null,
     "vlanMatrix": {},
@@ -60,12 +60,14 @@
         "id": "fw1",
         "name": "FW-IoT",
         "type": "firewall",
-        "vendorOs": "fortigate"
+        "kind": "firewall",
+        "vendorOs": "fortinet"
       },
       {
         "id": "sw1",
         "name": "PoE-Cameras",
         "type": "switch",
+        "kind": "switch",
         "vendorOs": "cisco_ios",
         "poeBudgetW": 740
       }

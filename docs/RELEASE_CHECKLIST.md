@@ -20,6 +20,8 @@ npm run test:e2e
 ## Validación funcional manual
 
 - [ ] Importar samples.
+- [ ] Validar `samples/production-scenarios.json` sin avisos inesperados.
+- [ ] Generar las configuraciones declaradas por cada escenario de referencia.
 - [ ] Crear VLAN, dispositivo, puerto, enlace y host desde UI.
 - [ ] Ejecutar Plan común de cambios.
 - [ ] Ejecutar Puerta de Producción.

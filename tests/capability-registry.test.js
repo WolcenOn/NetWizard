@@ -15,6 +15,14 @@ const Registry=require('../js/netwizard-capability-registry.js');
   assert.deepStrictEqual(Registry.getCapability('cisco_ios','arpInspection').requires,['dhcpSnooping']);
 })();
 
+(function testAllCanonicalVendorsHaveCapabilityRegistryEntry(){
+  const DeviceModel=require('../js/netwizard-device-model.js');
+  for(const vendor of DeviceModel.vendors()){
+    const platform=Registry.resolvePlatform({vendorOs:vendor.id});
+    assert(platform, `${vendor.id} no tiene entrada en el registro de capacidades`);
+  }
+})();
+
 (function testPlannedCapabilityBlocks(){
   const report=Registry.validateProject({devices:[{id:'r1',vendorOs:'cisco_ios',features:{bgp:true}}]});
   assert.strictEqual(report.ok,false);

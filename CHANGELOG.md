@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.50.0 · Matriz de escenarios de producción
+
+- Migrados los cuatro proyectos de referencia al contrato nativo 3.50.
+- Añadido un manifiesto con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
+- Añadido `evaluateReleaseCriteria()` para convertir la puerta de producción en un criterio automatizable y estricto.
+- Corregidos falsos bloqueos en trunks de servicio switch-router/firewall y en listas VLAN explícitas.
+- Normalizados aliases legacy de fabricante y completado el registro de capacidades para todos los vendors canónicos.
+- Ampliado Playwright para importar cada escenario, ejecutar la puerta, generar todas sus configuraciones y producir documentación.
+- Incluidos los samples en el artefacto de GitHub Pages.
+
 ## 3.48.0 · Estabilización del runtime publicado
 
 - Integrado en `index.html` el renderer multivendor y el conjunto avanzado de validadores, paneles y generadores.

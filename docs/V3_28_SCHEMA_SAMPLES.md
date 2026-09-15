@@ -1,5 +1,7 @@
 # NetWizard v3.28 · JSON Schema externo y samples oficiales
 
+> Nota 3.50: este documento conserva el origen histórico. Los archivos actuales de `samples/` ya usan schema 3.50 y su contrato de producción está en `production-scenarios.json`.
+
 ## Objetivo
 
 La v3.28 acerca NetWizard a una versión candidata de producción añadiendo validación formal externa y proyectos de ejemplo versionados.

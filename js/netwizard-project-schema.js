@@ -180,7 +180,9 @@ Mantenimiento:
       x.name = cleanText(x.name || `Dispositivo ${idx+1}`, 80);
       x.kind = normalizeDeviceKind(x);
       x.type = x.kind;
-      x.vendorOs = cleanText(x.vendorOs || 'cisco_ios', 40);
+      x.vendorOs = DEVICE_MODEL
+        ? DEVICE_MODEL.normalizeVendor(x.vendorOs || x.platform || x.os || 'generic_network')
+        : cleanText(x.vendorOs || 'generic_network', 40);
       x.notes = cleanText(x.notes, 1000);
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
       x.poeBudgetW = Number.isFinite(poeBudget) && poeBudget >= 0 ? Math.round(poeBudget * 10) / 10 : null;

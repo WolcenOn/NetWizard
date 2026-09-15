@@ -1,9 +1,9 @@
 {
   "format": "netwizard-project",
-  "schemaVersion": "3.28.0",
+  "schemaVersion": "3.50.0",
   "exportedAt": "2026-05-25T00:00:00.000Z",
   "project": {
-    "_schemaVersion": "3.28.0",
+    "_schemaVersion": "3.50.0",
     "step": "dash",
     "selected": null,
     "vlanMatrix": {},
@@ -40,14 +40,23 @@
         "id": "fw1",
         "name": "FW1",
         "type": "firewall",
-        "vendorOs": "fortigate"
+        "kind": "firewall",
+        "vendorOs": "fortinet"
       },
       {
         "id": "sw1",
         "name": "SW-Access",
         "type": "switch",
+        "kind": "switch",
         "vendorOs": "cisco_ios",
         "poeBudgetW": 120
+      },
+      {
+        "id": "ap1",
+        "name": "AP-Guest",
+        "type": "access_point",
+        "kind": "access_point",
+        "vendorOs": "ubiquiti_unifi"
       }
     ],
     "vlans": [
@@ -82,11 +91,11 @@
       {
         "id": "v99",
         "vlanId": 99,
-        "name": "Native-Transit",
+        "name": "Management-Native",
         "intent": {
-          "type": "transit",
-          "expectedHosts": 2,
-          "growthHosts": 0,
+          "type": "management",
+          "expectedHosts": 5,
+          "growthHosts": 2,
           "dhcp": false,
           "internet": false,
           "isolation": "restricted",
@@ -110,8 +119,8 @@
       {
         "id": "s99",
         "vlanRef": "v99",
-        "cidr": "10.255.0.0/30",
-        "gateway": "10.255.0.1"
+        "cidr": "10.10.99.0/24",
+        "gateway": "10.10.99.1"
       }
     ],
     "ports": [
@@ -160,10 +169,27 @@
         "id": "sw_p2",
         "deviceId": "sw1",
         "name": "Gi0/2",
-        "mode": "access",
-        "accessVlanRef": "v20",
-        "portFast": true,
-        "bpduGuard": true
+        "mode": "trunk",
+        "allowedVlans": [
+          20,
+          99
+        ],
+        "nativeVlanRef": "v99",
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30
+      },
+      {
+        "id": "ap_uplink",
+        "deviceId": "ap1",
+        "name": "eth0",
+        "mode": "trunk",
+        "allowedVlans": [
+          20,
+          99
+        ],
+        "nativeVlanRef": "v99",
+        "uplink": true
       }
     ],
     "links": [
@@ -171,10 +197,18 @@
         "id": "l1",
         "aPortId": "fw_lan",
         "bPortId": "sw_uplink",
-        "transitVlanRef": "v99",
         "medium": "copper",
         "cableType": "cat6",
         "lengthM": 15,
+        "speed": "1G"
+      },
+      {
+        "id": "l2",
+        "aPortId": "sw_p2",
+        "bPortId": "ap_uplink",
+        "medium": "copper",
+        "cableType": "cat6",
+        "lengthM": 18,
         "speed": "1G"
       }
     ],
@@ -194,10 +228,11 @@
         "id": "guest_ap",
         "name": "AP-Guest",
         "type": "ap",
-        "vlanRef": "v20",
+        "vlanRef": "v99",
         "portRef": "sw_p2",
-        "ipMode": "dhcp",
-        "staticIp": "",
+        "deviceRef": "ap1",
+        "ipMode": "static",
+        "staticIp": "10.10.99.10",
         "poeRequired": true,
         "poeWatts": 12
       }

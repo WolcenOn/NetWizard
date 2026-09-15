@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Production Gate v3.48
+   NetWizard Production Gate v3.50
    Puerta final de preparación para exportar/aplicar en modo producción.
    Agrega auditorías L1/L2/L3/IP/DHCP/PoE/Broadcast/Políticas y
    devuelve una decisión prudente: ready / review / blocked, con guía de corrección.
@@ -380,6 +380,35 @@ Mantenimiento:
     return {ok:canExport, ready, canExport, status, productionMode:!!opts.productionMode, strict:!!opts.strict, issues, counts, generatedAt:new Date().toISOString()};
   }
 
+  function evaluateReleaseCriteria(report, policy){
+    const r = report || {};
+    const opts = Object.assign({allowReview:false, allowedWarningCodes:[], maxWarnings:null}, obj(policy));
+    const allowed = new Set(arr(opts.allowedWarningCodes).map(clean).filter(Boolean));
+    const issues = arr(r.issues).map(normalizeIssue);
+    const blocking = issues.filter(i => i.blocking || i.severity === 'error');
+    const warnings = issues.filter(i => i.severity === 'warning');
+    const unexpectedWarnings = warnings.filter(i => !allowed.has(i.code));
+    const hasWarningLimit = opts.maxWarnings !== null && opts.maxWarnings !== '' && opts.maxWarnings !== undefined;
+    const warningLimit = hasWarningLimit && Number.isFinite(Number(opts.maxWarnings)) ? Number(opts.maxWarnings) : null;
+    const warningLimitExceeded = warningLimit !== null && warnings.length > warningLimit;
+    const reviewAccepted = opts.allowReview === true || warnings.length === 0;
+    const passed = blocking.length === 0 && unexpectedWarnings.length === 0 && !warningLimitExceeded && reviewAccepted;
+    return {
+      passed,
+      canExport:blocking.length === 0,
+      status:passed ? 'passed' : 'failed',
+      blocking,
+      warnings,
+      unexpectedWarnings,
+      reasons:[
+        ...(blocking.length ? [`${blocking.length} incidencia(s) bloqueante(s)`] : []),
+        ...(unexpectedWarnings.length ? [`${unexpectedWarnings.length} aviso(s) no aceptado(s)`] : []),
+        ...(warningLimitExceeded ? [`límite de avisos superado (${warnings.length}/${warningLimit})`] : []),
+        ...(!reviewAccepted ? ['el criterio exige estado ready sin avisos'] : [])
+      ]
+    };
+  }
+
   function summarizeGate(report, options){
     const r = report || {};
     const opts = options || {};
@@ -424,7 +453,7 @@ Mantenimiento:
     const card = doc.createElement('div');
     card.className = 'card';
     card.id = 'productionGateCard';
-    const staticHtml = '<div class="card-h"><div class="card-t" data-i18n="pg.card.title">🚦 Puerta de producción</div><span class="b bac" data-i18n="pg.card.badge">v3.48 i18n</span></div>'+
+    const staticHtml = '<div class="card-h"><div class="card-t" data-i18n="pg.card.title">🚦 Puerta de producción</div><span class="b bac" data-i18n="pg.card.badge">v3.50</span></div>'+
       '<div class="co co-ac" data-i18n="pg.card.desc">Validación final agregada antes de exportar o aplicar cambios. Incluye guía de corrección priorizada y checklist exportable.</div>'+
       '<label class="chk"><input type="checkbox" id="pgateStrict" checked> <span data-i18n="pg.strict">Perfil estricto de producción</span></label>'+
       '<label class="chk"><input type="checkbox" id="pgateShowGuide" checked> <span data-i18n="pg.showGuide">Mostrar guía de corrección</span></label>'+
@@ -456,7 +485,7 @@ Mantenimiento:
     root.addEventListener && root.addEventListener('nw:mode:changed', () => { try{ run(); }catch(_e){} });
   }
 
-  const api = {version:'netwizard-production-gate-v3.48', runProductionGate, summarizeGate, summarizeCounts, collectModuleIssues, applyStrictProductionEscalation, remediationForIssue, buildRemediationGuide, summarizeRemediationGuide, exportChecklistMarkdown};
+  const api = {version:'netwizard-production-gate-v3.50', runProductionGate, evaluateReleaseCriteria, summarizeGate, summarizeCounts, collectModuleIssues, applyStrictProductionEscalation, remediationForIssue, buildRemediationGuide, summarizeRemediationGuide, exportChecklistMarkdown};
   root.NetWizardProductionGate = api;
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
   if(root.document){

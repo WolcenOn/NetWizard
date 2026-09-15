@@ -21,13 +21,13 @@ function samplePayload(name){
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'samples', name), 'utf8'));
 }
 
-const sampleNames = ['small-office.json', 'school-network.json', 'iot-cameras.json', 'l3-transit-demo.json'];
+const productionScenarios = samplePayload('production-scenarios.json').scenarios;
 
-test('samples oficiales se importan en navegador, pasan schema y generan auditoría/documentación', async ({ page }) => {
+test('escenarios 3.50 cumplen puerta de producción, configuración y documentación en navegador', async ({ page }) => {
   await resetStorage(page);
-  for(const name of sampleNames){
-    await test.step(name, async () => {
-      const payload = samplePayload(name);
+  for(const scenario of productionScenarios){
+    await test.step(scenario.id, async () => {
+      const payload = samplePayload(scenario.file);
       await page.evaluate((payload) => {
         const prepared = window.NetWizardProjectSchema.prepareImport(payload, { defaults: window.defS });
         if(!prepared.ok) throw new Error(prepared.errors.join('\n'));
@@ -38,10 +38,15 @@ test('samples oficiales se importan en navegador, pasan schema y generan auditor
       await page.click('#btnProductionGate');
       await expect(page.locator('#productionGateOut')).toContainText(/Puerta de producción|Production gate|Estado:|Status:/i);
 
-      const result = await page.evaluate(() => {
+      const result = await page.evaluate((scenario) => {
         const project = window.NetWizardState.getSnapshot();
         const exported = window.NetWizardProjectSchema.prepareExport(project);
-        const report = window.NetWizardProductionGate.runProductionGate(project, { productionMode:false, strict:true });
+        const report = window.NetWizardProductionGate.runProductionGate(project, { productionMode:true, strict:true });
+        const release = window.NetWizardProductionGate.evaluateReleaseCriteria(report, {
+          allowReview:scenario.expectedStatus === 'review',
+          allowedWarningCodes:scenario.allowedWarningCodes,
+          maxWarnings:scenario.allowedWarningCodes.length
+        });
         const rows = window.NetWizardDocumentationUtils.buildInventoryRows(project);
         const matrix = window.NetWizardDocumentationUtils.buildConnectivityMatrix(project);
         const md = window.NetWizardDocumentationUtils.buildMarkdownDocument(project);
@@ -50,17 +55,34 @@ test('samples oficiales se importan en navegador, pasan schema y generan auditor
           devices: project.devices.length,
           vlans: project.vlans.length,
           gateStatus: report.status,
+          canExport: report.canExport,
+          releasePassed: release.passed,
+          warningCodes: report.issues.filter(issue => issue.severity === 'warning').map(issue => issue.code).sort(),
+          configs: scenario.configs.map(expected => ({
+            deviceId:expected.deviceId,
+            output:window.genConfig(expected.deviceId, expected.vendor)
+          })),
           rows: rows.length,
           matrix: matrix.length,
           markdownHasTitle: md.includes('# NetWizard') || md.includes('# Documentación')
         };
-      });
+      }, scenario);
       expect(result.schemaVersion).toBe('3.50.0');
       expect(result.devices).toBeGreaterThan(0);
       expect(result.vlans).toBeGreaterThan(0);
-      expect(['ready','review','blocked']).toContain(result.gateStatus);
+      expect(result.gateStatus).toBe(scenario.expectedStatus);
+      expect(result.canExport).toBeTruthy();
+      expect(result.releasePassed).toBeTruthy();
+      expect(result.warningCodes).toEqual(scenario.allowedWarningCodes.slice().sort());
       expect(result.rows).toBeGreaterThan(0);
       expect(result.markdownHasTitle).toBeTruthy();
+      for(const expected of scenario.configs){
+        const generated=result.configs.find(item => item.deviceId === expected.deviceId);
+        expect(generated, `${scenario.id}/${expected.deviceId}: salida ausente`).toBeTruthy();
+        expect(generated.output.length, `${scenario.id}/${expected.deviceId}: salida demasiado corta`).toBeGreaterThan(80);
+        expect(generated.output).not.toMatch(/Sin vendor asignado|todavía no implementado/i);
+        for(const signature of expected.signatures) expect(generated.output).toContain(signature);
+      }
     });
   }
 });

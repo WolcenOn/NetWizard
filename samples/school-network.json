@@ -1,9 +1,9 @@
 {
   "format": "netwizard-project",
-  "schemaVersion": "3.28.0",
+  "schemaVersion": "3.50.0",
   "exportedAt": "2026-05-25T00:00:00.000Z",
   "project": {
-    "_schemaVersion": "3.28.0",
+    "_schemaVersion": "3.50.0",
     "step": "dash",
     "selected": null,
     "vlanMatrix": {},
@@ -40,12 +40,15 @@
         "id": "fw1",
         "name": "Firewall",
         "type": "firewall",
-        "vendorOs": "fortigate"
+        "kind": "firewall",
+        "vendorOs": "fortinet"
       },
       {
         "id": "core1",
         "name": "Core-L3",
-        "type": "l3switch",
+        "type": "switch",
+        "kind": "switch",
+        "l3Capable": "yes",
         "vendorOs": "cisco_ios",
         "poeBudgetW": 0
       },
@@ -53,6 +56,7 @@
         "id": "sw_a",
         "name": "SW-Classrooms",
         "type": "switch",
+        "kind": "switch",
         "vendorOs": "cisco_ios",
         "poeBudgetW": 370
       }
@@ -146,6 +150,8 @@
         "id": "core_fw",
         "deviceId": "core1",
         "name": "Gi1/0/48",
+        "media": "SFP+",
+        "transceiver": "10GBASE-SR",
         "mode": "trunk",
         "allowedVlans": [
           10,
@@ -162,6 +168,8 @@
         "id": "fw_core",
         "deviceId": "fw1",
         "name": "port2",
+        "media": "SFP+",
+        "transceiver": "10GBASE-SR",
         "mode": "trunk",
         "allowedVlans": [
           10,
@@ -176,6 +184,8 @@
         "id": "core_swa",
         "deviceId": "core1",
         "name": "Gi1/0/1",
+        "media": "SFP+",
+        "transceiver": "10GBASE-SR",
         "mode": "trunk",
         "allowedVlans": [
           10,
@@ -190,6 +200,8 @@
         "id": "swa_core",
         "deviceId": "sw_a",
         "name": "Gi0/24",
+        "media": "SFP+",
+        "transceiver": "10GBASE-SR",
         "mode": "trunk",
         "allowedVlans": [
           10,
@@ -273,6 +285,25 @@
         "reservations": []
       }
     },
-    "fwRules": []
+    "fwRules": [
+      {
+        "id": "fw_guest_deny_internal",
+        "name": "Guests deny internal",
+        "src": "VLAN30",
+        "dst": "RFC1918",
+        "proto": "any",
+        "port": "any",
+        "action": "deny"
+      },
+      {
+        "id": "fw_guest_web",
+        "name": "Guests Internet Web",
+        "src": "VLAN30",
+        "dst": "Internet",
+        "proto": "tcp",
+        "port": "80,443",
+        "action": "allow"
+      }
+    ]
   }
 }

@@ -1,9 +1,9 @@
 {
   "format": "netwizard-project",
-  "schemaVersion": "3.28.0",
+  "schemaVersion": "3.50.0",
   "exportedAt": "2026-05-25T00:00:00.000Z",
   "project": {
-    "_schemaVersion": "3.28.0",
+    "_schemaVersion": "3.50.0",
     "step": "dash",
     "selected": null,
     "vlanMatrix": {},
@@ -40,18 +40,21 @@
         "id": "r1",
         "name": "R1",
         "type": "router",
+        "kind": "router",
         "vendorOs": "cisco_ios"
       },
       {
         "id": "r2",
         "name": "R2",
         "type": "router",
+        "kind": "router",
         "vendorOs": "cisco_ios"
       },
       {
         "id": "sw1",
         "name": "SW-LAN",
         "type": "switch",
+        "kind": "switch",
         "vendorOs": "cisco_ios"
       }
     ],

@@ -152,7 +152,7 @@ Mantenimiento:
       const allowed = allowedSet(p, project);
       const all = allVlanIds(project);
       if(!allowed.size){ issues.push(mk('NW-L2-001','warning',`${label}: trunk sin VLANs permitidas. Si no es intencionado, no transportará ninguna VLAN.`)); }
-      if(all.size && allowed.size === all.size){ issues.push(mk('NW-L2-002','warning',`${label}: trunk permite todas las VLANs del proyecto. Limita allowed VLANs a las necesarias.`)); }
+      if(all.size && allowed.size === all.size){ issues.push(mk('NW-L2-002','info',`${label}: trunk enumera todas las VLANs actuales del proyecto. Revisa la lista cuando se añadan nuevos segmentos.`)); }
       const native = nativeVlanId(p, maps.vlansById);
       if(native == null){ issues.push(mk('NW-L2-003','warning',`${label}: trunk sin VLAN nativa definida. Define una VLAN nativa no usada por usuarios si aplica.`)); }
       else if(native === 1){ issues.push(mk('NW-L2-004','warning',`${label}: usa VLAN 1 como nativa. En producción se recomienda una VLAN nativa dedicada/no usada.`)); }
