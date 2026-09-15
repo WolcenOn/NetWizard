@@ -73,6 +73,9 @@
       '- `reports/inventory.csv`: inventario operativo.',
       '- `reports/connectivity-matrix.csv`: intención de conectividad entre VLANs.',
       '- `reports/documentation.md`: documentación completa del diseño.',
+      '- `deployment/plan.json`: orden estructurado y dependencias del cambio.',
+      '- `deployment/runbook.md`: procedimiento ejecutable con prechecks y validaciones.',
+      '- `deployment/rollback-checklist.md`: reversión en orden inverso.',
       '- `manifest.json`: índice y CRC32 de cada archivo de payload.','',
       '## Uso seguro','',
       '1. Revisa los avisos y el checklist.',
@@ -89,11 +92,13 @@
     const gate=dependency(opts,'gate','NetWizardProductionGate');
     const schema=dependency(opts,'schema','NetWizardProjectSchema');
     const docs=dependency(opts,'documentation','NetWizardDocumentationUtils');
+    const runbook=dependency(opts,'runbook','NetWizardDeploymentRunbook');
     const generate=opts.generateConfig || root.genConfig;
     const missing=[];
     if(!gate||typeof gate.runProductionGate!=='function') missing.push('ProductionGate');
     if(!schema||typeof schema.prepareExport!=='function') missing.push('ProjectSchema');
     if(!docs||typeof docs.buildInventoryRows!=='function'||typeof docs.buildConnectivityMatrix!=='function'||typeof docs.buildMarkdownDocument!=='function'||typeof docs.toCsv!=='function') missing.push('DocumentationUtils');
+    if(!runbook||typeof runbook.buildDeploymentPlan!=='function'||typeof runbook.buildMarkdown!=='function'||typeof runbook.buildRollbackMarkdown!=='function') missing.push('DeploymentRunbook');
     if(typeof generate!=='function') missing.push('ConfigGenerator');
     if(missing.length) return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,issues:[gateIssue('NW-BUNDLE-001',`Dependencias no disponibles: ${missing.join(', ')}`)],files:[]};
 
@@ -127,6 +132,14 @@
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:generationIssues,files:[]};
     }
 
+    const configPaths=Object.fromEntries(configEntries.map(entry=>[entry.device.id,entry.path]));
+    let deploymentPlan;
+    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths});}
+    catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-030',`No se pudo construir el plan de despliegue: ${error&&error.message||error}`)],files:[]};}
+    if(!deploymentPlan||deploymentPlan.ok===false){
+      const planIssues=arr(deploymentPlan&&deploymentPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,deploymentPlan,issues:planIssues.length?planIssues:[gateIssue('NW-BUNDLE-031','El plan de despliegue no es ejecutable.')],files:[]};
+    }
+
     const files=[];
     try{
       const inventory=docs.buildInventoryRows(canonical); const matrix=docs.buildConnectivityMatrix(canonical,{locale:opts.locale});
@@ -137,6 +150,9 @@
       addFile(files,'reports/inventory.csv',docs.toCsv(inventory,docs.INVENTORY_COLUMNS)+'\n','text/csv;charset=utf-8');
       addFile(files,'reports/connectivity-matrix.csv',docs.toCsv(matrix,['source','destination','action','services','reason','sourceType'])+'\n','text/csv;charset=utf-8');
       addFile(files,'reports/documentation.md',docs.buildMarkdownDocument(canonical,{locale:opts.locale,generatedAt})+'\n','text/markdown;charset=utf-8');
+      addFile(files,'deployment/plan.json',JSON.stringify(deploymentPlan,null,2)+'\n','application/json');
+      addFile(files,'deployment/runbook.md',runbook.buildMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
+      addFile(files,'deployment/rollback-checklist.md',runbook.buildRollbackMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
       addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries),'text/markdown;charset=utf-8');
     }catch(error){
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-020',`No se pudieron construir los artefactos: ${error&&error.message||error}`)],files:[]};
@@ -149,12 +165,13 @@
       generatedAt,projectName:clean(canonical.projName,160),productionStatus:report.status,
       counts:{devices:devices.length,files:files.length+1,warnings:report.counts&&report.counts.warnings||0,errors:report.counts&&report.counts.errors||0},
       sensitive:true,
+      deployment:{strategy:deploymentPlan.strategy,phases:deploymentPlan.phases.length,steps:deploymentPlan.steps.length,observationMinutes:deploymentPlan.observationMinutes,estimatedTotalMinutes:deploymentPlan.estimatedTotalMinutes},
       files:files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}))
     };
     try{addFile(files,'manifest.json',JSON.stringify(manifest,null,2)+'\n','application/json');}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,report,issues:[gateIssue('NW-BUNDLE-022',`No se pudo crear el manifiesto: ${error&&error.message||error}`)],files:[]};}
     const filename=`${safeName(canonical.projName,'netwizard')}-deployment-${generatedAt.slice(0,10)}.zip`;
-    return {ok:true,blocked:false,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,filename,report,manifest,issues:arr(report.issues),files};
+    return {ok:true,blocked:false,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,filename,report,deploymentPlan,manifest,issues:arr(report.issues),files};
   }
 
   function dosDateTime(value){
@@ -190,7 +207,7 @@
       issues.slice(0,12).filter(issue=>issue.severity!=='info').forEach(issue=>lines.push(`• [${issue.code||'NW-BUNDLE'}] ${issue.message||''}`));
       return lines.join('\n');
     }
-    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.counts.files} archivos · ${pkg.manifest.counts.warnings} avisos documentados.`;
+    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · ${pkg.manifest.counts.warnings} avisos documentados.`;
   }
 
   function bindBrowserUi(attempt){

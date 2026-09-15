@@ -46,6 +46,7 @@
         "management": { "$ref": "#/$defs/management" },
         "observedState": { "anyOf": [{ "$ref": "#/$defs/observedState" }, { "type": "null" }] },
         "driftPolicy": { "$ref": "#/$defs/driftPolicy" },
+        "deployment": { "$ref": "#/$defs/deployment" },
         "vrfs": { "type": "array", "items": { "$ref": "#/$defs/vrf" } },
         "wanCircuits": { "type": "array", "items": { "$ref": "#/$defs/wanCircuit" } },
         "trafficProfiles": { "type": "array", "items": { "$ref": "#/$defs/trafficProfile" } },
@@ -260,6 +261,19 @@
       "properties": {
         "criticalKinds": { "type": "array", "items": { "type": "string" } },
         "blockingFields": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "strategy": { "type": "string" },
+        "changeTicket": { "type": "string", "maxLength": 120 },
+        "maintenanceWindow": { "type": "string", "maxLength": 160 },
+        "approvalOwner": { "type": "string", "maxLength": 120 },
+        "observationMinutes": { "type": "number", "minimum": 5 },
+        "validationTargets": { "type": "array", "items": { "type": "string", "maxLength": 200 } },
+        "devices": { "type": "object", "additionalProperties": { "type": "object" } }
       }
     },
     "vrf": {

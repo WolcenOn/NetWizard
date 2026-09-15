@@ -28,6 +28,9 @@ npm run test:e2e
 - [ ] Exportar configuraciones.
 - [ ] Exportar el paquete de despliegue ZIP y revisar su manifiesto, configuraciones e informes.
 - [ ] Confirmar que un proyecto con errores bloqueantes no puede descargar el paquete de despliegue.
+- [ ] Revisar que el runbook respeta dependencias físicas, controlador/AP y grupos HA/MLAG.
+- [ ] Confirmar ticket, ventana, aprobador, acceso OOB y backups reales antes del cambio.
+- [ ] Ensayar los criterios de parada y el rollback en orden inverso.
 - [ ] Exportar inventario CSV.
 - [ ] Exportar documentación Markdown.
 - [ ] Crear y restaurar snapshot.
