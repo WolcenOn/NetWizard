@@ -21,12 +21,25 @@
     ensureScript('./js/netwizard-cisco-routing-generator.js', 'data-netwizard-cisco-routing-generator', 'NetWizardCiscoRoutingGenerator');
 
     if(root.__netwizardCiscoRoutingInstalled) return true;
+    const pipeline = root.NetWizardConfigPipeline;
     const original = root.genConfig;
     const translator = root.NetWizardCiscoRoutingGenerator;
     const state = root.NetWizardState;
-    if(typeof original !== 'function' || !translator || !state || typeof state.getSnapshot !== 'function'){
+    if(!translator || (!pipeline && (typeof original !== 'function' || !state || typeof state.getSnapshot !== 'function'))){
       if((attempt || 0) < 80 && root.setTimeout) root.setTimeout(() => install((attempt || 0) + 1), 100);
       return false;
+    }
+
+    if(pipeline && typeof pipeline.registerStage === 'function'){
+      pipeline.registerStage({
+        id:'routing.cisco',
+        order:100,
+        description:'Añade routing neutral a routers Cisco IOS.',
+        supports(ctx){ return ctx.vendor === 'cisco_ios' && !(ctx.device && /switch/i.test(String(ctx.device.type || ''))); },
+        apply(config, ctx){ return translator.appendToConfig(config, ctx.project, ctx.deviceId); }
+      });
+      root.__netwizardCiscoRoutingInstalled = true;
+      return true;
     }
 
     root.genConfig = function enhancedCiscoRoutingGenConfig(deviceId, format){

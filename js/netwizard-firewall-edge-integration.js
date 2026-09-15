@@ -15,10 +15,22 @@
     ensureScript('./js/netwizard-routing-plan.js','data-netwizard-routing-plan-edge','NetWizardRoutingPlan');
     ensureScript('./js/netwizard-firewall-edge-generator.js','data-netwizard-firewall-edge-generator','NetWizardFirewallEdgeGenerator');
     if(root.__netwizardFirewallEdgeInstalled) return true;
+    const pipeline=root.NetWizardConfigPipeline;
     const original=root.genConfig, generator=root.NetWizardFirewallEdgeGenerator, state=root.NetWizardState;
-    if(typeof original!=='function'||!generator||!state||typeof state.getSnapshot!=='function'){
+    if(!generator||(!pipeline&&(typeof original!=='function'||!state||typeof state.getSnapshot!=='function'))){
       if((attempt||0)<80&&root.setTimeout) root.setTimeout(()=>install((attempt||0)+1),100);
       return false;
+    }
+    if(pipeline&&typeof pipeline.registerRenderer==='function'){
+      pipeline.registerRenderer({
+        id:'edge.firewall',
+        priority:300,
+        description:'Renderer especializado FortiGate/pfSense.',
+        supports(ctx){return ctx.vendor==='fortinet'||ctx.vendor==='pfsense';},
+        render(ctx){return generator.render(ctx.project,ctx.deviceId,ctx.vendor);}
+      });
+      root.__netwizardFirewallEdgeInstalled=true;
+      return true;
     }
     root.genConfig=function enhancedFirewallEdgeGenConfig(deviceId,format){
       const project=state.getSnapshot();

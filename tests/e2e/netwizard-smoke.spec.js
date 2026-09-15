@@ -27,7 +27,9 @@ test('carga la aplicación sin errores JavaScript críticos', async ({ page }) =
   expect(apiStatus.planner).toBe(true);
   expect(apiStatus.schema).toBe(true);
   expect(apiStatus.bridge).toBe(true);
-  expect(apiStatus.runtime).toMatchObject({ ok:true, missing:[], duplicateScripts:[], missingPipelineStages:[], generatorReady:true, architectureReady:true });
+  expect(apiStatus.runtime).toMatchObject({ ok:true, missing:[], duplicateScripts:[], missingPipelineStages:[], missingRegistryEntries:[], generatorReady:true, architectureReady:true });
+  expect(apiStatus.runtime.configPipeline.renderers.map(item => item.id)).toEqual(['edge.firewall','device.switching','vendor.base']);
+  expect(apiStatus.runtime.configPipeline.stages.map(item => item.id)).toEqual(['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services']);
 });
 
 test('genera configuración útil para todos los vendors ofrecidos por la UI', async ({ page }) => {

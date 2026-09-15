@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Vendor Config Generators v3.48
+   NetWizard Vendor Config Generators v3.50
    Generación de configuración por fabricante.
 
    Mantenimiento:
@@ -237,7 +237,12 @@
   }
 
   function install(options){
-    const original = options && options.originalGenConfig ? options.originalGenConfig : ((typeof genConfig === 'function') ? genConfig : root.genConfig);
+    const pipeline = root.NetWizardConfigPipeline;
+    const original = options && options.originalGenConfig
+      ? options.originalGenConfig
+      : (pipeline && typeof pipeline.getBaseGenerator === 'function'
+        ? pipeline.getBaseGenerator()
+        : ((typeof genConfig === 'function') ? genConfig : root.genConfig));
     if(typeof original !== 'function') return null;
     const enhanced = createEnhancedGenConfig(Object.assign({}, options || {}, {
       originalGenConfig: original,
@@ -254,12 +259,22 @@
         ip4s: (typeof ip4s === 'function') ? ip4s : root.NetWizardNetworkUtils && root.NetWizardNetworkUtils.ip4s
       }
     }));
+    if(pipeline && typeof pipeline.registerRenderer === 'function'){
+      pipeline.registerRenderer({
+        id:'vendor.base',
+        priority:100,
+        description:'Renderer multivendor principal con fallback al generador histórico.',
+        render(ctx){ return enhanced(ctx.deviceId, ctx.vendor || ctx.format); }
+      });
+      root.__netwizardVendorRendererInstalled=true;
+      return pipeline.generate;
+    }
     try { if(typeof genConfig === 'function') genConfig = enhanced; } catch {}
     root.genConfig = enhanced;
     return enhanced;
   }
 
-  const api = { version:'netwizard-vendor-config-generators-v3.48', createEnhancedGenConfig, install };
+  const api = { version:'netwizard-vendor-config-generators-v3.50', createEnhancedGenConfig, install };
   root.NetWizardVendorConfigGenerators = api;
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
 

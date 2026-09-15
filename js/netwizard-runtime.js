@@ -6,6 +6,7 @@
     'NetWizardState',
     'NetWizardPlanner',
     'NetWizardProjectSchema',
+    'NetWizardConfigPipeline',
     'NetWizardVendorConfigGenerators',
     'NetWizardArchitectureValidator',
     'NetWizardProductionGate',
@@ -62,7 +63,15 @@
   function verify(){
     const missing = requiredGlobals.filter(name => !root[name]);
     const duplicates = duplicateScripts();
-    const generatorReady = typeof root.genConfig === 'function';
+    const pipeline = root.NetWizardConfigPipeline;
+    const registry = pipeline && typeof pipeline.inspect === 'function' ? pipeline.inspect() : {renderers:[],stages:[]};
+    const requiredRenderers = ['edge.firewall','device.switching','vendor.base'];
+    const requiredStages = ['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services'];
+    const registeredRenderers = registry.renderers.map(item => item.id);
+    const registeredStages = registry.stages.map(item => item.id);
+    const missingRegistryEntries = requiredRenderers.filter(id => !registeredRenderers.includes(id))
+      .concat(requiredStages.filter(id => !registeredStages.includes(id)));
+    const generatorReady = !!(pipeline && root.genConfig === pipeline.generate && root.genConfig.__netwizardConfigPipeline);
     const architectureReady = !!(root.NetWizardProductionGate && root.NetWizardProductionGate.__architectureExtensionInstalled);
     const pipelineFlags = [
       '__netwizardCiscoRoutingInstalled',
@@ -75,11 +84,13 @@
     ];
     const missingPipelineStages = pipelineFlags.filter(name => !root[name]);
     return {
-      ok: !missing.length && !duplicates.length && !missingPipelineStages.length && generatorReady && architectureReady,
-      version: '3.48.0',
+      ok: !missing.length && !duplicates.length && !missingPipelineStages.length && !missingRegistryEntries.length && generatorReady && architectureReady,
+      version: '3.50.0',
       missing,
       duplicateScripts: duplicates,
       missingPipelineStages,
+      missingRegistryEntries,
+      configPipeline: registry,
       generatorReady,
       architectureReady
     };

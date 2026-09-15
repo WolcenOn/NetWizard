@@ -43,15 +43,26 @@ test('Project schema sanea texto, migra legacy y exporta payload versionado', ()
   const raw = { projName:'  Demo\u0000  ', devices:[{id:'sw 1', name:'  SW<Core>  ', type:'switch'}], vlans:[{id:'v10', vlanId:'10', name:'Users'}] };
   const prepared = NWSchema.prepareImport(raw, { defaults });
   assert.strictEqual(prepared.ok, true);
-  assert.strictEqual(prepared.project._schemaVersion, '3.48.0');
+  assert.strictEqual(prepared.project._schemaVersion, '3.50.0');
   assert.strictEqual(prepared.project.projName, 'Demo');
   assert.strictEqual(prepared.project.devices[0].id, 'sw_1');
   assert.strictEqual(prepared.project.devices[0].name, 'SW<Core>');
-  assert.ok(prepared.migrations.includes('legacy->3.48.0'));
+  assert.strictEqual(prepared.project.devices[0].kind, 'switch');
+  assert.ok(prepared.migrations.includes('legacy->3.50.0'));
   const exported = NWSchema.prepareExport(prepared.project, { defaults });
   assert.strictEqual(exported.format, 'netwizard-project');
-  assert.strictEqual(exported.schemaVersion, '3.48.0');
+  assert.strictEqual(exported.schemaVersion, '3.50.0');
   assert.ok(exported.project.iot);
+});
+
+test('Project schema migra 3.48 a 3.50 y rechaza versiones futuras', () => {
+  const old = NWSchema.prepareImport({_schemaVersion:'3.48.0', devices:[], ports:[], vlans:[], subnets:[], hosts:[], links:[], fwRules:[]});
+  assert.strictEqual(old.ok, true);
+  assert.strictEqual(old.sourceSchemaVersion, '3.48.0');
+  assert.deepStrictEqual(old.migrations, ['3.48.0->3.50.0']);
+  const future = NWSchema.prepareImport({_schemaVersion:'3.51.0', devices:[], ports:[], vlans:[], subnets:[], hosts:[], links:[], fwRules:[]});
+  assert.strictEqual(future.ok, false);
+  assert.ok(future.errors.some(error => error.includes('no soportada')));
 });
 
 test('Project schema bloquea referencias críticas inválidas en importación', () => {

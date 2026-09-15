@@ -1,10 +1,10 @@
-# NetWizard v3.48.0 RC · sistema i18n ampliable
+# NetWizard v3.50.0 RC · generadores y modelo consolidados
 
-> v3.48 convierte la traducción en un sistema ampliable: manifiesto de idiomas, validación de claves, sincronización de diccionarios y auditoría de textos hardcoded.
+> v3.50 incorpora un registro determinista de generadores y formaliza el modelo avanzado del proyecto sin perder compatibilidad de importación con 3.28–3.48.
 
-NetWizard `3.48.0` es la **línea base canónica de estabilización** y una Release Candidate para uso local/controlado. Mantiene el hardening XSS y no modifica el schema interno ni las claves del modelo de proyecto.
+NetWizard `3.50.0` es la **línea candidata de consolidación funcional** para uso local/controlado. Mantiene el hardening XSS, migra automáticamente los proyectos anteriores y genera exportaciones con schema `3.50.0`.
 
-La versión canónica se declara en `VERSION`. Los criterios de promoción a estable se documentan en `docs/STABLE_BASELINE_3_48.md`.
+La versión canónica se declara en `VERSION`. La línea 3.48 continúa documentada como baseline histórica en `docs/STABLE_BASELINE_3_48.md`.
 
 ## Qué incluye esta rama
 
@@ -17,6 +17,8 @@ La versión canónica se declara en `VERSION`. Los criterios de promoción a est
 - Puerta de producción con guía de corrección y checklist Markdown.
 - Exportaciones de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
+- Registro inspeccionable de renderers y etapas de configuración, sin wrappers globales dependientes del orden de carga.
+- Modelo 3.50 para routing, HA, seguridad, gestión, WAN, Wi-Fi, IPv6/VRF, resiliencia, capacidad, servicios y drift.
 - `package-lock.json`, licencia, changelog y script de empaquetado reproducible.
 
 ## Uso rápido
@@ -80,6 +82,10 @@ npm run audit:xss
 ```
 
 El auditor es heurístico y marca puntos que requieren revisión manual, especialmente usos legacy de `innerHTML`.
+
+## v3.50 · Registro de configuración y schema
+
+El runtime expone `NetWizardConfigPipeline.inspect()` para comprobar los renderers y etapas activos. `NetWizardProjectSchema.prepareImport()` migra proyectos compatibles a 3.50 y devuelve `sourceSchemaVersion` y la lista `migrations`; `prepareExport()` produce siempre el contrato canónico 3.50.
 
 ## v3.48 · Sistema i18n ampliable
 

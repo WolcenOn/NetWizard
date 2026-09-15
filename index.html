@@ -19,7 +19,7 @@
   </div>
   <div class="proj-lbl"><span data-i18n="top.project">Proyecto:</span> <b id="projLbl">Sin título</b></div>
   <div class="saved" id="savedLbl" data-i18n="top.saved">✓ guardado</div>
-  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.48 RC</span></div>
+  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.50 RC</span></div>
   <div style="display:flex;gap:6px;">
     <button class="btn bs bsm" id="btnReset" data-i18n="top.new">🗑 Nuevo</button>
     <button class="btn bp bsm" id="btnExport" data-i18n="top.export">⬆ Exportar</button>
@@ -929,7 +929,8 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-change-preview.js"></script>
 <script src="./js/netwizard-policy-utils.js"></script>
 <script src="./js/netwizard.js"></script>
-<!-- Pipeline de configuración: renderer base multivendor primero; extensiones ordenadas más abajo. -->
+<!-- Pipeline de configuración: registro único, renderer base y extensiones ordenadas. -->
+<script src="./js/netwizard-config-pipeline.js"></script>
 <script src="./js/netwizard-vendor-config-generators.js"></script>
 <script src="./js/netwizard-bridge.js"></script>
 <script src="./js/netwizard-bridge-ui.js"></script>

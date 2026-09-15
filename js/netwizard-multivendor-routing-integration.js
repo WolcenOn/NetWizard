@@ -21,12 +21,28 @@
     ensureScript('./js/netwizard-multivendor-routing-generator.js', 'data-netwizard-multivendor-routing-generator', 'NetWizardMultivendorRoutingGenerator');
 
     if(root.__netwizardMultivendorRoutingInstalled) return true;
+    const pipeline = root.NetWizardConfigPipeline;
     const original = root.genConfig;
     const translator = root.NetWizardMultivendorRoutingGenerator;
     const state = root.NetWizardState;
-    if(typeof original !== 'function' || !translator || !state || typeof state.getSnapshot !== 'function'){
+    if(!translator || (!pipeline && (typeof original !== 'function' || !state || typeof state.getSnapshot !== 'function'))){
       if((attempt || 0) < 80 && root.setTimeout) root.setTimeout(() => install((attempt || 0) + 1), 100);
       return false;
+    }
+
+    if(pipeline && typeof pipeline.registerStage === 'function'){
+      pipeline.registerStage({
+        id:'routing.multivendor',
+        order:110,
+        description:'Añade routing a Junos, Huawei VRP y MikroTik RouterOS.',
+        supports(ctx){
+          return ['juniper_junos','huawei_vrp','mikrotik_routeros'].includes(ctx.vendor)
+            && !(ctx.device && /switch/i.test(String(ctx.device.type || '')));
+        },
+        apply(config, ctx){ return translator.appendToConfig(config, ctx.project, ctx.deviceId, ctx.vendor); }
+      });
+      root.__netwizardMultivendorRoutingInstalled = true;
+      return true;
     }
 
     root.genConfig = function enhancedMultivendorRoutingGenConfig(deviceId, format){
