@@ -284,6 +284,13 @@ test('La identidad IP de un dispositivo gestionado puede referenciar su trunk Po
   const audit = NWP.readinessAudit(project, {productionMode:true});
   assert.ok(!audit.errors.some(message => /conectado a un puerto trunk/.test(message)));
   assert.ok(!audit.errors.some(message => /presupuesto del equipo 0 W/.test(message)));
+
+  project.ports[0].mode='access';
+  project.ports[0].accessVlanRef='v20';
+  project.vlans.push({id:'v20',vlanId:20,name:'Other'});
+  project.subnets.push({id:'s20',vlanRef:'v20',cidr:'10.10.20.0/24',gateway:'10.10.20.1'});
+  const mismatch = NWP.readinessAudit(project, {productionMode:true});
+  assert.ok(mismatch.errors.some(message => /VLAN del host/.test(message)), 'deviceRef no debe ocultar un mismatch de VLAN access');
 });
 
 test('Auditoría capa 1 detecta host en puerto trunk y VLAN inconsistente', () => {

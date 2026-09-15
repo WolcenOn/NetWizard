@@ -91,11 +91,11 @@
       {
         "id": "v99",
         "vlanId": 99,
-        "name": "Native-Transit",
+        "name": "Management-Native",
         "intent": {
-          "type": "transit",
-          "expectedHosts": 2,
-          "growthHosts": 0,
+          "type": "management",
+          "expectedHosts": 5,
+          "growthHosts": 2,
           "dhcp": false,
           "internet": false,
           "isolation": "restricted",
@@ -119,8 +119,8 @@
       {
         "id": "s99",
         "vlanRef": "v99",
-        "cidr": "10.255.0.0/30",
-        "gateway": "10.255.0.1"
+        "cidr": "10.10.99.0/24",
+        "gateway": "10.10.99.1"
       }
     ],
     "ports": [
@@ -197,7 +197,6 @@
         "id": "l1",
         "aPortId": "fw_lan",
         "bPortId": "sw_uplink",
-        "transitVlanRef": "v99",
         "medium": "copper",
         "cableType": "cat6",
         "lengthM": 15,
@@ -232,8 +231,8 @@
         "vlanRef": "v99",
         "portRef": "sw_p2",
         "deviceRef": "ap1",
-        "ipMode": "dhcp",
-        "staticIp": "",
+        "ipMode": "static",
+        "staticIp": "10.10.99.10",
         "poeRequired": true,
         "poeWatts": 12
       }

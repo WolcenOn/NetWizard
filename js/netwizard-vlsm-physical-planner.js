@@ -382,10 +382,10 @@ Mantenimiento:
       if(!p){ errors.push(`Host ${h.name}: puerto físico inexistente.`); continue; }
       // Una fila host con deviceRef representa la identidad IP/PoE de un equipo
       // gestionado (AP, servidor, appliance), no un endpoint access duplicado.
-      if(h.deviceRef && devById(project,h.deviceRef)) continue;
+      const managedIdentity=!!(h.deviceRef && devById(project,h.deviceRef));
       const d = devById(project,p.deviceId);
-      if(p.mode==='trunk') errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
-      if(p.mode==='routed') warnings.push(`Host ${h.name}: está conectado a un puerto routed; normalmente debería ser access.`);
+      if(p.mode==='trunk' && !managedIdentity) errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
+      if(p.mode==='routed' && !managedIdentity) warnings.push(`Host ${h.name}: está conectado a un puerto routed; normalmente debería ser access.`);
       if(h.vlanRef && p.accessVlanRef && h.vlanRef!==p.accessVlanRef){
         const hv = vlanByRef(project,h.vlanRef), pv = vlanByRef(project,p.accessVlanRef);
         errors.push(`Host ${h.name}: VLAN del host (${hv?.vlanId||'?'}) no coincide con la VLAN access del puerto (${pv?.vlanId||'?'}).`);
