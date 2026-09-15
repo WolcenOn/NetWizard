@@ -56,8 +56,14 @@ Mantenimiento:
   function normalizeWithDefaults(project, defaults){
     const def = defaultProject(defaults);
     const p = { ...def, ...asObject(project) };
-    const arrayKeys = ['devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations'];
+    const arrayKeys = [
+      'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations',
+      'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
+      'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
+    ];
     for(const key of arrayKeys) p[key] = asArray(p[key]);
+    for(const key of ['routing','highAvailability','accessSecurity','management','driftPolicy']) p[key] = asObject(p[key]);
+    p.observedState = p.observedState && typeof p.observedState === 'object' && !Array.isArray(p.observedState) ? p.observedState : null;
     p.vlanMatrix = asObject(p.vlanMatrix);
     p.dhcp = asObject(p.dhcp);
     p.security = { ...asObject(def.security), ...asObject(p.security) };
@@ -84,10 +90,26 @@ Mantenimiento:
     const out = {};
     for(const [k,v] of Object.entries(asObject(obj))){
       if(typeof v === 'string') out[k] = cleanText(v, maxLen);
-      else if(v && typeof v === 'object') out[k] = clone(v);
+      else if(v && typeof v === 'object') out[k] = sanitizeLooseValue(v, maxLen);
       else out[k] = v;
     }
     return out;
+  }
+
+  function sanitizeLooseValue(value, maxLen, depth){
+    const level = depth || 0;
+    if(level > 16) return null;
+    if(typeof value === 'string') return cleanText(value, maxLen || 1000);
+    if(Array.isArray(value)) return value.map(item => sanitizeLooseValue(item, maxLen, level + 1));
+    if(value && typeof value === 'object'){
+      const out = {};
+      for(const [key, item] of Object.entries(value)){
+        if(['__proto__','prototype','constructor'].includes(key)) continue;
+        out[cleanText(key, 120)] = sanitizeLooseValue(item, maxLen, level + 1);
+      }
+      return out;
+    }
+    return value;
   }
 
 
@@ -289,6 +311,14 @@ Mantenimiento:
       x.notes = cleanText(x.notes, 1000);
       return x;
     });
+
+    const advancedArrays = [
+      'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
+      'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
+    ];
+    for(const key of advancedArrays) p[key] = sanitizeLooseValue(p[key], 1000);
+    for(const key of ['routing','highAvailability','accessSecurity','management','driftPolicy']) p[key] = sanitizeLooseValue(p[key], 1000);
+    p.observedState = p.observedState ? sanitizeLooseValue(p.observedState, 1000) : null;
 
     return { project: p, warnings: [] };
   }

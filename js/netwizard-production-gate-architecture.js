@@ -1,4 +1,4 @@
-/* NetWizard Production Gate Architecture Extension v3.49-dev */
+/* NetWizard Production Gate Architecture Extension v3.48 */
 (function initNetWizardProductionGateArchitecture(root){
 'use strict';
 function arr(v){return Array.isArray(v)?v:[];}
@@ -6,8 +6,9 @@ function tryRequire(p){try{return require(p);}catch{return null;}}
 function load(globalName,file){return root[globalName]||(typeof require==='function'?tryRequire(file):null);}
 function baseGate(){return load('NetWizardProductionGate','./netwizard-production-gate.js');}
 function routingPlan(){return load('NetWizardRoutingPlan','./netwizard-routing-plan.js');}
-function ensureScript(src,selector,key){if(!root.document||root.document.querySelector(selector))return;const s=root.document.createElement('script');s.src=src;s.dataset[key]='1';s.defer=false;root.document.head.appendChild(s);}
+function ensureScript(src,selector,key){if(!root.document||root.document.querySelector(selector))return;const s=root.document.createElement('script');s.src=src;s.dataset[key]='1';s.async=false;s.defer=false;s.onerror=()=>root.console&&root.console.error(`NetWizard: no se pudo cargar ${src}`);root.document.head.appendChild(s);}
 const integrations=[
+['NetWizardArchitectureValidator','./js/netwizard-architecture-validator.js','netwizard-architecture-validator','netwizardArchitectureValidator'],
 ['NetWizardRoutingPlan','./js/netwizard-routing-plan.js','netwizard-routing-plan','netwizardRoutingPlan'],
 ['NetWizardCapabilityRegistry','./js/netwizard-capability-registry.js','netwizard-capability-registry','netwizardCapabilityRegistry'],
 ['NetWizardCapabilityUi','./js/netwizard-capability-ui.js','netwizard-capability-ui','netwizardCapabilityUi'],

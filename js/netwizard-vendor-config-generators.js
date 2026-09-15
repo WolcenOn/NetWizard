@@ -1,5 +1,5 @@
 /* =========================================================
-   NetWizard Vendor Config Generators v3.50
+   NetWizard Vendor Config Generators v3.48
    Generación de configuración por fabricante.
 
    Mantenimiento:
@@ -259,7 +259,7 @@
     return enhanced;
   }
 
-  const api = { version:'netwizard-vendor-config-generators-v3.50', createEnhancedGenConfig, install };
+  const api = { version:'netwizard-vendor-config-generators-v3.48', createEnhancedGenConfig, install };
   root.NetWizardVendorConfigGenerators = api;
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.48.0 · Estabilización del runtime publicado
+
+- Integrado en `index.html` el renderer multivendor y el conjunto avanzado de validadores, paneles y generadores.
+- Fijado un orden determinista para routing, firewall, switching, seguridad de acceso, gestión y HA.
+- Añadido `NetWizardRuntime` para detectar módulos ausentes, scripts duplicados y etapas no instaladas.
+- Añadidas pruebas del entrypoint real y matriz E2E para todos los vendors ofrecidos por la interfaz.
+- Normalizadas y saneadas las ramas avanzadas del proyecto manteniendo compatibilidad con schema `3.48.0`.
+- Corregido el asistente para no representar un servidor simultáneamente como switch y host.
+- Pages se empaqueta y despliega únicamente después de superar quality y E2E.
+- Sustituido `http-server` por un servidor de pruebas sin dependencias y fijada la versión de Playwright.
 
 ## 3.48.0 · Sistema i18n ampliable
 

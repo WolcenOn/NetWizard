@@ -49,4 +49,16 @@ test('La extensión conserva un proyecto arquitectónicamente coherente', () => 
   assert.ok(!report.issues.some(i => i.code === 'NW-LINK-001'));
 });
 
+test('La extensión no inventa drift cuando no existe snapshot observado', () => {
+  const project = projectWithMixedLink();
+  project.ports[0].mode = 'routed';
+  project.ports[0].l3Ip = '172.16.0.1';
+  project.ports[0].l3Cidr = '172.16.0.1/30';
+  project.ports[0].allowedVlans = [];
+  project.observedState = null;
+  const report = BaseGate.runProductionGate(project, {productionMode:false, strict:true});
+  assert.deepStrictEqual(report.observedDrift.drift, []);
+  assert.ok(!report.issues.some(i => String(i.code || '').startsWith('NW-DRIFT-')));
+});
+
 console.log('\nTests production gate architecture completados.');
