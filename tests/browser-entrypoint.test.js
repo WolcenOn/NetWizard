@@ -39,6 +39,7 @@ const required = [
   'js/netwizard-management-integration.js',
   'js/netwizard-ha-services-integration.js',
   'js/netwizard-production-gate-architecture.js',
+  'js/netwizard-deployment-bundle.js',
   'js/netwizard-runtime.js'
 ];
 
@@ -63,6 +64,8 @@ before('js/netwizard-vendor-config-generators.js', 'js/netwizard-cisco-routing-i
 before('js/netwizard-routing-plan.js', 'js/netwizard-cisco-routing-generator.js');
 before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-integration.js');
 before('js/netwizard-architecture-validator.js', 'js/netwizard-production-gate-architecture.js');
+before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-bundle.js');
+before('js/netwizard-deployment-bundle.js', 'js/netwizard-runtime.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-runtime.js');
 
 const architectureSource = fs.readFileSync(path.join(root, 'js/netwizard-production-gate-architecture.js'), 'utf8');

@@ -151,6 +151,31 @@ test('documentación y matriz funcionan desde la UI y producen descargas', async
   expect(csv.suggestedFilename()).toMatch(/inventario\.csv$/);
 });
 
+test('paquete de despliegue descarga un ZIP completo tras superar la puerta estricta', async ({ page }) => {
+  await resetStorage(page);
+  const payload = samplePayload('small-office.json');
+  await page.evaluate((payload) => {
+    const prepared = window.NetWizardProjectSchema.prepareImport(payload, { defaults: window.defS });
+    if(!prepared.ok) throw new Error(prepared.errors.join('\n'));
+    window.NetWizardState.replaceProject(prepared.project, { source:'e2e-deployment-bundle' });
+    window.navTo && window.navTo('cfg');
+  }, payload);
+  await expect(page.locator('#expDeploymentPackage')).toBeVisible();
+
+  const zipDownload = page.waitForEvent('download');
+  await page.click('#expDeploymentPackage');
+  const download = await zipDownload;
+  expect(download.suggestedFilename()).toMatch(/small-office.*deployment-\d{4}-\d{2}-\d{2}\.zip$/i);
+  const downloadedPath = await download.path();
+  const zip = fs.readFileSync(downloadedPath);
+  expect(zip.readUInt32LE(0)).toBe(0x04034b50);
+  expect(zip.includes(Buffer.from('manifest.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('project/netwizard-project.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('reports/production-checklist.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('netwizard-deployment-bundle'))).toBeTruthy();
+  await expect(page.locator('#deploymentPackageStatus')).toContainText(/Paquete preparado|Package prepared/i);
+});
+
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {
   await resetStorage(page);
   await setProject(page, {
@@ -171,4 +196,12 @@ test('puerta de producción bloquea un diseño incompleto antes de exportar', as
   const gate = await page.evaluate(() => window.NetWizardProductionGate.runProductionGate(window.NetWizardState.getSnapshot(), { productionMode:true, strict:true }));
   expect(gate.status).toBe('blocked');
   expect(gate.counts.blocking).toBeGreaterThan(0);
+
+  page.on('dialog', dialog => dialog.accept());
+  await page.evaluate(() => window.navTo && window.navTo('cfg'));
+  await page.click('#expDeploymentPackage');
+  await expect(page.locator('#deploymentPackageStatus')).toContainText(/BLOQUEADO|BLOCKED/i);
+  const bundle = await page.evaluate(() => window.NetWizardLastDeploymentBundle);
+  expect(bundle.ok).toBe(false);
+  expect(bundle.files).toHaveLength(0);
 });

@@ -35,6 +35,8 @@
   "actions.cancel": "Cancel",
   "actions.close": "Close",
   "actions.download": "Download",
+  "bundle.download": "🚀 Deployment package ZIP",
+  "bundle.help": "The ZIP package runs the strict production gate and includes configurations, snapshot, inventory, documentation and checklist.",
   "docs.card.title": "📑 Inventory, documentation and matrix",
   "docs.card.badge": "v3.50",
   "docs.card.desc": "Export an operational project inventory and review a VLAN connectivity matrix before production.",

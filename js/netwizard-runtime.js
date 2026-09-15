@@ -12,6 +12,7 @@
     'NetWizardArchitectureValidator',
     'NetWizardProductionGate',
     'NetWizardProductionGateArchitecture',
+    'NetWizardDeploymentBundle',
     'NetWizardCapabilityRegistry',
     'NetWizardCapabilityUi',
     'NetWizardDeviceCapabilityForm',

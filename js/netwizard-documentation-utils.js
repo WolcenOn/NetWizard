@@ -96,7 +96,7 @@
   function upperAction(a){ const x=lower(a); return x==='allow'?'ALLOW':x==='deny'?'DENY':x==='log'?'LOG':'REVIEW'; }
   function markdownTable(rows, cols){ if(!arr(rows).length) return '_Sin datos._\n'; const head='| '+cols.join(' | ')+' |'; const sep='| '+cols.map(()=> '---').join(' | ')+' |'; const body=rows.map(r=>'| '+cols.map(c=>escMd(r[c])).join(' | ')+' |'); return [head,sep,...body].join('\n')+'\n'; }
   function buildMarkdownDocument(project, options){
-    const p=obj(project); const now=new Date().toISOString(); const inv=buildInventoryRows(p); const lines=[]; const loc=localeForReport(options); const matrix=buildConnectivityMatrix(p, {locale:loc});
+    const p=obj(project); const now=(options&&options.generatedAt)||new Date().toISOString(); const inv=buildInventoryRows(p); const lines=[]; const loc=localeForReport(options); const matrix=buildConnectivityMatrix(p, {locale:loc});
     const projectName=clean(p.projName||(loc==='en'?'Untitled project':'Proyecto sin título'),120);
     lines.push('# '+tr('doc.title',{project:projectName},loc)); lines.push(''); lines.push(tr('doc.exported',{date:now},loc)); lines.push('');
     lines.push('## '+tr('doc.summary',{},loc)); lines.push(''); lines.push(markdownTable([{devices:arr(p.devices).length,vlans:arr(p.vlans).length,subnets:arr(p.subnets).length,hosts:arr(p.hosts).length,links:arr(p.links).length,rules:arr(p.fwRules).length}], ['devices','vlans','subnets','hosts','links','rules']));

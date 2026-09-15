@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.50.0 · Paquete de despliegue verificable
+
+- Añadido un ZIP autocontenido con configuraciones por dispositivo, snapshot canónico, inventario, matriz, documentación y checklist.
+- El paquete ejecuta siempre la puerta estricta y no se crea si existen errores bloqueantes o salidas vendor inválidas.
+- Incluido un manifiesto con schema, estado, rutas, tamaños y CRC32 del payload.
+- Añadidos límites defensivos de tamaño y cantidad de dispositivos sin incorporar dependencias remotas.
+- La acción principal de exportación usa el nuevo paquete; las exportaciones legacy continúan disponibles.
+- Añadidas pruebas unitarias, matriz sobre los escenarios 3.50 y Playwright para descarga y bloqueo.
+
 ## 3.50.0 · Matriz de escenarios de producción
 
 - Migrados los cuatro proyectos de referencia al contrato nativo 3.50.
