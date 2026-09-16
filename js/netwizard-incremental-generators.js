@@ -139,6 +139,7 @@
     return{blocks,blockByKey,routes,excluded:Array.from(new Set(excluded)),opaqueRoots:opaqueRoots.map(item=>item.lines.join('\n')),invalid};
   }
   function multisetContains(available,wanted){const counts=new Map();for(const item of available)counts.set(item,(counts.get(item)||0)+1);for(const item of wanted){const count=counts.get(item)||0;if(!count)return false;counts.set(item,count-1);}return true;}
+  function removableLogicalInterface(name){return /\.\d+$|^(?:Vlan|Loopback|Tunnel|Port-channel)\d+$/i.test(String(name||''));}
   function renderIosBlock(header,commands){return commands.length?[header,...commands.map(command=>` ${command}`),' exit']:[];}
   function renderIosFile(title,commands){return[`! ${title}`,'! Candidato sin guardado automático. Revisar línea por línea antes de aplicar.','configure terminal',...commands,'end','! La persistencia queda fuera de este fichero.'].join('\n')+'\n';}
   function ciscoIosAdapter(context){
@@ -153,6 +154,7 @@
       for(const [slotKey,targetSlot] of target.slots){const sourceSlot=source&&source.slots.get(slotKey);if(sourceSlot&&sourceSlot.command===targetSlot.command)continue;forward.push(targetSlot.command);additions.push(`${target.header} :: ${targetSlot.command}`);if(sourceSlot){reverse.push(sourceSlot.command);deletions.push(`${target.header} :: ${sourceSlot.command}`);}else reverse.push(targetSlot.undo);}
       if(!source&&target.type==='vlan'){apply.push(target.header,...forward.map(command=>` ${command}`),' exit');rollback.push(`no ${target.header}`);additions.push(target.header);continue;}
       if(!source&&target.type==='dhcp'){apply.push(target.header,...forward.map(command=>` ${command}`),' exit');rollback.push(`no ${target.header}`);additions.push(target.header);continue;}
+      if(!source&&target.type==='interface'){if(!removableLogicalInterface(target.key))return{ready:false,reason:`${target.header}: una interfaz física sin stanza observada no tiene rollback exacto demostrable.`};apply.push(target.header,...forward.map(command=>` ${command}`),' exit');rollback.push(`no ${target.header}`);additions.push(target.header);continue;}
       if(forward.length){apply.push(...renderIosBlock(target.header,forward));rollback.push(...renderIosBlock(target.header,reverse));}
     }
     const beforeRoutes=new Map();for(const route of before.routes){const list=beforeRoutes.get(route.key)||[];if(!list.includes(route.command))list.push(route.command);beforeRoutes.set(route.key,list);}

@@ -145,6 +145,14 @@ assert.match(sampleCandidate.applyContent,/^interface Gi0\/1$/m);
 assert.match(sampleCandidate.applyContent,/^ switchport access vlan 10$/m);
 assert.match(sampleCandidate.rollbackContent,/^ switchport access vlan 999$/m);
 
+const logicalInterface=Incremental.ciscoIosAdapter({deviceName:'Edge',observedConfig:'hostname EDGE\n',desiredConfig:'hostname EDGE\ninterface GigabitEthernet0/1.10\n encapsulation dot1Q 10\n ip address 10.10.10.1 255.255.255.0\n no shutdown\n exit\n'});
+assert.strictEqual(logicalInterface.ready,true);
+assert.match(logicalInterface.applyContent,/^interface GigabitEthernet0\/1\.10$/m);
+assert.match(logicalInterface.rollbackContent,/^no interface GigabitEthernet0\/1\.10$/m);
+const absentPhysical=Incremental.ciscoIosAdapter({deviceName:'Edge',observedConfig:'hostname EDGE\n',desiredConfig:'hostname EDGE\ninterface GigabitEthernet0/2\n description New uplink\n no shutdown\n exit\n'});
+assert.strictEqual(absentPhysical.ready,false);
+assert.match(absentPhysical.reason,/interfaz física/i);
+
 const unsupported=build(project('fortinet'),'config system interface\nend\n');
 assert.strictEqual(unsupported.ok,true);
 assert.strictEqual(unsupported.devices[0].status,'manual-review');
