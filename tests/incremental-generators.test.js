@@ -129,6 +129,10 @@ const invalidVlanCisco=build(cisco,ciscoDesired.replace('switchport access vlan 
 assert.strictEqual(invalidVlanCisco.devices[0].status,'manual-review');
 const invalidMaskCisco=build(cisco,ciscoDesired.replace('network 10.10.10.0 255.255.255.0','network 10.10.10.0 255.0.255.0'));
 assert.strictEqual(invalidMaskCisco.devices[0].status,'manual-review');
+const reopenedCisco=ciscoDesired.replace('end\nwrite memory','interface GigabitEthernet1/0/1\n switchport access vlan 20\n exit\nend\nwrite memory');
+assert.strictEqual(build(cisco,reopenedCisco).devices[0].status,'candidate-ready');
+const conflictingReopen=reopenedCisco.replace(/(interface GigabitEthernet1\/0\/1\n switchport access vlan )20\n exit\nend/, '$130\n exit\nend');
+assert.strictEqual(build(cisco,conflictingReopen).devices[0].status,'manual-review');
 
 const sampleProject=JSON.parse(JSON.stringify(require('../samples/small-office.json').project));
 const sampleSwitch=sampleProject.devices.find(device=>device.vendorOs==='cisco_ios'&&(device.kind==='switch'||device.type==='switch'));

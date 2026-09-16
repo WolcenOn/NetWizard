@@ -109,7 +109,8 @@
   }
   function parseCiscoIos(value){
     const blocks=[],blockByKey=new Map(),routes=[],excluded=[],opaqueRoots=[],invalid=[];let current=null;
-    function addBlock(type,key,header,line){const mapKey=`${type}:${key}`;if(blockByKey.has(mapKey)){invalid.push({line,content:header,reason:'duplicate-block'});current=null;return;}current={type,key,header,slots:new Map(),unknown:[],line};blockByKey.set(mapKey,current);blocks.push(current);}
+    function addBlock(type,key,header,line){const mapKey=`${type}:${key}`,existing=blockByKey.get(mapKey);if(existing){current=existing;return;}current={type,key,header,slots:new Map(),unknown:[],line};blockByKey.set(mapKey,current);blocks.push(current);}
+    function addOpaque(line,lineNumber){current={type:'opaque',lines:[line],line:lineNumber};opaqueRoots.push(current);}
     for(const [index,rawValue] of text(value).split('\n').entries()){
       const lineNumber=index+1,raw=rawValue.replace(/[ \t]+$/,''),line=raw.trim();if(!line||line.startsWith('!'))continue;
       if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(raw)){invalid.push({line:lineNumber,content:line,reason:'control-character'});continue;}
@@ -122,11 +123,11 @@
         if((match=line.match(/^interface ([A-Za-z][A-Za-z0-9./:_-]{0,127})$/))){addBlock('interface',match[1],`interface ${match[1]}`,lineNumber);continue;}
         if((match=line.match(/^ip dhcp pool ([A-Za-z0-9_.-]{1,64})$/))){addBlock('dhcp',match[1],`ip dhcp pool ${match[1]}`,lineNumber);continue;}
         if(/^vlan\b|^interface\b|^ip dhcp pool\b/.test(line)){invalid.push({line:lineNumber,content:line,reason:'malformed-supported-block'});continue;}
-        if(/^ip route\b/.test(line)){const route=parseIosRoute(line);if(route)routes.push(route);else invalid.push({line:lineNumber,content:line,reason:'unsupported-route-format'});continue;}
+        if(/^ip route\b/.test(line)){const route=parseIosRoute(line);if(route)routes.push(route);else addOpaque(line,lineNumber);continue;}
         if(/^ip dhcp excluded-address\b/.test(line)){
           const command=line.replace(/\s+!\s.*$/,''),match=command.match(new RegExp(`^ip dhcp excluded-address (${IPV4})(?: (${IPV4}))?$`));if(match&&(!match[2]||ipv4Number(match[1])<=ipv4Number(match[2])))excluded.push(command);else invalid.push({line:lineNumber,content:line,reason:'unsupported-exclusion-format'});continue;
         }
-        current={type:'opaque',lines:[line],line:lineNumber};opaqueRoots.push(current);continue;
+        addOpaque(line,lineNumber);continue;
       }
       if(!current){invalid.push({line:lineNumber,content:line,reason:'orphan-subcommand'});continue;}
       if(current.type==='opaque'){current.lines.push(line);continue;}
