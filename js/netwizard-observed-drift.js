@@ -22,7 +22,7 @@ function validateProject(project,options){
   if(snapshot&&typeof snapshot==='object'){
     const opts=Object.assign({criticalKinds:['devices','links','wanCircuits','internalServices'],blockingFields:['adminState','operState','enabled','provider','bandwidthUpMbps','bandwidthDownMbps','security','vrfRef','vlanRef']},project&&project.driftPolicy||{},options||{});
     const kinds=['devices','ports','links','vlans','wanCircuits','internalServices','wifiAccessPoints','wifiSsids','vrfs','ipv6Networks'];
-    for(const kind of kinds){const result=compareCollection(kind,project&&project[kind],snapshot[kind],opts);issues.push(...result.issues);drift.push(...result.drift);}
+    for(const kind of kinds){if(!Array.isArray(snapshot[kind]))continue;const result=compareCollection(kind,project&&project[kind],snapshot[kind],opts);issues.push(...result.issues);drift.push(...result.drift);}
   }
   const blocking=issues.filter(i=>i.blocking).length;
   return{version:'netwizard-observed-drift-v1',ok:blocking===0,issues,drift,counts:{blocking,warnings:issues.filter(i=>i.severity==='warning').length,missing:drift.filter(d=>d.type==='missing').length,changed:drift.filter(d=>d.type==='changed').length,unexpected:drift.filter(d=>d.type==='unexpected').length},observedAt:snapshot&&snapshot.observedAt||null};

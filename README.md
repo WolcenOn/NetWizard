@@ -17,6 +17,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Puerta de producción con guía de corrección y checklist Markdown.
 - Paquete de despliegue ZIP con puerta estricta, configuraciones por dispositivo, snapshot 3.50, inventario, matriz, documentación, checklist, manifiesto CRC32 y runbook reversible.
 - Secuenciación operativa por dependencias: borde, core, acceso, servicios/controladores y APs; incluye protección HA/MLAG, criterios de parada y rollback inverso.
+- Change set observado → deseado con cobertura, caducidad, fingerprints, diffs de revisión, evidencia posterior y bloqueo seguro del modo incremental.
 - Exportaciones individuales de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
 - Matriz de escenarios de producción 3.50: oficina, campus, IoT/cámaras y tránsito L3 con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
@@ -99,6 +100,8 @@ Los proyectos de `samples/` ya están exportados nativamente como 3.50. `samples
 La acción principal **Exportar** genera ahora el paquete de despliegue ZIP. Esta ruta siempre usa la puerta estricta de producción aunque la interfaz esté en modo demo: los errores bloquean la descarga y los avisos se conservan dentro del informe y del checklist.
 
 El paquete incorpora `deployment/plan.json`, `deployment/runbook.md` y `deployment/rollback-checklist.md`. El snapshot de NetWizard documenta el diseño deseado, pero no reemplaza el backup real de cada equipo.
+
+También incorpora `changes/change-set.json`, diffs directos/inversos y evidencias pre/post. Consulta [el contrato de change set 3.50](docs/V3_50_CHANGE_SET.md). Los `.diff` documentan el cambio, pero no deben aplicarse directamente como comandos.
 
 ## v3.48 · Sistema i18n ampliable
 

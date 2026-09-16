@@ -25,6 +25,12 @@ reports/documentation.md
 deployment/plan.json
 deployment/runbook.md
 deployment/rollback-checklist.md
+changes/change-set.json
+changes/summary.md
+changes/patches/*.diff
+changes/rollback/*.diff
+evidence/pre-change.json
+evidence/post-change-checklist.md
 ```
 
 `manifest.json` identifica la versión de schema, el estado de producción y cada archivo de payload mediante ruta, tamaño y CRC32. El ZIP usa almacenamiento sin compresión para mantener una implementación estática, auditable y sin dependencias remotas; el CRC32 del propio formato permite detectar corrupción de cada entrada.
@@ -32,3 +38,5 @@ deployment/rollback-checklist.md
 El paquete debe tratarse como información sensible porque puede contener direccionamiento, nombres internos y configuraciones de infraestructura.
 
 La secuencia y reversión se documentan en `docs/V3_50_DEPLOYMENT_RUNBOOK.md`.
+
+Cuando existen configuraciones en `observedState.deviceConfigs`, el bundle crea un change set observado → deseado. El modo `deployment.changeMode: incremental` exige cobertura completa, capturas recientes y coincidencia de fabricante; los diffs son evidencia de revisión, no comandos ejecutables.

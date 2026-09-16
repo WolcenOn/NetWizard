@@ -20,6 +20,8 @@ Mantenimiento:
   const SUPPORTED_SCHEMA = /^3\.(?:2[89]|3\d|4\d|50)\.0$/;
   const DEVICE_MODEL = root.NetWizardDeviceModel || (typeof require === 'function' ? tryRequireDeviceModel() : null);
   const DEVICE_KINDS = DEVICE_MODEL ? DEVICE_MODEL.kinds.slice() : ['switch','router','firewall','access_point','wlan_controller','server','appliance'];
+  const MAX_OBSERVED_CONFIG_CHARS = 256 * 1024;
+  const MAX_OBSERVED_TOTAL_CHARS = 4 * 1024 * 1024;
   const ADVANCED_ARRAY_KEYS = [
     'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
     'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
@@ -134,6 +136,43 @@ Mantenimiento:
       return out;
     }
     return value;
+  }
+
+  function cleanConfigText(value){
+    return String(value == null ? '' : value)
+      .replace(/\r\n?/g, '\n')
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+  }
+
+  function sanitizeObservedState(value){
+    if(!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const source = asObject(value);
+    const out = sanitizeLooseValue(Object.fromEntries(Object.entries(source).filter(([key]) => key !== 'deviceConfigs')), 1000);
+    const rawConfigs = Array.isArray(source.deviceConfigs)
+      ? Object.fromEntries(source.deviceConfigs.map(entry => [cleanId(asObject(entry).deviceId, ''), entry]).filter(([id]) => id))
+      : asObject(source.deviceConfigs);
+    const configs = {};
+    let total = 0;
+    for(const [rawId, rawEntry] of Object.entries(rawConfigs).slice(0, 1000)){
+      const id = cleanId(rawId || asObject(rawEntry).deviceId, '');
+      if(!id) continue;
+      const entry = typeof rawEntry === 'string' ? { content: rawEntry } : asObject(rawEntry);
+      const content = cleanConfigText(entry.content);
+      const remaining = Math.max(0, MAX_OBSERVED_TOTAL_CHARS - total);
+      const limit = Math.min(MAX_OBSERVED_CONFIG_CHARS, remaining);
+      const kept = content.slice(0, limit);
+      total += kept.length;
+      configs[id] = {
+        vendor: cleanText(entry.vendor, 80),
+        capturedAt: cleanText(entry.capturedAt || source.observedAt, 80),
+        source: cleanText(entry.source, 160),
+        content: kept,
+        contentTruncated: entry.contentTruncated === true || kept.length < content.length
+      };
+    }
+    out.deviceConfigs = configs;
+    out.deviceConfigsTruncated = Object.keys(rawConfigs).length > Object.keys(configs).length;
+    return out;
   }
 
 
@@ -347,7 +386,7 @@ Mantenimiento:
       });
     }
     for(const key of ADVANCED_OBJECT_KEYS) p[key] = sanitizeLooseValue(p[key], 1000);
-    p.observedState = p.observedState ? sanitizeLooseValue(p.observedState, 1000) : null;
+    p.observedState = sanitizeObservedState(p.observedState);
 
     return { project: p, warnings: [] };
   }

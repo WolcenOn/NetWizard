@@ -12,6 +12,7 @@
     'NetWizardArchitectureValidator',
     'NetWizardProductionGate',
     'NetWizardProductionGateArchitecture',
+    'NetWizardChangeSet',
     'NetWizardDeploymentRunbook',
     'NetWizardDeploymentBundle',
     'NetWizardCapabilityRegistry',
