@@ -18,7 +18,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Paquete de despliegue ZIP con puerta estricta, configuraciones por dispositivo, snapshot 3.50, inventario, matriz, documentación, checklist, manifiesto CRC32 y runbook reversible.
 - Secuenciación operativa por dependencias: borde, core, acceso, servicios/controladores y APs; incluye protección HA/MLAG, criterios de parada y rollback inverso.
 - Change set observado → deseado con cobertura, caducidad, fingerprints, diffs de revisión, evidencia posterior y bloqueo seguro del modo incremental.
-- Registro incremental denegado por defecto, con candidatos Junos `set/delete`, rollback inverso y modo estricto que bloquea fabricantes sin adaptador seguro.
+- Registro incremental denegado por defecto, con candidatos Junos `set/delete`, Cisco IOS jerárquico administrado, rollback inverso y modo estricto que bloquea fabricantes sin adaptador seguro.
 - Exportaciones individuales de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
 - Matriz de escenarios de producción 3.50: oficina, campus, IoT/cámaras y tránsito L3 con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
@@ -104,7 +104,7 @@ El paquete incorpora `deployment/plan.json`, `deployment/runbook.md` y `deployme
 
 También incorpora `changes/change-set.json`, diffs directos/inversos y evidencias pre/post. Consulta [el contrato de change set 3.50](docs/V3_50_CHANGE_SET.md). Los `.diff` documentan el cambio, pero no deben aplicarse directamente como comandos.
 
-El registro incremental documentado en [Generadores incrementales seguros](docs/V3_50_INCREMENTAL_GENERATORS.md) solo emite comandos cuando un adaptador puede demostrar una transformación reversible. En 3.50 el primer adaptador ejecutable es Junos `display set`; el resto queda explícitamente en revisión manual.
+El registro incremental documentado en [Generadores incrementales seguros](docs/V3_50_INCREMENTAL_GENERATORS.md) solo emite comandos cuando un adaptador puede demostrar una transformación reversible. En 3.50 existen adaptadores para Junos `display set` y para el subconjunto administrado de Cisco IOS; el resto queda explícitamente en revisión manual.
 
 ## v3.48 · Sistema i18n ampliable
 

@@ -31,8 +31,8 @@ changes/patches/*.diff
 changes/rollback/*.diff
 incremental/plan.json
 incremental/summary.md
-incremental/commands/*.set
-incremental/rollback/*.set
+incremental/commands/*.{set,cfg}
+incremental/rollback/*.{set,cfg}
 evidence/pre-change.json
 evidence/post-change-checklist.md
 ```
@@ -45,4 +45,4 @@ La secuencia y reversión se documentan en `docs/V3_50_DEPLOYMENT_RUNBOOK.md`.
 
 Cuando existen configuraciones en `observedState.deviceConfigs`, el bundle crea un change set observado → deseado. El modo `deployment.changeMode: incremental` exige cobertura completa, capturas recientes y coincidencia de fabricante; los diffs son evidencia de revisión, no comandos ejecutables.
 
-El registro incremental puede convertir un change set Junos `display set` en candidatos `set/delete`. Los demás fabricantes permanecen en revisión manual hasta disponer de un parser seguro. `deployment.requireExecutableIncremental: true` bloquea el paquete si cualquier cambio carece de adaptador ejecutable.
+El registro incremental puede convertir un change set Junos `display set` en candidatos `set/delete` y un cambio Cisco IOS administrado en candidatos jerárquicos `.cfg`. Los demás fabricantes permanecen en revisión manual hasta disponer de un parser seguro. `deployment.requireExecutableIncremental: true` bloquea el paquete si cualquier cambio carece de adaptador ejecutable.
