@@ -34,7 +34,8 @@ const project={
 };
 const configPaths=Object.fromEntries(project.devices.map((device,index)=>[device.id,`configs/${String(index+1).padStart(2,'0')}-${device.id}.cfg`]));
 const changeSet={requestedMode:'incremental',executionMode:'reviewed-incremental',coverage:{devices:6,observed:6,changed:1},devices:[{deviceId:'fw1',status:'change-required',applyMode:'reviewed-target',patchPath:'changes/patches/fw1.diff',rollbackPatchPath:'changes/rollback/fw1.diff',capturedAt:'2026-09-15T00:00:00Z',stats:{addedLines:2,removedLines:1}},{deviceId:'sw1',status:'no-change',applyMode:'reviewed-target',capturedAt:'2026-09-15T00:00:00Z',stats:{addedLines:0,removedLines:0}}]};
-const plan=Runbook.buildDeploymentPlan(project,{generatedAt:'2026-09-15T00:00:00.000Z',configPaths,changeSet});
+const incrementalPlan={mode:'incremental',requireExecutableIncremental:false,counts:{candidateReady:1,manualReview:4,noChange:1},devices:[{deviceId:'fw1',status:'candidate-ready',adapterId:'test.safe',applyPath:'incremental/commands/fw1.set',rollbackPath:'incremental/rollback/fw1.set',instructions:['Validar candidato.'],rollbackInstructions:['Validar rollback.'],commandCounts:{additions:2,deletions:1}},{deviceId:'sw1',status:'no-change'}]};
+const plan=Runbook.buildDeploymentPlan(project,{generatedAt:'2026-09-15T00:00:00.000Z',configPaths,changeSet,incrementalPlan});
 assert.strictEqual(plan.ok,true);
 assert.strictEqual(plan.maxParallel,1);
 assert.strictEqual(plan.changeTicket,'CHG-42');
@@ -44,6 +45,7 @@ assert.deepStrictEqual(plan.validationTargets,['HTTPS portal']);
 assert.strictEqual(plan.criticalServices[0].id,'dns');
 assert.strictEqual(plan.resilienceChecks[0].id,'wan-down');
 assert.strictEqual(plan.changeSet.executionMode,'reviewed-incremental');
+assert.strictEqual(plan.incremental.counts.candidateReady,1);
 assert.strictEqual(plan.steps.length,project.devices.length);
 assert.strictEqual(new Set(plan.steps.map(step=>step.deviceId)).size,project.devices.length);
 
@@ -58,6 +60,7 @@ assert.strictEqual(plan.steps.find(step=>step.deviceId==='fw1').risk,'critical')
 assert.ok(plan.steps.find(step=>step.deviceId==='fw1').backup.some(line=>/backup/i.test(line)));
 assert.strictEqual(plan.steps.find(step=>step.deviceId==='ap1').configPath,configPaths.ap1);
 assert.strictEqual(plan.steps.find(step=>step.deviceId==='fw1').change.patchPath,'changes/patches/fw1.diff');
+assert.strictEqual(plan.steps.find(step=>step.deviceId==='fw1').incremental.applyPath,'incremental/commands/fw1.set');
 
 const markdown=Runbook.buildMarkdown(plan);
 assert.match(markdown,/Runbook de despliegue/);
@@ -68,9 +71,10 @@ assert.match(markdown,/Firewall/);
 assert.match(markdown,/diff de revisión/i);
 assert.match(markdown,/\+2 \/ -1 líneas/);
 assert.match(markdown,/No aplicar configuración/);
+assert.match(markdown,/incremental\/commands\/fw1\.set/);
 const rollback=Runbook.buildRollbackMarkdown(plan);
 assert.match(rollback,/Checklist de rollback/);
-assert.match(rollback,/changes\/rollback\/fw1\.diff/);
+assert.match(rollback,/incremental\/rollback\/fw1\.set/);
 assert.match(rollback,/SW Acceso.*sin rollback/);
 assert.ok(rollback.indexOf('AP Planta 1')<rollback.indexOf('Firewall'),'rollback debe listar los equipos en orden inverso');
 

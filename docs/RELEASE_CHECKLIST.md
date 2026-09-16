@@ -34,6 +34,9 @@ npm run test:e2e
 - [ ] Si el modo es incremental, comprobar cobertura, antigüedad y fabricante de todas las capturas observadas.
 - [ ] Revisar los diffs observado → deseado y confirmar que nadie los tratará como comandos directos.
 - [ ] Capturar fingerprints y evidencias posteriores al cambio.
+- [ ] Confirmar que cada fichero `incremental/commands/` procede de un adaptador `candidate-ready`.
+- [ ] Para Junos, revisar `show | compare`, ejecutar `commit check` y usar la política aprobada de `commit confirmed`.
+- [ ] No convertir estados `manual-review` en comandos mediante copia directa del diff.
 - [ ] Exportar inventario CSV.
 - [ ] Exportar documentación Markdown.
 - [ ] Crear y restaurar snapshot.

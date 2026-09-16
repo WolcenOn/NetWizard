@@ -40,6 +40,7 @@ const required = [
   'js/netwizard-ha-services-integration.js',
   'js/netwizard-production-gate-architecture.js',
   'js/netwizard-change-set.js',
+  'js/netwizard-incremental-generators.js',
   'js/netwizard-deployment-runbook.js',
   'js/netwizard-deployment-bundle.js',
   'js/netwizard-runtime.js'
@@ -68,7 +69,8 @@ before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-in
 before('js/netwizard-architecture-validator.js', 'js/netwizard-production-gate-architecture.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-change-set.js');
-before('js/netwizard-change-set.js', 'js/netwizard-deployment-runbook.js');
+before('js/netwizard-change-set.js', 'js/netwizard-incremental-generators.js');
+before('js/netwizard-incremental-generators.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-deployment-runbook.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-deployment-bundle.js', 'js/netwizard-runtime.js');

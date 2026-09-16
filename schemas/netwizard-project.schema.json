@@ -290,6 +290,7 @@
         "observationMinutes": { "type": "number", "minimum": 5 },
         "changeMode": { "type": "string", "enum": ["full", "incremental"] },
         "maxObservedAgeHours": { "type": "number", "minimum": 1 },
+        "requireExecutableIncremental": { "type": "boolean" },
         "validationTargets": { "type": "array", "items": { "type": "string", "maxLength": 200 } },
         "devices": { "type": "object", "additionalProperties": { "type": "object" } }
       }

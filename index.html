@@ -736,7 +736,7 @@
           <button class="btn by" id="nwBridgePreview" title="Genera un snapshot compatible con IoTWizard sin modificar el proyecto">🌉 Vista IoT-ready</button>
           <button class="btn bs" id="nwBridgeDownload" title="Descarga el snapshot + grafo unificado para pruebas de integración">⬇ Grafo unificado</button>
         </div>
-        <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set observado, evidencias, runbook y rollback.</pre>
+        <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set, candidatos incrementales seguros, evidencias y rollback.</pre>
         <div class="hint" id="nwBridgeStatus" style="margin-top:6px;">Bridge IoT-ready: genera una copia de lectura para futuras integraciones sin alterar NetWizard.</div>
         <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" style="min-height:80px;margin-top:8px;"></textarea>
       </div>
@@ -991,6 +991,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <!-- La puerta extendida se instala cuando todos sus validadores ya existen. -->
 <script src="./js/netwizard-production-gate-architecture.js"></script>
 <script src="./js/netwizard-change-set.js"></script>
+<script src="./js/netwizard-incremental-generators.js"></script>
 <script src="./js/netwizard-deployment-runbook.js"></script>
 <script src="./js/netwizard-deployment-bundle.js"></script>
 <script src="./js/netwizard-runtime.js"></script>

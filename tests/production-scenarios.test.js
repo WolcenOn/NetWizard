@@ -18,6 +18,7 @@ const Documentation=require('../js/netwizard-documentation-utils.js');
 const DeploymentBundle=require('../js/netwizard-deployment-bundle.js');
 const DeploymentRunbook=require('../js/netwizard-deployment-runbook.js');
 const ChangeSet=require('../js/netwizard-change-set.js');
+const IncrementalGenerators=require('../js/netwizard-incremental-generators.js');
 require('../js/netwizard-production-gate-architecture.js');
 const Gate=global.NetWizardProductionGate;
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'samples','production-scenarios.json'),'utf8'));
@@ -79,7 +80,7 @@ for(const scenario of manifest.scenarios){
   }
 
   const bundle=DeploymentBundle.buildDeploymentPackage(prepared.project,{
-    generatedAt:'2026-09-15T00:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,
+    generatedAt:'2026-09-15T00:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,incremental:IncrementalGenerators,
     generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)
   });
   assert.strictEqual(bundle.ok,true,`${scenario.id}: el paquete quedó bloqueado: ${(bundle.issues||[]).map(issue=>issue.code).join(', ')}`);
@@ -89,6 +90,7 @@ for(const scenario of manifest.scenarios){
   assert.strictEqual(bundle.deploymentPlan.steps.length,prepared.project.devices.length);
   assert.ok(bundle.files.some(file=>file.path==='deployment/runbook.md'));
   assert.ok(bundle.files.some(file=>file.path==='changes/change-set.json'));
+  assert.ok(bundle.files.some(file=>file.path==='incremental/plan.json'));
   assert.ok(bundle.files.some(file=>file.path==='evidence/pre-change.json'));
   assert.ok(DeploymentBundle.encodeZip(bundle).length>1000,`${scenario.id}: ZIP vacío`);
 
@@ -100,7 +102,7 @@ for(const scenario of manifest.scenarios){
     const changedDevice=incrementalProject.devices[0];
     incrementalProject.observedState.deviceConfigs[changedDevice.id].content+='\n! observed-only-line\n';
     activeProject=incrementalProject;
-    const incrementalBundle=DeploymentBundle.buildDeploymentPackage(incrementalProject,{generatedAt:'2026-09-15T12:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)});
+    const incrementalBundle=DeploymentBundle.buildDeploymentPackage(incrementalProject,{generatedAt:'2026-09-15T12:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,incremental:IncrementalGenerators,generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)});
     assert.strictEqual(incrementalBundle.ok,true,`${scenario.id}: change set incremental bloqueado: ${(incrementalBundle.issues||[]).map(issue=>issue.code).join(', ')}`);
     assert.strictEqual(incrementalBundle.manifest.changeSet.executionMode,'reviewed-incremental');
     assert.strictEqual(incrementalBundle.manifest.changeSet.observedDevices,incrementalProject.devices.length);
