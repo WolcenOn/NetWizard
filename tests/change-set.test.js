@@ -53,6 +53,25 @@ const wrongVendor=project(previous);
 wrongVendor.observedState.deviceConfigs.sw1.vendor='juniper_junos';
 assert.ok(build(wrongVendor).issues.some(item=>item.code==='NW-CHANGE-004'&&item.blocking));
 
+const missingVendor=project(previous);
+delete missingVendor.observedState.deviceConfigs.sw1.vendor;
+assert.ok(build(missingVendor).issues.some(item=>item.code==='NW-CHANGE-010'&&item.blocking));
+
+const invalidDate=project(previous);
+invalidDate.observedState.deviceConfigs.sw1.capturedAt='fecha-invalida';
+assert.ok(build(invalidDate).issues.some(item=>item.code==='NW-CHANGE-007'&&item.blocking));
+
+const futureDate=project(previous);
+futureDate.observedState.deviceConfigs.sw1.capturedAt='2026-09-17T12:00:00.000Z';
+assert.ok(build(futureDate).issues.some(item=>item.code==='NW-CHANGE-009'&&item.blocking));
+
+const invalidAge=project(previous,{deployment:{changeMode:'incremental',maxObservedAgeHours:'invalid'}});
+assert.ok(build(invalidAge).issues.some(item=>item.code==='NW-CHANGE-011'&&item.blocking));
+
+const invalidMode=project(previous,{deployment:{changeMode:'incremental-change',maxObservedAgeHours:24}});
+assert.strictEqual(build(invalidMode).executionMode,'invalid');
+assert.ok(build(invalidMode).issues.some(item=>item.code==='NW-CHANGE-012'&&item.blocking));
+
 const truncated=project(previous);
 truncated.observedState.deviceConfigs.sw1.contentTruncated=true;
 assert.ok(build(truncated).issues.some(item=>item.code==='NW-CHANGE-005'&&item.blocking));

@@ -49,11 +49,13 @@
   function publicChangeSet(changeSet){const copy=JSON.parse(JSON.stringify(changeSet||{}));delete copy.artifacts;return copy;}
 
   function buildChangeSet(project,options){
-    const p=obj(project),opts=obj(options),deployment=obj(p.deployment),requestedMode=clean(deployment.changeMode||opts.changeMode||'full',30).toLowerCase();
-    const mode=requestedMode==='incremental'?'incremental':'full';const generatedAt=clean(opts.generatedAt,80)||new Date().toISOString();
-    const maxAge=Math.max(1,Number(deployment.maxObservedAgeHours||opts.maxObservedAgeHours||24));
+    const p=obj(project),opts=obj(options),deployment=obj(p.deployment),explicitMode=clean(deployment.changeMode||opts.changeMode,30).toLowerCase();
+    const mode=explicitMode||'full';const generatedAt=clean(opts.generatedAt,80)||new Date().toISOString();
+    const rawMaxAge=deployment.maxObservedAgeHours!=null?deployment.maxObservedAgeHours:(opts.maxObservedAgeHours!=null?opts.maxObservedAgeHours:24);const parsedMaxAge=Number(rawMaxAge);const maxAge=Number.isFinite(parsedMaxAge)&&parsedMaxAge>=1?parsedMaxAge:24;
     const observed=obj(p.observedState),observedMap=observedConfigMap(observed),desiredMap=desiredConfigMap(opts.desiredConfigs),configPaths=obj(opts.configPaths);
     const issues=[],devices=[],artifacts=[],deviceList=arr(p.devices);
+    if(!['full','incremental'].includes(mode))issues.push(issue('NW-CHANGE-012',`Modo de cambio no soportado: ${mode}. Use full o incremental.`,true));
+    if(!Number.isFinite(parsedMaxAge)||parsedMaxAge<1)issues.push(issue('NW-CHANGE-011','maxObservedAgeHours debe ser un número igual o superior a 1.',true));
     if(observed.deviceConfigsTruncated)issues.push(issue('NW-CHANGE-006','El conjunto de configuraciones observadas fue truncado durante la importación.',true));
     for(let index=0;index<deviceList.length;index++){
       const device=deviceList[index],deviceId=clean(device&&device.id,120),deviceName=clean(device&&device.name,120)||deviceId,vendor=clean(device&&device.vendorOs,80)||'generic_network';
@@ -61,8 +63,10 @@
       const capturedAt=clean(snapshot&&snapshot.capturedAt||observed.observedAt,80)||null;const ageHours=capturedAt?hoursBetween(generatedAt,capturedAt):null;const blocking=mode==='incremental';
       if(!hasObserved)issues.push(issue('NW-CHANGE-001',`${deviceName}: no existe configuración observada; no puede calcularse un delta fiable.`,blocking,{deviceId}));
       if(hasObserved&&!capturedAt)issues.push(issue('NW-CHANGE-002',`${deviceName}: la configuración observada no tiene capturedAt/observedAt.`,blocking,{deviceId}));
+      if(hasObserved&&capturedAt&&ageHours==null)issues.push(issue('NW-CHANGE-007',`${deviceName}: capturedAt/observedAt no contiene una fecha válida.`,blocking,{deviceId}));
+      if(hasObserved&&ageHours!=null&&ageHours<-(5/60))issues.push(issue('NW-CHANGE-009',`${deviceName}: el snapshot está fechado en el futuro.`,blocking,{deviceId,ageHours}));
       if(hasObserved&&ageHours!=null&&ageHours>maxAge)issues.push(issue('NW-CHANGE-003',`${deviceName}: el snapshot tiene ${Math.floor(ageHours)} h y supera el máximo de ${maxAge} h.`,blocking,{deviceId,ageHours}));
-      const observedVendor=clean(snapshot&&snapshot.vendor,80);if(hasObserved&&observedVendor&&observedVendor!==vendor)issues.push(issue('NW-CHANGE-004',`${deviceName}: el snapshot es ${observedVendor}, pero el diseño requiere ${vendor}.`,blocking,{deviceId}));
+      const observedVendor=clean(snapshot&&snapshot.vendor,80);if(hasObserved&&!observedVendor)issues.push(issue('NW-CHANGE-010',`${deviceName}: el snapshot no identifica el fabricante.`,blocking,{deviceId}));else if(hasObserved&&observedVendor!==vendor)issues.push(issue('NW-CHANGE-004',`${deviceName}: el snapshot es ${observedVendor}, pero el diseño requiere ${vendor}.`,blocking,{deviceId}));
       if(snapshot&&snapshot.contentTruncated)issues.push(issue('NW-CHANGE-005',`${deviceName}: la configuración observada fue truncada durante la importación.`,true,{deviceId}));
       if(!desired)issues.push(issue('NW-CHANGE-008',`${deviceName}: no existe configuración objetivo para construir el change set.`,true,{deviceId}));
       const stats=hasObserved?deltaStats(observedContent,desired):{beforeLines:0,afterLines:lines(desired).length,addedLines:lines(desired).length,removedLines:0,changed:true};
@@ -71,7 +75,7 @@
       devices.push({deviceId,deviceName,vendor,status:!hasObserved?'baseline-required':(stats.changed?'change-required':'no-change'),applyMode:hasObserved?'reviewed-target':'full-target',configPath:configPaths[deviceId]||null,patchPath,rollbackPatchPath,capturedAt,ageHours:ageHours==null?null:Math.max(0,Number(ageHours.toFixed(2))),observedFingerprint:hasObserved?fingerprint(observedContent):null,desiredFingerprint:fingerprint(desired),stats});
     }
     const blockingIssues=issues.filter(item=>item.blocking),covered=devices.filter(item=>item.capturedAt&&item.observedFingerprint).length,changed=devices.filter(item=>item.status==='change-required').length;
-    return{ok:blockingIssues.length===0,format:FORMAT,version:VERSION,generatedAt,projectName:clean(p.projName,160),requestedMode:mode,executionMode:mode==='incremental'?'reviewed-incremental':'full-target',maxObservedAgeHours:maxAge,observedAt:clean(observed.observedAt,80)||null,coverage:{devices:devices.length,observed:covered,missing:devices.length-covered,changed,noChange:devices.filter(item=>item.status==='no-change').length},issues,devices,artifacts,warning:'Los archivos .diff son evidencia de revisión y rollback; no son comandos para aplicar directamente.'};
+    return{ok:blockingIssues.length===0,format:FORMAT,version:VERSION,generatedAt,projectName:clean(p.projName,160),requestedMode:mode,executionMode:mode==='incremental'?'reviewed-incremental':(mode==='full'?'full-target':'invalid'),maxObservedAgeHours:maxAge,observedAt:clean(observed.observedAt,80)||null,coverage:{devices:devices.length,observed:covered,missing:devices.length-covered,changed,noChange:devices.filter(item=>item.status==='no-change').length},issues,devices,artifacts,warning:'Los archivos .diff son evidencia de revisión y rollback; no son comandos para aplicar directamente.'};
   }
   function list(items){return arr(items).map(item=>`- [ ] ${item}`).join('\n')||'- [ ] Sin elementos.';}
   function buildSummaryMarkdown(changeSet){
