@@ -248,6 +248,22 @@
       "additionalProperties": true,
       "properties": {
         "observedAt": { "type": "string" },
+        "source": { "type": "string", "maxLength": 160 },
+        "deviceConfigs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["content"],
+            "additionalProperties": true,
+            "properties": {
+              "vendor": { "type": "string", "maxLength": 80 },
+              "capturedAt": { "type": "string", "maxLength": 80 },
+              "source": { "type": "string", "maxLength": 160 },
+              "content": { "type": "string", "maxLength": 262144 },
+              "contentTruncated": { "type": "boolean" }
+            }
+          }
+        },
         "devices": { "type": "array", "items": { "type": "object" } },
         "ports": { "type": "array", "items": { "type": "object" } },
         "links": { "type": "array", "items": { "type": "object" } },
@@ -272,6 +288,8 @@
         "maintenanceWindow": { "type": "string", "maxLength": 160 },
         "approvalOwner": { "type": "string", "maxLength": 120 },
         "observationMinutes": { "type": "number", "minimum": 5 },
+        "changeMode": { "type": "string", "enum": ["full", "incremental"] },
+        "maxObservedAgeHours": { "type": "number", "minimum": 1 },
         "validationTargets": { "type": "array", "items": { "type": "string", "maxLength": 200 } },
         "devices": { "type": "object", "additionalProperties": { "type": "object" } }
       }

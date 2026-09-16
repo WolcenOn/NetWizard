@@ -175,9 +175,47 @@ test('paquete de despliegue descarga un ZIP completo tras superar la puerta estr
   expect(zip.includes(Buffer.from('deployment/plan.json'))).toBeTruthy();
   expect(zip.includes(Buffer.from('deployment/runbook.md'))).toBeTruthy();
   expect(zip.includes(Buffer.from('deployment/rollback-checklist.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('changes/change-set.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('changes/summary.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('evidence/pre-change.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('evidence/post-change-checklist.md'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('diff no ejecutable'))).toBeFalsy();
+  expect(zip.includes(Buffer.from('no son comandos'))).toBeTruthy();
   expect(zip.includes(Buffer.from('NO es un backup'))).toBeTruthy();
   expect(zip.includes(Buffer.from('netwizard-deployment-bundle'))).toBeTruthy();
   await expect(page.locator('#deploymentPackageStatus')).toContainText(/Paquete preparado|Package prepared/i);
+});
+
+test('modo incremental exige evidencia y exporta diffs directos e inversos', async ({ page }) => {
+  await resetStorage(page);
+  const payload = samplePayload('small-office.json');
+  await page.evaluate((payload) => {
+    const prepared = window.NetWizardProjectSchema.prepareImport(payload, { defaults: window.defS });
+    if(!prepared.ok) throw new Error(prepared.errors.join('\n'));
+    const project=prepared.project;
+    window.NetWizardState.replaceProject(project,{source:'e2e-change-set-base'});
+    const capturedAt=new Date().toISOString();
+    project.deployment=Object.assign({},project.deployment,{changeMode:'incremental',maxObservedAgeHours:24});
+    project.observedState={observedAt:capturedAt,source:'playwright',deviceConfigs:{}};
+    for(const device of project.devices)project.observedState.deviceConfigs[device.id]={vendor:device.vendorOs,capturedAt,source:'playwright',content:window.genConfig(device.id,device.vendorOs)};
+    project.observedState.deviceConfigs[project.devices[0].id].content+='\n! observed-only-line\n';
+    window.NetWizardState.replaceProject(project,{source:'e2e-change-set'});
+    window.navTo && window.navTo('cfg');
+  }, payload);
+
+  const zipDownload = page.waitForEvent('download');
+  await page.click('#expDeploymentPackage');
+  const download = await zipDownload;
+  const downloadedPath = await download.path();
+  const zip = fs.readFileSync(downloadedPath);
+  expect(zip.includes(Buffer.from('changes/change-set.json'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('changes/patches/'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('changes/rollback/'))).toBeTruthy();
+  const bundle = await page.evaluate(() => window.NetWizardLastDeploymentBundle);
+  expect(bundle.ok).toBe(true);
+  expect(bundle.manifest.changeSet.executionMode).toBe('reviewed-incremental');
+  expect(bundle.manifest.changeSet.missingDevices).toBe(0);
+  expect(bundle.manifest.changeSet.changedDevices).toBe(1);
 });
 
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {

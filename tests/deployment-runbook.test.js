@@ -33,7 +33,8 @@ const project={
   haGroups:[],mlagDomains:[]
 };
 const configPaths=Object.fromEntries(project.devices.map((device,index)=>[device.id,`configs/${String(index+1).padStart(2,'0')}-${device.id}.cfg`]));
-const plan=Runbook.buildDeploymentPlan(project,{generatedAt:'2026-09-15T00:00:00.000Z',configPaths});
+const changeSet={requestedMode:'incremental',executionMode:'reviewed-incremental',coverage:{devices:6,observed:6,changed:1},devices:[{deviceId:'fw1',status:'change-required',applyMode:'reviewed-target',patchPath:'changes/patches/fw1.diff',rollbackPatchPath:'changes/rollback/fw1.diff',capturedAt:'2026-09-15T00:00:00Z',stats:{addedLines:2,removedLines:1}},{deviceId:'sw1',status:'no-change',applyMode:'reviewed-target',capturedAt:'2026-09-15T00:00:00Z',stats:{addedLines:0,removedLines:0}}]};
+const plan=Runbook.buildDeploymentPlan(project,{generatedAt:'2026-09-15T00:00:00.000Z',configPaths,changeSet});
 assert.strictEqual(plan.ok,true);
 assert.strictEqual(plan.maxParallel,1);
 assert.strictEqual(plan.changeTicket,'CHG-42');
@@ -42,6 +43,7 @@ assert.ok(plan.estimatedTotalMinutes>30);
 assert.deepStrictEqual(plan.validationTargets,['HTTPS portal']);
 assert.strictEqual(plan.criticalServices[0].id,'dns');
 assert.strictEqual(plan.resilienceChecks[0].id,'wan-down');
+assert.strictEqual(plan.changeSet.executionMode,'reviewed-incremental');
 assert.strictEqual(plan.steps.length,project.devices.length);
 assert.strictEqual(new Set(plan.steps.map(step=>step.deviceId)).size,project.devices.length);
 
@@ -55,6 +57,7 @@ for(const step of plan.steps)for(const dependency of step.dependsOn)assert.ok(po
 assert.strictEqual(plan.steps.find(step=>step.deviceId==='fw1').risk,'critical');
 assert.ok(plan.steps.find(step=>step.deviceId==='fw1').backup.some(line=>/backup/i.test(line)));
 assert.strictEqual(plan.steps.find(step=>step.deviceId==='ap1').configPath,configPaths.ap1);
+assert.strictEqual(plan.steps.find(step=>step.deviceId==='fw1').change.patchPath,'changes/patches/fw1.diff');
 
 const markdown=Runbook.buildMarkdown(plan);
 assert.match(markdown,/Runbook de despliegue/);
@@ -62,8 +65,13 @@ assert.match(markdown,/NO es un backup/);
 assert.match(markdown,/Criterios de parada/);
 assert.match(markdown,/Escenarios de resiliencia declarados/);
 assert.match(markdown,/Firewall/);
+assert.match(markdown,/diff de revisión/i);
+assert.match(markdown,/\+2 \/ -1 líneas/);
+assert.match(markdown,/No aplicar configuración/);
 const rollback=Runbook.buildRollbackMarkdown(plan);
 assert.match(rollback,/Checklist de rollback/);
+assert.match(rollback,/changes\/rollback\/fw1\.diff/);
+assert.match(rollback,/SW Acceso.*sin rollback/);
 assert.ok(rollback.indexOf('AP Planta 1')<rollback.indexOf('Firewall'),'rollback debe listar los equipos en orden inverso');
 
 const haPlan=Runbook.buildDeploymentPlan({devices:[

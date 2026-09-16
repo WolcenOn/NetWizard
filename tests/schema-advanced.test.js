@@ -34,6 +34,22 @@ assert.ok(schema.model.deviceKinds.includes('wlan_controller'));
 assert.ok(schema.model.advancedArrays.includes('wanCircuits'));
 assert.ok(schema.model.advancedObjects.includes('deployment'));
 
+const observedConfig = 'interface Ethernet1\n description snapshot\n'.repeat(40);
+const observed = schema.prepareImport({
+  devices:[{id:'sw1',name:'SW1',kind:'switch',type:'switch',vendorOs:'cisco_ios'}],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
+  observedState:{observedAt:'2026-09-16T10:00:00Z',deviceConfigs:{sw1:{vendor:'cisco_ios',source:'manual',content:observedConfig}}},
+  deployment:{changeMode:'incremental',maxObservedAgeHours:24}
+});
+assert.strictEqual(observed.ok,true);
+assert.strictEqual(observed.project.observedState.deviceConfigs.sw1.content,observedConfig);
+assert.strictEqual(observed.project.observedState.deviceConfigs.sw1.capturedAt,'2026-09-16T10:00:00Z');
+assert.strictEqual(observed.project.observedState.deviceConfigs.sw1.contentTruncated,false);
+assert.strictEqual(observed.project.deployment.changeMode,'incremental');
+
+const oversized = schema.prepareImport({devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],observedState:{deviceConfigs:{sw1:{content:'x'.repeat(262145)}}}});
+assert.strictEqual(oversized.project.observedState.deviceConfigs.sw1.content.length,262144);
+assert.strictEqual(oversized.project.observedState.deviceConfigs.sw1.contentTruncated,true);
+
 const legacyDevices = schema.prepareImport({
   devices:[
     {id:'legacy-ap',name:'AP antiguo',type:'switch',wifiRole:'ap',vendorOs:'ubiquiti_unifi'},

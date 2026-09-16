@@ -17,6 +17,7 @@ const FirewallGenerator=require('../js/netwizard-firewall-edge-generator.js');
 const Documentation=require('../js/netwizard-documentation-utils.js');
 const DeploymentBundle=require('../js/netwizard-deployment-bundle.js');
 const DeploymentRunbook=require('../js/netwizard-deployment-runbook.js');
+const ChangeSet=require('../js/netwizard-change-set.js');
 require('../js/netwizard-production-gate-architecture.js');
 const Gate=global.NetWizardProductionGate;
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'samples','production-scenarios.json'),'utf8'));
@@ -64,19 +65,21 @@ for(const scenario of manifest.scenarios){
   assert.strictEqual(release.passed,true,`${scenario.id}: ${release.reasons.join(', ')}`);
 
   activeProject=prepared.project;
+  const generatedConfigs={};
   for(const expected of scenario.configs){
     const device=prepared.project.devices.find(item=>item.id===expected.deviceId);
     assert(device,`${scenario.id}: no existe ${expected.deviceId}`);
     assert.strictEqual(device.vendorOs,expected.vendor,`${scenario.id}/${expected.deviceId}: vendor inesperado`);
     assert.ok(expected.signatures.length >= 2,`${scenario.id}/${expected.deviceId}: contrato de salida insuficiente`);
     const output=pipeline.generate(expected.deviceId,expected.vendor);
+    generatedConfigs[expected.deviceId]=output;
     assert.ok(output.length > 80,`${scenario.id}/${expected.deviceId}: salida demasiado corta`);
     assert.ok(!/Sin vendor asignado|todavía no implementado/i.test(output),`${scenario.id}/${expected.deviceId}: fallback inválido`);
     for(const signature of expected.signatures) assert.ok(output.includes(signature),`${scenario.id}/${expected.deviceId}: falta ${signature}`);
   }
 
   const bundle=DeploymentBundle.buildDeploymentPackage(prepared.project,{
-    generatedAt:'2026-09-15T00:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,
+    generatedAt:'2026-09-15T00:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,
     generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)
   });
   assert.strictEqual(bundle.ok,true,`${scenario.id}: el paquete quedó bloqueado: ${(bundle.issues||[]).map(issue=>issue.code).join(', ')}`);
@@ -85,7 +88,25 @@ for(const scenario of manifest.scenarios){
   assert.strictEqual(bundle.files.filter(file=>file.path.startsWith('configs/')).length,prepared.project.devices.length);
   assert.strictEqual(bundle.deploymentPlan.steps.length,prepared.project.devices.length);
   assert.ok(bundle.files.some(file=>file.path==='deployment/runbook.md'));
+  assert.ok(bundle.files.some(file=>file.path==='changes/change-set.json'));
+  assert.ok(bundle.files.some(file=>file.path==='evidence/pre-change.json'));
   assert.ok(DeploymentBundle.encodeZip(bundle).length>1000,`${scenario.id}: ZIP vacío`);
+
+  if(scenario===manifest.scenarios[0]){
+    const incrementalProject=JSON.parse(JSON.stringify(prepared.project));
+    incrementalProject.deployment=Object.assign({},incrementalProject.deployment,{changeMode:'incremental',maxObservedAgeHours:24});
+    incrementalProject.observedState={observedAt:'2026-09-15T11:00:00.000Z',source:'production-scenario',deviceConfigs:{}};
+    for(const device of incrementalProject.devices)incrementalProject.observedState.deviceConfigs[device.id]={vendor:device.vendorOs,capturedAt:'2026-09-15T11:00:00.000Z',source:'fixture',content:generatedConfigs[device.id]};
+    const changedDevice=incrementalProject.devices[0];
+    incrementalProject.observedState.deviceConfigs[changedDevice.id].content+='\n! observed-only-line\n';
+    activeProject=incrementalProject;
+    const incrementalBundle=DeploymentBundle.buildDeploymentPackage(incrementalProject,{generatedAt:'2026-09-15T12:00:00.000Z',gate:Gate,schema:Schema,documentation:Documentation,runbook:DeploymentRunbook,changeSet:ChangeSet,generateConfig:(deviceId,vendor)=>pipeline.generate(deviceId,vendor)});
+    assert.strictEqual(incrementalBundle.ok,true,`${scenario.id}: change set incremental bloqueado: ${(incrementalBundle.issues||[]).map(issue=>issue.code).join(', ')}`);
+    assert.strictEqual(incrementalBundle.manifest.changeSet.executionMode,'reviewed-incremental');
+    assert.strictEqual(incrementalBundle.manifest.changeSet.observedDevices,incrementalProject.devices.length);
+    assert.strictEqual(incrementalBundle.manifest.changeSet.changedDevices,1);
+    assert.ok(incrementalBundle.files.some(file=>file.path.startsWith('changes/patches/')));
+  }
 }
 
 const rejected=Gate.evaluateReleaseCriteria({issues:[{code:'NW-X',severity:'warning',message:'nuevo aviso'}]},{allowReview:true,allowedWarningCodes:[]});

@@ -31,6 +31,9 @@ npm run test:e2e
 - [ ] Revisar que el runbook respeta dependencias físicas, controlador/AP y grupos HA/MLAG.
 - [ ] Confirmar ticket, ventana, aprobador, acceso OOB y backups reales antes del cambio.
 - [ ] Ensayar los criterios de parada y el rollback en orden inverso.
+- [ ] Si el modo es incremental, comprobar cobertura, antigüedad y fabricante de todas las capturas observadas.
+- [ ] Revisar los diffs observado → deseado y confirmar que nadie los tratará como comandos directos.
+- [ ] Capturar fingerprints y evidencias posteriores al cambio.
 - [ ] Exportar inventario CSV.
 - [ ] Exportar documentación Markdown.
 - [ ] Crear y restaurar snapshot.

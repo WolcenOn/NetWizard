@@ -2,6 +2,7 @@
 
 const assert=require('assert');
 const Bundle=require('../js/netwizard-deployment-bundle.js');
+const ChangeSet=require('../js/netwizard-change-set.js');
 
 const generatedAt='2026-09-15T12:34:56.000Z';
 const project={
@@ -30,8 +31,14 @@ const fakeRunbook={
   buildMarkdown(){return'# Runbook\n';},
   buildRollbackMarkdown(){return'# Rollback\n';}
 };
+const fakeChangeSet={
+  buildChangeSet(value,options){return{ok:true,format:'netwizard-change-set',version:'3.50.0',generatedAt:options.generatedAt,projectName:value.projName,requestedMode:'full',executionMode:'full-target',observedAt:null,coverage:{devices:value.devices.length,observed:0,missing:value.devices.length,changed:0,noChange:0},issues:[],devices:value.devices.map(device=>({deviceId:device.id,deviceName:device.name,vendor:device.vendorOs,status:'baseline-required',capturedAt:null,observedFingerprint:null,desiredFingerprint:'fnv1a32:00000000',stats:{addedLines:1,removedLines:0}})),artifacts:[],warning:'diff no ejecutable'};},
+  buildSummaryMarkdown(){return'# Change set\n';},
+  buildPostChangeChecklist(){return'# Evidencias posteriores\n';},
+  publicChangeSet(value){const copy=JSON.parse(JSON.stringify(value));delete copy.artifacts;return copy;}
+};
 function generateConfig(id,vendor){return `! ${vendor}\nhostname ${id}\ninterface ethernet1\n description deployment-test\n`;}
-function build(extra){return Bundle.buildDeploymentPackage(project,Object.assign({generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,generateConfig},extra||{}));}
+function build(extra){return Bundle.buildDeploymentPackage(project,Object.assign({generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:fakeChangeSet,generateConfig},extra||{}));}
 
 const pkg=build();
 assert.strictEqual(pkg.ok,true);
@@ -44,11 +51,12 @@ assert.strictEqual(pkg.manifest.counts.devices,2);
 assert.strictEqual(pkg.manifest.counts.files,pkg.files.length);
 assert.ok(pkg.files.some(file=>file.path==='configs/01-FW-Edge-fw1-fortinet.conf'));
 assert.ok(pkg.files.some(file=>file.path==='configs/02-SW-Core-sw1-cisco_ios.cfg'));
-for(const required of ['manifest.json','README.md','project/netwizard-project.json','reports/production-gate.json','reports/production-checklist.md','reports/inventory.csv','reports/connectivity-matrix.csv','reports/documentation.md','deployment/plan.json','deployment/runbook.md','deployment/rollback-checklist.md']){
+for(const required of ['manifest.json','README.md','project/netwizard-project.json','reports/production-gate.json','reports/production-checklist.md','reports/inventory.csv','reports/connectivity-matrix.csv','reports/documentation.md','deployment/plan.json','deployment/runbook.md','deployment/rollback-checklist.md','changes/change-set.json','changes/summary.md','evidence/pre-change.json','evidence/post-change-checklist.md']){
   assert.ok(pkg.files.some(file=>file.path===required),`Falta ${required}`);
 }
 assert.ok(pkg.manifest.files.every(file=>/^[0-9a-f]{8}$/.test(file.crc32)));
 assert.strictEqual(pkg.manifest.deployment.steps,2);
+assert.strictEqual(pkg.manifest.changeSet.executionMode,'full-target');
 assert.strictEqual(Bundle.crc32('123456789').toString(16),'cbf43926');
 assert.strictEqual(Bundle.configExtension('aruba_aoss'),'cfg');
 assert.strictEqual(Bundle.configExtension('windows'),'ps1');
@@ -106,5 +114,23 @@ assert.strictEqual(docsFailure.issues[0].code,'NW-BUNDLE-020');
 const runbookFailure=build({runbook:Object.assign({},fakeRunbook,{buildDeploymentPlan(){return{ok:false,issues:[{code:'NW-RUNBOOK-001',severity:'error',blocking:true,message:'ciclo'}]};}})});
 assert.strictEqual(runbookFailure.ok,false);
 assert.strictEqual(runbookFailure.issues[0].code,'NW-RUNBOOK-001');
+
+const changeSetFailure=build({changeSet:Object.assign({},fakeChangeSet,{buildChangeSet(){return{ok:false,issues:[{code:'NW-CHANGE-001',severity:'error',blocking:true,message:'snapshot ausente'}]};}})});
+assert.strictEqual(changeSetFailure.ok,false);
+assert.strictEqual(changeSetFailure.issues[0].code,'NW-CHANGE-001');
+
+const incrementalProject=JSON.parse(JSON.stringify(project));
+incrementalProject.deployment={changeMode:'incremental',maxObservedAgeHours:24};
+incrementalProject.observedState={observedAt:'2026-09-15T11:00:00.000Z',deviceConfigs:{
+  sw1:{vendor:'cisco_ios',content:generateConfig('sw1','cisco_ios'),capturedAt:'2026-09-15T11:00:00.000Z'},
+  fw1:{vendor:'fortinet',content:'! fortinet\nhostname fw1\ninterface ethernet1\n description old-value\n',capturedAt:'2026-09-15T11:00:00.000Z'}
+}};
+const incremental=Bundle.buildDeploymentPackage(incrementalProject,{generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:ChangeSet,generateConfig});
+assert.strictEqual(incremental.ok,true);
+assert.strictEqual(incremental.manifest.changeSet.executionMode,'reviewed-incremental');
+assert.strictEqual(incremental.manifest.changeSet.observedDevices,2);
+assert.strictEqual(incremental.manifest.changeSet.changedDevices,1);
+assert.ok(incremental.files.some(file=>file.path.startsWith('changes/patches/')&&file.path.endsWith('.diff')));
+assert.ok(incremental.files.some(file=>file.path.startsWith('changes/rollback/')&&file.path.endsWith('.diff')));
 
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');

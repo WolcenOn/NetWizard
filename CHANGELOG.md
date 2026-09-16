@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.50.0 · Change set observado y evidencia
+
+- Añadido contrato `observedState.deviceConfigs` con límites explícitos y detección de truncado.
+- Añadido modo `deployment.changeMode: incremental`, bloqueado ante snapshots ausentes, antiguos o de otro fabricante.
+- El bundle genera change set, diffs observado/deseado, diffs inversos y evidencias pre/post.
+- El runbook enlaza cada paso con su delta y recuerda que un diff no es un script ejecutable.
+
 ## 3.50.0 · Runbook de despliegue y rollback
 
 - Añadido un motor que ordena equipos por dependencias físicas, función y relaciones controlador/AP.
