@@ -153,4 +153,13 @@ assert.strictEqual(junosBundle.manifest.incremental.manualReview,0);
 assert.ok(junosBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&/delete system host-name OLD/.test(file.content)));
 assert.ok(junosBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&/set system host-name OLD/.test(file.content)));
 
+const ciscoProject={projName:'Cisco incremental',devices:[{id:'sw1',name:'Access Cisco',kind:'switch',vendorOs:'cisco_ios'}],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},deployment:{changeMode:'incremental',maxObservedAgeHours:24,requireExecutableIncremental:true},observedState:{observedAt:'2026-09-15T11:00:00.000Z',deviceConfigs:{sw1:{vendor:'cisco_ios',capturedAt:'2026-09-15T11:00:00.000Z',content:'hostname ACCESS-1\ninterface GigabitEthernet1/0/1\n switchport\n switchport mode access\n switchport access vlan 10\n no shutdown\n exit\n'}}}};
+const ciscoDesired='configure terminal\nhostname ACCESS-1\nvlan 20\n name Voice\n exit\ninterface GigabitEthernet1/0/1\n switchport\n switchport mode access\n switchport access vlan 20\n no shutdown\n exit\nend\nwrite memory\n';
+const ciscoBundle=Bundle.buildDeploymentPackage(ciscoProject,{generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:ChangeSet,incremental:Incremental,generateConfig(){return ciscoDesired;}});
+assert.strictEqual(ciscoBundle.ok,true);
+assert.strictEqual(ciscoBundle.manifest.incremental.candidateReady,1);
+assert.strictEqual(ciscoBundle.manifest.incremental.manualReview,0);
+assert.ok(ciscoBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.cfg')&&/switchport access vlan 20/.test(file.content)));
+assert.ok(ciscoBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.cfg')&&/switchport access vlan 10/.test(file.content)));
+
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');

@@ -2,6 +2,7 @@
 
 const assert=require('assert');
 const Incremental=require('../js/netwizard-incremental-generators.js');
+const Switching=require('../js/netwizard-switching-generator.js');
 
 const observed='## Last changed\nset system host-name old-edge\nset interfaces ge-0/0/0 unit 0 family inet address 192.0.2.2/30\n';
 const desired='# NetWizard\nset system host-name new-edge\nset interfaces ge-0/0/0 unit 0 family inet address 192.0.2.2/30\nset routing-options static route 0.0.0.0/0 next-hop 192.0.2.1\n';
@@ -44,15 +45,109 @@ assert.strictEqual(build(strictInvalid,'set system host-name edge\ncommit\n').ok
 const secretDesired='set system host-name edge\nset access radius-server 10.0.0.1 secret ${SECRET:radius}\n';
 assert.strictEqual(build(project(),secretDesired).devices[0].status,'manual-review');
 
-const cisco=project('cisco_ios');
-cisco.observedState.deviceConfigs.r1.content='hostname old-edge\n';
-const unsupported=build(cisco,'hostname new-edge\n');
+const ciscoObserved=`version 17.9
+hostname EDGE-1
+vlan 10
+ name Users
+ exit
+interface GigabitEthernet1/0/1
+ description Old desk
+ switchport
+ switchport mode access
+ switchport access vlan 10
+ storm-control broadcast level 1.00
+ no shutdown
+ exit
+ip dhcp excluded-address 10.10.10.1
+ip dhcp pool VLAN10
+ network 10.10.10.0 255.255.255.0
+ default-router 10.10.10.1
+ dns-server 1.1.1.1
+ lease 1
+ exit
+ip route 0.0.0.0 0.0.0.0 192.0.2.1
+end
+`;
+const ciscoDesired=`configure terminal
+hostname EDGE-1
+vlan 10
+ name Users
+ exit
+vlan 20
+ name Voice
+ exit
+interface GigabitEthernet1/0/1
+ description New desk
+ switchport
+ switchport mode access
+ switchport access vlan 20
+ storm-control broadcast level 1.00
+ no shutdown
+ exit
+ip dhcp excluded-address 10.10.10.1
+ip dhcp excluded-address 10.10.10.10 10.10.10.20
+ip dhcp pool VLAN10
+ network 10.10.10.0 255.255.255.0
+ default-router 10.10.10.1
+ dns-server 8.8.8.8
+ lease 1
+ exit
+ip route 0.0.0.0 0.0.0.0 192.0.2.254
+end
+write memory
+`;
+const cisco=project('cisco_ios',{projName:'Cisco seguro',observedState:{deviceConfigs:{r1:{vendor:'cisco_ios',capturedAt:'2026-09-16T10:00:00Z',content:ciscoObserved}}}});
+const ciscoPlan=build(cisco,ciscoDesired);
+assert.strictEqual(ciscoPlan.ok,true);
+assert.strictEqual(ciscoPlan.devices[0].status,'candidate-ready');
+assert.strictEqual(ciscoPlan.devices[0].adapterId,'cisco-ios.managed-delta');
+assert.ok(ciscoPlan.artifacts.every(file=>file.path.endsWith('.cfg')));
+const ciscoApply=ciscoPlan.artifacts.find(file=>file.path.includes('/commands/')).content;
+const ciscoRollback=ciscoPlan.artifacts.find(file=>file.path.includes('/rollback/')).content;
+assert.match(ciscoApply,/^configure terminal$/m);
+assert.match(ciscoApply,/^vlan 20$/m);
+assert.match(ciscoApply,/^ switchport access vlan 20$/m);
+assert.match(ciscoApply,/^ dns-server 8\.8\.8\.8$/m);
+assert.match(ciscoApply,/^no ip route 0\.0\.0\.0 0\.0\.0\.0 192\.0\.2\.1$/m);
+assert.match(ciscoApply,/^ip route 0\.0\.0\.0 0\.0\.0\.0 192\.0\.2\.254$/m);
+assert.match(ciscoApply,/^ip dhcp excluded-address 10\.10\.10\.10 10\.10\.10\.20$/m);
+assert.ok(!/^write memory$/m.test(ciscoApply));
+assert.match(ciscoRollback,/^no vlan 20$/m);
+assert.match(ciscoRollback,/^ switchport access vlan 10$/m);
+assert.match(ciscoRollback,/^ dns-server 1\.1\.1\.1$/m);
+assert.match(ciscoRollback,/^no ip dhcp excluded-address 10\.10\.10\.10 10\.10\.10\.20$/m);
+assert.match(ciscoRollback,/^ip route 0\.0\.0\.0 0\.0\.0\.0 192\.0\.2\.1$/m);
+
+const unsupportedCisco=build(cisco,ciscoDesired.replace('hostname EDGE-1','hostname EDGE-CHANGED'));
+assert.strictEqual(unsupportedCisco.devices[0].status,'manual-review');
+assert.ok(unsupportedCisco.issues.some(item=>item.code==='NW-INCREMENTAL-003'));
+const changedUnknown=build(cisco,ciscoDesired.replace('storm-control broadcast level 1.00','storm-control broadcast level 2.00'));
+assert.strictEqual(changedUnknown.devices[0].status,'manual-review');
+const placeholderCisco=build(cisco,ciscoDesired.replace('description New desk','description ${SECRET:desk}'));
+assert.strictEqual(placeholderCisco.devices[0].status,'manual-review');
+const invalidVlanCisco=build(cisco,ciscoDesired.replace('switchport access vlan 20','switchport access vlan 5000'));
+assert.strictEqual(invalidVlanCisco.devices[0].status,'manual-review');
+const invalidMaskCisco=build(cisco,ciscoDesired.replace('network 10.10.10.0 255.255.255.0','network 10.10.10.0 255.0.255.0'));
+assert.strictEqual(invalidMaskCisco.devices[0].status,'manual-review');
+
+const sampleProject=JSON.parse(JSON.stringify(require('../samples/small-office.json').project));
+const sampleSwitch=sampleProject.devices.find(device=>device.vendorOs==='cisco_ios'&&(device.kind==='switch'||device.type==='switch'));
+const sampleDesired=Switching.render(sampleProject,sampleSwitch.id,'cisco_ios');
+const sampleObserved=sampleDesired.replace(/^(\s*switchport access vlan )\d+$/m,(_line,prefix)=>`${prefix}999`);
+const sampleCandidate=Incremental.ciscoIosAdapter({deviceName:sampleSwitch.name,observedConfig:sampleObserved,desiredConfig:sampleDesired});
+assert.strictEqual(sampleCandidate.ready,true);
+assert.strictEqual(sampleCandidate.noChange,false);
+assert.match(sampleCandidate.applyContent,/^interface Gi0\/1$/m);
+assert.match(sampleCandidate.applyContent,/^ switchport access vlan 10$/m);
+assert.match(sampleCandidate.rollbackContent,/^ switchport access vlan 999$/m);
+
+const unsupported=build(project('fortinet'),'config system interface\nend\n');
 assert.strictEqual(unsupported.ok,true);
 assert.strictEqual(unsupported.devices[0].status,'manual-review');
 assert.ok(unsupported.issues.some(item=>item.code==='NW-INCREMENTAL-002'));
 
-cisco.deployment.requireExecutableIncremental=true;
-assert.strictEqual(build(cisco,'hostname new-edge\n').ok,false);
+const strictUnsupported=project('fortinet',{deployment:{changeMode:'incremental',requireExecutableIncremental:true}});
+assert.strictEqual(build(strictUnsupported,'config system interface\nend\n').ok,false);
 
 const missingInput=Incremental.buildPlan(project(),{generatedAt:'2026-09-16T12:00:00Z',changeSet:changeSet(),desiredConfigs:{}});
 assert.strictEqual(missingInput.ok,false);
@@ -63,4 +158,4 @@ registry.register({id:'test',vendors:['test_os'],generate(){return{ready:true,no
 assert.strictEqual(registry.resolve('test_os').id,'test');
 assert.throws(()=>registry.register({id:'test',vendors:['other'],generate(){}}),/duplicado/i);
 
-console.log('✓ Registro incremental genera candidatos Junos reversibles y deriva lo ambiguo a revisión manual');
+console.log('✓ Registro incremental genera candidatos Junos/Cisco IOS reversibles y deriva lo ambiguo a revisión manual');

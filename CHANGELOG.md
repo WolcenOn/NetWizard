@@ -4,6 +4,8 @@
 
 - Añadido un registro inspeccionable de adaptadores incrementales con denegación por defecto.
 - Añadido `junos.set-delta` para generar candidatos `set/delete` y candidatos inversos desde capturas `display set`.
+- Añadido `cisco-ios.managed-delta` para VLAN, interfaces, rutas estáticas IPv4 y DHCP, preservando configuración observada no administrada.
+- Los candidatos Cisco IOS son reversibles, bloquean cambios ambiguos/fuera de allowlist y nunca guardan automáticamente.
 - Los formatos ambiguos, secretos, placeholders y fabricantes no soportados pasan a revisión manual.
 - `deployment.requireExecutableIncremental` permite bloquear cualquier cambio sin candidato seguro.
 - El bundle y el runbook incorporan plan, comandos candidatos, rollback y procedimiento `commit check`.

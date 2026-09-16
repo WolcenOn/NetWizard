@@ -231,6 +231,49 @@ test('modo incremental genera candidato Junos reversible sin inventar CLI', asyn
   expect(bundle.manifest.incremental.manualReview).toBe(0);
 });
 
+test('modo incremental genera candidato Cisco IOS reversible y no guarda automáticamente', async ({ page }) => {
+  await resetStorage(page);
+  const payload = samplePayload('small-office.json');
+  await page.evaluate((payload) => {
+    const prepared = window.NetWizardProjectSchema.prepareImport(payload, { defaults: window.defS });
+    if(!prepared.ok) throw new Error(prepared.errors.join('\n'));
+    const project=prepared.project;
+    const target=project.devices.find(device=>device.vendorOs==='cisco_ios' && device.kind==='switch');
+    if(!target) throw new Error('No existe switch Cisco IOS');
+    window.NetWizardState.replaceProject(project,{source:'e2e-cisco-change-base'});
+    const capturedAt=new Date().toISOString();
+    project.deployment=Object.assign({},project.deployment,{changeMode:'incremental',maxObservedAgeHours:24,requireExecutableIncremental:true});
+    project.observedState={observedAt:capturedAt,source:'playwright',deviceConfigs:{}};
+    for(const device of project.devices)project.observedState.deviceConfigs[device.id]={vendor:device.vendorOs,capturedAt,source:'playwright',content:window.genConfig(device.id,device.vendorOs)};
+    const desired=project.observedState.deviceConfigs[target.id].content;
+    const previous=desired.replace(/^(\s*switchport access vlan )\d+$/m,(_line,prefix)=>`${prefix}999`);
+    if(previous===desired) throw new Error('La salida Cisco IOS no contiene switchport access vlan');
+    project.observedState.deviceConfigs[target.id].content=previous;
+    window.NetWizardState.replaceProject(project,{source:'e2e-cisco-change'});
+    window.navTo && window.navTo('cfg');
+  }, payload);
+
+  const zipDownload = page.waitForEvent('download');
+  await page.click('#expDeploymentPackage');
+  const download = await zipDownload;
+  const downloadedPath = await download.path();
+  const zip = fs.readFileSync(downloadedPath);
+  expect(zip.includes(Buffer.from('incremental/commands/'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('incremental/rollback/'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('.cfg'))).toBeTruthy();
+  expect(zip.includes(Buffer.from('switchport access vlan 999'))).toBeTruthy();
+  const bundle = await page.evaluate(() => window.NetWizardLastDeploymentBundle);
+  expect(bundle.ok).toBe(true);
+  expect(bundle.manifest.changeSet.changedDevices).toBe(1);
+  expect(bundle.manifest.incremental.candidateReady).toBe(1);
+  expect(bundle.manifest.incremental.manualReview).toBe(0);
+  const candidate=bundle.incrementalPlan.artifacts.find(file=>file.path.includes('/commands/'));
+  const rollback=bundle.incrementalPlan.artifacts.find(file=>file.path.includes('/rollback/'));
+  expect(candidate.path).toMatch(/\.cfg$/);
+  expect(candidate.content).not.toMatch(/^write memory$/m);
+  expect(rollback.content).toContain('switchport access vlan 999');
+});
+
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {
   await resetStorage(page);
   await setProject(page, {
