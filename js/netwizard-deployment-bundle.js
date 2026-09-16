@@ -57,14 +57,14 @@
   function gateIssue(code,message,extra){ return Object.assign({code,severity:'error',blocking:true,category:'deployment-bundle',source:'deployment-bundle',message},extra||{}); }
   function compareText(a,b){ const left=clean(a,120),right=clean(b,120); return left<right?-1:(left>right?1:0); }
 
-  function buildReadme(project,report,generatedAt,configFiles,changeSet){
+  function buildReadme(project,report,generatedAt,configFiles,changeSet,incrementalPlan){
     const lines=[
       `# Paquete de despliegue — ${clean(project.projName,160)||'NetWizard'}`,'',
       `- Formato: ${FORMAT} ${VERSION}`,
       `- Generado: ${generatedAt}`,
       `- Estado de producción: ${String(report.status||'unknown').toUpperCase()}`,
       `- Dispositivos configurados: ${configFiles.length}`,
-      `- Avisos: ${(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length}`,'',
+      `- Avisos: ${(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan&&incrementalPlan.issues).filter(item=>item.severity==='warning').length}`,'',
       '## Contenido','',
       '- `project/netwizard-project.json`: snapshot saneado y versionado.',
       '- `configs/`: configuración generada para cada dispositivo.',
@@ -80,6 +80,10 @@
       '- `changes/summary.md`: resumen humano de cobertura y diferencias.',
       '- `changes/patches/`: diffs de revisión; no son comandos ejecutables.',
       '- `changes/rollback/`: diffs inversos para apoyar la reversión.',
+      '- `incremental/plan.json`: decisión del registro de adaptadores por equipo.',
+      '- `incremental/summary.md`: candidatos ejecutables y revisiones manuales.',
+      '- `incremental/commands/`: comandos cargables solo cuando el adaptador los certifica.',
+      '- `incremental/rollback/`: comandos inversos candidatos; el backup real sigue siendo autoritativo.',
       '- `evidence/pre-change.json`: fingerprints y metadatos del snapshot previo.',
       '- `evidence/post-change-checklist.md`: evidencias que deben capturarse tras el cambio.',
       '- `manifest.json`: índice y CRC32 de cada archivo de payload.','',
@@ -100,6 +104,7 @@
     const docs=dependency(opts,'documentation','NetWizardDocumentationUtils');
     const runbook=dependency(opts,'runbook','NetWizardDeploymentRunbook');
     const changeSetBuilder=dependency(opts,'changeSet','NetWizardChangeSet');
+    const incrementalBuilder=dependency(opts,'incremental','NetWizardIncrementalGenerators');
     const generate=opts.generateConfig || root.genConfig;
     const missing=[];
     if(!gate||typeof gate.runProductionGate!=='function') missing.push('ProductionGate');
@@ -107,6 +112,7 @@
     if(!docs||typeof docs.buildInventoryRows!=='function'||typeof docs.buildConnectivityMatrix!=='function'||typeof docs.buildMarkdownDocument!=='function'||typeof docs.toCsv!=='function') missing.push('DocumentationUtils');
     if(!runbook||typeof runbook.buildDeploymentPlan!=='function'||typeof runbook.buildMarkdown!=='function'||typeof runbook.buildRollbackMarkdown!=='function') missing.push('DeploymentRunbook');
     if(!changeSetBuilder||typeof changeSetBuilder.buildChangeSet!=='function'||typeof changeSetBuilder.buildSummaryMarkdown!=='function'||typeof changeSetBuilder.buildPostChangeChecklist!=='function'||typeof changeSetBuilder.publicChangeSet!=='function') missing.push('ChangeSet');
+    if(!incrementalBuilder||typeof incrementalBuilder.buildPlan!=='function'||typeof incrementalBuilder.buildSummaryMarkdown!=='function'||typeof incrementalBuilder.publicPlan!=='function') missing.push('IncrementalGenerators');
     if(typeof generate!=='function') missing.push('ConfigGenerator');
     if(missing.length) return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,issues:[gateIssue('NW-BUNDLE-001',`Dependencias no disponibles: ${missing.join(', ')}`)],files:[]};
 
@@ -148,8 +154,14 @@
     if(!changeSet||changeSet.ok===false){
       const changeIssues=arr(changeSet&&changeSet.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:changeIssues.length?changeIssues:[gateIssue('NW-BUNDLE-033','El change set incremental no es ejecutable.')],files:[]};
     }
+    let incrementalPlan;
+    try{incrementalPlan=incrementalBuilder.buildPlan(canonical,{generatedAt,changeSet,desiredConfigs,configPaths});}
+    catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:[gateIssue('NW-BUNDLE-034',`No se pudo construir el plan incremental: ${error&&error.message||error}`)],files:[]};}
+    if(!incrementalPlan||incrementalPlan.ok===false){
+      const incrementalIssues=arr(incrementalPlan&&incrementalPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,incrementalPlan,issues:incrementalIssues.length?incrementalIssues:[gateIssue('NW-BUNDLE-035','El plan incremental requerido no es ejecutable.')],files:[]};
+    }
     let deploymentPlan;
-    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet});}
+    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet,incrementalPlan});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-030',`No se pudo construir el plan de despliegue: ${error&&error.message||error}`)],files:[]};}
     if(!deploymentPlan||deploymentPlan.ok===false){
       const planIssues=arr(deploymentPlan&&deploymentPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,deploymentPlan,issues:planIssues.length?planIssues:[gateIssue('NW-BUNDLE-031','El plan de despliegue no es ejecutable.')],files:[]};
@@ -171,9 +183,12 @@
       addFile(files,'changes/change-set.json',JSON.stringify(changeSetBuilder.publicChangeSet(changeSet),null,2)+'\n','application/json');
       addFile(files,'changes/summary.md',changeSetBuilder.buildSummaryMarkdown(changeSet),'text/markdown;charset=utf-8');
       for(const artifact of arr(changeSet.artifacts)) addFile(files,artifact.path,artifact.content,'text/x-diff;charset=utf-8');
+      addFile(files,'incremental/plan.json',JSON.stringify(incrementalBuilder.publicPlan(incrementalPlan),null,2)+'\n','application/json');
+      addFile(files,'incremental/summary.md',incrementalBuilder.buildSummaryMarkdown(incrementalPlan),'text/markdown;charset=utf-8');
+      for(const artifact of arr(incrementalPlan.artifacts)) addFile(files,artifact.path,artifact.content,artifact.mime||'text/plain;charset=utf-8');
       addFile(files,'evidence/pre-change.json',JSON.stringify({format:'netwizard-pre-change-evidence',version:VERSION,generatedAt,observedAt:changeSet.observedAt,coverage:changeSet.coverage,devices:changeSet.devices.map(device=>({deviceId:device.deviceId,vendor:device.vendor,capturedAt:device.capturedAt,observedFingerprint:device.observedFingerprint,desiredFingerprint:device.desiredFingerprint,status:device.status}))},null,2)+'\n','application/json');
       addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan),'text/markdown;charset=utf-8');
-      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet),'text/markdown;charset=utf-8');
+      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan),'text/markdown;charset=utf-8');
     }catch(error){
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-020',`No se pudieron construir los artefactos: ${error&&error.message||error}`)],files:[]};
     }
@@ -183,16 +198,17 @@
     const manifest={
       format:FORMAT,version:VERSION,schemaVersion:exported.schemaVersion||schema.schemaVersion||VERSION,
       generatedAt,projectName:clean(canonical.projName,160),productionStatus:report.status,
-      counts:{devices:devices.length,files:files.length+1,warnings:(report.counts&&report.counts.warnings||0)+arr(changeSet.issues).filter(item=>item.severity==='warning').length,errors:report.counts&&report.counts.errors||0},
+      counts:{devices:devices.length,files:files.length+1,warnings:(report.counts&&report.counts.warnings||0)+arr(changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan.issues).filter(item=>item.severity==='warning').length,errors:report.counts&&report.counts.errors||0},
       sensitive:true,
       deployment:{strategy:deploymentPlan.strategy,phases:deploymentPlan.phases.length,steps:deploymentPlan.steps.length,observationMinutes:deploymentPlan.observationMinutes,estimatedTotalMinutes:deploymentPlan.estimatedTotalMinutes},
       changeSet:{requestedMode:changeSet.requestedMode,executionMode:changeSet.executionMode,observedDevices:changeSet.coverage.observed,changedDevices:changeSet.coverage.changed,missingDevices:changeSet.coverage.missing},
+      incremental:{mode:incrementalPlan.mode,requireExecutableIncremental:incrementalPlan.requireExecutableIncremental,candidateReady:incrementalPlan.counts.candidateReady,manualReview:incrementalPlan.counts.manualReview,noChange:incrementalPlan.counts.noChange},
       files:files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}))
     };
     try{addFile(files,'manifest.json',JSON.stringify(manifest,null,2)+'\n','application/json');}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,report,issues:[gateIssue('NW-BUNDLE-022',`No se pudo crear el manifiesto: ${error&&error.message||error}`)],files:[]};}
     const filename=`${safeName(canonical.projName,'netwizard')}-deployment-${generatedAt.slice(0,10)}.zip`;
-    return {ok:true,blocked:false,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,filename,report,changeSet,deploymentPlan,manifest,issues:arr(report.issues).concat(arr(changeSet.issues)),files};
+    return {ok:true,blocked:false,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,filename,report,changeSet,incrementalPlan,deploymentPlan,manifest,issues:arr(report.issues).concat(arr(changeSet.issues),arr(incrementalPlan.issues)),files};
   }
 
   function dosDateTime(value){
@@ -228,7 +244,7 @@
       issues.slice(0,12).filter(issue=>issue.severity!=='info').forEach(issue=>lines.push(`• [${issue.code||'NW-BUNDLE'}] ${issue.message||''}`));
       return lines.join('\n');
     }
-    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · cambio ${pkg.manifest.changeSet.executionMode} · ${pkg.manifest.counts.warnings} avisos documentados.`;
+    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · cambio ${pkg.manifest.changeSet.executionMode} · candidatos seguros ${pkg.manifest.incremental.candidateReady} · revisión manual ${pkg.manifest.incremental.manualReview} · ${pkg.manifest.counts.warnings} avisos.`;
   }
 
   function bindBrowserUi(attempt){

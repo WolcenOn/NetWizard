@@ -13,6 +13,7 @@
     'NetWizardProductionGate',
     'NetWizardProductionGateArchitecture',
     'NetWizardChangeSet',
+    'NetWizardIncrementalGenerators',
     'NetWizardDeploymentRunbook',
     'NetWizardDeploymentBundle',
     'NetWizardCapabilityRegistry',

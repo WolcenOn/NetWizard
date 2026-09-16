@@ -11,7 +11,7 @@ const prepared = schema.prepareImport({
   vrfs:[{id:'vrf-1', name:'Corp\u0000\nVRF'}],
   routing:{strategy:'ospf\u0000', bgp:{neighbors:[{description:'Peer\u0007 externo'}]}},
   management:{syslog:{servers:['logs.example.test\u0000']}},
-  deployment:{changeTicket:' CHG-42\u0000 ',devices:{r1:{phase:'core',dependsOnDeviceRefs:['edge\u0000']}}}
+  deployment:{changeTicket:' CHG-42\u0000 ',requireExecutableIncremental:true,devices:{r1:{phase:'core',dependsOnDeviceRefs:['edge\u0000']}}}
 });
 
 assert.strictEqual(prepared.ok, true);
@@ -22,6 +22,7 @@ assert.strictEqual(prepared.project.routing.bgp.neighbors[0].description, 'Peer 
 assert.strictEqual(prepared.project.management.syslog.servers[0], 'logs.example.test');
 assert.strictEqual(prepared.project.deployment.changeTicket, 'CHG-42');
 assert.strictEqual(prepared.project.deployment.devices.r1.dependsOnDeviceRefs[0], 'edge');
+assert.strictEqual(prepared.project.deployment.requireExecutableIncremental, true);
 
 const exported = schema.prepareExport(prepared.project);
 assert.ok(Array.isArray(exported.project.ipv6Networks));
