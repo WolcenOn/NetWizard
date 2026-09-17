@@ -42,8 +42,10 @@ assert.ok(missing.issues.some(issue=>issue.code==='NW-CHANGE-001'));
 const fortinet=Ui.upsertSnapshot(project('fortinet'),'sw1',{content:'config system global\n set hostname OLD\nend',capturedAt});
 const manual=Ui.buildDevicePreview(fortinet,'sw1',{generatedAt,changeSet:ChangeSet,incremental:Incremental,generateConfig:()=> 'config system global\n set hostname NEW\nend'});
 assert.strictEqual(manual.ok,true);
-assert.strictEqual(manual.status,'manual-review');
-assert.strictEqual(manual.candidate,'');
+assert.strictEqual(manual.status,'candidate-ready');
+assert.match(manual.candidate,/set hostname NEW/);
+assert.match(manual.rollback,/set hostname OLD/);
+assert.match(manual.applyFilename,/\.conf$/);
 
 const removed=Ui.removeSnapshot(saved,'sw1');
 assert.strictEqual(removed.observedState,null);

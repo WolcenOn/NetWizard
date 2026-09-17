@@ -162,4 +162,13 @@ assert.strictEqual(ciscoBundle.manifest.incremental.manualReview,0);
 assert.ok(ciscoBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.cfg')&&/switchport access vlan 20/.test(file.content)));
 assert.ok(ciscoBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.cfg')&&/switchport access vlan 10/.test(file.content)));
 
+const fortiProject={projName:'FortiOS incremental',devices:[{id:'fw1',name:'FortiGate Edge',kind:'firewall',vendorOs:'fortinet'}],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},deployment:{changeMode:'incremental',maxObservedAgeHours:24,requireExecutableIncremental:true},observedState:{observedAt:'2026-09-15T11:00:00.000Z',deviceConfigs:{fw1:{vendor:'fortinet',capturedAt:'2026-09-15T11:00:00.000Z',content:'config system global\n set hostname "FW-OLD"\nend\nconfig router static\n edit 10\n  set dst 0.0.0.0/0\n  set gateway 203.0.113.1\n next\nend\n'}}}};
+const fortiDesired='config system global\n set hostname "FW1"\nend\nconfig router static\n edit 10\n  set dst 0.0.0.0/0\n  set gateway 203.0.113.254\n next\nend\n';
+const fortiBundle=Bundle.buildDeploymentPackage(fortiProject,{generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:ChangeSet,incremental:Incremental,generateConfig(){return fortiDesired;}});
+assert.strictEqual(fortiBundle.ok,true);
+assert.strictEqual(fortiBundle.manifest.incremental.candidateReady,1);
+assert.strictEqual(fortiBundle.manifest.incremental.manualReview,0);
+assert.ok(fortiBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.conf')&&/set gateway 203\.0\.113\.254/.test(file.content)));
+assert.ok(fortiBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.conf')&&/set gateway 203\.0\.113\.1/.test(file.content)));
+
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');
