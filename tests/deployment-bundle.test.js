@@ -171,4 +171,13 @@ assert.strictEqual(fortiBundle.manifest.incremental.manualReview,0);
 assert.ok(fortiBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.conf')&&/set gateway 203\.0\.113\.254/.test(file.content)));
 assert.ok(fortiBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.conf')&&/set gateway 203\.0\.113\.1/.test(file.content)));
 
+const routerOsProject={projName:'RouterOS incremental',devices:[{id:'r1',name:'MikroTik Edge',kind:'router',vendorOs:'mikrotik_routeros'}],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},deployment:{changeMode:'incremental',maxObservedAgeHours:24,requireExecutableIncremental:true},observedState:{observedAt:'2026-09-15T11:00:00.000Z',deviceConfigs:{r1:{vendor:'mikrotik_routeros',capturedAt:'2026-09-15T11:00:00.000Z',content:'# 2026-09-15 by RouterOS 7.15\n/system identity set name="MT-OLD"\n/ip service set ssh disabled=no\n'}}}};
+const routerOsDesired='/system identity set name="MT-EDGE"\n/ip service set ssh disabled=no\n/interface vlan add name=vlan20 vlan-id=20 interface=bridge-lan\n';
+const routerOsBundle=Bundle.buildDeploymentPackage(routerOsProject,{generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:ChangeSet,incremental:Incremental,generateConfig(){return routerOsDesired;}});
+assert.strictEqual(routerOsBundle.ok,true);
+assert.strictEqual(routerOsBundle.manifest.incremental.candidateReady,1);
+assert.strictEqual(routerOsBundle.manifest.incremental.manualReview,0);
+assert.ok(routerOsBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.rsc')&&/name="MT-EDGE"/.test(file.content)));
+assert.ok(routerOsBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.rsc')&&/name="MT-OLD"/.test(file.content)));
+
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');

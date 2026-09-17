@@ -9,6 +9,8 @@
 - Los candidatos Cisco IOS son reversibles, bloquean cambios ambiguos/fuera de allowlist y nunca guardan automáticamente.
 - Añadido `fortios.managed-delta` para interfaces, objetos, zonas, rutas, políticas, DHCP y gestión básica mediante jerarquía FortiOS reversible.
 - FortiOS bloquea secretos, placeholders, VDOM/contexto ambiguo y cambios en OSPF, SD-WAN, VPN, UTM u otras secciones no administradas.
+- Añadido `routeros-v7.managed-delta` con parser de `/export terse`, identidades estables, candidatos/rollback `.rsc` y soporte administrado para bridge/VLAN, routing, DHCP, VRRP y gestión básica.
+- RouterOS bloquea scripts, selectores dinámicos, identidades ambiguas, secretos, placeholders y comandos fuera de allowlist.
 - Los formatos ambiguos, secretos, placeholders y fabricantes no soportados pasan a revisión manual.
 - `deployment.requireExecutableIncremental` permite bloquear cualquier cambio sin candidato seguro.
 - El bundle y el runbook incorporan plan, comandos candidatos, rollback y procedimiento `commit check`.

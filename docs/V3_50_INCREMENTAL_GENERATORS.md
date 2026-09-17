@@ -10,7 +10,8 @@ NetWizard dispone de un registro separado para transformar un change set revisad
 | Cisco IOS | `cisco-ios.managed-delta` | Candidato jerárquico para VLAN, interfaces, rutas estáticas y DHCP |
 | Cisco ASA | — | Revisión manual |
 | Fortinet FortiOS | `fortios.managed-delta` | Candidato jerárquico para interfaces, objetos, zonas, rutas, políticas, DHCP y gestión básica |
-| Huawei, MikroTik, Aruba | — | Revisión manual |
+| MikroTik RouterOS v7 | `routeros-v7.managed-delta` | Candidato `.rsc` para bridge/VLAN, routing, DHCP, VRRP y gestión básica |
+| Huawei, Aruba | — | Revisión manual |
 | pfSense, UniFi, Omada, Galgus | — | Revisión manual/controlador |
 | Windows, Linux | — | Revisión manual |
 
@@ -63,6 +64,27 @@ Las secciones no administradas —por ejemplo OSPF avanzado, SD-WAN, VPN, UTM, c
 
 Los candidatos `.conf` no ejecutan backups, reinicios ni acciones de despliegue remoto. Antes de aplicar se deben confirmar VDOM, nombres de interfaz, IDs y orden de políticas, además de conservar un backup real de FortiGate.
 
+## MikroTik RouterOS v7
+
+La captura recomendada es un export `terse` completo, porque presenta cada comando con su ruta de menú en una sola línea y oculta los valores sensibles por defecto:
+
+```text
+/export terse
+```
+
+`routeros-v7.managed-delta` normaliza tanto `/ip route add` como `/ip/route/add`. Empareja las filas únicamente mediante identidades estables y explícitas —por ejemplo `name`, `bridge+interface`, `bridge+vlan-ids`, `dst-address+distance` o `area+networks`— y administra una allowlist limitada:
+
+- bridge, puertos bridge, VLANs, bonding y VRRP;
+- direcciones, pools, DHCP server/client/relay y NAT de salida generado por NetWizard;
+- rutas estáticas y OSPF v7 básico;
+- identidad, DNS, NTP, servicios IP, syslog y activación básica de SNMP.
+
+Una fila existente se cambia mediante `set [find where …]`; el rollback restaura sus valores observados o usa `unset` cuando la propiedad no existía. Una fila nueva solo se admite si la captura conserva una cabecera que la identifica como export completo de RouterOS v7; se aplica mediante su `add` objetivo y el rollback solo puede eliminar esa misma alta por su identidad estable. Las filas observadas ausentes del objetivo se conservan: el adaptador no interpreta la configuración generada como un reemplazo completo del router. Cualquier `#error exporting` invalida la captura.
+
+Scripts, acciones `remove`/`unset` en el objetivo, selectores dinámicos ya escritos con `[find …]`, identidades duplicadas, campos fuera de allowlist, secretos y placeholders pasan a `manual-review`. Antes de importar hay que confirmar que cada selector devuelve exactamente una fila.
+
+Los candidatos usan extensión `.rsc`. Se recomienda comprobar primero la sintaxis con `import file-name=<candidato>.rsc verbose=yes dry-run=yes` en una versión RouterOS compatible, mantener acceso MAC/serial/OOB y conservar tanto el export como un backup binario real. El candidato no activa Safe Mode, no reinicia y no crea backups automáticamente.
+
 ## Política estricta
 
 ```json
@@ -84,6 +106,7 @@ Con `requireExecutableIncremental: true`, cualquier dispositivo que necesite cam
 - `incremental/commands/*.set`: candidato Junos observado → deseado.
 - `incremental/commands/*.cfg`: candidato Cisco IOS administrado.
 - `incremental/commands/*.conf`: candidato FortiOS administrado.
+- `incremental/commands/*.rsc`: candidato RouterOS v7 administrado.
 - `incremental/rollback/*`: candidato inverso según fabricante.
 
 El backup real capturado antes del cambio sigue siendo la fuente autoritativa para una reversión. El candidato inverso no lo sustituye.
