@@ -19,6 +19,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Secuenciación operativa por dependencias: borde, core, acceso, servicios/controladores y APs; incluye protección HA/MLAG, criterios de parada y rollback inverso.
 - Change set observado → deseado con cobertura, caducidad, fingerprints, diffs de revisión, evidencia posterior y bloqueo seguro del modo incremental.
 - Registro incremental denegado por defecto, con candidatos Junos `set/delete`, Cisco IOS jerárquico administrado, rollback inverso y modo estricto que bloquea fabricantes sin adaptador seguro.
+- Panel por dispositivo para pegar y conservar una captura real, ejecutar el preflight observado → deseado y descargar candidato/rollback cuando el adaptador lo certifica.
 - Exportaciones individuales de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
 - Schema externo, samples y tests unitarios/E2E preparados.
 - Matriz de escenarios de producción 3.50: oficina, campus, IoT/cámaras y tránsito L3 con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
@@ -105,6 +106,8 @@ El paquete incorpora `deployment/plan.json`, `deployment/runbook.md` y `deployme
 También incorpora `changes/change-set.json`, diffs directos/inversos y evidencias pre/post. Consulta [el contrato de change set 3.50](docs/V3_50_CHANGE_SET.md). Los `.diff` documentan el cambio, pero no deben aplicarse directamente como comandos.
 
 El registro incremental documentado en [Generadores incrementales seguros](docs/V3_50_INCREMENTAL_GENERATORS.md) solo emite comandos cuando un adaptador puede demostrar una transformación reversible. En 3.50 existen adaptadores para Junos `display set` y para el subconjunto administrado de Cisco IOS; el resto queda explícitamente en revisión manual.
+
+La pantalla **Configuración & Export** permite seleccionar un dispositivo, pegar su configuración real, registrar origen y fecha, y ejecutar un preflight aislado. **Guardar y analizar** persiste la captura en `observedState.deviceConfigs` y activa el modo incremental; **Analizar sin guardar** permite validar primero el contenido. El panel no rebaja las reglas del ZIP: el paquete completo sigue exigiendo capturas válidas para todos los equipos cuando el modo incremental está activo.
 
 ## v3.48 · Sistema i18n ampliable
 

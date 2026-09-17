@@ -2,6 +2,7 @@
 
 ## 3.50.0 · Generadores incrementales seguros
 
+- Añadido panel de captura observada por dispositivo con persistencia, preflight aislado y descarga de candidato/rollback.
 - Añadido un registro inspeccionable de adaptadores incrementales con denegación por defecto.
 - Añadido `junos.set-delta` para generar candidatos `set/delete` y candidatos inversos desde capturas `display set`.
 - Añadido `cisco-ios.managed-delta` para VLAN, interfaces, rutas estáticas IPv4 y DHCP, preservando configuración observada no administrada.

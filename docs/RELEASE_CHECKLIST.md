@@ -32,6 +32,7 @@ npm run test:e2e
 - [ ] Confirmar ticket, ventana, aprobador, acceso OOB y backups reales antes del cambio.
 - [ ] Ensayar los criterios de parada y el rollback en orden inverso.
 - [ ] Si el modo es incremental, comprobar cobertura, antigüedad y fabricante de todas las capturas observadas.
+- [ ] Probar en la UI guardar/recargar una captura por dispositivo y descargar candidato/rollback solo cuando el preflight indique `candidate-ready`.
 - [ ] Revisar los diffs observado → deseado y confirmar que nadie los tratará como comandos directos.
 - [ ] Capturar fingerprints y evidencias posteriores al cambio.
 - [ ] Confirmar que cada fichero `incremental/commands/` procede de un adaptador `candidate-ready`.

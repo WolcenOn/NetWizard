@@ -710,6 +710,39 @@
           </div>
         </div>
       </div>
+      <div class="card" id="observedConfigCard">
+        <div class="card-h"><div class="card-t">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
+        <div class="hint" style="margin-bottom:9px;">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
+        <div class="row">
+          <div><label class="fl" for="observedDevice">Dispositivo</label><select id="observedDevice"></select></div>
+          <div><label class="fl" for="observedSource">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl" for="observedCapturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
+          <div><label class="fl" for="observedMaxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
+        </div>
+        <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> Exigir candidato incremental ejecutable para todos los cambios del ZIP</label>
+        <label class="fl" for="observedConfig" style="margin-top:9px;">Configuración observada</label>
+        <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" style="min-height:180px;"></textarea>
+        <div class="brow">
+          <button class="btn bg" id="observedSave">💾 Guardar y analizar</button>
+          <button class="btn bp" id="observedPreflight">🧪 Analizar sin guardar</button>
+          <button class="btn bd" id="observedRemove">✕ Eliminar captura</button>
+        </div>
+        <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;">Sin captura observada.</pre>
+        <div class="g2">
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Candidato incremental</div>
+            <textarea class="cfg" id="observedCandidate" readonly style="min-height:180px;"></textarea>
+            <button class="btn bs bsm" id="observedDownloadCandidate" disabled>⬇ Descargar candidato</button>
+          </div>
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Rollback candidato</div>
+            <textarea class="cfg" id="observedRollback" readonly style="min-height:180px;"></textarea>
+            <button class="btn bs bsm" id="observedDownloadRollback" disabled>⬇ Descargar rollback</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
         <div class="hint" style="margin-bottom:8px;">Parámetros importantes: dominio, contraseña, versión y rol por switch. Para VTP, los enlaces entre switches deben ir en trunk.</div>
@@ -992,6 +1025,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-production-gate-architecture.js"></script>
 <script src="./js/netwizard-change-set.js"></script>
 <script src="./js/netwizard-incremental-generators.js"></script>
+<script src="./js/netwizard-observed-config-ui.js"></script>
 <script src="./js/netwizard-deployment-runbook.js"></script>
 <script src="./js/netwizard-deployment-bundle.js"></script>
 <script src="./js/netwizard-runtime.js"></script>
