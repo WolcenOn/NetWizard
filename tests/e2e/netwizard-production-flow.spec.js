@@ -274,6 +274,49 @@ test('modo incremental genera candidato Cisco IOS reversible y no guarda automá
   expect(rollback.content).toContain('switchport access vlan 999');
 });
 
+test('la UI guarda una captura Cisco IOS, ejecuta preflight y descarga candidato y rollback', async ({ page }) => {
+  await resetStorage(page);
+  const payload=samplePayload('small-office.json');
+  const fixture=await page.evaluate((payload)=>{
+    const prepared=window.NetWizardProjectSchema.prepareImport(payload,{defaults:window.defS});
+    if(!prepared.ok)throw new Error(prepared.errors.join('\n'));
+    window.NetWizardState.replaceProject(prepared.project,{source:'e2e-observed-ui'});
+    const project=window.NetWizardState.getSnapshot(),target=project.devices.find(device=>device.vendorOs==='cisco_ios'&&device.kind==='switch');
+    if(!target)throw new Error('No existe switch Cisco IOS');
+    const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replace(/^(\s*switchport access vlan )\d+$/m,(_line,prefix)=>`${prefix}999`);
+    if(observed===desired)throw new Error('La salida Cisco IOS no contiene una VLAN access');
+    window.navTo('cfg');return{deviceId:target.id,observed};
+  },payload);
+  await expect(page.locator('#observedConfigCard')).toBeVisible();
+  await page.selectOption('#observedDevice',fixture.deviceId);
+  await page.fill('#observedSource','show running-config / Playwright');
+  await page.fill('#observedCapturedAt',new Date().toISOString().slice(0,16));
+  await page.fill('#observedConfig',fixture.observed);
+  await page.check('#observedRequireExecutable');
+  await page.click('#observedSave');
+  await expect(page.locator('#observedStatus')).toContainText('Candidato incremental seguro');
+  await expect(page.locator('#observedStatus')).toContainText('cisco-ios.managed-delta');
+  await expect(page.locator('#observedCandidate')).toHaveValue(/configure terminal/);
+  await expect(page.locator('#observedRollback')).toHaveValue(/switchport access vlan 999/);
+
+  const state=await page.evaluate((deviceId)=>{
+    const project=window.NetWizardState.getSnapshot(),entry=project.observedState.deviceConfigs[deviceId];
+    return{mode:project.deployment.changeMode,strict:project.deployment.requireExecutableIncremental,source:entry.source,vendor:entry.vendor,content:entry.content};
+  },fixture.deviceId);
+  expect(state.mode).toBe('incremental');
+  expect(state.strict).toBe(true);
+  expect(state.source).toBe('show running-config / Playwright');
+  expect(state.vendor).toBe('cisco_ios');
+  expect(state.content).toContain('switchport access vlan 999');
+
+  const candidateDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadCandidate');
+  expect((await candidateDownload).suggestedFilename()).toMatch(/\.cfg$/);
+  const rollbackDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadRollback');
+  expect((await rollbackDownload).suggestedFilename()).toMatch(/\.cfg$/);
+});
+
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {
   await resetStorage(page);
   await setProject(page, {

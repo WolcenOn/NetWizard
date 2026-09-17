@@ -32,6 +32,18 @@ NetWizard puede comparar la configuración objetivo generada con una captura rea
 
 El schema conserva hasta 256 KiB por configuración observada y 4 MiB en total. Una captura truncada se etiqueta y bloquea el modo incremental.
 
+## Captura desde la interfaz
+
+En **Configuración & Export → Estado observado y cambio incremental** se puede:
+
+1. Seleccionar el dispositivo real.
+2. Registrar el origen y la fecha de la captura.
+3. Pegar la configuración obtenida directamente del equipo.
+4. Guardarla y ejecutar el preflight, o analizarla sin persistirla.
+5. Descargar candidato y rollback únicamente si el estado es `candidate-ready`.
+
+El preflight del panel está deliberadamente limitado al dispositivo seleccionado para facilitar la corrección progresiva. La exportación ZIP evalúa siempre el proyecto completo y bloquea el modo incremental hasta lograr cobertura válida para todos sus dispositivos.
+
 Las colecciones estructurales (`devices`, `ports`, `vlans`, etc.) son opcionales en un snapshot. La auditoría de drift solo compara aquellas que estén presentes, por lo que una captura exclusivamente de configuraciones no inventa recursos ausentes.
 
 ## Artefactos

@@ -41,6 +41,7 @@ const required = [
   'js/netwizard-production-gate-architecture.js',
   'js/netwizard-change-set.js',
   'js/netwizard-incremental-generators.js',
+  'js/netwizard-observed-config-ui.js',
   'js/netwizard-deployment-runbook.js',
   'js/netwizard-deployment-bundle.js',
   'js/netwizard-runtime.js'
@@ -70,6 +71,8 @@ before('js/netwizard-architecture-validator.js', 'js/netwizard-production-gate-a
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-change-set.js');
 before('js/netwizard-change-set.js', 'js/netwizard-incremental-generators.js');
+before('js/netwizard-incremental-generators.js', 'js/netwizard-observed-config-ui.js');
+before('js/netwizard-observed-config-ui.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-incremental-generators.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-deployment-runbook.js', 'js/netwizard-deployment-bundle.js');
