@@ -3,6 +3,7 @@
 const assert=require('assert');
 const Incremental=require('../js/netwizard-incremental-generators.js');
 const Switching=require('../js/netwizard-switching-generator.js');
+const FirewallEdge=require('../js/netwizard-firewall-edge-generator.js');
 
 const observed='## Last changed\nset system host-name old-edge\nset interfaces ge-0/0/0 unit 0 family inet address 192.0.2.2/30\n';
 const desired='# NetWizard\nset system host-name new-edge\nset interfaces ge-0/0/0 unit 0 family inet address 192.0.2.2/30\nset routing-options static route 0.0.0.0/0 next-hop 192.0.2.1\n';
@@ -153,13 +154,110 @@ const absentPhysical=Incremental.ciscoIosAdapter({deviceName:'Edge',observedConf
 assert.strictEqual(absentPhysical.ready,false);
 assert.match(absentPhysical.reason,/interfaz física/i);
 
-const unsupported=build(project('fortinet'),'config system interface\nend\n');
+const fortiObserved=`config system global
+ set hostname "FW-OLD"
+end
+config system interface
+ edit "wan1"
+  set ip 203.0.113.2 255.255.255.252
+  set allowaccess ping https ssh
+  set role wan
+ next
+ edit "VLAN10_Users"
+  set interface "port2"
+  set vlanid 10
+  set ip 10.10.10.1 255.255.255.0
+  set allowaccess ping
+  set role lan
+ next
+end
+config firewall address
+ edit "NET_Users"
+  set subnet 10.10.10.0 255.255.255.0
+ next
+end
+config router static
+ edit 10
+  set dst 0.0.0.0/0
+  set gateway 203.0.113.1
+ next
+end
+config system dhcp server
+ edit 1
+  set interface "VLAN10_Users"
+  set default-gateway 10.10.10.1
+  set netmask 255.255.255.0
+  set lease-time 86400
+  config ip-range
+   edit 1
+    set start-ip 10.10.10.20
+    set end-ip 10.10.10.100
+   next
+  end
+ next
+end
+config firewall policy
+end
+config user radius
+end
+`;
+const fortiDesired=fortiObserved.replace('"FW-OLD"','"FW1"').replace('set gateway 203.0.113.1','set gateway 203.0.113.254').replace('set end-ip 10.10.10.100','set end-ip 10.10.10.200')+`config firewall policy
+ edit 10
+  set name "Users_to_Internet"
+  set srcintf "VLAN10_Users"
+  set dstintf "wan1"
+  set srcaddr "NET_Users"
+  set dstaddr "all"
+  set action accept
+  set schedule "always"
+  set service "ALL"
+  set nat enable
+  set logtraffic all
+ next
+end
+`;
+const fortinet=project('fortinet',{projName:'FortiOS seguro',observedState:{deviceConfigs:{r1:{vendor:'fortinet',capturedAt:'2026-09-16T10:00:00Z',content:fortiObserved}}}});
+const fortiPlan=build(fortinet,fortiDesired);
+assert.strictEqual(fortiPlan.ok,true);
+assert.strictEqual(fortiPlan.devices[0].status,'candidate-ready');
+assert.strictEqual(fortiPlan.devices[0].adapterId,'fortios.managed-delta');
+assert.ok(fortiPlan.artifacts.every(file=>file.path.endsWith('.conf')));
+const fortiApply=fortiPlan.artifacts.find(file=>file.path.includes('/commands/')).content;
+const fortiRollback=fortiPlan.artifacts.find(file=>file.path.includes('/rollback/')).content;
+assert.match(fortiApply,/^ set hostname "FW1"$/m);
+assert.match(fortiApply,/^  set gateway 203\.0\.113\.254$/m);
+assert.match(fortiApply,/^     set end-ip 10\.10\.10\.200$/m);
+assert.match(fortiApply,/^ edit 10$/m);
+assert.match(fortiRollback,/^ set hostname "FW-OLD"$/m);
+assert.match(fortiRollback,/^  set gateway 203\.0\.113\.1$/m);
+assert.match(fortiRollback,/^ delete 10$/m);
+
+const changedOpaque=build(fortinet,fortiDesired+'config router ospf\n set router-id 10.0.0.1\nend\n');
+assert.strictEqual(changedOpaque.devices[0].status,'manual-review');
+const changedSecret=build(fortinet,fortiDesired+'config user radius\n edit "NW_RADIUS_1"\n  set server "10.0.0.10"\n  set secret ${SECRET:radius}\n next\nend\n');
+assert.strictEqual(changedSecret.devices[0].status,'manual-review');
+const literalSecret=build(fortinet,fortiDesired+'config user radius\n edit "NW_RADIUS_1"\n  set server "10.0.0.10"\n  set secret "real-value"\n next\nend\n');
+assert.strictEqual(literalSecret.devices[0].status,'manual-review');
+const invalidForti=build(fortinet,fortiDesired.replace('set vlanid 10','set vlanid 5000'));
+assert.strictEqual(invalidForti.devices[0].status,'manual-review');
+const changedUnknownForti=build(fortinet,fortiDesired.replace('set role lan','set role lan\n  set device-identification enable'));
+assert.strictEqual(changedUnknownForti.devices[0].status,'manual-review');
+
+const sampleFirewall=sampleProject.devices.find(device=>device.vendorOs==='fortinet');
+const sampleFortiDesired=FirewallEdge.render(sampleProject,sampleFirewall.id,'fortinet');
+const sampleFortiObserved=sampleFortiDesired.replaceAll('set hostname "FW1"','set hostname "FW-OLD"');
+const sampleFortiCandidate=Incremental.fortiOsAdapter({deviceName:sampleFirewall.name,observedConfig:sampleFortiObserved,desiredConfig:sampleFortiDesired});
+assert.strictEqual(sampleFortiCandidate.ready,true);
+assert.match(sampleFortiCandidate.applyContent,/^ set hostname "FW1"$/m);
+assert.match(sampleFortiCandidate.rollbackContent,/^ set hostname "FW-OLD"$/m);
+
+const unsupported=build(project('huawei_vrp'),'system-view\n');
 assert.strictEqual(unsupported.ok,true);
 assert.strictEqual(unsupported.devices[0].status,'manual-review');
 assert.ok(unsupported.issues.some(item=>item.code==='NW-INCREMENTAL-002'));
 
-const strictUnsupported=project('fortinet',{deployment:{changeMode:'incremental',requireExecutableIncremental:true}});
-assert.strictEqual(build(strictUnsupported,'config system interface\nend\n').ok,false);
+const strictUnsupported=project('huawei_vrp',{deployment:{changeMode:'incremental',requireExecutableIncremental:true}});
+assert.strictEqual(build(strictUnsupported,'system-view\n').ok,false);
 
 const missingInput=Incremental.buildPlan(project(),{generatedAt:'2026-09-16T12:00:00Z',changeSet:changeSet(),desiredConfigs:{}});
 assert.strictEqual(missingInput.ok,false);
@@ -170,4 +268,4 @@ registry.register({id:'test',vendors:['test_os'],generate(){return{ready:true,no
 assert.strictEqual(registry.resolve('test_os').id,'test');
 assert.throws(()=>registry.register({id:'test',vendors:['other'],generate(){}}),/duplicado/i);
 
-console.log('✓ Registro incremental genera candidatos Junos/Cisco IOS reversibles y deriva lo ambiguo a revisión manual');
+console.log('✓ Registro incremental genera candidatos Junos/Cisco IOS/FortiOS reversibles y deriva lo ambiguo a revisión manual');

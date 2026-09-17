@@ -38,6 +38,7 @@ npm run test:e2e
 - [ ] Confirmar que cada fichero `incremental/commands/` procede de un adaptador `candidate-ready`.
 - [ ] Para Junos, revisar `show | compare`, ejecutar `commit check` y usar la política aprobada de `commit confirmed`.
 - [ ] Para Cisco IOS, confirmar que el candidato solo toca VLAN/interfaces/rutas/DHCP permitidos, no contiene guardado automático y preserva comandos observados ajenos a NetWizard.
+- [ ] Para FortiOS, confirmar VDOM, interfaces, IDs/orden de políticas, backup real y que el candidato solo toca secciones administradas.
 - [ ] No convertir estados `manual-review` en comandos mediante copia directa del diff.
 - [ ] Exportar inventario CSV.
 - [ ] Exportar documentación Markdown.

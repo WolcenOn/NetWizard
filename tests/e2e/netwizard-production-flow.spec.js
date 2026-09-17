@@ -317,6 +317,38 @@ test('la UI guarda una captura Cisco IOS, ejecuta preflight y descarga candidato
   expect((await rollbackDownload).suggestedFilename()).toMatch(/\.cfg$/);
 });
 
+test('la UI genera un candidato FortiOS reversible desde la configuración observada', async ({ page }) => {
+  await resetStorage(page);
+  const payload=samplePayload('small-office.json');
+  const fixture=await page.evaluate((payload)=>{
+    const prepared=window.NetWizardProjectSchema.prepareImport(payload,{defaults:window.defS});
+    if(!prepared.ok)throw new Error(prepared.errors.join('\n'));
+    window.NetWizardState.replaceProject(prepared.project,{source:'e2e-fortios-observed-ui'});
+    const project=window.NetWizardState.getSnapshot(),target=project.devices.find(device=>device.vendorOs==='fortinet');
+    if(!target)throw new Error('No existe firewall Fortinet');
+    const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replaceAll('set hostname "FW1"','set hostname "FW-OLD"');
+    if(observed===desired)throw new Error('La salida FortiOS no contiene el hostname esperado');
+    window.navTo('cfg');return{deviceId:target.id,observed};
+  },payload);
+  await page.selectOption('#observedDevice',fixture.deviceId);
+  await page.fill('#observedSource','show full-configuration / Playwright');
+  await page.fill('#observedCapturedAt',new Date().toISOString().slice(0,16));
+  await page.fill('#observedConfig',fixture.observed);
+  await page.check('#observedRequireExecutable');
+  await page.click('#observedSave');
+  await expect(page.locator('#observedStatus')).toContainText('Candidato incremental seguro');
+  await expect(page.locator('#observedStatus')).toContainText('fortios.managed-delta');
+  await expect(page.locator('#observedCandidate')).toHaveValue(/config system global[\s\S]*set hostname "FW1"/);
+  await expect(page.locator('#observedRollback')).toHaveValue(/set hostname "FW-OLD"/);
+
+  const candidateDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadCandidate');
+  expect((await candidateDownload).suggestedFilename()).toMatch(/\.conf$/);
+  const rollbackDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadRollback');
+  expect((await rollbackDownload).suggestedFilename()).toMatch(/\.conf$/);
+});
+
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {
   await resetStorage(page);
   await setProject(page, {

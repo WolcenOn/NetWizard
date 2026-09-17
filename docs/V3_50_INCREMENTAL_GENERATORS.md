@@ -9,7 +9,8 @@ NetWizard dispone de un registro separado para transformar un change set revisad
 | Juniper Junos | `junos.set-delta` | Candidato `set/delete` y candidato inverso |
 | Cisco IOS | `cisco-ios.managed-delta` | Candidato jerárquico para VLAN, interfaces, rutas estáticas y DHCP |
 | Cisco ASA | — | Revisión manual |
-| Fortinet, Huawei, MikroTik, Aruba | — | Revisión manual |
+| Fortinet FortiOS | `fortios.managed-delta` | Candidato jerárquico para interfaces, objetos, zonas, rutas, políticas, DHCP y gestión básica |
+| Huawei, MikroTik, Aruba | — | Revisión manual |
 | pfSense, UniFi, Omada, Galgus | — | Revisión manual/controlador |
 | Windows, Linux | — | Revisión manual |
 
@@ -46,6 +47,22 @@ El adaptador no elimina bloques completos simplemente porque no aparezcan en el 
 
 Los candidatos `.cfg` incluyen `configure terminal` y `end`, pero nunca guardan la configuración. `write memory`/`copy running-config startup-config` quedan fuera del fichero y requieren aprobación explícita después de los postchecks. El rollback inverso es auxiliar: la captura real previa continúa siendo la fuente autoritativa.
 
+## Fortinet FortiOS
+
+La captura recomendada es `show full-configuration`, obtenida en el VDOM correcto y sin prompts ni paginación. `fortios.managed-delta` interpreta la jerarquía `config/edit/set/next/end`, fusiona secciones repetidas compatibles y solo administra:
+
+- hostname y parámetros básicos DNS/NTP/syslog;
+- interfaces físicas/VLAN y relay DHCP;
+- objetos de dirección y zonas;
+- rutas estáticas simples;
+- políticas firewall básicas, NAT y logging;
+- servidores DHCP e `ip-range`;
+- referencias RADIUS/SNMP ya existentes, bloqueando cualquier cambio de secreto.
+
+Las secciones no administradas —por ejemplo OSPF avanzado, SD-WAN, VPN, UTM, certificados o HA/FGCP— deben coincidir exactamente si aparecen en el objetivo; cualquier modificación pasa a `manual-review`. Los objetos nuevos se revierten con `delete`, mientras que los campos modificados restauran su `set` observado o usan `unset` cuando antes no existían.
+
+Los candidatos `.conf` no ejecutan backups, reinicios ni acciones de despliegue remoto. Antes de aplicar se deben confirmar VDOM, nombres de interfaz, IDs y orden de políticas, además de conservar un backup real de FortiGate.
+
 ## Política estricta
 
 ```json
@@ -66,6 +83,7 @@ Con `requireExecutableIncremental: true`, cualquier dispositivo que necesite cam
 - `incremental/summary.md`: resumen revisable.
 - `incremental/commands/*.set`: candidato Junos observado → deseado.
 - `incremental/commands/*.cfg`: candidato Cisco IOS administrado.
+- `incremental/commands/*.conf`: candidato FortiOS administrado.
 - `incremental/rollback/*`: candidato inverso según fabricante.
 
 El backup real capturado antes del cambio sigue siendo la fuente autoritativa para una reversión. El candidato inverso no lo sustituye.
