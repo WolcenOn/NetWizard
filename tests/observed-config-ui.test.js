@@ -47,6 +47,16 @@ assert.match(manual.candidate,/set hostname NEW/);
 assert.match(manual.rollback,/set hostname OLD/);
 assert.match(manual.applyFilename,/\.conf$/);
 
+const routerOsObserved='/system identity set name="MT-OLD"\n/ip service set ssh disabled=no\n';
+const routerOsDesired='/system identity set name="MT-EDGE"\n/ip service set ssh disabled=no\n';
+const routerOs=Ui.upsertSnapshot(project('mikrotik_routeros'),'sw1',{content:routerOsObserved,capturedAt,source:'/export terse'});
+const routerOsPreview=Ui.buildDevicePreview(routerOs,'sw1',{generatedAt,changeSet:ChangeSet,incremental:Incremental,generateConfig:()=>routerOsDesired});
+assert.strictEqual(routerOsPreview.ok,true);
+assert.strictEqual(routerOsPreview.status,'candidate-ready');
+assert.match(routerOsPreview.candidate,/\/system\/identity\/set name="MT-EDGE"/);
+assert.match(routerOsPreview.rollback,/\/system\/identity\/set name="MT-OLD"/);
+assert.match(routerOsPreview.applyFilename,/\.rsc$/);
+
 const removed=Ui.removeSnapshot(saved,'sw1');
 assert.strictEqual(removed.observedState,null);
 assert.throws(()=>Ui.upsertSnapshot(project(),'sw1',{content:'x'.repeat(Ui.MAX_CONFIG_CHARS+1),capturedAt}),/supera el límite/);

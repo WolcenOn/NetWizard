@@ -251,6 +251,62 @@ assert.strictEqual(sampleFortiCandidate.ready,true);
 assert.match(sampleFortiCandidate.applyContent,/^ set hostname "FW1"$/m);
 assert.match(sampleFortiCandidate.rollbackContent,/^ set hostname "FW-OLD"$/m);
 
+const routerOsObserved=`# 2026-09-17 by RouterOS 7.15
+/system identity set name="MT-OLD"
+/interface bridge add name=bridge-lan vlan-filtering=yes protocol-mode=rstp
+/interface/bridge/port/add bridge=bridge-lan interface=ether2 pvid=10 edge=yes bpdu-guard=yes
+/interface bridge vlan add bridge=bridge-lan vlan-ids=10 tagged=bridge-lan untagged=ether2
+/ip route add dst-address=0.0.0.0/0 gateway=192.0.2.1 distance=1 comment="NetWizard WAN"
+/ip service set telnet disabled=yes
+/ip/service/set ssh disabled=no address=10.0.0.0/8
+`;
+const routerOsDesired=routerOsObserved
+  .replace('name="MT-OLD"','name="MT-EDGE"')
+  .replace('pvid=10 edge=yes','pvid=20 edge=yes')
+  .replace('gateway=192.0.2.1','gateway=192.0.2.254')
+  .replace('address=10.0.0.0/8','address=10.10.0.0/16')+
+  '/interface vlan add name=vlan20 vlan-id=20 interface=bridge-lan\n';
+const routerOs=project('mikrotik_routeros',{projName:'RouterOS seguro',observedState:{deviceConfigs:{r1:{vendor:'mikrotik_routeros',capturedAt:'2026-09-16T10:00:00Z',content:routerOsObserved}}}});
+const routerOsPlan=build(routerOs,routerOsDesired);
+assert.strictEqual(routerOsPlan.ok,true);
+assert.strictEqual(routerOsPlan.devices[0].status,'candidate-ready');
+assert.strictEqual(routerOsPlan.devices[0].adapterId,'routeros-v7.managed-delta');
+assert.ok(routerOsPlan.artifacts.every(file=>file.path.endsWith('.rsc')));
+const routerOsApply=routerOsPlan.artifacts.find(file=>file.path.includes('/commands/')).content;
+const routerOsRollback=routerOsPlan.artifacts.find(file=>file.path.includes('/rollback/')).content;
+assert.match(routerOsApply,/^\/system\/identity\/set name="MT-EDGE"$/m);
+assert.match(routerOsApply,/^\/interface\/bridge\/port\/set \[find where bridge=bridge-lan and interface=ether2\] pvid=20$/m);
+assert.match(routerOsApply,/^\/ip\/route\/set \[find where dst-address=0\.0\.0\.0\/0 and distance=1\] gateway=192\.0\.2\.254$/m);
+assert.match(routerOsApply,/^\/interface vlan add name=vlan20 vlan-id=20 interface=bridge-lan$/m);
+assert.match(routerOsRollback,/^\/system\/identity\/set name="MT-OLD"$/m);
+assert.match(routerOsRollback,/^\/interface\/vlan\/remove \[find where name=vlan20\]$/m);
+assert.match(routerOsRollback,/^\/ip\/service\/set ssh address=10\.0\.0\.0\/8$/m);
+assert.doesNotMatch(routerOsApply,/reset-configuration|reboot|backup save/i);
+
+const routerOsNoChange=Incremental.routerOsAdapter({deviceName:'MT',observedConfig:routerOsObserved,desiredConfig:routerOsObserved});
+assert.strictEqual(routerOsNoChange.ready,true);
+assert.strictEqual(routerOsNoChange.noChange,true);
+const changedRouterOsScript=build(routerOs,routerOsDesired+':if (true) do={ /system reboot }\n');
+assert.strictEqual(changedRouterOsScript.devices[0].status,'manual-review');
+const changedRouterOsSecret=build(routerOs,routerOsDesired+'/radius add service=login address=10.0.0.10 secret=${SECRET:radius}\n');
+assert.strictEqual(changedRouterOsSecret.devices[0].status,'manual-review');
+const invalidRouterOsVlan=build(routerOs,routerOsDesired.replace('vlan-id=20','vlan-id=5000'));
+assert.strictEqual(invalidRouterOsVlan.devices[0].status,'manual-review');
+const incompleteRouterOsExport=project('mikrotik_routeros',{observedState:{deviceConfigs:{r1:{vendor:'mikrotik_routeros',capturedAt:'2026-09-16T10:00:00Z',content:routerOsObserved.replace('# 2026-09-17 by RouterOS 7.15\n','')}}}});
+assert.strictEqual(build(incompleteRouterOsExport,routerOsDesired).devices[0].status,'manual-review');
+assert.strictEqual(build(routerOs,routerOsDesired.replace('# 2026-09-17 by RouterOS 7.15','#error exporting "/ip route" (timeout)')).devices[0].status,'manual-review');
+const dynamicRouterOsSelector=build(routerOs,routerOsDesired+'/interface/bridge/set [find name="bridge-lan"] dhcp-snooping=yes\n');
+assert.strictEqual(dynamicRouterOsSelector.devices[0].status,'manual-review');
+
+const sampleRouterOs=JSON.parse(JSON.stringify(sampleProject));
+sampleRouterOs.devices.find(device=>device.id===sampleSwitch.id).vendorOs='mikrotik_routeros';
+const sampleRouterOsDesired=Switching.render(sampleRouterOs,sampleSwitch.id,'mikrotik_routeros');
+const sampleRouterOsObserved=sampleRouterOsDesired.replace(/pvid=\d+/, 'pvid=999');
+const sampleRouterOsCandidate=Incremental.routerOsAdapter({deviceName:sampleSwitch.name,observedConfig:sampleRouterOsObserved,desiredConfig:sampleRouterOsDesired});
+assert.strictEqual(sampleRouterOsCandidate.ready,true);
+assert.match(sampleRouterOsCandidate.applyContent,/\/interface\/bridge\/port\/set .* pvid=10/m);
+assert.match(sampleRouterOsCandidate.rollbackContent,/\/interface\/bridge\/port\/set .* pvid=999/m);
+
 const unsupported=build(project('huawei_vrp'),'system-view\n');
 assert.strictEqual(unsupported.ok,true);
 assert.strictEqual(unsupported.devices[0].status,'manual-review');
@@ -268,4 +324,4 @@ registry.register({id:'test',vendors:['test_os'],generate(){return{ready:true,no
 assert.strictEqual(registry.resolve('test_os').id,'test');
 assert.throws(()=>registry.register({id:'test',vendors:['other'],generate(){}}),/duplicado/i);
 
-console.log('✓ Registro incremental genera candidatos Junos/Cisco IOS/FortiOS reversibles y deriva lo ambiguo a revisión manual');
+console.log('✓ Registro incremental genera candidatos Junos/Cisco IOS/FortiOS/RouterOS reversibles y deriva lo ambiguo a revisión manual');

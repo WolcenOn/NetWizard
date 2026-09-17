@@ -349,6 +349,39 @@ test('la UI genera un candidato FortiOS reversible desde la configuración obser
   expect((await rollbackDownload).suggestedFilename()).toMatch(/\.conf$/);
 });
 
+test('la UI genera un candidato RouterOS v7 reversible desde export terse', async ({ page }) => {
+  await resetStorage(page);
+  const payload=samplePayload('small-office.json');
+  const fixture=await page.evaluate((payload)=>{
+    const prepared=window.NetWizardProjectSchema.prepareImport(payload,{defaults:window.defS});
+    if(!prepared.ok)throw new Error(prepared.errors.join('\n'));
+    const target=prepared.project.devices.find(device=>device.kind==='switch'||device.type==='switch');
+    if(!target)throw new Error('No existe switch para la prueba RouterOS');
+    target.vendorOs='mikrotik_routeros';
+    window.NetWizardState.replaceProject(prepared.project,{source:'e2e-routeros-observed-ui'});
+    const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replace(/pvid=\d+/, 'pvid=999');
+    if(observed===desired)throw new Error('La salida RouterOS no contiene un PVID administrado');
+    window.navTo('cfg');return{deviceId:target.id,observed};
+  },payload);
+  await page.selectOption('#observedDevice',fixture.deviceId);
+  await page.fill('#observedSource','/export terse / Playwright');
+  await page.fill('#observedCapturedAt',new Date().toISOString().slice(0,16));
+  await page.fill('#observedConfig',fixture.observed);
+  await page.check('#observedRequireExecutable');
+  await page.click('#observedSave');
+  await expect(page.locator('#observedStatus')).toContainText('Candidato incremental seguro');
+  await expect(page.locator('#observedStatus')).toContainText('routeros-v7.managed-delta');
+  await expect(page.locator('#observedCandidate')).toHaveValue(/\/interface\/bridge\/port\/set \[find where .*\] pvid=/);
+  await expect(page.locator('#observedRollback')).toHaveValue(/\/interface\/bridge\/port\/set \[find where .*\] pvid=999/);
+
+  const candidateDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadCandidate');
+  expect((await candidateDownload).suggestedFilename()).toMatch(/\.rsc$/);
+  const rollbackDownload=page.waitForEvent('download');
+  await page.click('#observedDownloadRollback');
+  expect((await rollbackDownload).suggestedFilename()).toMatch(/\.rsc$/);
+});
+
 test('puerta de producción bloquea un diseño incompleto antes de exportar', async ({ page }) => {
   await resetStorage(page);
   await setProject(page, {
