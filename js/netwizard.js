@@ -2231,24 +2231,59 @@ $('expJson').onclick=()=>{
   const payload=NWSchema&&typeof NWSchema.prepareExport==='function'?NWSchema.prepareExport(snap,{defaults:defS}):snap;
   $('jsonBox').value=JSON.stringify(payload,null,2);
 };
+function prepareJsonImportText(text){
+  const txt=String(text||'').trim();
+  if(!txt)throw new Error('No hay contenido JSON para importar.');
+  const raw=JSON.parse(txt);
+  let p=raw?.project&&typeof raw.project==='object'?raw.project:raw;
+  let warnings=[];
+  if(NWSchema&&typeof NWSchema.prepareImport==='function'){
+    const prepared=NWSchema.prepareImport(raw,{defaults:defS});
+    if(!prepared.ok)throw new Error('JSON inválido:\n- '+prepared.errors.join('\n- '));
+    p=prepared.project;
+    warnings=prepared.warnings||[];
+  }else if(!Array.isArray(p?.devices)||!Array.isArray(p?.vlans)){
+    throw new Error('JSON inválido.');
+  }
+  return{project:p,warnings};
+}
+function applyJsonImportText(text,source){
+  const prepared=prepareJsonImportText(text);
+  if(prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
+  const importSource=source||'json-import';
+  window.NetWizardState.replaceProject(prepared.project,{source:importSource});
+  document.dispatchEvent(new CustomEvent('nw:iot:changed',{detail:{source:importSource}}));
+  return prepared;
+}
+window.NetWizardJsonImport={version:'netwizard-json-import-v1',prepareJsonImportText,applyJsonImportText};
 $('impJson').onclick=()=>{
-  const txt=($('jsonBox').value||'').trim();
-  if(!txt)return alert('Pega el JSON primero.');
   try{
-    const raw=JSON.parse(txt);
-    let p=raw?.project&&typeof raw.project==='object'?raw.project:raw;
-    if(NWSchema&&typeof NWSchema.prepareImport==='function'){
-      const prepared=NWSchema.prepareImport(raw,{defaults:defS});
-      if(!prepared.ok)return alert('JSON inválido:\n- '+prepared.errors.join('\n- '));
-      p=prepared.project;
-      if(prepared.warnings&&prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
-    }else if(!Array.isArray(p?.devices)||!Array.isArray(p?.vlans)){
-      return alert('JSON inválido.');
-    }
-    window.NetWizardState.replaceProject(p,{source:'json-import'});
-    document.dispatchEvent(new CustomEvent('nw:iot:changed',{detail:{source:'json-import'}}));
-  }catch(e){alert('JSON inválido: '+e.message);}
+    const prepared=applyJsonImportText($('jsonBox').value,'json-import-text');
+    const status=$('jsonImportStatus');
+    if(status)status.textContent=`Importado desde texto: ${prepared.project.projName||'proyecto sin nombre'}.`;
+  }catch(e){alert(e.message||('JSON inválido: '+e));}
 };
+if($('impJsonFile')&&$('jsonFileInput')){
+  $('impJsonFile').onclick=()=>{$('jsonFileInput').value='';$('jsonFileInput').click();};
+  $('jsonFileInput').addEventListener('change',()=>{
+    const file=$('jsonFileInput').files&&$('jsonFileInput').files[0];
+    if(!file)return;
+    const status=$('jsonImportStatus');
+    if(file.size>10*1024*1024){if(status)status.textContent='Archivo rechazado: supera 10 MB.';alert('El archivo JSON supera el límite de 10 MB.');return;}
+    if(status)status.textContent=`Leyendo ${file.name}…`;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const text=String(reader.result||'');
+        $('jsonBox').value=text;
+        const prepared=applyJsonImportText(text,'json-import-file');
+        if(status)status.textContent=`✓ ${file.name} cargado · ${prepared.project.projName||'proyecto sin nombre'} · ${Math.max(1,Math.round(file.size/1024))} KB.`;
+      }catch(e){if(status)status.textContent=`Error al importar ${file.name}.`;alert(e.message||('JSON inválido: '+e));}
+    };
+    reader.onerror=()=>{if(status)status.textContent=`No se pudo leer ${file.name}.`;alert('No se pudo leer el archivo seleccionado.');};
+    reader.readAsText(file,'utf-8');
+  });
+}
 $('btnReset').onclick=()=>{if(!confirm('¿Borrar todo el proyecto?'))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
 $('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>$('expBundle').click(),200);};
 
