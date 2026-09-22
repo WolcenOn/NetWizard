@@ -215,8 +215,10 @@
             <div><label class="fl">Interfaz WAN</label><input id="devWanIf" placeholder="GigabitEthernet0/0"/></div>
           </div>
         </div>
-        <label class="fl">Notas</label>
-        <input id="devNotes" placeholder="Modelo, rack, ubicación…"/>
+        <div class="row">
+          <div><label class="fl">Notas</label><input id="devNotes" placeholder="Modelo, rack, ubicación…"/></div>
+          <div><label class="fl">Color identificativo</label><input id="devColor" type="color" value="#3b82f6" title="Color usado para identificar el dispositivo en listas de puertos"/></div>
+        </div>
         <input type="hidden" id="devEditId"/>
         <div class="brow"><button class="btn bp bfull" id="btnAddDev">➕ Añadir dispositivo</button><button class="btn bs" id="btnCancelDevEdit" style="display:none;">Cancelar edición</button></div>
       </div>
@@ -952,6 +954,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-change-preview.js"></script>
 <script src="./js/netwizard-policy-utils.js"></script>
 <script src="./js/netwizard.js"></script>
+<script src="./js/netwizard-bulk-port-editor.js"></script>
 <!-- Pipeline de configuración: registro único, renderer base y extensiones ordenadas. -->
 <script src="./js/netwizard-config-pipeline.js"></script>
 <script src="./js/netwizard-vendor-config-generators.js"></script>
