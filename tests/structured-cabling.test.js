@@ -9,8 +9,8 @@ let project={
   racks:[{id:'rack1',name:'Rack 1',rackUnits:24}],
   physicalLocations:[{id:'loc1',name:'Oficina'}],
   devices:[{id:'sw1',name:'SW-01',rackId:'rack1'}],
-  ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1'}],
-  hosts:[{id:'h1',name:'PC-01'}],
+  ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1'},{id:'p2',deviceId:'sw1',name:'Gi1/0/2'}],
+  hosts:[{id:'h1',name:'PC-01',portRef:'p1'}],
   patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],
   rackItems:[]
 };
@@ -49,6 +49,16 @@ audit=Cabling.validate(duplicate);
 assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-005'));
 assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-006'));
 assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-008'));
+
+const mismatch=JSON.parse(JSON.stringify(project));
+mismatch.patchConnections[0].switchPortId='p2';
+audit=Cabling.validate(mismatch);
+assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-016'));
+
+const disconnected=JSON.parse(JSON.stringify(project));
+disconnected.patchConnections=[];
+audit=Cabling.validate(disconnected);
+assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-018'));
 
 global.NetWizardProductionGate=require('../js/netwizard-production-gate.js');
 global.NetWizardRackModel=require('../js/netwizard-rack-model.js');
