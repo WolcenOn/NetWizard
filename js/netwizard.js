@@ -184,6 +184,7 @@ const cliQuoted=NWCore.safeQuotedCli||((v,max=160)=>cliText(v,max).replace(/"/g,
 // =========================================================
 function ensurePhysicalLocationModel(){
   if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
+  const hadStructuredLocations=S.physicalLocations.some(l=>l&&cleanStr(l.name));
   const seen=new Set();
   S.physicalLocations=(S.physicalLocations||[]).filter(Boolean).map(l=>({
     id:l.id||uid('pl'),
@@ -193,7 +194,9 @@ function ensurePhysicalLocationModel(){
     distance:l.distance==null?'':String(l.distance),
     notes:cleanStr(l.notes)
   })).filter(l=>l.name && !seen.has(l.name.toLowerCase()) && seen.add(l.name.toLowerCase()));
-  for(const n of (S.hostPhysicalLocations||[])) if(cleanStr(n) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(n).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(n),type:'other',parentId:'',distance:'',notes:''});
+  if(!hadStructuredLocations){
+    for(const n of (S.hostPhysicalLocations||[])) if(cleanStr(n) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(n).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(n),type:'other',parentId:'',distance:'',notes:''});
+  }
   for(const h of S.hosts||[]) if(cleanStr(h.physicalLocation) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(h.physicalLocation).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(h.physicalLocation),type:'other',parentId:'',distance:'',notes:''});
   for(const d of S.devices||[]) if(cleanStr(d.physicalLocation) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(d.physicalLocation).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(d.physicalLocation),type:'other',parentId:'',distance:'',notes:''});
   syncVisualLocationsIntoPhysical();
@@ -251,14 +254,19 @@ function syncPhysicalLocationsIntoVisual(){
   const V=S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null});
   if(!Array.isArray(V.locs)) V.locs=[];
   const byName=new Map(V.locs.map(l=>[cleanStr(l.name).toLowerCase(),l]));
-  for(const pl of (S.physicalLocations||[])){
+  const physical=S.physicalLocations||[];
+  const hasChildren=new Set(physical.map(l=>cleanStr(l.parentId)).filter(Boolean));
+  for(const pl of physical){
     const name=cleanStr(pl.name); if(!name) continue;
     const key=name.toLowerCase();
-    if(!byName.has(key)){
+    const existing=byName.get(key);
+    const isContainer=hasChildren.has(pl.id)&&['site','campus','building','floor'].includes(cleanStr(pl.type).toLowerCase());
+    if(!existing&&isContainer)continue;
+    if(!existing){
       const vl={id:uid('loc'),name,color:'#10233c',x:80+V.locs.length*360,y:90+(V.locs.length%2)*260,type:pl.type||'other',physicalLocationId:pl.id};
       V.locs.push(vl); byName.set(key,vl);
     }else{
-      const vl=byName.get(key); vl.physicalLocationId=vl.physicalLocationId||pl.id; vl.type=vl.type||pl.type||'other';
+      existing.physicalLocationId=existing.physicalLocationId||pl.id; existing.type=existing.type||pl.type||'other';
     }
   }
 }
@@ -2616,11 +2624,71 @@ async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)r
   layout.classList.toggle('fs',next);
 }
 syncV5FullscreenState();}
+function visualLocForPhysicalLocationId(id){
+  if(!id)return '';
+  return vv().locs.find(l=>l.physicalLocationId===id)?.id||'';
+}
+function visualLocForPhysicalLocationName(name){
+  const key=cleanStr(name).toLowerCase();if(!key)return '';
+  return vv().locs.find(l=>cleanStr(l.name).toLowerCase()===key)?.id||'';
+}
+function inferredDeviceVisualLoc(d){
+  if(!d)return '';
+  let lid=visualLocForPhysicalLocationId(d.locationId||d.physicalLocationId);
+  if(lid)return lid;
+  lid=visualLocForPhysicalLocationName(d.physicalLocation);if(lid)return lid;
+  const rack=(S.racks||[]).find(r=>r.id===(d.rackId||d.rack));
+  if(rack){
+    lid=visualLocForPhysicalLocationId(rack.locationId||rack.physicalLocationId);
+    if(lid)return lid;
+    lid=visualLocForPhysicalLocationName(rack.location||rack.physicalLocation);
+    if(lid)return lid;
+  }
+  return '';
+}
+function inferredHostVisualLoc(h){
+  if(!h)return '';
+  let lid=visualLocForPhysicalLocationId(h.locationId||h.physicalLocationId);
+  if(lid)return lid;
+  lid=visualLocForPhysicalLocationName(h.physicalLocation);if(lid)return lid;
+  const hc=(S.hostOutletConnections||[]).find(x=>x.hostId===h.id);
+  const outlet=hc&&(S.telecomOutlets||[]).find(x=>x.id===hc.outletId);
+  if(outlet){
+    lid=visualLocForPhysicalLocationId(outlet.locationId||outlet.physicalLocationId);
+    if(lid)return lid;
+    lid=visualLocForPhysicalLocationName(outlet.location||outlet.physicalLocation);
+    if(lid)return lid;
+  }
+  return '';
+}
+function isSyntheticDefaultVisualLoc(loc){
+  if(!loc)return false;
+  const names=['Core / Perímetro','Acceso / Usuarios','Servicios'];
+  if(!names.includes(cleanStr(loc.name)))return false;
+  const linked=(S.physicalLocations||[]).find(pl=>pl.id===loc.physicalLocationId);
+  return !loc.physicalLocationId ||
+    cleanStr(loc.type).toLowerCase()==='zone' ||
+    !!(linked && (cleanStr(linked.type).toLowerCase()==='zone' || cleanStr(linked.notes)==='Sincronizada desde Vista V5'));
+}
 function ensureVisualModel(){
   const V=vv();
   for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
   for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
   for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
+  if((S.physicalLocations||[]).length){
+    const defaultNames=new Set(['Core / Perímetro','Acceso / Usuarios','Servicios']);
+    const meaningfulPhysical=(S.physicalLocations||[]).some(pl=>!defaultNames.has(cleanStr(pl.name)));
+    const syntheticLocs=meaningfulPhysical?V.locs.filter(isSyntheticDefaultVisualLoc):[];
+    const syntheticIds=new Set(syntheticLocs.map(l=>l.id));
+    const syntheticPhysicalIds=new Set(syntheticLocs.map(l=>l.physicalLocationId).filter(Boolean));
+    if(syntheticIds.size){
+      V.locs=V.locs.filter(l=>!syntheticIds.has(l.id));
+      for(const [id,lid] of Object.entries(V.assign.devices))if(syntheticIds.has(lid))delete V.assign.devices[id];
+      for(const [id,lid] of Object.entries(V.assign.hosts))if(syntheticIds.has(lid))delete V.assign.hosts[id];
+      S.physicalLocations=(S.physicalLocations||[]).filter(pl=>!syntheticPhysicalIds.has(pl.id));
+    }
+    syncPhysicalLocationsIntoVisual();
+  }
   if(!V.locs.length){
     V.locs=[
       {id:uid('loc'),name:'Core / Perímetro',color:'#0f2744',x:60,y:70,type:'zone'},
@@ -2632,24 +2700,30 @@ function ensureVisualModel(){
   const l0=V.locs[0]?.id||'',l1=V.locs[1]?.id||l0,l2=V.locs[2]?.id||l1;
   for(const d of S.devices){
     if(!V.assign.devices[d.id]||!vLocById(V.assign.devices[d.id])){
-      let lid=l1;
-      if(d.type==='firewall'||d.type==='router')lid=l0;
-      else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
+      let lid=inferredDeviceVisualLoc(d);
+      if(!lid){
+        lid=l1;
+        if(d.type==='firewall'||d.type==='router')lid=l0;
+        else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
+      }
       V.assign.devices[d.id]=lid;
     }
   }
   for(const h of S.hosts){
     if(!V.assign.hosts[h.id]||!vLocById(V.assign.hosts[h.id])){
+      const inferred=inferredHostVisualLoc(h);
       const linkedId=hostConnectedDeviceId(h);
-      V.assign.hosts[h.id]=linkedId?deviceVisualLoc(linkedId):l1;
+      V.assign.hosts[h.id]=inferred||(linkedId?deviceVisualLoc(linkedId):l1);
     }
   }
 }
 function devsInVisualLoc(lid){return S.devices.filter(d=>deviceVisualLoc(d.id)===lid && v5ShowDevice(d));}
 function hostEffectiveVisualLoc(h){
+  const explicit=hostVisualLoc(h.id);
+  if(explicit&&vLocById(explicit))return explicit;
   const linkedDev=devById(hostConnectedDeviceId(h)||'');
   const linkedLoc=linkedDev ? deviceVisualLoc(linkedDev.id) : '';
-  return linkedLoc || hostVisualLoc(h.id) || '';
+  return linkedLoc || '';
 }
 function hostsInVisualLoc(lid){return S.hosts.filter(h=>hostEffectiveVisualLoc(h)===lid && v5ShowHost(h));}
 function visualLocContentBounds(loc){
