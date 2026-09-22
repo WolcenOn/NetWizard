@@ -50,6 +50,15 @@ assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-005'));
 assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-006'));
 assert.ok(audit.issues.some(x=>x.code==='NW-CABLE-008'));
 
+global.NetWizardProductionGate=require('../js/netwizard-production-gate.js');
+global.NetWizardRackModel=require('../js/netwizard-rack-model.js');
+global.NetWizardStructuredCabling=Cabling;
+const Integration=require('../js/netwizard-rack-production-integration.js');
+assert.strictEqual(Integration.install(),true);
+const gate=global.NetWizardProductionGate.runProductionGate(duplicate,{productionMode:true,strict:false});
+assert.strictEqual(gate.canExport,false);
+assert.ok(gate.issues.some(x=>x.code==='NW-CABLE-008'&&x.blocking));
+
 const removed=UI.removeEntity(project,'patchPanel','pp1');
 assert.strictEqual(removed.patchPanels.length,0);
 assert.strictEqual(removed.cableRuns.length,0);
