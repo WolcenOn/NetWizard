@@ -23,7 +23,7 @@ test('editor físico crea una ruta completa switch → patch panel → toma → 
       patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[]
     });
     window.NetWizardState.replaceProject(p,{source:'e2e-cabling'});
-    if(window.navTo)window.navTo('physical');
+    if(window.navTo)window.navTo('dev');
   });
   await page.waitForSelector('#structuredCablingMount');
 
