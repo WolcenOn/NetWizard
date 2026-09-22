@@ -251,14 +251,19 @@ function syncPhysicalLocationsIntoVisual(){
   const V=S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null});
   if(!Array.isArray(V.locs)) V.locs=[];
   const byName=new Map(V.locs.map(l=>[cleanStr(l.name).toLowerCase(),l]));
-  for(const pl of (S.physicalLocations||[])){
+  const physical=S.physicalLocations||[];
+  const hasChildren=new Set(physical.map(l=>cleanStr(l.parentId)).filter(Boolean));
+  for(const pl of physical){
     const name=cleanStr(pl.name); if(!name) continue;
     const key=name.toLowerCase();
-    if(!byName.has(key)){
+    const existing=byName.get(key);
+    const isContainer=hasChildren.has(pl.id)&&['site','campus','building','floor'].includes(cleanStr(pl.type).toLowerCase());
+    if(!existing&&isContainer)continue;
+    if(!existing){
       const vl={id:uid('loc'),name,color:'#10233c',x:80+V.locs.length*360,y:90+(V.locs.length%2)*260,type:pl.type||'other',physicalLocationId:pl.id};
       V.locs.push(vl); byName.set(key,vl);
     }else{
-      const vl=byName.get(key); vl.physicalLocationId=vl.physicalLocationId||pl.id; vl.type=vl.type||pl.type||'other';
+      existing.physicalLocationId=existing.physicalLocationId||pl.id; existing.type=existing.type||pl.type||'other';
     }
   }
 }
