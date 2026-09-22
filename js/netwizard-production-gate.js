@@ -216,13 +216,23 @@ Mantenimiento:
   }
 
   function dedupeIssues(issues){
-    const seen = new Set();
-    const out = [];
+    const seen = new Set(), byMessage = new Map(), out = [];
     for(const raw of arr(issues)){
       const i = normalizeIssue(raw);
       const key = [i.code, i.severity, i.category, i.message].join('\u0001');
       if(seen.has(key)) continue;
-      seen.add(key); out.push(i);
+      const messageKey = String(i.message||'').trim().toLowerCase();
+      const prevIndex = byMessage.get(messageKey);
+      if(prevIndex != null){
+        const prev = out[prevIndex];
+        const prevGeneric = prev && prev.code === 'NW-L1-000';
+        const currentSpecific = /^NW-(POE|CABLE)-/.test(i.code||'');
+        if(prevGeneric && currentSpecific){ out[prevIndex]=i; seen.add(key); continue; }
+        const currentGeneric = i.code === 'NW-L1-000';
+        const prevSpecific = prev && /^NW-(POE|CABLE)-/.test(prev.code||'');
+        if(currentGeneric && prevSpecific){ seen.add(key); continue; }
+      }
+      seen.add(key); byMessage.set(messageKey,out.length); out.push(i);
     }
     return out;
   }
@@ -243,7 +253,7 @@ Mantenimiento:
     for(const v of arr(p.vlans)){
       if(!v || !v.id) continue;
       const intentType = clean(v.intent && v.intent.type).toLowerCase();
-      if(intentType === 'transit') continue;
+      if(['transit','quarantine','parking','native','blackhole','l2-only','layer2'].includes(intentType)) continue;
       if(!vlanHasHosts.has(v.id) && !vlanHasIntent.has(v.id)) continue;
       const sn = subnetsByVlan.get(v.id);
       if(!sn) continue;
