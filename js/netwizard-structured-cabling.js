@@ -60,7 +60,6 @@ function validate(project){
 function rackEdges(project,rackId){const panelIds=new Set(arr(project&&project.patchPanels).filter(x=>x.rackId===rackId).map(x=>x.id));return paths(project).filter(x=>panelIds.has(x.patchPanelId));}
 function billOfMaterials(project){
  const rows=[];
- for(const p of arr(project&&project.patchPanels))rows.push({kind:'Patch panel',description:`${p.name||p.id} · ${p.portCount||0} puertos · ${p.category||'categoría no definida'}`,quantity:1,rackId:p.rackId});
  for(const o of arr(project&&project.telecomOutlets))rows.push({kind:'Toma de red',description:`${o.name||o.id} · ${o.portCount||1} puerto(s) · ${o.category||'categoría no definida'}`,quantity:1,locationId:o.locationId});
  const runs=arr(project&&project.cableRuns);const byType=new Map();for(const r of runs){const k=r.cableType||'Cable estructurado';const cur=byType.get(k)||{quantity:0,lengthM:0};cur.quantity++;cur.lengthM+=num(r.lengthM)||0;byType.set(k,cur);}for(const [kind,v] of byType)rows.push({kind:'Cable estructurado',description:`${kind} · ${Math.round(v.lengthM*10)/10} m documentados`,quantity:v.quantity});
  const patchCount=arr(project&&project.patchConnections).length,hostCount=arr(project&&project.hostOutletConnections).length;if(patchCount)rows.push({kind:'Latiguillo rack',description:'Latiguillos patch panel ↔ switch',quantity:patchCount});if(hostCount)rows.push({kind:'Latiguillo usuario',description:'Latiguillos toma ↔ host',quantity:hostCount});
