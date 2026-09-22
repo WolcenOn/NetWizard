@@ -9,16 +9,16 @@ function mergeIssues(){
   return out;
 }
 function install(){
-  const gate=root.NetWizardProductionGate,rack=root.NetWizardRackModel;
-  if(!gate||!rack||typeof gate.runProductionGate!=='function'||gate.__rackExtensionInstalled)return false;
+  const gate=root.NetWizardProductionGate,rack=root.NetWizardRackModel,cabling=root.NetWizardStructuredCabling;
+  if(!gate||!rack||!cabling||typeof gate.runProductionGate!=='function'||gate.__rackExtensionInstalled)return false;
   const original=gate.runProductionGate.bind(gate);
   gate.runProductionGate=(project,options)=>{
-    const report=original(project,options),rackReport=rack.validate(project||{});
-    const issues=mergeIssues(report.issues,rackReport.issues);
+    const report=original(project,options),rackReport=rack.validate(project||{}),cablingReport=cabling.validate(project||{});
+    const issues=mergeIssues(report.issues,rackReport.issues,cablingReport.issues);
     const counts=typeof gate.summarizeCounts==='function'?gate.summarizeCounts(issues):{errors:issues.filter(i=>i&&i.severity==='error').length,warnings:issues.filter(i=>i&&i.severity==='warning').length,blocking:issues.filter(i=>i&&(i.blocking||i.severity==='error')).length,byCategory:{}};
     const blocking=issues.filter(i=>i&&(i.blocking||i.severity==='error'));
     const status=blocking.length?'blocked':((counts.warnings||0)>0?'review':'ready');
-    return Object.assign({},report,{ok:!blocking.length,ready:status==='ready',canExport:!blocking.length,status,issues,counts,racks:rackReport});
+    return Object.assign({},report,{ok:!blocking.length,ready:status==='ready',canExport:!blocking.length,status,issues,counts,racks:rackReport,structuredCabling:cablingReport});
   };
   gate.__rackExtensionInstalled=true;
   return true;
@@ -33,7 +33,7 @@ function boot(attempt){
   if(install()){inject();return;}
   if((attempt||0)<60&&root.setTimeout)root.setTimeout(()=>boot((attempt||0)+1),100);
 }
-const api={version:'netwizard-rack-production-integration-v1',install,mergeIssues,boot};
+const api={version:'netwizard-rack-production-integration-v2',install,mergeIssues,boot};
 root.NetWizardRackProductionIntegration=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
