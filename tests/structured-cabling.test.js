@@ -19,6 +19,9 @@ project=UI.addPatchPanel(project,{id:'pp1',rackId:'rack1',name:'PP-01',portCount
 assert.strictEqual(project.patchPanels.length,1);
 assert.ok(project.rackItems.some(x=>x.patchPanelId==='pp1'&&x.startUnit===20));
 
+const optionalPlacement=UI.addPatchPanel({racks:[{id:'rack1'}],patchPanels:[],rackItems:[]},{id:'pp-no-u',rackId:'rack1',name:'PP sin U',portCount:24,rackUnit:''});
+assert.ok(!optionalPlacement.rackItems.some(x=>x.patchPanelId==='pp-no-u'),'Una U vacía no debe convertirse en U0');
+
 project=UI.addOutlet(project,{id:'to1',locationId:'loc1',name:'TO-01',portCount:1,category:'Cat6A'});
 project=UI.addCableRun(project,{id:'run1',patchPanelId:'pp1',patchPort:1,outletId:'to1',outletPort:1,cableType:'Cat6A',lengthM:35,route:'CPD → Oficina'});
 project=UI.addPatchConnection(project,{id:'pc1',patchPanelId:'pp1',patchPort:1,switchPortId:'p1',patchCordLengthM:1});
