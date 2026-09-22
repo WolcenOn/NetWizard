@@ -16,7 +16,7 @@
   const UNSUPPORTED_OUTPUT=/Sin vendor asignado|vendor (?:no )?asignado|not implemented|no implementado|unsupported vendor/i;
   const CONFIG_EXTENSIONS={
     cisco_ios:'cfg',cisco_asa:'cfg',fortinet:'conf',juniper_junos:'set',aruba_aoss:'cfg',
-    mikrotik_routeros:'rsc',huawei_vrp:'cfg',pfsense:'txt',ubiquiti_unifi:'md',
+    mikrotik_routeros:'rsc',huawei_vrp:'cfg',pfsense:'php',ubiquiti_unifi:'md',
     tplink_omada:'md',galgus_cloud:'md',windows:'ps1',linux:'sh',generic_network:'txt'
   };
 

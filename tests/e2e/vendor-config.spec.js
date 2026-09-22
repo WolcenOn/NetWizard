@@ -52,10 +52,10 @@ const VENDORS = [
     label: 'pfSense',
     type: 'firewall',
     signatures: [
-      /NetWizard pfSense deployment plan/,
-      /no es XML importable universal/,
-      /VLAN 10 Usuarios: 10\.10\.10\.0\/24, gateway 10\.10\.10\.1/,
-      /Outbound NAT híbrido o automático/
+      /NetWizard pfSense provisioning candidate/,
+      /write_config\(\$nw_note\)/,
+      /\/\/ VLAN 10 Usuarios/,
+      /\$config\["nat"\]\["outbound"\]\["mode"\]="automatic"/
     ]
   },
   {

@@ -32,14 +32,30 @@ test('FortiGate genera interfaces, VLAN, objetos, NAT y política explícita',()
  assert.ok(cfg.includes('set gateway 203.0.113.1'));
 });
 
-test('pfSense se etiqueta como plan revisable y no como XML universal',()=>{
- const out=Edge.render(project('pfsense'),'fw1','pfsense');
- assert.ok(out.includes('procedimiento aplicable/revisable'));
- assert.ok(out.includes('no es XML importable universal'));
- assert.ok(out.includes('Outbound NAT'));
- assert.ok(out.includes('VLAN 10 Users'));
+test('pfSense genera script PHP revisable con VLAN, alias, NAT y reglas',()=>{
+ const p=project('pfsense');
+ p.ports.find(x=>x.id==='lan').allowedVlans=[10];
+ p.fwRules.push({id:'dns',name:'DNS',action:'allow',proto:'udp',port:'53',dir:'out'});
+ const out=Edge.render(p,'fw1','pfsense');
+ assert.ok(out.includes('<?php'));
+ assert.ok(out.includes('pfSense provisioning candidate'));
+ assert.ok(out.includes('write_config($nw_note)'));
+ assert.ok(out.includes('$config["nat"]["outbound"]["mode"]="automatic"'));
+ assert.ok(out.includes('// VLAN 10 Users'));
+ assert.ok(out.includes('nw_alias("NET_Users"'));
+ assert.ok(out.includes('nw_rule('));
 });
 
+
+test('pfSense limita las VLANs a las transportadas por su trunk cuando no hay gatewayDeviceRef',()=>{
+ const p=project('pfsense');
+ p.vlans.push({id:'v20',vlanId:20,name:'Remote'});
+ p.subnets.push({id:'s20',vlanRef:'v20',cidr:'10.20.20.0/24',gateway:'10.20.20.1'});
+ p.ports.find(x=>x.id==='lan').allowedVlans=[10];
+ const out=Edge.render(p,'fw1','pfsense');
+ assert.ok(out.includes('// VLAN 10 Users'));
+ assert.ok(!out.includes('// VLAN 20 Remote'));
+});
 test('Generador no devuelve contenido para vendor ajeno',()=>{
  assert.strictEqual(Edge.render(project('cisco_ios'),'fw1','cisco_ios'),'');
 });

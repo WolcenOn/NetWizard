@@ -40,6 +40,17 @@ Mantenimiento:
     const txt = `${intent.type || ''} ${vlan && vlan.name || ''}`.toLowerCase();
     return intent.type === 'transit' || /transit|tránsito|p2p|point.?to.?point|uplink|wan/.test(txt);
   }
+  function isLayer2OnlyVlan(vlan){
+    const intent = vlan && vlan.intent && typeof vlan.intent === 'object' ? vlan.intent : {};
+    const txt = `${intent.type || ''} ${vlan && vlan.name || ''}`.toLowerCase();
+    return ['quarantine','parking','native','blackhole','l2-only','layer2'].includes(String(intent.type||'').toLowerCase()) || /cuarentena|quarantine|parking|native|blackhole|sin l3|l2 only/.test(txt);
+  }
+  function trunkEndpointAllowed(host,port){
+    const type=String(host&&host.type||'').toLowerCase();
+    const wireless=['ap','access_point','wireless_ap','wifi_ap'].includes(type);
+    const members=Array.isArray(port&&port.allowedVlans)?port.allowedVlans:[];
+    return wireless&&members.length>0;
+  }
   function linkTransitVlanRef(link, aPort, bPort){
     return (link && (link.transitVlanRef || link.vlanRef || link.l3VlanRef)) ||
       (aPort && (aPort.routedVlanRef || aPort.transitVlanRef)) ||
@@ -156,7 +167,7 @@ Mantenimiento:
     const links = isArray(p.links);
     if(!vlans.length) issues.push(mk('NW-VLAN-000', 'error', 'design', 'No hay VLANs definidas.'));
     for(const v of vlans){
-      if(!subnets.some(sn=>sn.vlanRef===v.id)) issues.push(mk('NW-VLAN-001', 'warning', 'design', `VLAN ${v.vlanId||v.id}: no tiene subnet/gateway definido.`));
+      if(!subnets.some(sn=>sn.vlanRef===v.id) && !isLayer2OnlyVlan(v)) issues.push(mk('NW-VLAN-001', 'warning', 'design', `VLAN ${v.vlanId||v.id}: no tiene subnet/gateway definido.`));
     }
     const hasInterVlanCapable = devices.some(d=>['router','firewall','l3switch','switch_l3'].includes(String(d.type||'').toLowerCase()) || String(d.l3Capable||'').toLowerCase()==='yes');
     const hasMultipleVlans = vlans.length > 1;
@@ -384,7 +395,7 @@ Mantenimiento:
       // gestionado (AP, servidor, appliance), no un endpoint access duplicado.
       const managedIdentity=!!(h.deviceRef && devById(project,h.deviceRef));
       const d = devById(project,p.deviceId);
-      if(p.mode==='trunk' && !managedIdentity) errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
+      if(p.mode==='trunk' && !managedIdentity && !trunkEndpointAllowed(h,p)) errors.push(`Host ${h.name}: está conectado a un puerto trunk (${d?.name||'?'} ${p.name}).`);
       if(p.mode==='routed' && !managedIdentity) warnings.push(`Host ${h.name}: está conectado a un puerto routed; normalmente debería ser access.`);
       if(h.vlanRef && p.accessVlanRef && h.vlanRef!==p.accessVlanRef){
         const hv = vlanByRef(project,h.vlanRef), pv = vlanByRef(project,p.accessVlanRef);
