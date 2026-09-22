@@ -2658,12 +2658,24 @@ function inferredHostVisualLoc(h){
   }
   return '';
 }
+function isSyntheticDefaultVisualLoc(loc){
+  return !!loc && !loc.physicalLocationId && cleanStr(loc.type).toLowerCase()==='zone' &&
+    ['Core / Perímetro','Acceso / Usuarios','Servicios'].includes(cleanStr(loc.name));
+}
 function ensureVisualModel(){
   const V=vv();
   for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
   for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
   for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
-  if(!V.locs.length && (S.physicalLocations||[]).length) syncPhysicalLocationsIntoVisual();
+  if((S.physicalLocations||[]).length){
+    const syntheticIds=new Set(V.locs.filter(isSyntheticDefaultVisualLoc).map(l=>l.id));
+    if(syntheticIds.size){
+      V.locs=V.locs.filter(l=>!syntheticIds.has(l.id));
+      for(const [id,lid] of Object.entries(V.assign.devices))if(syntheticIds.has(lid))delete V.assign.devices[id];
+      for(const [id,lid] of Object.entries(V.assign.hosts))if(syntheticIds.has(lid))delete V.assign.hosts[id];
+    }
+    syncPhysicalLocationsIntoVisual();
+  }
   if(!V.locs.length){
     V.locs=[
       {id:uid('loc'),name:'Core / Perímetro',color:'#0f2744',x:60,y:70,type:'zone'},
