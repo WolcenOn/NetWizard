@@ -2,13 +2,16 @@
 const assert=require('assert');
 const report=require('../js/netwizard-detailed-report-v3.js');
 const gate={issues:[{code:'NW-RACK-001',severity:'error',blocking:true,category:'rack',message:'Rack HQ: colisión en U20.'}],counts:{blocking:1,errors:1,warnings:0}};
-const project={_schemaVersion:'3.48.0',projName:'Proyecto Rack',physicalLocations:[{id:'loc1',name:'CPD'}],racks:[{id:'rack1',name:'Rack HQ',locationId:'loc1',rackUnits:42,powerCapacityWatts:4000,coolingCapacityWatts:3500}],devices:[{id:'sw1',name:'SW-CORE',type:'switch',vendor:'Cisco',model:'C9300',rackId:'rack1',rackUnit:20,rackUnits:1,powerDrawWatts:180}],rackItems:[{id:'pp1',rackId:'rack1',type:'patch-panel',startUnit:22,heightUnits:1,label:'Patch panel Cat6A'}],pdus:[{id:'pdu1',rackId:'rack1',name:'PDU A',outletCount:12}],powerConnections:[{id:'pc1',deviceId:'sw1',pduId:'pdu1',outlet:1,powerSupplyIndex:0,feed:'A'}],ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',media:'copper'}],links:[],hosts:[],vlans:[],wanCircuits:[]};
+const project={_schemaVersion:'3.48.0',projName:'Proyecto Rack',physicalLocations:[{id:'loc1',name:'CPD'}],racks:[{id:'rack1',name:'Rack HQ',locationId:'loc1',rackUnits:42,powerCapacityWatts:4000,coolingCapacityWatts:3500}],devices:[{id:'sw1',name:'SW-CORE',type:'switch',vendor:'Cisco',model:'C9300',rackId:'rack1',rackUnit:20,rackUnits:1,powerDrawWatts:180}],rackItems:[{id:'pp1',rackId:'rack1',type:'patch-panel',startUnit:22,heightUnits:1,label:'Patch panel Cat6A'}],pdus:[{id:'pdu1',rackId:'rack1',name:'PDU A',outletCount:12}],powerConnections:[{id:'pc1',deviceId:'sw1',pduId:'pdu1',outlet:1,powerSupplyIndex:0,feed:'A'}],ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',media:'copper'}],links:[],hosts:[{id:'h1',name:'PC-01'}],vlans:[],wanCircuits:[],patchPanels:[{id:'pp1',rackId:'rack1',name:'PP-01',portCount:24,category:'Cat6A'}],telecomOutlets:[{id:'to1',locationId:'loc1',name:'TO-01',portCount:1,category:'Cat6A'}],cableRuns:[{id:'run1',patchPanelId:'pp1',patchPort:1,outletId:'to1',outletPort:1,cableType:'Cat6A',lengthM:30,route:'CPD → oficina'}],patchConnections:[{id:'patch1',patchPanelId:'pp1',patchPort:1,switchPortId:'p1',patchCordLengthM:1}],hostOutletConnections:[{id:'host1',hostId:'h1',outletId:'to1',outletPort:1,patchCordLengthM:2}]};
 const html=report.build(project,{gateReport:gate});
 assert.ok(html.includes('Informe técnico compacto'));
 assert.ok(html.includes('Conectividad y cableado'));
 assert.ok(html.includes('Inventario y materiales'));
 assert.ok(html.includes('Implantación física y racks'));
 assert.ok(html.includes('Conexiones físicas de rack'));
+assert.ok(html.includes('Cableado estructurado'));
+assert.ok(html.includes('CPD → oficina'));
+assert.ok(html.includes('PC-01'));
 assert.ok(html.includes('Energía'));
 assert.ok(html.includes('PDU A'));
 assert.ok(html.includes('Rack HQ'));
