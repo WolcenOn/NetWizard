@@ -55,6 +55,16 @@ function validate(project){
    const ok=`${h.outletId}|${op}`;if(usedHostOutlet.has(ok))issues.push(issue('NW-CABLE-014','error',`La toma ${h.outletId} puerto ${op} tiene más de un host conectado.`,{hostOutletConnectionId:h.id,outletId:h.outletId}));else usedHostOutlet.set(ok,h.id);
    if(h.hostId){if(usedHost.has(h.hostId))issues.push(issue('NW-CABLE-015','warning',`${hostLabel(project,h.hostId)} aparece conectado a más de una toma.`,{hostOutletConnectionId:h.id,hostId:h.hostId}));else usedHost.set(h.hostId,h.id);}
  }
+ const runByOutletPort=new Map(runs.map(r=>[`${r.outletId}|${r.outletPort||1}`,r]));
+ const patchByPanelPort=new Map(patches.map(p=>[`${p.patchPanelId}|${p.patchPort}`,p]));
+ for(const h of hosts){
+   if(!hostMap.has(h.hostId))continue;
+   const host=hostMap.get(h.hostId),run=runByOutletPort.get(`${h.outletId}|${h.outletPort||1}`);
+   if(!run){issues.push(issue('NW-CABLE-017','error',`${host.name||host.id}: está conectado a una toma sin tramo permanente documentado.`,{hostId:host.id,outletId:h.outletId}));continue;}
+   const patch=patchByPanelPort.get(`${run.patchPanelId}|${run.patchPort}`);
+   if(!patch){issues.push(issue('NW-CABLE-018','error',`${host.name||host.id}: su ruta física llega a ${panelLabel(project,run.patchPanelId)} P${run.patchPort}, pero no está parcheada a ningún puerto de red.`,{hostId:host.id,patchPanelId:run.patchPanelId,patchPort:run.patchPort}));continue;}
+   if(host.portRef&&patch.switchPortId&&host.portRef!==patch.switchPortId)issues.push(issue('NW-CABLE-016','error',`${host.name||host.id}: portRef lógico (${portLabel(project,host.portRef)}) no coincide con el puerto físico parcheado (${portLabel(project,patch.switchPortId)}).`,{hostId:host.id,portId:patch.switchPortId,logicalPortId:host.portRef}));
+ }
  return{version:'netwizard-structured-cabling-v1',ok:!issues.some(x=>x.blocking),issues,counts:{blocking:issues.filter(x=>x.blocking).length,warnings:issues.filter(x=>x.severity==='warning').length},paths:paths(project)};
 }
 function rackEdges(project,rackId){const panelIds=new Set(arr(project&&project.patchPanels).filter(x=>x.rackId===rackId).map(x=>x.id));return paths(project).filter(x=>panelIds.has(x.patchPanelId));}
