@@ -765,14 +765,11 @@
           <button class="btn bs" id="expBundle">📦 Bundle TXT</button>
           <button class="btn bs" id="expCsv">📋 Hosts CSV</button>
           <button class="btn bs" id="expJson">💾 JSON</button>
-          <button class="btn bs" id="impJson">📋 Importar texto</button>
-          <button class="btn bs" id="impJsonFile">📂 Cargar archivo JSON</button>
-          <input id="jsonFileInput" type="file" accept=".json,application/json" hidden/>
+          <button class="btn bs" id="impJson">📂 Importar</button>
           <button class="btn by" id="nwBridgePreview" title="Genera un snapshot compatible con IoTWizard sin modificar el proyecto">🌉 Vista IoT-ready</button>
           <button class="btn bs" id="nwBridgeDownload" title="Descarga el snapshot + grafo unificado para pruebas de integración">⬇ Grafo unificado</button>
         </div>
         <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set, candidatos incrementales seguros, evidencias y rollback.</pre>
-        <div class="hint" id="jsonImportStatus" style="margin-top:6px;">Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema antes de sustituir el proyecto actual.</div>
         <div class="hint" id="nwBridgeStatus" style="margin-top:6px;">Bridge IoT-ready: genera una copia de lectura para futuras integraciones sin alterar NetWizard.</div>
         <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" style="min-height:80px;margin-top:8px;"></textarea>
       </div>
