@@ -27,6 +27,12 @@ function addSite(p,s){
   {id:cpd,name:`${s.name} · CPD`,type:'room',parentId:siteLoc},
   {id:office,name:`${s.name} · Oficina`,type:'room',parentId:siteLoc}
  );
+ const siteIndex=siteDefs.findIndex(x=>x.id===s.id),col=siteIndex%2,row=Math.floor(siteIndex/2);
+ const cpdVisual=`${s.id}_vloc_cpd`,officeVisual=`${s.id}_vloc_office`;
+ p.visual.locs.push(
+  {id:cpdVisual,name:`${s.name} · CPD`,color:'#10233c',x:80+col*760,y:80+row*560,type:'room',physicalLocationId:cpd},
+  {id:officeVisual,name:`${s.name} · Oficina`,color:'#14263b',x:430+col*760,y:80+row*560,type:'room',physicalLocationId:office}
+ );
  p.racks.push({id:rack,name:`RACK-${s.code}-01`,locationId:cpd,rackUnits:24,widthMm:600,depthMm:1000,maxLoadKg:700,powerCapacityWatts:5000,coolingCapacityWatts:3500});
  const vids={users:s.vbase+10,wifi:s.vbase+20,voice:s.vbase+30,servers:s.vbase+40,mgmt:s.vbase+99};
  const refs=Object.fromEntries(Object.entries(vids).map(([k,v])=>[k,`${s.id}_v${v}`]));
@@ -41,12 +47,13 @@ function addSite(p,s){
  for(const k of ['users','wifi','voice']){const n=nets[k];p.dhcp[String(vids[k])]={enabled:true,start:ip(s,n.start),end:ip(s,n.end),dns:'1.1.1.1,8.8.8.8',domain:'corp.example',lease:k==='users'?7:3,exclusions:[],reservations:[]};}
  const fw=`${s.id}_fw`,core=`${s.id}_core`,access=`${s.id}_access`,voiceSrv=`${s.id}_srv_voice`,inetSrv=`${s.id}_srv_inet`;
  p.devices.push(
-  {id:fw,name:`FW-${s.code}-01`,type:'firewall',kind:'firewall',vendorOs:'pfsense',model:'Netgate 6100',mgmtIp:ip(s,90),internetEdge:'yes',wanIf:'wan0',rackId:rack,rackUnit:20,rackUnits:1,powerDrawWatts:80},
-  {id:core,name:`SW-CORE-${s.code}-01`,type:'switch',kind:'switch',vendorOs:'cisco_ios',model:'Cisco Catalyst 9300',mgmtIp:ip(s,91),rackId:rack,rackUnit:18,rackUnits:1,powerDrawWatts:90,poeBudgetW:0},
-  {id:access,name:`SW-ACCESS-${s.code}-01`,type:'switch',kind:'switch',vendorOs:'cisco_ios',model:'Cisco Catalyst 9200L PoE+',mgmtIp:ip(s,92),rackId:rack,rackUnit:16,rackUnits:1,powerDrawWatts:120,poeBudgetW:370},
-  {id:voiceSrv,name:`SRV-VOICE-${s.code}-01`,type:'server',kind:'server',vendorOs:'linux',model:'1U Voice Server',rackId:rack,rackUnit:12,rackUnits:2,powerDrawWatts:180},
-  {id:inetSrv,name:`SRV-INET-${s.code}-01`,type:'server',kind:'server',vendorOs:'linux',model:'1U Internet Services',rackId:rack,rackUnit:9,rackUnits:2,powerDrawWatts:160}
+  {id:fw,name:`FW-${s.code}-01`,type:'firewall',kind:'firewall',vendorOs:'pfsense',model:'Netgate 6100',mgmtIp:ip(s,90),internetEdge:'yes',wanIf:'wan0',rackId:rack,rackUnit:20,rackUnits:1,powerDrawWatts:80,locationId:cpd,physicalLocation:`${s.name} · CPD`},
+  {id:core,name:`SW-CORE-${s.code}-01`,type:'switch',kind:'switch',vendorOs:'cisco_ios',model:'Cisco Catalyst 9300',mgmtIp:ip(s,91),rackId:rack,rackUnit:18,rackUnits:1,powerDrawWatts:90,poeBudgetW:0,locationId:cpd,physicalLocation:`${s.name} · CPD`},
+  {id:access,name:`SW-ACCESS-${s.code}-01`,type:'switch',kind:'switch',vendorOs:'cisco_ios',model:'Cisco Catalyst 9200L PoE+',mgmtIp:ip(s,92),rackId:rack,rackUnit:16,rackUnits:1,powerDrawWatts:120,poeBudgetW:370,locationId:cpd,physicalLocation:`${s.name} · CPD`},
+  {id:voiceSrv,name:`SRV-VOICE-${s.code}-01`,type:'server',kind:'server',vendorOs:'linux',model:'1U Voice Server',rackId:rack,rackUnit:12,rackUnits:2,powerDrawWatts:180,locationId:cpd,physicalLocation:`${s.name} · CPD`},
+  {id:inetSrv,name:`SRV-INET-${s.code}-01`,type:'server',kind:'server',vendorOs:'linux',model:'1U Internet Services',rackId:rack,rackUnit:9,rackUnits:2,powerDrawWatts:160,locationId:cpd,physicalLocation:`${s.name} · CPD`}
  );
+ for(const id of [fw,core,access,voiceSrv,inetSrv])p.visual.assign.devices[id]=cpdVisual;
  const allowed=[vids.users,vids.wifi,vids.voice,vids.servers,vids.mgmt],native=refs.mgmt;
  const fwWan=`${s.id}_fw_wan`,fwLan=`${s.id}_fw_lan`,coreFw=`${s.id}_core_fw`,coreAcc=`${s.id}_core_acc`,accUp=`${s.id}_acc_up`;
  p.ports.push(
@@ -65,11 +72,11 @@ function addSite(p,s){
  for(const [type,n,vlan,poe,watts] of endpoints){
   const portId=`${s.id}_acc_${type}${n}`;const row={id:portId,deviceId:access,name:`GigabitEthernet1/0/${portNo}`,mode:'access',media:'GE',accessVlanRef:refs[vlan],portFast:true,bpduGuard:true,desc:`${type.toUpperCase()} ${n}`};
   if(poe){row.poeMode=type==='ap'?'at':'af';row.poeWattsMax=type==='ap'?30:15.4;}p.ports.push(row);
-  const hostId=`${s.id}_${type}${n}`,prefix={pc:'PC',ap:'AP',phone:'PHONE'}[type];const host={id:hostId,name:`${prefix}-${s.code}-${String(n).padStart(2,'0')}`,type,vlanRef:refs[vlan],portRef:portId,ipMode:'dhcp'};if(poe){host.poeRequired=true;host.poeWatts=watts;}p.hosts.push(host);structured.push([portNo,portId,hostId,type,n]);portNo++;
+  const hostId=`${s.id}_${type}${n}`,prefix={pc:'PC',ap:'AP',phone:'PHONE'}[type];const host={id:hostId,name:`${prefix}-${s.code}-${String(n).padStart(2,'0')}`,type,vlanRef:refs[vlan],portRef:portId,ipMode:'dhcp',locationId:office,physicalLocation:`${s.name} · Oficina`};if(poe){host.poeRequired=true;host.poeWatts=watts;}p.hosts.push(host);p.visual.assign.hosts[hostId]=officeVisual;structured.push([portNo,portId,hostId,type,n]);portNo++;
  }
  for(const [role,deviceId,hostId,name,offset] of [['voice',voiceSrv,`${s.id}_voice_host`,`PBX-${s.code}-01`,82],['internet',inetSrv,`${s.id}_inet_host`,`INET-${s.code}-01`,83]]){
   const portId=`${s.id}_acc_srv_${role}`;p.ports.push({id:portId,deviceId:access,name:`GigabitEthernet1/0/${portNo}`,mode:'access',media:'GE',accessVlanRef:refs.servers,portFast:true,bpduGuard:true,desc:`Servidor ${role}`});
-  p.hosts.push({id:hostId,name,type:'server',deviceRef:deviceId,vlanRef:refs.servers,portRef:portId,ipMode:'static',staticIp:ip(s,offset)});portNo++;
+  p.hosts.push({id:hostId,name,type:'server',deviceRef:deviceId,vlanRef:refs.servers,portRef:portId,ipMode:'static',staticIp:ip(s,offset),locationId:cpd,physicalLocation:`${s.name} · CPD`});p.visual.assign.hosts[hostId]=cpdVisual;portNo++;
  }
  const panel=`${s.id}_patch01`;p.patchPanels.push({id:panel,rackId:rack,name:`PP-${s.code}-01`,portCount:24,category:'Cat6A',rackUnit:23});
  p.rackItems.push({id:`rackitem_${panel}`,rackId:rack,type:'patch-panel',patchPanelId:panel,label:`PP-${s.code}-01`,startUnit:23,heightUnits:1,face:'front'},{id:`${s.id}_cm01`,rackId:rack,type:'cable-manager',label:`Pasacables ${s.code}`,startUnit:22,heightUnits:1,face:'front'});
@@ -99,7 +106,7 @@ function json(pretty){return JSON.stringify(buildPayload(),null,pretty===false?0
 function download(){if(!root.document)return null;const blob=new Blob([json(true)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=root.document.createElement('a');a.href=url;a.download='netwizard-empresa-4-sedes-production.json';root.document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);return true;}
 function loadIntoProject(){if(!root.NetWizardState)return false;root.NetWizardState.replaceProject(buildProject(),{source:'sample-four-sites'});return true;}
 function inject(){if(!root.document||root.document.getElementById('btnFourSitesSample'))return;const anchor=root.document.getElementById('impJsonFile')||root.document.getElementById('impJson');if(!anchor)return;const load=root.document.createElement('button');load.id='btnFourSitesSample';load.type='button';load.className='btn bs';load.textContent='🏢 Cargar ejemplo 4 sedes';load.onclick=()=>{if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el ejemplo completo de cuatro sedes?'))return;loadIntoProject();};const dl=root.document.createElement('button');dl.id='btnFourSitesSampleDownload';dl.type='button';dl.className='btn bs';dl.textContent='⬇ JSON 4 sedes';dl.onclick=download;anchor.insertAdjacentElement('afterend',dl);anchor.insertAdjacentElement('afterend',load);}
-const api={version:'netwizard-four-sites-sample-v1',siteDefs:clone(siteDefs),buildProject,buildPayload,json,download,loadIntoProject,inject};
+const api={version:'netwizard-four-sites-sample-v2',siteDefs:clone(siteDefs),buildProject,buildPayload,json,download,loadIntoProject,inject};
 root.NetWizardFourSitesSample=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));else setTimeout(inject,0);}
 })(typeof window!=='undefined'?window:globalThis);
