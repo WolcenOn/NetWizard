@@ -19,7 +19,7 @@
   </div>
   <div class="proj-lbl"><span data-i18n="top.project">Proyecto:</span> <b id="projLbl">Sin título</b></div>
   <div class="saved" id="savedLbl" data-i18n="top.saved">✓ guardado</div>
-  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.45 RC</span></div>
+  <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.50 RC</span></div>
   <div style="display:flex;gap:6px;">
     <button class="btn bs bsm" id="btnReset" data-i18n="top.new">🗑 Nuevo</button>
     <button class="btn bp bsm" id="btnExport" data-i18n="top.export">⬆ Exportar</button>
@@ -190,8 +190,6 @@
           <div><label class="fl">Tipo</label>
             <select id="devType">
               <option value="switch">🔀 Switch</option>
-              <option value="router">🌐 Router</option>
-              <option value="firewall">🛡 Firewall</option>
             </select>
           </div>
         </div>
@@ -199,17 +197,6 @@
           <div><label class="fl">Vendor / OS</label>
             <select id="devVendor">
               <option value="">— selecciona —</option>
-              <option value="cisco_ios">Cisco IOS</option>
-              <option value="cisco_asa">Cisco ASA</option>
-              <option value="juniper_junos">Juniper Junos</option>
-              <option value="aruba_aoss">Aruba AOS-S</option>
-              <option value="pfsense">pfSense</option>
-              <option value="fortinet">FortiGate</option>
-              <option value="ubiquiti_unifi">Ubiquiti UniFi</option>
-              <option value="huawei_vrp">Huawei VRP</option>
-              <option value="galgus_cloud">Galgus Cloud</option>
-              <option value="tplink_omada">TP-Link Omada</option>
-              <option value="mikrotik_routeros">MikroTik RouterOS</option>
             </select>
           </div>
           <div><label class="fl">IP gestión</label><input id="devMgmt" placeholder="10.0.99.1"/></div>
@@ -723,6 +710,39 @@
           </div>
         </div>
       </div>
+      <div class="card" id="observedConfigCard">
+        <div class="card-h"><div class="card-t">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
+        <div class="hint" style="margin-bottom:9px;">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
+        <div class="row">
+          <div><label class="fl" for="observedDevice">Dispositivo</label><select id="observedDevice"></select></div>
+          <div><label class="fl" for="observedSource">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl" for="observedCapturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
+          <div><label class="fl" for="observedMaxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
+        </div>
+        <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> Exigir candidato incremental ejecutable para todos los cambios del ZIP</label>
+        <label class="fl" for="observedConfig" style="margin-top:9px;">Configuración observada</label>
+        <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" style="min-height:180px;"></textarea>
+        <div class="brow">
+          <button class="btn bg" id="observedSave">💾 Guardar y analizar</button>
+          <button class="btn bp" id="observedPreflight">🧪 Analizar sin guardar</button>
+          <button class="btn bd" id="observedRemove">✕ Eliminar captura</button>
+        </div>
+        <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;">Sin captura observada.</pre>
+        <div class="g2">
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Candidato incremental</div>
+            <textarea class="cfg" id="observedCandidate" readonly style="min-height:180px;"></textarea>
+            <button class="btn bs bsm" id="observedDownloadCandidate" disabled>⬇ Descargar candidato</button>
+          </div>
+          <div>
+            <div class="card-t" style="margin:8px 0 6px;">Rollback candidato</div>
+            <textarea class="cfg" id="observedRollback" readonly style="min-height:180px;"></textarea>
+            <button class="btn bs bsm" id="observedDownloadRollback" disabled>⬇ Descargar rollback</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
         <div class="hint" style="margin-bottom:8px;">Parámetros importantes: dominio, contraseña, versión y rol por switch. Para VTP, los enlaces entre switches deben ir en trunk.</div>
@@ -740,8 +760,9 @@
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">📤 Exportar</div>
         <div class="brow">
+          <button class="btn bp" id="expDeploymentPackage" data-i18n="bundle.download">🚀 Paquete de despliegue ZIP</button>
           <button class="btn bp" id="expAll">📁 Por dispositivo</button>
-          <button class="btn bs" id="expBundle">📦 Bundle</button>
+          <button class="btn bs" id="expBundle">📦 Bundle TXT</button>
           <button class="btn bs" id="expCsv">📋 Hosts CSV</button>
           <button class="btn bs" id="expJson">💾 JSON</button>
           <button class="btn bs" id="impJson">📋 Importar texto</button>
@@ -750,6 +771,7 @@
           <button class="btn by" id="nwBridgePreview" title="Genera un snapshot compatible con IoTWizard sin modificar el proyecto">🌉 Vista IoT-ready</button>
           <button class="btn bs" id="nwBridgeDownload" title="Descarga el snapshot + grafo unificado para pruebas de integración">⬇ Grafo unificado</button>
         </div>
+        <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set, candidatos incrementales seguros, evidencias y rollback.</pre>
         <div class="hint" id="jsonImportStatus" style="margin-top:6px;">Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema antes de sustituir el proyecto actual.</div>
         <div class="hint" id="nwBridgeStatus" style="margin-top:6px;">Bridge IoT-ready: genera una copia de lectura para futuras integraciones sin alterar NetWizard.</div>
         <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" style="min-height:80px;margin-top:8px;"></textarea>
@@ -924,6 +946,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-security-utils.js"></script>
 <script src="./js/netwizard-i18n.js"></script>
 <script src="./js/netwizard-network-utils.js"></script>
+<script src="./js/netwizard-device-model.js"></script>
 <script src="./js/netwizard-project-schema.js"></script>
 <script src="./js/netwizard-audit.js"></script>
 <script src="./js/netwizard-l3-config-utils.js"></script>
@@ -932,6 +955,9 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-change-preview.js"></script>
 <script src="./js/netwizard-policy-utils.js"></script>
 <script src="./js/netwizard.js"></script>
+<!-- Pipeline de configuración: registro único, renderer base y extensiones ordenadas. -->
+<script src="./js/netwizard-config-pipeline.js"></script>
+<script src="./js/netwizard-vendor-config-generators.js"></script>
 <script src="./js/netwizard-bridge.js"></script>
 <script src="./js/netwizard-bridge-ui.js"></script>
 <script src="./js/netwizard-graph-viewer.js"></script>
@@ -952,6 +978,60 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-vendor-hardening.js"></script>
 <script src="./js/netwizard-production-gate.js"></script>
 <script src="./js/netwizard-connectivity-checker.js"></script>
+
+<!-- Validación avanzada y paneles. El orden es deliberado: lógica antes que UI. -->
+<script src="./js/netwizard-architecture-validator.js"></script>
+<script src="./js/netwizard-routing-plan.js"></script>
+<script src="./js/netwizard-capability-registry.js"></script>
+<script src="./js/netwizard-capability-ui.js"></script>
+<script src="./js/netwizard-device-capability-form.js"></script>
+<script src="./js/netwizard-physical-inventory.js"></script>
+<script src="./js/netwizard-physical-inventory-ui.js"></script>
+<script src="./js/netwizard-resilience-topology.js"></script>
+<script src="./js/netwizard-resilience-ui.js"></script>
+<script src="./js/netwizard-wan-circuits.js"></script>
+<script src="./js/netwizard-wan-circuits-ui.js"></script>
+<script src="./js/netwizard-traffic-capacity.js"></script>
+<script src="./js/netwizard-traffic-capacity-ui.js"></script>
+<script src="./js/netwizard-internal-services.js"></script>
+<script src="./js/netwizard-internal-services-ui.js"></script>
+<script src="./js/netwizard-wifi-planning.js"></script>
+<script src="./js/netwizard-wifi-planning-ui.js"></script>
+<script src="./js/netwizard-ipv6-vrf.js"></script>
+<script src="./js/netwizard-ipv6-vrf-ui.js"></script>
+<script src="./js/netwizard-failure-simulation.js"></script>
+<script src="./js/netwizard-failure-simulation-ui.js"></script>
+<script src="./js/netwizard-observed-drift.js"></script>
+<script src="./js/netwizard-observed-drift-ui.js"></script>
+<script src="./js/netwizard-detailed-report-v2.js"></script>
+
+<!-- Generadores especializados y wrappers, registrados en un orden estable. -->
+<script src="./js/netwizard-cisco-routing-generator.js"></script>
+<script src="./js/netwizard-multivendor-routing-generator.js"></script>
+<script src="./js/netwizard-firewall-edge-generator.js"></script>
+<script src="./js/netwizard-switching-generator.js"></script>
+<script src="./js/netwizard-access-security-plan.js"></script>
+<script src="./js/netwizard-access-security-generator.js"></script>
+<script src="./js/netwizard-management-plan.js"></script>
+<script src="./js/netwizard-management-generator.js"></script>
+<script src="./js/netwizard-ha-services-plan.js"></script>
+<script src="./js/netwizard-ha-services-generator.js"></script>
+<script src="./js/netwizard-cisco-routing-integration.js"></script>
+<script src="./js/netwizard-multivendor-routing-integration.js"></script>
+<script src="./js/netwizard-firewall-edge-integration.js"></script>
+<script src="./js/netwizard-switching-integration.js"></script>
+<script src="./js/netwizard-access-security-integration.js"></script>
+<script src="./js/netwizard-management-integration.js"></script>
+<script src="./js/netwizard-ha-services-integration.js"></script>
+
+<!-- La puerta extendida se instala cuando todos sus validadores ya existen. -->
+<script src="./js/netwizard-production-gate-architecture.js"></script>
+<script src="./js/netwizard-change-set.js"></script>
+<script src="./js/netwizard-incremental-generators.js"></script>
+<script src="./js/netwizard-observed-config-ui.js"></script>
+<script src="./js/netwizard-deployment-runbook.js"></script>
+<script src="./js/netwizard-deployment-bundle.js"></script>
+<script src="./js/netwizard-runtime.js"></script>
 
 </body>
 </html>
