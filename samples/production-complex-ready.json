@@ -67,7 +67,14 @@
         "mode": "trunk",
         "media": "GE",
         "nativeVlanRef": "v99",
-        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          99
+        ],
         "uplink": true,
         "desc": "Trunk a SW-CORE-01"
       },
@@ -78,7 +85,14 @@
         "mode": "trunk",
         "media": "GE",
         "nativeVlanRef": "v99",
-        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          99
+        ],
         "uplink": true,
         "desc": "Trunk a RTR-EDGE-01"
       },
@@ -89,7 +103,14 @@
         "mode": "trunk",
         "media": "10GE",
         "nativeVlanRef": "v99",
-        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          99
+        ],
         "uplink": true,
         "desc": "Uplink a SW-ACCESS-01"
       },
@@ -100,7 +121,14 @@
         "mode": "trunk",
         "media": "10GE",
         "nativeVlanRef": "v99",
-        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "allowedVlans": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          99
+        ],
         "uplink": true,
         "desc": "Uplink a SW-CORE-01"
       },
@@ -167,20 +195,74 @@
       }
     ],
     "vlans": [
-      {"id": "v10", "vlanId": 10, "name": "Usuarios"},
-      {"id": "v20", "vlanId": 20, "name": "Servidores"},
-      {"id": "v30", "vlanId": 30, "name": "WiFi-Corporativo"},
-      {"id": "v40", "vlanId": 40, "name": "VoIP"},
-      {"id": "v50", "vlanId": 50, "name": "Camaras"},
-      {"id": "v99", "vlanId": 99, "name": "Gestion"}
+      {
+        "id": "v10",
+        "vlanId": 10,
+        "name": "Usuarios"
+      },
+      {
+        "id": "v20",
+        "vlanId": 20,
+        "name": "Servidores"
+      },
+      {
+        "id": "v30",
+        "vlanId": 30,
+        "name": "WiFi-Corporativo"
+      },
+      {
+        "id": "v40",
+        "vlanId": 40,
+        "name": "VoIP"
+      },
+      {
+        "id": "v50",
+        "vlanId": 50,
+        "name": "Camaras"
+      },
+      {
+        "id": "v99",
+        "vlanId": 99,
+        "name": "Gestion"
+      }
     ],
     "subnets": [
-      {"id": "sn10", "vlanRef": "v10", "cidr": "10.10.0.0/24", "gateway": "10.10.0.1"},
-      {"id": "sn20", "vlanRef": "v20", "cidr": "10.20.0.0/24", "gateway": "10.20.0.1"},
-      {"id": "sn30", "vlanRef": "v30", "cidr": "10.30.0.0/24", "gateway": "10.30.0.1"},
-      {"id": "sn40", "vlanRef": "v40", "cidr": "10.40.0.0/24", "gateway": "10.40.0.1"},
-      {"id": "sn50", "vlanRef": "v50", "cidr": "10.50.0.0/24", "gateway": "10.50.0.1"},
-      {"id": "sn99", "vlanRef": "v99", "cidr": "10.99.0.0/24", "gateway": "10.99.0.1"}
+      {
+        "id": "sn10",
+        "vlanRef": "v10",
+        "cidr": "10.10.0.0/24",
+        "gateway": "10.10.0.1"
+      },
+      {
+        "id": "sn20",
+        "vlanRef": "v20",
+        "cidr": "10.20.0.0/24",
+        "gateway": "10.20.0.1"
+      },
+      {
+        "id": "sn30",
+        "vlanRef": "v30",
+        "cidr": "10.30.0.0/24",
+        "gateway": "10.30.0.1"
+      },
+      {
+        "id": "sn40",
+        "vlanRef": "v40",
+        "cidr": "10.40.0.0/24",
+        "gateway": "10.40.0.1"
+      },
+      {
+        "id": "sn50",
+        "vlanRef": "v50",
+        "cidr": "10.50.0.0/24",
+        "gateway": "10.50.0.1"
+      },
+      {
+        "id": "sn99",
+        "vlanRef": "v99",
+        "cidr": "10.99.0.0/24",
+        "gateway": "10.99.0.1"
+      }
     ],
     "hosts": [
       {
@@ -297,13 +379,57 @@
       }
     ],
     "dhcp": {
-      "10": {"enabled": true, "start": "10.10.0.50", "end": "10.10.0.200", "dns": "1.1.1.1,8.8.8.8", "domain": "corp.example", "lease": 7, "exclusions": [], "reservations": []},
-      "30": {"enabled": true, "start": "10.30.0.50", "end": "10.30.0.200", "dns": "1.1.1.1,8.8.8.8", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []},
-      "40": {"enabled": true, "start": "10.40.0.50", "end": "10.40.0.200", "dns": "10.20.0.10", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []},
-      "50": {"enabled": true, "start": "10.50.0.50", "end": "10.50.0.200", "dns": "10.20.0.10", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []}
+      "10": {
+        "enabled": true,
+        "start": "10.10.0.50",
+        "end": "10.10.0.200",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "30": {
+        "enabled": true,
+        "start": "10.30.0.50",
+        "end": "10.30.0.200",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "corp.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "40": {
+        "enabled": true,
+        "start": "10.40.0.50",
+        "end": "10.40.0.200",
+        "dns": "10.20.0.10",
+        "domain": "corp.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "50": {
+        "enabled": true,
+        "start": "10.50.0.50",
+        "end": "10.50.0.200",
+        "dns": "10.20.0.10",
+        "domain": "corp.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      }
     },
     "vlanMatrix": {},
-    "security": {"bpdu": "yes", "ps": "yes", "ds": "yes", "dsV": "99", "dai": "yes", "ipsg": "yes", "qV": "999"},
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "99",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "999"
+    },
     "roas": {
       "gwId": "rtr_edge_01",
       "lanIf": "GigabitEthernet0/1",
@@ -311,11 +437,37 @@
       "wanCidr": "198.51.100.2/30",
       "wanNh": "198.51.100.1"
     },
-    "vtp": {"domain": "CORP", "password": "", "version": "3", "pruning": "yes", "roles": {"sw_core_01": "server", "sw_access_01": "client"}},
-    "topo": {"pos": {}},
+    "vtp": {
+      "domain": "CORP",
+      "password": "",
+      "version": "3",
+      "pruning": "yes",
+      "roles": {
+        "sw_core_01": "server",
+        "sw_access_01": "client"
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
     "physicalLocations": [
-      {"id": "site_hq", "name": "Sede central", "type": "site"},
-      {"id": "room_cpd", "name": "CPD principal", "type": "room", "parentId": "site_hq"}
+      {
+        "id": "site_hq",
+        "name": "Sede central",
+        "type": "site"
+      },
+      {
+        "id": "room_cpd",
+        "name": "CPD principal",
+        "type": "room",
+        "parentId": "site_hq"
+      },
+      {
+        "id": "office_floor_1",
+        "name": "Oficina planta 1",
+        "type": "room",
+        "parentId": "site_hq"
+      }
     ],
     "hostPhysicalLocations": [],
     "uiSort": {},
@@ -333,23 +485,255 @@
       }
     ],
     "rackItems": [
-      {"id": "rackitem_patch_01", "rackId": "rack_cpd_01", "type": "patch-panel", "label": "Patch panel Cat6A 24p", "startUnit": 23, "heightUnits": 1, "face": "front"},
-      {"id": "rackitem_cable_01", "rackId": "rack_cpd_01", "type": "cable-manager", "label": "Pasacables horizontal", "startUnit": 22, "heightUnits": 1, "face": "front"}
+      {
+        "id": "rackitem_patch_01",
+        "rackId": "rack_cpd_01",
+        "type": "patch-panel",
+        "label": "Patch panel Cat6A 24p",
+        "startUnit": 23,
+        "heightUnits": 1,
+        "face": "front",
+        "patchPanelId": "patch_cpd_01"
+      },
+      {
+        "id": "rackitem_cable_01",
+        "rackId": "rack_cpd_01",
+        "type": "cable-manager",
+        "label": "Pasacables horizontal",
+        "startUnit": 22,
+        "heightUnits": 1,
+        "face": "front"
+      }
     ],
     "pdus": [
-      {"id": "pdu_a", "rackId": "rack_cpd_01", "name": "PDU-A", "feed": "A", "mounting": "vertical-rear", "voltage": 230, "maxCurrentAmps": 16, "maxPowerWatts": 3680, "outletCount": 12},
-      {"id": "pdu_b", "rackId": "rack_cpd_01", "name": "PDU-B", "feed": "B", "mounting": "vertical-rear", "voltage": 230, "maxCurrentAmps": 16, "maxPowerWatts": 3680, "outletCount": 12}
+      {
+        "id": "pdu_a",
+        "rackId": "rack_cpd_01",
+        "name": "PDU-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 12
+      },
+      {
+        "id": "pdu_b",
+        "rackId": "rack_cpd_01",
+        "name": "PDU-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 12
+      }
     ],
     "powerConnections": [
-      {"id": "power_rtr_a", "deviceId": "rtr_edge_01", "powerSupplyIndex": 0, "pduId": "pdu_a", "outlet": 1, "feed": "A"},
-      {"id": "power_core_a", "deviceId": "sw_core_01", "powerSupplyIndex": 0, "pduId": "pdu_a", "outlet": 2, "feed": "A"},
-      {"id": "power_access_b", "deviceId": "sw_access_01", "powerSupplyIndex": 0, "pduId": "pdu_b", "outlet": 1, "feed": "B"}
+      {
+        "id": "power_rtr_a",
+        "deviceId": "rtr_edge_01",
+        "powerSupplyIndex": 0,
+        "pduId": "pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "power_core_a",
+        "deviceId": "sw_core_01",
+        "powerSupplyIndex": 0,
+        "pduId": "pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "power_access_b",
+        "deviceId": "sw_access_01",
+        "powerSupplyIndex": 0,
+        "pduId": "pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      }
     ],
     "iot": {
       "accessNodes": [],
       "devices": [],
-      "map": {"show": {"network": true, "port": false, "access": true, "iot": true, "wifi": true, "lora": true, "zigbee": true, "thread": true, "mqtt": true}, "scale": 1, "panX": 0, "panY": 0}
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
     },
-    "visual": {"locs": [], "assign": {"devices": {}, "hosts": {}}, "pos": {}, "view": {"px": 60, "py": 50, "zoom": 1}, "sel": null}
+    "visual": {
+      "locs": [],
+      "assign": {
+        "devices": {},
+        "hosts": {}
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "patchPanels": [
+      {
+        "id": "patch_cpd_01",
+        "rackId": "rack_cpd_01",
+        "name": "PP-CAT6A-01",
+        "portCount": 24,
+        "category": "Cat6A",
+        "rackUnit": 23
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "to_user_01",
+        "locationId": "office_floor_1",
+        "name": "TO-USR-01",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "to_ap_01",
+        "locationId": "office_floor_1",
+        "name": "TO-AP-01",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "to_phone_01",
+        "locationId": "office_floor_1",
+        "name": "TO-VOZ-01",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "to_cam_01",
+        "locationId": "office_floor_1",
+        "name": "TO-CAM-01",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "run_user_01",
+        "label": "Horizontal usuario 01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 1,
+        "outletId": "to_user_01",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 32,
+        "route": "CPD → bandeja principal → oficina planta 1"
+      },
+      {
+        "id": "run_ap_01",
+        "label": "Horizontal AP 01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 2,
+        "outletId": "to_ap_01",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 38,
+        "route": "CPD → bandeja principal → techo planta 1"
+      },
+      {
+        "id": "run_phone_01",
+        "label": "Horizontal voz 01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 3,
+        "outletId": "to_phone_01",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 35,
+        "route": "CPD → bandeja principal → puesto voz planta 1"
+      },
+      {
+        "id": "run_cam_01",
+        "label": "Horizontal cámara 01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 4,
+        "outletId": "to_cam_01",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "CPD → bandeja principal → perímetro planta 1"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "patch_user_01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 1,
+        "switchPortId": "access_user_01",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_ap_01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 2,
+        "switchPortId": "access_ap_01",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_phone_01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 3,
+        "switchPortId": "access_phone_01",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_cam_01",
+        "patchPanelId": "patch_cpd_01",
+        "patchPort": 4,
+        "switchPortId": "access_cam_01",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "hostcord_user_01",
+        "hostId": "host_pc_01",
+        "outletId": "to_user_01",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hostcord_ap_01",
+        "hostId": "host_ap_01",
+        "outletId": "to_ap_01",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hostcord_phone_01",
+        "hostId": "host_phone_01",
+        "outletId": "to_phone_01",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hostcord_cam_01",
+        "hostId": "host_cam_01",
+        "outletId": "to_cam_01",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      }
+    ]
   }
 }
