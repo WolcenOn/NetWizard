@@ -4,7 +4,7 @@
 const MODEL=root.NetWizardStructuredCabling||(typeof require==='function'?require('./netwizard-structured-cabling.js'):null);
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
-const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
+const num=v=>{if(v==null||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;};
 const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 function ensureArrays(project){for(const k of ['patchPanels','telecomOutlets','cableRuns','patchConnections','hostOutletConnections','rackItems'])if(!Array.isArray(project[k]))project[k]=[];return project;}
