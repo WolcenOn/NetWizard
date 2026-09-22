@@ -85,6 +85,7 @@ Mantenimiento:
     const p = { ...def, ...asObject(project) };
     const arrayKeys = [
       'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations',
+      'patchPanels','telecomOutlets','cableRuns','patchConnections','hostOutletConnections',
       ...ADVANCED_ARRAY_KEYS
     ];
     for(const key of arrayKeys) p[key] = asArray(p[key]);
@@ -253,6 +254,62 @@ Mantenimiento:
       x.bpduGuard = !(x.bpduGuard === false || x.bpduguard === false || x.bpduGuard === 'false' || x.bpduguard === 'false');
       x.uplink = x.uplink === true || x.isUplink === true || x.uplink === 'true' || x.isUplink === 'true';
       x.desc = cleanText(x.desc, 240);
+      return x;
+    });
+
+    p.patchPanels = p.patchPanels.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `patch_${idx+1}`);
+      x.rackId = cleanId(x.rackId, '');
+      x.name = cleanText(x.name || `Patch panel ${idx+1}`, 120);
+      x.portCount = Math.max(1, cleanNumber(x.portCount, 24));
+      x.category = cleanText(x.category || 'Cat6A', 40);
+      const rackUnit = Number(x.rackUnit); x.rackUnit = Number.isFinite(rackUnit) ? rackUnit : null;
+      return x;
+    });
+
+    p.telecomOutlets = p.telecomOutlets.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `outlet_${idx+1}`);
+      x.locationId = cleanId(x.locationId, '');
+      x.name = cleanText(x.name || `Toma ${idx+1}`, 120);
+      x.portCount = Math.max(1, cleanNumber(x.portCount, 1));
+      x.category = cleanText(x.category || 'Cat6A', 40);
+      x.room = cleanText(x.room || '', 120);
+      return x;
+    });
+
+    p.cableRuns = p.cableRuns.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `cable_${idx+1}`);
+      x.label = cleanText(x.label || '', 120);
+      x.patchPanelId = cleanId(x.patchPanelId, '');
+      x.patchPort = Math.max(1, cleanNumber(x.patchPort, 1));
+      x.outletId = cleanId(x.outletId, '');
+      x.outletPort = Math.max(1, cleanNumber(x.outletPort, 1));
+      x.cableType = cleanText(x.cableType || 'Cat6A', 40);
+      const lengthM = Number(x.lengthM); x.lengthM = Number.isFinite(lengthM) && lengthM >= 0 ? Math.round(lengthM * 10) / 10 : null;
+      x.route = cleanText(x.route || x.physicalPath || '', 500);
+      return x;
+    });
+
+    p.patchConnections = p.patchConnections.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `patchcord_${idx+1}`);
+      x.patchPanelId = cleanId(x.patchPanelId, '');
+      x.patchPort = Math.max(1, cleanNumber(x.patchPort, 1));
+      x.switchPortId = cleanId(x.switchPortId, '');
+      const lengthM = Number(x.patchCordLengthM); x.patchCordLengthM = Number.isFinite(lengthM) && lengthM >= 0 ? Math.round(lengthM * 10) / 10 : null;
+      return x;
+    });
+
+    p.hostOutletConnections = p.hostOutletConnections.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `hostcord_${idx+1}`);
+      x.hostId = cleanId(x.hostId, '');
+      x.outletId = cleanId(x.outletId, '');
+      x.outletPort = Math.max(1, cleanNumber(x.outletPort, 1));
+      const lengthM = Number(x.patchCordLengthM); x.patchCordLengthM = Number.isFinite(lengthM) && lengthM >= 0 ? Math.round(lengthM * 10) / 10 : null;
       return x;
     });
 

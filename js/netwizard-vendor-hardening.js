@@ -33,6 +33,12 @@ Mantenimiento:
   function isL3Device(d){ return /router|firewall|l3|gateway/i.test(clean(d && d.type)) || vendorOf(d) === 'cisco_asa' || vendorOf(d) === 'fortinet' || vendorOf(d) === 'pfsense'; }
   function hasUsefulIp(value){ return /^\d{1,3}(\.\d{1,3}){3}$/.test(clean(value)); }
   function hasCidr(value){ return /^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(clean(value)); }
+  function isLayer2OnlyVlan(vlan){
+    const intent = vlan && vlan.intent && typeof vlan.intent === 'object' ? vlan.intent : {};
+    const txt = `${intent.type || ''} ${vlan && vlan.name || ''}`.toLowerCase();
+    return ['quarantine','parking','native','blackhole','l2-only','layer2'].includes(String(intent.type||'').toLowerCase()) || /cuarentena|quarantine|parking|native|blackhole|sin l3|l2 only/.test(txt);
+  }
+
   function hasInternet(project){ return arr(project.devices).some(d => d && d.internetEdge === 'yes') || !!clean(obj(project.roas).wanCidr); }
 
   function validateCommon(project, device){
@@ -92,6 +98,7 @@ Mantenimiento:
     const vlans = arr(project.vlans);
     if(vlans.length && !Object.keys(snByV).length) issues.push(issue({code:'NW-FW-001', severity:'error', blocking:true, message:`${deviceLabel(device)} exportaría firewall sin subredes/gateways de VLAN.`}));
     for(const v of vlans){
+      if(isLayer2OnlyVlan(v)) continue;
       const sn = snByV[v.id];
       if(!sn || !hasCidr(sn.cidr) || !hasUsefulIp(sn.gateway)){
         issues.push(issue({code:'NW-FW-002', severity:'error', blocking:true, message:`${deviceLabel(device)}: VLAN ${v.vlanId || v.id} no tiene subnet/gateway válido para interfaces firewall.`}));

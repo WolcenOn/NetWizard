@@ -67,6 +67,7 @@ assert.strictEqual(pkg.manifest.incremental.mode,'full');
 assert.strictEqual(Bundle.crc32('123456789').toString(16),'cbf43926');
 assert.strictEqual(Bundle.configExtension('aruba_aoss'),'cfg');
 assert.strictEqual(Bundle.configExtension('windows'),'ps1');
+assert.strictEqual(Bundle.configExtension('pfsense'),'php');
 
 const zipA=Bundle.encodeZip(pkg);
 const zipB=Bundle.encodeZip(build());
