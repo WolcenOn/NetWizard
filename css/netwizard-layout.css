@@ -123,6 +123,8 @@
 }
 .rack-topology-arrow.is-external { color: var(--yw); }
 .rack-topology-arrow.is-power { color: var(--gn); }
+.rack-topology-arrow.is-cabling { color: var(--pu, #a78bfa); }
+.rack-path-incomplete td { background: color-mix(in srgb, var(--yw) 10%, transparent); }
 .rack-topology-meta {
   grid-column: 1 / -1;
   color: var(--t4);
