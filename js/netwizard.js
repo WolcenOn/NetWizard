@@ -250,23 +250,39 @@ function syncVisualLocationsIntoPhysical(){
     }
   }
 }
+function physicalLocationUsedDirectly(pl){
+  if(!pl)return false;
+  const id=pl.id,name=cleanStr(pl.name).toLowerCase();
+  const matches=(obj)=>cleanStr(obj&&obj.locationId)===id||cleanStr(obj&&obj.physicalLocationId)===id||cleanStr(obj&&obj.physicalLocation).toLowerCase()===name;
+  if((S.devices||[]).some(matches)||(S.hosts||[]).some(matches)||(S.racks||[]).some(matches)||(S.telecomOutlets||[]).some(matches))return true;
+  return false;
+}
 function syncPhysicalLocationsIntoVisual(){
   const V=S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null});
   if(!Array.isArray(V.locs)) V.locs=[];
-  const byName=new Map(V.locs.map(l=>[cleanStr(l.name).toLowerCase(),l]));
   const physical=S.physicalLocations||[];
   const hasChildren=new Set(physical.map(l=>cleanStr(l.parentId)).filter(Boolean));
+  const wanted=new Set();
   for(const pl of physical){
-    const name=cleanStr(pl.name); if(!name) continue;
-    const key=name.toLowerCase();
-    const existing=byName.get(key);
     const isContainer=hasChildren.has(pl.id)&&['site','campus','building','floor'].includes(cleanStr(pl.type).toLowerCase());
-    if(!existing&&isContainer)continue;
+    if(!isContainer||physicalLocationUsedDirectly(pl))wanted.add(pl.id);
+  }
+  const removedIds=new Set(V.locs.filter(l=>l.physicalLocationId&&!wanted.has(l.physicalLocationId)&&physical.some(pl=>pl.id===l.physicalLocationId)).map(l=>l.id));
+  if(removedIds.size){
+    V.locs=V.locs.filter(l=>!removedIds.has(l.id));
+    for(const [id,lid] of Object.entries(V.assign.devices||{}))if(removedIds.has(lid))delete V.assign.devices[id];
+    for(const [id,lid] of Object.entries(V.assign.hosts||{}))if(removedIds.has(lid))delete V.assign.hosts[id];
+  }
+  const byName=new Map(V.locs.map(l=>[cleanStr(l.name).toLowerCase(),l]));
+  for(const pl of physical){
+    if(!wanted.has(pl.id))continue;
+    const name=cleanStr(pl.name); if(!name) continue;
+    const key=name.toLowerCase(),existing=byName.get(key);
     if(!existing){
       const vl={id:uid('loc'),name,color:'#10233c',x:80+V.locs.length*360,y:90+(V.locs.length%2)*260,type:pl.type||'other',physicalLocationId:pl.id};
-      V.locs.push(vl); byName.set(key,vl);
+      V.locs.push(vl);byName.set(key,vl);
     }else{
-      existing.physicalLocationId=existing.physicalLocationId||pl.id; existing.type=existing.type||pl.type||'other';
+      existing.physicalLocationId=pl.id;existing.type=pl.type||existing.type||'other';
     }
   }
 }
@@ -2699,21 +2715,27 @@ function ensureVisualModel(){
   syncLocationModels();
   const l0=V.locs[0]?.id||'',l1=V.locs[1]?.id||l0,l2=V.locs[2]?.id||l1;
   for(const d of S.devices){
+    const inferred=inferredDeviceVisualLoc(d);
+    if(inferred&&vLocById(inferred)){
+      V.assign.devices[d.id]=inferred;
+      continue;
+    }
     if(!V.assign.devices[d.id]||!vLocById(V.assign.devices[d.id])){
-      let lid=inferredDeviceVisualLoc(d);
-      if(!lid){
-        lid=l1;
-        if(d.type==='firewall'||d.type==='router')lid=l0;
-        else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
-      }
+      let lid=l1;
+      if(d.type==='firewall'||d.type==='router')lid=l0;
+      else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
       V.assign.devices[d.id]=lid;
     }
   }
   for(const h of S.hosts){
+    const inferred=inferredHostVisualLoc(h);
+    if(inferred&&vLocById(inferred)){
+      V.assign.hosts[h.id]=inferred;
+      continue;
+    }
     if(!V.assign.hosts[h.id]||!vLocById(V.assign.hosts[h.id])){
-      const inferred=inferredHostVisualLoc(h);
       const linkedId=hostConnectedDeviceId(h);
-      V.assign.hosts[h.id]=inferred||(linkedId?deviceVisualLoc(linkedId):l1);
+      V.assign.hosts[h.id]=linkedId?deviceVisualLoc(linkedId):l1;
     }
   }
 }
