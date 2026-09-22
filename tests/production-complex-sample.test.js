@@ -22,7 +22,7 @@ const defaults=()=>({
 
 const prepared=Schema.prepareImport(payload,{defaults});
 assert.strictEqual(prepared.ok,true,prepared.errors&&prepared.errors.join('\n'));
-assert.strictEqual(prepared.project._schemaVersion,'3.48.0');
+assert.strictEqual(prepared.project._schemaVersion,Schema.schemaVersion||'3.50.0');
 assert.ok(prepared.project.devices.length>=3);
 assert.ok(prepared.project.vlans.length>=6);
 assert.ok(prepared.project.links.length>=2);

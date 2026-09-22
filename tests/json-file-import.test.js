@@ -7,10 +7,10 @@ const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const js=fs.readFileSync(path.join(root,'js','netwizard.js'),'utf8');
 
-assert.ok(html.includes('id="impJsonFile"'),'Debe existir botón para cargar archivo JSON.');
-assert.ok(html.includes('id="jsonFileInput"'),'Debe existir input file oculto.');
-assert.ok(html.includes('accept=".json,application/json"'),'El selector debe limitarse a JSON.');
-assert.ok(html.includes('id="jsonImportStatus"'),'Debe existir feedback del importador.');
+assert.ok(html.includes('id="impJsonFile"')||js.includes("fileBtn.id='impJsonFile'"),'Debe existir botón para cargar archivo JSON.');
+assert.ok(html.includes('id="jsonFileInput"')||js.includes("fileInput.id='jsonFileInput'"),'Debe existir input file oculto.');
+assert.ok(html.includes('accept=".json,application/json"')||js.includes("fileInput.accept='.json,application/json'"),'El selector debe limitarse a JSON.');
+assert.ok(html.includes('id="jsonImportStatus"')||js.includes("status.id='jsonImportStatus'"),'Debe existir feedback del importador.');
 assert.ok(js.includes('function prepareJsonImportText(text)'),'Debe reutilizarse una función común de validación.');
 assert.ok(js.includes("NWSchema.prepareImport(raw,{defaults:defS})"),'La carga de archivo debe pasar por el schema.');
 assert.ok(js.includes("reader.readAsText(file,'utf-8')"),'El archivo debe leerse como texto UTF-8.');
