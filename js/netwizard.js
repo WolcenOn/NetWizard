@@ -2659,8 +2659,13 @@ function inferredHostVisualLoc(h){
   return '';
 }
 function isSyntheticDefaultVisualLoc(loc){
-  return !!loc && !loc.physicalLocationId && cleanStr(loc.type).toLowerCase()==='zone' &&
-    ['Core / Perímetro','Acceso / Usuarios','Servicios'].includes(cleanStr(loc.name));
+  if(!loc)return false;
+  const names=['Core / Perímetro','Acceso / Usuarios','Servicios'];
+  if(!names.includes(cleanStr(loc.name)))return false;
+  const linked=(S.physicalLocations||[]).find(pl=>pl.id===loc.physicalLocationId);
+  return !loc.physicalLocationId ||
+    cleanStr(loc.type).toLowerCase()==='zone' ||
+    !!(linked && (cleanStr(linked.type).toLowerCase()==='zone' || cleanStr(linked.notes)==='Sincronizada desde Vista V5'));
 }
 function ensureVisualModel(){
   const V=vv();
@@ -2668,11 +2673,16 @@ function ensureVisualModel(){
   for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
   for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
   if((S.physicalLocations||[]).length){
-    const syntheticIds=new Set(V.locs.filter(isSyntheticDefaultVisualLoc).map(l=>l.id));
+    const defaultNames=new Set(['Core / Perímetro','Acceso / Usuarios','Servicios']);
+    const meaningfulPhysical=(S.physicalLocations||[]).some(pl=>!defaultNames.has(cleanStr(pl.name)));
+    const syntheticLocs=meaningfulPhysical?V.locs.filter(isSyntheticDefaultVisualLoc):[];
+    const syntheticIds=new Set(syntheticLocs.map(l=>l.id));
+    const syntheticPhysicalIds=new Set(syntheticLocs.map(l=>l.physicalLocationId).filter(Boolean));
     if(syntheticIds.size){
       V.locs=V.locs.filter(l=>!syntheticIds.has(l.id));
       for(const [id,lid] of Object.entries(V.assign.devices))if(syntheticIds.has(lid))delete V.assign.devices[id];
       for(const [id,lid] of Object.entries(V.assign.hosts))if(syntheticIds.has(lid))delete V.assign.hosts[id];
+      S.physicalLocations=(S.physicalLocations||[]).filter(pl=>!syntheticPhysicalIds.has(pl.id));
     }
     syncPhysicalLocationsIntoVisual();
   }
