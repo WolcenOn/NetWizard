@@ -184,6 +184,7 @@ const cliQuoted=NWCore.safeQuotedCli||((v,max=160)=>cliText(v,max).replace(/"/g,
 // =========================================================
 function ensurePhysicalLocationModel(){
   if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
+  const hadStructuredLocations=S.physicalLocations.some(l=>l&&cleanStr(l.name));
   const seen=new Set();
   S.physicalLocations=(S.physicalLocations||[]).filter(Boolean).map(l=>({
     id:l.id||uid('pl'),
@@ -193,7 +194,9 @@ function ensurePhysicalLocationModel(){
     distance:l.distance==null?'':String(l.distance),
     notes:cleanStr(l.notes)
   })).filter(l=>l.name && !seen.has(l.name.toLowerCase()) && seen.add(l.name.toLowerCase()));
-  for(const n of (S.hostPhysicalLocations||[])) if(cleanStr(n) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(n).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(n),type:'other',parentId:'',distance:'',notes:''});
+  if(!hadStructuredLocations){
+    for(const n of (S.hostPhysicalLocations||[])) if(cleanStr(n) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(n).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(n),type:'other',parentId:'',distance:'',notes:''});
+  }
   for(const h of S.hosts||[]) if(cleanStr(h.physicalLocation) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(h.physicalLocation).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(h.physicalLocation),type:'other',parentId:'',distance:'',notes:''});
   for(const d of S.devices||[]) if(cleanStr(d.physicalLocation) && !S.physicalLocations.some(l=>l.name.toLowerCase()===cleanStr(d.physicalLocation).toLowerCase())) S.physicalLocations.push({id:uid('pl'),name:cleanStr(d.physicalLocation),type:'other',parentId:'',distance:'',notes:''});
   syncVisualLocationsIntoPhysical();
