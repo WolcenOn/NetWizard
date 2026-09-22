@@ -24,7 +24,7 @@ function install(){
   return true;
 }
 function inject(){
-  for(const name of ['NetWizardRackUi','NetWizardDetailedReport']){
+  for(const name of ['NetWizardRackUi','NetWizardCompactReport']){
     const mod=root[name];
     if(mod&&typeof mod.inject==='function'){try{mod.inject();}catch(_e){}}
   }
