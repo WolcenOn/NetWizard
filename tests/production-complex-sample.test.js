@@ -7,6 +7,7 @@ const root=path.resolve(__dirname,'..');
 require(path.join(root,'js','netwizard-audit.js'));
 const Schema=require(path.join(root,'js','netwizard-project-schema.js'));
 const Gate=require(path.join(root,'js','netwizard-production-gate.js'));
+const Cabling=require(path.join(root,'js','netwizard-structured-cabling.js'));
 const Rack=require(path.join(root,'js','netwizard-rack-model.js'));
 
 const payload=JSON.parse(fs.readFileSync(path.join(root,'samples','production-complex-ready.json'),'utf8'));
@@ -17,7 +18,8 @@ const defaults=()=>({
   visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{}},
   iot:{accessNodes:[],devices:[],map:{show:{}}},
   physicalLocations:[],hostPhysicalLocations:[],uiSort:{},
-  racks:[],rackItems:[],pdus:[],powerConnections:[]
+  racks:[],rackItems:[],pdus:[],powerConnections:[],
+  patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[]
 });
 
 const prepared=Schema.prepareImport(payload,{defaults});
@@ -28,6 +30,14 @@ assert.ok(prepared.project.vlans.length>=6);
 assert.ok(prepared.project.links.length>=2);
 assert.ok(prepared.project.racks.length>=1);
 
+assert.ok(prepared.project.patchPanels.length>=1);
+assert.ok(prepared.project.cableRuns.length>=4);
+
+const cabling=Cabling.validate(prepared.project);
+assert.strictEqual(cabling.ok,true,cabling.issues.map(i=>`${i.code}: ${i.message}`).join('\n'));
+assert.ok(cabling.paths.length>=4);
+assert.ok(cabling.paths.every(x=>x.complete));
+
 const rack=Rack.validate(prepared.project);
 assert.strictEqual(rack.ok,true,rack.issues.map(i=>`${i.code}: ${i.message}`).join('\n'));
 
@@ -35,4 +45,4 @@ const report=Gate.runProductionGate(prepared.project,{productionMode:true,strict
 assert.strictEqual(report.canExport,true,report.issues.map(i=>`[${i.severity}] [${i.code}] ${i.message}`).join('\n'));
 assert.strictEqual(report.counts.blocking,0,Gate.summarizeGate(report));
 
-console.log('✓ Sample complejo importa, valida racks y supera la puerta de producción sin bloqueos');
+console.log('✓ Sample complejo importa, valida cableado/racks y supera la puerta de producción sin bloqueos');
