@@ -60,6 +60,7 @@ for(const site of ['s1','s2','s3','s4']){
   assert.strictEqual(p.devices.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 equipos de rack');
   assert.strictEqual(p.vlans.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 VLANs');
   assert.strictEqual(p.subnets.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 subredes VLSM');
+  assert.ok(p.subnets.filter(x=>x.id.startsWith(site+'_')).every(x=>x.gatewayDeviceRef===site+'_fw'),site+' debe asociar todas sus subredes al firewall local');
   assert.strictEqual(p.hosts.filter(x=>x.id.startsWith(site+'_')).length,10,site+' debe tener 10 hosts');
   assert.strictEqual(p.cableRuns.filter(x=>x.id.startsWith(site+'_')).length,8,site+' debe tener 8 rutas estructuradas');
   assert.strictEqual(p.powerConnections.filter(x=>x.id.startsWith(site+'_')).length,7,site+' debe tener 7 conexiones de alimentación');
