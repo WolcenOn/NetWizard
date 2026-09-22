@@ -1,0 +1,355 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.48.0",
+  "exportedAt": "2026-09-21T00:00:00.000Z",
+  "project": {
+    "_schemaVersion": "3.48.0",
+    "step": "dash",
+    "projName": "Campus corporativo - referencia producción",
+    "devices": [
+      {
+        "id": "rtr_edge_01",
+        "name": "RTR-EDGE-01",
+        "type": "router",
+        "vendorOs": "cisco_ios",
+        "model": "Cisco ISR 4331",
+        "mgmtIp": "10.99.0.2",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0",
+        "rackId": "rack_cpd_01",
+        "rackUnit": 20,
+        "rackUnits": 2,
+        "powerDrawWatts": 120
+      },
+      {
+        "id": "sw_core_01",
+        "name": "SW-CORE-01",
+        "type": "switch",
+        "vendorOs": "cisco_ios",
+        "model": "Cisco Catalyst 9300",
+        "mgmtIp": "10.99.0.3",
+        "rackId": "rack_cpd_01",
+        "rackUnit": 17,
+        "rackUnits": 1,
+        "powerDrawWatts": 110,
+        "poeBudgetW": 0
+      },
+      {
+        "id": "sw_access_01",
+        "name": "SW-ACCESS-01",
+        "type": "switch",
+        "vendorOs": "cisco_ios",
+        "model": "Cisco Catalyst 9200L PoE+",
+        "mgmtIp": "10.99.0.10",
+        "rackId": "rack_cpd_01",
+        "rackUnit": 13,
+        "rackUnits": 1,
+        "powerDrawWatts": 95,
+        "poeBudgetW": 370
+      }
+    ],
+    "ports": [
+      {
+        "id": "rtr_wan",
+        "deviceId": "rtr_edge_01",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "l3Ip": "198.51.100.2",
+        "l3Cidr": "198.51.100.0/30",
+        "desc": "WAN ISP"
+      },
+      {
+        "id": "rtr_lan",
+        "deviceId": "rtr_edge_01",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "media": "GE",
+        "nativeVlanRef": "v99",
+        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "uplink": true,
+        "desc": "Trunk a SW-CORE-01"
+      },
+      {
+        "id": "core_rtr",
+        "deviceId": "sw_core_01",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "trunk",
+        "media": "GE",
+        "nativeVlanRef": "v99",
+        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "uplink": true,
+        "desc": "Trunk a RTR-EDGE-01"
+      },
+      {
+        "id": "core_access",
+        "deviceId": "sw_core_01",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "media": "10GE",
+        "nativeVlanRef": "v99",
+        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "uplink": true,
+        "desc": "Uplink a SW-ACCESS-01"
+      },
+      {
+        "id": "access_core",
+        "deviceId": "sw_access_01",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "media": "10GE",
+        "nativeVlanRef": "v99",
+        "allowedVlans": [10, 20, 30, 40, 50, 99],
+        "uplink": true,
+        "desc": "Uplink a SW-CORE-01"
+      },
+      {
+        "id": "access_user_01",
+        "deviceId": "sw_access_01",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "media": "GE",
+        "accessVlanRef": "v10",
+        "portFast": true,
+        "bpduGuard": true,
+        "desc": "PC usuario"
+      },
+      {
+        "id": "access_srv_01",
+        "deviceId": "sw_access_01",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "media": "GE",
+        "accessVlanRef": "v20",
+        "portFast": true,
+        "bpduGuard": true,
+        "desc": "Servidor aplicación"
+      },
+      {
+        "id": "access_ap_01",
+        "deviceId": "sw_access_01",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "media": "GE",
+        "accessVlanRef": "v30",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP corporativo"
+      },
+      {
+        "id": "access_phone_01",
+        "deviceId": "sw_access_01",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "media": "GE",
+        "accessVlanRef": "v40",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "Telefono IP"
+      },
+      {
+        "id": "access_cam_01",
+        "deviceId": "sw_access_01",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "media": "GE",
+        "accessVlanRef": "v50",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "Camara IP"
+      }
+    ],
+    "vlans": [
+      {"id": "v10", "vlanId": 10, "name": "Usuarios"},
+      {"id": "v20", "vlanId": 20, "name": "Servidores"},
+      {"id": "v30", "vlanId": 30, "name": "WiFi-Corporativo"},
+      {"id": "v40", "vlanId": 40, "name": "VoIP"},
+      {"id": "v50", "vlanId": 50, "name": "Camaras"},
+      {"id": "v99", "vlanId": 99, "name": "Gestion"}
+    ],
+    "subnets": [
+      {"id": "sn10", "vlanRef": "v10", "cidr": "10.10.0.0/24", "gateway": "10.10.0.1"},
+      {"id": "sn20", "vlanRef": "v20", "cidr": "10.20.0.0/24", "gateway": "10.20.0.1"},
+      {"id": "sn30", "vlanRef": "v30", "cidr": "10.30.0.0/24", "gateway": "10.30.0.1"},
+      {"id": "sn40", "vlanRef": "v40", "cidr": "10.40.0.0/24", "gateway": "10.40.0.1"},
+      {"id": "sn50", "vlanRef": "v50", "cidr": "10.50.0.0/24", "gateway": "10.50.0.1"},
+      {"id": "sn99", "vlanRef": "v99", "cidr": "10.99.0.0/24", "gateway": "10.99.0.1"}
+    ],
+    "hosts": [
+      {
+        "id": "host_pc_01",
+        "name": "PC-USUARIO-01",
+        "type": "pc",
+        "vlanRef": "v10",
+        "portRef": "access_user_01",
+        "ipMode": "dhcp"
+      },
+      {
+        "id": "host_srv_01",
+        "name": "SRV-APP-01",
+        "type": "server",
+        "vlanRef": "v20",
+        "portRef": "access_srv_01",
+        "ipMode": "static",
+        "staticIp": "10.20.0.10"
+      },
+      {
+        "id": "host_ap_01",
+        "name": "AP-CORP-01",
+        "type": "ap",
+        "vlanRef": "v30",
+        "portRef": "access_ap_01",
+        "ipMode": "dhcp",
+        "poeRequired": true,
+        "poeWatts": 18
+      },
+      {
+        "id": "host_phone_01",
+        "name": "PHONE-01",
+        "type": "phone",
+        "vlanRef": "v40",
+        "portRef": "access_phone_01",
+        "ipMode": "dhcp",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "host_cam_01",
+        "name": "CAM-01",
+        "type": "camera",
+        "vlanRef": "v50",
+        "portRef": "access_cam_01",
+        "ipMode": "dhcp",
+        "poeRequired": true,
+        "poeWatts": 12
+      }
+    ],
+    "links": [
+      {
+        "id": "link_rtr_core",
+        "name": "RTR-CORE",
+        "aPortId": "rtr_lan",
+        "bPortId": "core_rtr",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 5,
+        "speed": "1G",
+        "physicalPath": "CPD rack principal"
+      },
+      {
+        "id": "link_core_access",
+        "name": "CORE-ACCESS",
+        "aPortId": "core_access",
+        "bPortId": "access_core",
+        "medium": "fiber",
+        "cableType": "om4",
+        "lengthM": 40,
+        "speed": "10G",
+        "physicalPath": "CPD patch panel fibra"
+      }
+    ],
+    "fwRules": [
+      {
+        "id": "fw_dns",
+        "name": "Permitir DNS",
+        "src": "10.0.0.0/8",
+        "dst": "any",
+        "proto": "udp",
+        "port": "53",
+        "action": "allow",
+        "dir": "out",
+        "prio": 10,
+        "reviewed": true,
+        "source": "manual"
+      },
+      {
+        "id": "fw_https",
+        "name": "Permitir HTTPS",
+        "src": "10.0.0.0/8",
+        "dst": "any",
+        "proto": "tcp",
+        "port": "443",
+        "action": "allow",
+        "dir": "out",
+        "prio": 20,
+        "reviewed": true,
+        "source": "manual"
+      },
+      {
+        "id": "fw_deny",
+        "name": "Denegar resto entrante",
+        "src": "any",
+        "dst": "10.0.0.0/8",
+        "proto": "any",
+        "port": "any",
+        "action": "deny",
+        "dir": "in",
+        "prio": 9999,
+        "reviewed": true,
+        "source": "manual"
+      }
+    ],
+    "dhcp": {
+      "10": {"enabled": true, "start": "10.10.0.50", "end": "10.10.0.200", "dns": "1.1.1.1,8.8.8.8", "domain": "corp.example", "lease": 7, "exclusions": [], "reservations": []},
+      "30": {"enabled": true, "start": "10.30.0.50", "end": "10.30.0.200", "dns": "1.1.1.1,8.8.8.8", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []},
+      "40": {"enabled": true, "start": "10.40.0.50", "end": "10.40.0.200", "dns": "10.20.0.10", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []},
+      "50": {"enabled": true, "start": "10.50.0.50", "end": "10.50.0.200", "dns": "10.20.0.10", "domain": "corp.example", "lease": 3, "exclusions": [], "reservations": []}
+    },
+    "vlanMatrix": {},
+    "security": {"bpdu": "yes", "ps": "yes", "ds": "yes", "dsV": "99", "dai": "yes", "ipsg": "yes", "qV": "999"},
+    "roas": {
+      "gwId": "rtr_edge_01",
+      "lanIf": "GigabitEthernet0/1",
+      "natVRef": "v99",
+      "wanCidr": "198.51.100.2/30",
+      "wanNh": "198.51.100.1"
+    },
+    "vtp": {"domain": "CORP", "password": "", "version": "3", "pruning": "yes", "roles": {"sw_core_01": "server", "sw_access_01": "client"}},
+    "topo": {"pos": {}},
+    "physicalLocations": [
+      {"id": "site_hq", "name": "Sede central", "type": "site"},
+      {"id": "room_cpd", "name": "CPD principal", "type": "room", "parentId": "site_hq"}
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "rack_cpd_01",
+        "name": "Rack CPD 01",
+        "locationId": "room_cpd",
+        "rackUnits": 24,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 800,
+        "powerCapacityWatts": 7000,
+        "coolingCapacityWatts": 5000
+      }
+    ],
+    "rackItems": [
+      {"id": "rackitem_patch_01", "rackId": "rack_cpd_01", "type": "patch-panel", "label": "Patch panel Cat6A 24p", "startUnit": 23, "heightUnits": 1, "face": "front"},
+      {"id": "rackitem_cable_01", "rackId": "rack_cpd_01", "type": "cable-manager", "label": "Pasacables horizontal", "startUnit": 22, "heightUnits": 1, "face": "front"}
+    ],
+    "pdus": [
+      {"id": "pdu_a", "rackId": "rack_cpd_01", "name": "PDU-A", "feed": "A", "mounting": "vertical-rear", "voltage": 230, "maxCurrentAmps": 16, "maxPowerWatts": 3680, "outletCount": 12},
+      {"id": "pdu_b", "rackId": "rack_cpd_01", "name": "PDU-B", "feed": "B", "mounting": "vertical-rear", "voltage": 230, "maxCurrentAmps": 16, "maxPowerWatts": 3680, "outletCount": 12}
+    ],
+    "powerConnections": [
+      {"id": "power_rtr_a", "deviceId": "rtr_edge_01", "powerSupplyIndex": 0, "pduId": "pdu_a", "outlet": 1, "feed": "A"},
+      {"id": "power_core_a", "deviceId": "sw_core_01", "powerSupplyIndex": 0, "pduId": "pdu_a", "outlet": 2, "feed": "A"},
+      {"id": "power_access_b", "deviceId": "sw_access_01", "powerSupplyIndex": 0, "pduId": "pdu_b", "outlet": 1, "feed": "B"}
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {"show": {"network": true, "port": false, "access": true, "iot": true, "wifi": true, "lora": true, "zigbee": true, "thread": true, "mqtt": true}, "scale": 1, "panX": 0, "panY": 0}
+    },
+    "visual": {"locs": [], "assign": {"devices": {}, "hosts": {}}, "pos": {}, "view": {"px": 60, "py": 50, "zoom": 1}, "sel": null}
+  }
+}
