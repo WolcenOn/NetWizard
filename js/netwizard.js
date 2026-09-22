@@ -2647,9 +2647,11 @@ function ensureVisualModel(){
 }
 function devsInVisualLoc(lid){return S.devices.filter(d=>deviceVisualLoc(d.id)===lid && v5ShowDevice(d));}
 function hostEffectiveVisualLoc(h){
+  const explicit=hostVisualLoc(h.id);
+  if(explicit&&vLocById(explicit))return explicit;
   const linkedDev=devById(hostConnectedDeviceId(h)||'');
   const linkedLoc=linkedDev ? deviceVisualLoc(linkedDev.id) : '';
-  return linkedLoc || hostVisualLoc(h.id) || '';
+  return linkedLoc || '';
 }
 function hostsInVisualLoc(lid){return S.hosts.filter(h=>hostEffectiveVisualLoc(h)===lid && v5ShowHost(h));}
 function visualLocContentBounds(loc){
