@@ -1426,7 +1426,7 @@ function renderPortsList(){
   pts.forEach(p=>{
     const d=devById(p.deviceId); const v=vByRef(p.accessVlanRef); const lnk=isLinked(p.id);
     const tr=document.createElement('tr');
-    const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=txtForBg?txtForBg(d.labelColor):'#fff';devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
+    const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=textColorForBg(d.labelColor);devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
     const tdPort=document.createElement('td'); tdPort.className='mono'; const b=document.createElement('b'); b.textContent=p.name||''; tdPort.appendChild(b);
     if(p.desc){ const desc=document.createElement('div'); desc.style.fontSize='9.5px'; desc.style.color='var(--t3)'; desc.textContent=String(p.desc).substring(0,20); tdPort.appendChild(desc); }
     tr.appendChild(tdPort);
@@ -1793,6 +1793,7 @@ function createSortTh(name,key,label){
 function appendText(el,value){ el.appendChild(document.createTextNode(String(value ?? ''))); return el; }
 function makeBadge(text, cls){ const span=document.createElement('span'); span.className=cls||'b'; span.textContent=String(text ?? ''); return span; }
 function safeColor(value, fallback){ const s=String(value || '').trim(); return /^#[0-9a-f]{3,8}$/i.test(s) ? s : (fallback || '#888'); }
+function textColorForBg(value){ const s=safeColor(value,'#3b82f6').replace('#',''); const hex=s.length===3?s.split('').map(x=>x+x).join(''):s.slice(0,6); const r=parseInt(hex.slice(0,2),16)||0,g=parseInt(hex.slice(2,4),16)||0,b=parseInt(hex.slice(4,6),16)||0; return ((r*299+g*587+b*114)/1000)>=150?'#111827':'#ffffff'; }
 function addOption(sel, value, text, selected){ const opt=document.createElement('option'); opt.value=String(value ?? ''); opt.textContent=String(text ?? ''); if(selected)opt.selected=true; sel.appendChild(opt); return opt; }
 function renderHosts(){
   const fv=$('hFiltV').value,ft=$('hFiltT').value;
