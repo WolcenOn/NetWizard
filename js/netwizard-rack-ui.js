@@ -39,7 +39,14 @@ function rackTopologyView(project,rack){
     row.appendChild(el('small','rack-topology-meta',`Feed ${edge.feed||'—'}`));power.appendChild(row);
   }
   if(!arr(topology.powerEdges).length)power.appendChild(el('div','empty','No hay conexiones eléctricas asociadas a este rack.'));
-  wrap.append(data,power);return wrap;
+  const cable=el('section','rack-topology-group');cable.appendChild(el('h4','','🧵 Cableado estructurado'));
+  for(const edge of arr(topology.cablingEdges)){
+    const row=el('div','rack-topology-edge');
+    row.append(el('span','rack-topology-from',edge.switchPortLabel),el('span','rack-topology-arrow is-cabling','⇢'),el('span','rack-topology-to',`${edge.panelLabel} P${edge.patchPort} → ${edge.outletLabel} P${edge.outletPort} → ${edge.hostLabel}`));
+    row.appendChild(el('small','rack-topology-meta',[edge.cableType,edge.lengthM!=null?edge.lengthM+' m':null,edge.route,edge.complete?'ruta completa':'ruta incompleta'].filter(Boolean).join(' · ')));cable.appendChild(row);
+  }
+  if(!arr(topology.cablingEdges).length)cable.appendChild(el('div','empty','No hay cableado estructurado asociado a este rack.'));
+  wrap.append(data,power,cable);return wrap;
 }
 function editorCard(project){const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','✏️ Editor de racks y alimentación'));const tabs=el('div','rack-editor-grid');
 const rackForm=el('form','rack-editor-form');rackForm.dataset.form='rack';const rackName=input('text','Rack principal');const rackUnits=input('number','42',42);rackUnits.min='1';const rackLocation=select([['','Sin ubicación'],...arr(project.physicalLocations).map(x=>[x.id,x.name||x.id])],'');const rackPower=input('number','7000');rackForm.append(field('Nombre',rackName),field('Unidades',rackUnits),field('Ubicación',rackLocation),field('Capacidad eléctrica W',rackPower),button('➕ Crear rack','bp','add-rack'));rackForm.elementsRef={rackName,rackUnits,rackLocation,rackPower};
@@ -56,5 +63,5 @@ if(action==='add-pdu'){const f=mount.querySelector('[data-form="pdu"]');const r=
 if(action==='add-power'){const f=mount.querySelector('[data-form="power"]');const r=f.elementsRef;const pdu=arr(snapshot.pdus).find(x=>x.id===r.powerPdu.value);next=addPowerConnection(snapshot,{deviceId:r.powerDevice.value,pduId:r.powerPdu.value,outlet:r.powerOutlet.value,powerSupplyIndex:r.powerPsu.value,feed:pdu&&pdu.feed});}
 if(action==='remove-rack')next=removeEntity(snapshot,'rack',e.target.dataset.id);if(action==='remove-pdu')next=removeEntity(snapshot,'pdu',e.target.dataset.id);if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',e.target.dataset.id);if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});};}
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
-const api={version:'netwizard-rack-ui-v4',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
+const api={version:'netwizard-rack-ui-v5',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
 })(typeof window!=='undefined'?window:globalThis);
