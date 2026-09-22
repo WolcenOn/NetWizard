@@ -3,7 +3,7 @@
 'use strict';
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
-const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
+const num=v=>{if(v==null||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;};
 const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
 function issue(code,severity,message,extra){return Object.assign({code,severity,blocking:severity==='error',category:'structured-cabling',source:'structured-cabling',message},extra||{});}
 function mediaIsCopper(value){const s=clean(value).toLowerCase();return !s||s.includes('cat')||s.includes('copper')||s.includes('utp')||s.includes('ftp');}
