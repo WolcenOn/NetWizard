@@ -43,7 +43,7 @@ function addSite(p,s){
   servers:{off:80,pfx:29,gw:81,name:'Servidores'},
   mgmt:{off:88,pfx:29,gw:89,name:'Gestión'}
  };
- for(const k of Object.keys(nets)){const n=nets[k];p.vlans.push({id:refs[k],vlanId:vids[k],name:`${s.code}-${n.name}`});p.subnets.push({id:`${s.id}_sn_${k}`,vlanRef:refs[k],cidr:cidr(s,n.off,n.pfx),gateway:ip(s,n.gw),gatewayDeviceRef:fw});}
+ for(const k of Object.keys(nets)){const n=nets[k];p.vlans.push({id:refs[k],vlanId:vids[k],name:`${s.code}-${n.name}`});p.subnets.push({id:`${s.id}_sn_${k}`,vlanRef:refs[k],cidr:cidr(s,n.off,n.pfx),gateway:ip(s,n.gw),gatewayDeviceRef:`${s.id}_fw`});}
  for(const k of ['users','wifi','voice']){const n=nets[k];p.dhcp[String(vids[k])]={enabled:true,start:ip(s,n.start),end:ip(s,n.end),dns:'1.1.1.1,8.8.8.8',domain:'corp.example',lease:k==='users'?7:3,exclusions:[],reservations:[]};}
  const fw=`${s.id}_fw`,core=`${s.id}_core`,access=`${s.id}_access`,voiceSrv=`${s.id}_srv_voice`,inetSrv=`${s.id}_srv_inet`;
  p.devices.push(
