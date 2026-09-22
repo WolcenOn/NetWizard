@@ -56,7 +56,7 @@ test('pfSense limita las VLANs a las transportadas por su trunk cuando no hay ga
  assert.ok(out.includes('// VLAN 10 Users'));
  assert.ok(!out.includes('// VLAN 20 Remote'));
 });
-\ntest('Generador no devuelve contenido para vendor ajeno',()=>{
+test('Generador no devuelve contenido para vendor ajeno',()=>{
  assert.strictEqual(Edge.render(project('cisco_ios'),'fw1','cisco_ios'),'');
 });
 
