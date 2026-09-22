@@ -2926,10 +2926,66 @@ function v5HoverMove(evt){
   el.style.top=Math.max(8,top)+'px';
   vcv.style.cursor='help';
 }
+function v5SelectedDeviceId(){
+  const sel=vv().sel;
+  if(!sel)return '';
+  if(sel.t==='device')return sel.id;
+  if(sel.t==='host'){
+    const h=S.hosts.find(x=>x.id===sel.id);
+    return h?hostConnectedDeviceId(h)||'':'';
+  }
+  return '';
+}
+function v5NetworkLinkSelected(a,b){
+  const id=v5SelectedDeviceId();
+  return !!id&&(a.deviceId===id||b.deviceId===id);
+}
+function v5HostLinkSelected(h,linkedDev){
+  const sel=vv().sel;
+  if(!sel)return false;
+  if(sel.t==='host')return sel.id===h.id;
+  return sel.t==='device'&&sel.id===linkedDev.id;
+}
+function v5HostLinkGeometry(h,linkedDev){
+  let p=h.portRef?S.ports.find(x=>x.id===h.portRef):null;
+  if(!p && (h.portAssignMode||'auto')==='auto'){
+    const suggested=suggestHostPort(linkedDev.id,h.id);
+    p=suggested?S.ports.find(x=>x.id===suggested):null;
+  }
+  const hb=visualNodeBounds('host',h.id),db=visualNodeBounds('dev',linkedDev.id);
+  const start={x:hb.x,y:hb.y+hb.h/2},end={x:db.x+db.w,y:db.y+db.h/2};
+  const ph=v2s(start.x,start.y),pd=v2s(end.x,end.y);
+  return{p,ph,pd,midX:(ph.x+pd.x)/2,midY:(ph.y+pd.y)/2};
+}
+function drawV5NetworkLink(lk,a,b,selected){
+  const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db)return false;
+  const ca=nodeCenterById('dev',da.id),cb=nodeCenterById('dev',db.id),pa=v2s(ca.x,ca.y),pb=v2s(cb.x,cb.y);
+  const trunk=a.mode==='trunk'||b.mode==='trunk';
+  vctx.save();
+  vctx.globalAlpha=selected?1:.42;
+  vctx.lineWidth=selected?(trunk?4.2:3.2):(trunk?2.2:1.25);
+  vctx.strokeStyle=selected?'#f8fafc':(trunk?'#38bdf8':'#3b82f6');
+  vctx.setLineDash(trunk?[8,4]:[]);
+  if(selected){vctx.shadowColor=trunk?'#38bdf8':'#60a5fa';vctx.shadowBlur=8;}
+  vctx.beginPath();vctx.moveTo(pa.x,pa.y);vctx.lineTo(pb.x,pb.y);vctx.stroke();vctx.restore();
+  return true;
+}
+function drawV5HostLink(h,linkedDev,selected){
+  const g=v5HostLinkGeometry(h,linkedDev),accent=deviceAccentColor(linkedDev.id);
+  vctx.save();
+  vctx.globalAlpha=selected?1:.34;
+  vctx.lineWidth=selected?4.2:1.45;
+  vctx.strokeStyle=selected?'#ede9fe':'rgba(196,181,253,1)';
+  if(selected){vctx.shadowColor=accent;vctx.shadowBlur=10;}
+  vctx.beginPath();vctx.moveTo(g.ph.x,g.ph.y);vctx.bezierCurveTo(g.midX,g.ph.y,g.midX,g.pd.y,g.pd.x,g.pd.y);vctx.stroke();
+  vctx.restore();
+  if(selected)v5DrawLinkDot(g.midX,g.midY,h,linkedDev,g.p,accent);
+  return true;
+}
 function drawV5(){
   if(!vcv)return;v5SyncFilterInputs();ensureVisualModel();if(v5ProMode()&&!vv().freezeLocAutoBounds)computeProfessionalLocationBounds();const r=vcv.getBoundingClientRect();if(!r.width||!r.height)return;vctx.clearRect(0,0,r.width,r.height);
   v5LinkDots=[];
-  const z=vv().view.zoom;
+  const z=vv().view.zoom,renderState={layerOrder:['background','base-links','nodes','selected-links'],baseNetwork:0,baseHost:0,selectedNetwork:0,selectedHost:0,selected:vv().sel?{...vv().sel}:null};
   vctx.globalAlpha=.05;vctx.strokeStyle='#3b82f6';vctx.lineWidth=1;for(let x=0;x<r.width;x+=26){vctx.beginPath();vctx.moveTo(x,0);vctx.lineTo(x,r.height);vctx.stroke();}for(let y=0;y<r.height;y+=26){vctx.beginPath();vctx.moveTo(0,y);vctx.lineTo(r.width,y);vctx.stroke();}vctx.globalAlpha=1;
   for(const loc of vLocs())layoutVisualLoc(loc,false);
   const ordered=[...vLocs()].sort((a,b)=>vLocDepth(a.id)-vLocDepth(b.id));
@@ -2939,9 +2995,21 @@ function drawV5(){
     if(vdrag&&vdrag.overLoc===loc.id){vctx.strokeStyle='#60a5fa';vctx.lineWidth=2;vctx.setLineDash([8,5]);drawRound(vctx,p.x+4,p.y+4,w-8,h-8,Math.max(4,15*z));vctx.stroke();vctx.setLineDash([]);}
     vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(11,13-depth)+'px Space Grotesk,sans-serif';vctx.fillText((depth?('↳ '.repeat(Math.min(depth,2))):'')+loc.name,p.x+12*z,p.y+22*z);vctx.fillStyle='#8fa3c0';vctx.font='11px Space Grotesk,sans-serif';vctx.fillText(devsInVisualLoc(loc.id).length+' equipos · '+hostsInVisualLoc(loc.id).length+' hosts',p.x+12*z,p.y+37*z);
     const hs=12*z,hx=p.x+w-hs-8*z,hy=p.y+h-hs-8*z;
-    if(!(v5ProMode()&&loc.parentId)){ vctx.fillStyle='rgba(148,163,184,.95)';vctx.fillRect(hx,hy,hs,hs); vctx.strokeStyle='rgba(15,23,42,.95)';vctx.strokeRect(hx,hy,hs,hs); vctx.beginPath();vctx.moveTo(hx+3*z,hy+hs-3*z);vctx.lineTo(hx+hs-3*z,hy+3*z);vctx.stroke(); }
+    if(!(v5ProMode()&&loc.parentId)){vctx.fillStyle='rgba(148,163,184,.95)';vctx.fillRect(hx,hy,hs,hs);vctx.strokeStyle='rgba(15,23,42,.95)';vctx.strokeRect(hx,hy,hs,hs);vctx.beginPath();vctx.moveTo(hx+3*z,hy+hs-3*z);vctx.lineTo(hx+hs-3*z,hy+3*z);vctx.stroke();}
   }
-  for(const lk of S.links){const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b)continue;const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;const ca=nodeCenterById('dev',da.id),cb=nodeCenterById('dev',db.id);const pa=v2s(ca.x,ca.y),pb=v2s(cb.x,cb.y);const trunk=a.mode==='trunk'||b.mode==='trunk';vctx.lineWidth=trunk?2.8:1.6;vctx.strokeStyle=trunk?'#38bdf8':'#3b82f6';vctx.setLineDash(trunk?[8,4]:[]);vctx.beginPath();vctx.moveTo(pa.x,pa.y);vctx.lineTo(pb.x,pb.y);vctx.stroke();vctx.setLineDash([]);}
+
+  // Cableado base: siempre detrás de equipos y etiquetas.
+  for(const lk of S.links){
+    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b)continue;
+    const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
+    if(drawV5NetworkLink(lk,a,b,false))renderState.baseNetwork++;
+  }
+  for(const h of S.hosts){
+    const linkedDev=devById(hostConnectedDeviceId(h)||'');if(!linkedDev||!v5ShowHost(h)||!v5ShowDevice(linkedDev))continue;
+    if(drawV5HostLink(h,linkedDev,false))renderState.baseHost++;
+  }
+
+  // Nodos y texto: se pintan por encima del cableado normal.
   for(const loc of vLocs()){
     for(const d of devsInVisualLoc(loc.id)){
       const nb=visualNodeBounds('dev',d.id),np=v2s(nb.x,nb.y),accent=deviceAccentColor(d.id),accentSoft=rgbaFromCss(accent,.18);
@@ -2965,9 +3033,7 @@ function drawV5(){
       const vlan=vByRef(h.vlanRef);
       if(v5ReadableZoom()){
         vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(7.5,10.5*z)+'px Space Grotesk,sans-serif';vctx.fillText((h.name||'').slice(0,20),np.x+8*z,np.y+14*z);
-        const chip=(vlan?('V'+vlan.vlanId):'sin VLAN');
-        vctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';
-        const chipW=Math.max(32*z,(chip.length*6+12)*z);
+        const chip=(vlan?('V'+vlan.vlanId):'sin VLAN');vctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
         vctx.fillStyle='rgba(15,23,42,.78)';drawRound(vctx,np.x+8*z,np.y+22*z,chipW,14*z,Math.max(2,7*z));vctx.fill();
         vctx.fillStyle=accent;vctx.fillText(chip,np.x+14*z,np.y+32*z);
       }else{
@@ -2975,29 +3041,18 @@ function drawV5(){
       }
     }
   }
-  for(const h of S.hosts){
-    const linkedDev=devById(hostConnectedDeviceId(h)||'');
-    if(!linkedDev||!v5ShowHost(h)||!v5ShowDevice(linkedDev))continue;
-    let p=h.portRef?S.ports.find(x=>x.id===h.portRef):null;
-    if(!p && (h.portAssignMode||'auto')==='auto'){
-      const suggested=suggestHostPort(linkedDev.id,h.id);
-      p=suggested?S.ports.find(x=>x.id===suggested):null;
-    }
-    const hb=visualNodeBounds('host',h.id), db=visualNodeBounds('dev',linkedDev.id);
-    const start={x:hb.x, y:hb.y+hb.h/2};
-    const end={x:db.x+db.w, y:db.y+db.h/2};
-    const ph=v2s(start.x,start.y), pd=v2s(end.x,end.y);
-    vctx.lineWidth=2.6;
-    vctx.strokeStyle='rgba(196,181,253,1)';
-    vctx.beginPath();
-    vctx.moveTo(ph.x,ph.y);
-    const midX=(ph.x+pd.x)/2;
-    vctx.bezierCurveTo(midX,ph.y,midX,pd.y,pd.x,pd.y);
-    vctx.stroke();
-    const mx=(ph.x+pd.x)/2,my=(ph.y+pd.y)/2;
-    const accent=deviceAccentColor(linkedDev.id);
-    v5DrawLinkDot(mx,my,h,linkedDev,p,accent);
+
+  // Selección: solo sus enlaces vuelven a primer plano.
+  for(const lk of S.links){
+    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b||!v5NetworkLinkSelected(a,b))continue;
+    const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
+    if(drawV5NetworkLink(lk,a,b,true))renderState.selectedNetwork++;
   }
+  for(const h of S.hosts){
+    const linkedDev=devById(hostConnectedDeviceId(h)||'');if(!linkedDev||!v5ShowHost(h)||!v5ShowDevice(linkedDev)||!v5HostLinkSelected(h,linkedDev))continue;
+    if(drawV5HostLink(h,linkedDev,true))renderState.selectedHost++;
+  }
+  window.NetWizardV5RenderState=renderState;
 }
 function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;for(const loc of vLocs()){const b=visualLocBounds(loc);minx=Math.min(minx,b.x);miny=Math.min(miny,b.y);maxx=Math.max(maxx,b.x+b.w);maxy=Math.max(maxy,b.y+b.h);}if(!isFinite(minx)){vv().view={px:60,py:50,zoom:1};drawV5();return;}const r=vcv.parentElement.getBoundingClientRect();const padx=24,pady=24;const zw=Math.max(.45,Math.min(1.25,(r.width-padx*2)/(maxx-minx||1)));const zh=Math.max(.45,Math.min(1.25,(r.height-pady*2)/(maxy-miny||1)));const zoom=Math.min(zw,zh);vv().view.zoom=zoom;vv().view.px=padx-minx*zoom+(r.width-(maxx-minx)*zoom-padx*2)/2;vv().view.py=pady-miny*zoom+(r.height-(maxy-miny)*zoom-pady*2)/2;drawV5();}
 function visualResizeHandleHit(wx,wy){
