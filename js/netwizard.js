@@ -2231,6 +2231,39 @@ $('expJson').onclick=()=>{
   const payload=NWSchema&&typeof NWSchema.prepareExport==='function'?NWSchema.prepareExport(snap,{defaults:defS}):snap;
   $('jsonBox').value=JSON.stringify(payload,null,2);
 };
+function ensureJsonFileImportControls(){
+  const importText=$('impJson'),jsonBox=$('jsonBox');
+  if(!importText||!jsonBox)return;
+  let fileBtn=$('impJsonFile');
+  if(!fileBtn){
+    fileBtn=document.createElement('button');
+    fileBtn.type='button';
+    fileBtn.className='btn bs';
+    fileBtn.id='impJsonFile';
+    fileBtn.textContent='📂 Cargar archivo JSON';
+    importText.insertAdjacentElement('afterend',fileBtn);
+  }
+  let fileInput=$('jsonFileInput');
+  if(!fileInput){
+    fileInput=document.createElement('input');
+    fileInput.id='jsonFileInput';
+    fileInput.type='file';
+    fileInput.accept='.json,application/json';
+    fileInput.hidden=true;
+    fileBtn.insertAdjacentElement('afterend',fileInput);
+  }
+  if(!$('jsonImportStatus')){
+    const status=document.createElement('div');
+    status.className='hint';
+    status.id='jsonImportStatus';
+    status.style.marginTop='6px';
+    status.textContent='Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema.';
+    const bridge=$('nwBridgeStatus');
+    if(bridge)bridge.insertAdjacentElement('beforebegin',status);
+    else jsonBox.insertAdjacentElement('beforebegin',status);
+  }
+}
+ensureJsonFileImportControls();
 function prepareJsonImportText(text){
   const txt=String(text||'').trim();
   if(!txt)throw new Error('No hay contenido JSON para importar.');
