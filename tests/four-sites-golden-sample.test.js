@@ -47,7 +47,16 @@ assert.strictEqual(p.telecomOutlets.length,32);
 assert.strictEqual(p.cableRuns.length,32);
 assert.strictEqual(p.pdus.length,8);
 
+assert.strictEqual(p.visual.locs.length,8,'Debe haber exactamente CPD + oficina para cada una de las cuatro sedes');
+assert.ok(!p.visual.locs.some(x=>['Core / Perímetro','Acceso / Usuarios','Servicios'].includes(x.name)),'El ejemplo no debe caer en ubicaciones visuales genéricas');
+
 for(const site of ['s1','s2','s3','s4']){
+  const cpdVisual=site+'_vloc_cpd',officeVisual=site+'_vloc_office';
+  assert.ok(p.visual.locs.some(x=>x.id===cpdVisual));
+  assert.ok(p.visual.locs.some(x=>x.id===officeVisual));
+  assert.strictEqual(Object.entries(p.visual.assign.devices).filter(([id,lid])=>id.startsWith(site+'_')&&lid===cpdVisual).length,5,site+' debe colocar sus 5 equipos en su CPD');
+  assert.strictEqual(Object.entries(p.visual.assign.hosts).filter(([id,lid])=>id.startsWith(site+'_')&&lid===officeVisual).length,8,site+' debe colocar 8 endpoints en su oficina');
+  assert.strictEqual(Object.entries(p.visual.assign.hosts).filter(([id,lid])=>id.startsWith(site+'_')&&lid===cpdVisual).length,2,site+' debe colocar los 2 hosts-servidor en su CPD');
   assert.strictEqual(p.devices.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 equipos de rack');
   assert.strictEqual(p.vlans.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 VLANs');
   assert.strictEqual(p.subnets.filter(x=>x.id.startsWith(site+'_')).length,5,site+' debe tener 5 subredes VLSM');
