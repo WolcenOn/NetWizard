@@ -2621,11 +2621,49 @@ async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)r
   layout.classList.toggle('fs',next);
 }
 syncV5FullscreenState();}
+function visualLocForPhysicalLocationId(id){
+  if(!id)return '';
+  return vv().locs.find(l=>l.physicalLocationId===id)?.id||'';
+}
+function visualLocForPhysicalLocationName(name){
+  const key=cleanStr(name).toLowerCase();if(!key)return '';
+  return vv().locs.find(l=>cleanStr(l.name).toLowerCase()===key)?.id||'';
+}
+function inferredDeviceVisualLoc(d){
+  if(!d)return '';
+  let lid=visualLocForPhysicalLocationId(d.locationId||d.physicalLocationId);
+  if(lid)return lid;
+  lid=visualLocForPhysicalLocationName(d.physicalLocation);if(lid)return lid;
+  const rack=(S.racks||[]).find(r=>r.id===(d.rackId||d.rack));
+  if(rack){
+    lid=visualLocForPhysicalLocationId(rack.locationId||rack.physicalLocationId);
+    if(lid)return lid;
+    lid=visualLocForPhysicalLocationName(rack.location||rack.physicalLocation);
+    if(lid)return lid;
+  }
+  return '';
+}
+function inferredHostVisualLoc(h){
+  if(!h)return '';
+  let lid=visualLocForPhysicalLocationId(h.locationId||h.physicalLocationId);
+  if(lid)return lid;
+  lid=visualLocForPhysicalLocationName(h.physicalLocation);if(lid)return lid;
+  const hc=(S.hostOutletConnections||[]).find(x=>x.hostId===h.id);
+  const outlet=hc&&(S.telecomOutlets||[]).find(x=>x.id===hc.outletId);
+  if(outlet){
+    lid=visualLocForPhysicalLocationId(outlet.locationId||outlet.physicalLocationId);
+    if(lid)return lid;
+    lid=visualLocForPhysicalLocationName(outlet.location||outlet.physicalLocation);
+    if(lid)return lid;
+  }
+  return '';
+}
 function ensureVisualModel(){
   const V=vv();
   for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
   for(const k of Object.keys(V.assign.hosts))if(!S.hosts.some(h=>h.id===k))delete V.assign.hosts[k];
   for(const k of Object.keys(V.pos))if(!S.devices.some(d=>d.id===k)&&!S.hosts.some(h=>h.id===k))delete V.pos[k];
+  if(!V.locs.length && (S.physicalLocations||[]).length) syncPhysicalLocationsIntoVisual();
   if(!V.locs.length){
     V.locs=[
       {id:uid('loc'),name:'Core / Perímetro',color:'#0f2744',x:60,y:70,type:'zone'},
@@ -2637,16 +2675,20 @@ function ensureVisualModel(){
   const l0=V.locs[0]?.id||'',l1=V.locs[1]?.id||l0,l2=V.locs[2]?.id||l1;
   for(const d of S.devices){
     if(!V.assign.devices[d.id]||!vLocById(V.assign.devices[d.id])){
-      let lid=l1;
-      if(d.type==='firewall'||d.type==='router')lid=l0;
-      else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
+      let lid=inferredDeviceVisualLoc(d);
+      if(!lid){
+        lid=l1;
+        if(d.type==='firewall'||d.type==='router')lid=l0;
+        else if((d.name||'').toLowerCase().includes('srv')||(d.name||'').toLowerCase().includes('server')||(d.notes||'').toLowerCase().includes('server'))lid=l2;
+      }
       V.assign.devices[d.id]=lid;
     }
   }
   for(const h of S.hosts){
     if(!V.assign.hosts[h.id]||!vLocById(V.assign.hosts[h.id])){
+      const inferred=inferredHostVisualLoc(h);
       const linkedId=hostConnectedDeviceId(h);
-      V.assign.hosts[h.id]=linkedId?deviceVisualLoc(linkedId):l1;
+      V.assign.hosts[h.id]=inferred||(linkedId?deviceVisualLoc(linkedId):l1);
     }
   }
 }
