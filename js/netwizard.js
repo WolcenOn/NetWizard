@@ -1235,21 +1235,21 @@ function ensurePortsFromModel(deviceId){const d=devById(deviceId);if(!d||!d.mode
 // 06. DISPOSITIVOS
 // Alta, edición, borrado y renderizado de dispositivos de infraestructura.
 // =========================================================
-function clearDevForm(){ $('devEditId').value=''; $('devName').value='';$('devMgmt').value='';$('devNotes').value='';$('devVendor').value=''; if($('devModel'))$('devModel').value=''; if($('devWifiRole'))$('devWifiRole').value='none'; $('devType').value='switch';$('devEdge').value='no';$('devWanIf').value='';$('btnAddDev').textContent='➕ Añadir dispositivo';$('btnCancelDevEdit').style.display='none';$('devEdgeSec').style.display='none'; renderDeviceModelHint(); }
-function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=devKind(d); $('devVendor').value=d.vendorOs||''; if($('devModel'))$('devModel').value=d.model||''; if($('devWifiRole'))$('devWifiRole').value=d.wifiRole||'none'; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=isEdgeDevice(d)?'':'none'; renderDeviceModelHint(); $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
+function clearDevForm(){ $('devEditId').value=''; $('devName').value='';$('devMgmt').value='';$('devNotes').value='';if($('devColor'))$('devColor').value='#3b82f6';$('devVendor').value=''; if($('devModel'))$('devModel').value=''; if($('devWifiRole'))$('devWifiRole').value='none'; $('devType').value='switch';$('devEdge').value='no';$('devWanIf').value='';$('btnAddDev').textContent='➕ Añadir dispositivo';$('btnCancelDevEdit').style.display='none';$('devEdgeSec').style.display='none'; renderDeviceModelHint(); }
+function startDevEdit(id){ const d=devById(id); if(!d)return; $('devEditId').value=id; $('devName').value=d.name||''; $('devType').value=devKind(d); $('devVendor').value=d.vendorOs||''; if($('devModel'))$('devModel').value=d.model||''; if($('devWifiRole'))$('devWifiRole').value=d.wifiRole||'none'; $('devMgmt').value=d.mgmtIp||''; $('devNotes').value=d.notes||''; if($('devColor'))$('devColor').value=d.labelColor||'#3b82f6'; $('devEdge').value=d.internetEdge||'no'; $('devWanIf').value=d.wanIf||''; $('devEdgeSec').style.display=isEdgeDevice(d)?'':'none'; renderDeviceModelHint(); $('btnAddDev').textContent='💾 Guardar cambios'; $('btnCancelDevEdit').style.display=''; navTo('dev'); window.scrollTo({top:0,behavior:'smooth'}); }
 $('btnCancelDevEdit').onclick=()=>clearDevForm();
 $('btnAddDev').onclick=()=>{
-  const name=($('devName').value||'').trim();const kind=$('devType').value;const type=kind;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const model=($('devModel')?.value||'').trim()||null;const wifiRole=($('devWifiRole')?.value||'none');const edge=isEdgeDevice({kind})?$('devEdge').value:'no';const wanIf=isEdgeDevice({kind})?(($('devWanIf').value||'').trim()||null):null;
+  const name=($('devName').value||'').trim();const kind=$('devType').value;const type=kind;const vendor=($('devVendor').value||'').trim()||null;const mgmt=($('devMgmt').value||'').trim()||null;const notes=($('devNotes').value||'').trim()||null;const labelColor=/^#[0-9a-f]{6}$/i.test($('devColor')?.value||'')?$('devColor').value:'#3b82f6';const model=($('devModel')?.value||'').trim()||null;const wifiRole=($('devWifiRole')?.value||'none');const edge=isEdgeDevice({kind})?$('devEdge').value:'no';const wanIf=isEdgeDevice({kind})?(($('devWanIf').value||'').trim()||null):null;
   const eid=$('devEditId').value||null;
   if(!name)return alert('Nombre requerido.');if(mgmt&&parseIp(mgmt)===null)return alert('IP de gestión inválida.');
   if(isEdgeDevice({kind})&&edge==='yes'){const exists=S.devices.some(d=>d.id!==eid&&isEdgeDevice(d)&&d.internetEdge==='yes');if(exists)return alert('Ya existe otro dispositivo marcado como Internet Edge.');}
   if(eid){
     const d=devById(eid); if(!d)return alert('No se encontró el dispositivo a editar.');
-    Object.assign(d,{name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf});
+    Object.assign(d,{name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,labelColor,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf});
     ensurePortsFromModel(eid);
   }else{
     const id=uid('dev');
-    S.devices.push({id,name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf,layout:null});
+    S.devices.push({id,name,type,kind,vendorOs:vendor,mgmtIp:mgmt,notes,labelColor,model,wifiRole,hasWifi:wifiRole!=='none',internetEdge:edge,wanIf,layout:null});
     S.topo.pos[id]={x:80+Math.random()*540,y:60+Math.random()*280};
     ensurePortsFromModel(id);
   }
@@ -1426,7 +1426,7 @@ function renderPortsList(){
   pts.forEach(p=>{
     const d=devById(p.deviceId); const v=vByRef(p.accessVlanRef); const lnk=isLinked(p.id);
     const tr=document.createElement('tr');
-    const tdDev=document.createElement('td'); tdDev.appendChild(makeBadge(d?.name||'?','b bgr')); tr.appendChild(tdDev);
+    const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=txtForBg?txtForBg(d.labelColor):'#fff';devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
     const tdPort=document.createElement('td'); tdPort.className='mono'; const b=document.createElement('b'); b.textContent=p.name||''; tdPort.appendChild(b);
     if(p.desc){ const desc=document.createElement('div'); desc.style.fontSize='9.5px'; desc.style.color='var(--t3)'; desc.textContent=String(p.desc).substring(0,20); tdPort.appendChild(desc); }
     tr.appendChild(tdPort);
