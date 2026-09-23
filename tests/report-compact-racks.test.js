@@ -39,6 +39,7 @@ const project={
   patchConnections:[{id:'patch1',patchPanelId:'pp1',patchPort:1,switchPortId:'p3',patchCordLengthM:1}],
   hostOutletConnections:[{id:'host1',hostId:'h1',outletId:'to1',outletPort:1,patchCordLengthM:2}]
 };
+for(let n=4;n<=15;n++)project.ports.push({id:'px'+n,deviceId:'sw1',name:'Gi1/0/'+n,mode:'access',media:'copper'});
 
 const model=reportModel.build(project,{gateReport:gate});
 assert.strictEqual(model.portMatrices.length,2);
@@ -61,6 +62,9 @@ assert.strictEqual(model.structuredChains[0].totalLengthM,33);
 assert.ok(model.rackSummaries.some(x=>x.rackId==='rack1'&&x.dataLinks===1&&x.structuredRuns===1));
 assert.strictEqual(model.rackTopologies[0].dataEdges.length,1);
 assert.strictEqual(model.rackTopologies[0].dataEdges[0].media,'OM4 multimode');
+assert.strictEqual(model.rackTopologies[0].dataEdges[0].label,'Uplink servidor');
+assert.strictEqual(model.rackTopologies[0].dataEdges[0].fromPortId,'p1');
+assert.strictEqual(model.rackTopologies[0].powerEdges[0].label,'pc1');
 assert.ok(model.installationChecklist.some(x=>x.category==='Parcheo'&&x.task.includes('Gi1/0/2')));
 assert.ok(model.installationChecklist.some(x=>x.category==='Energía'&&x.task.includes('SRV-01')&&!x.documented));
 
@@ -77,12 +81,27 @@ assert.ok(html.includes('Vista trasera'));
 assert.ok(html.includes('Pasacables trasero'));
 assert.ok(html.includes('rear-pdu-rail'));
 assert.ok(html.includes('U42'));
+assert.ok(html.includes('Plano visual de replanteo y conexiones'));
+assert.ok(html.includes('Plano de replanteo'));
+assert.ok(html.includes('Referencias de instalación'));
+assert.ok(html.includes('DATA-01'));
+assert.ok(html.includes('CAB-01'));
+assert.ok(html.includes('PWR-01'));
+assert.ok(html.includes('Enlaces directos principales'));
+assert.ok(html.includes('Uplink servidor'));
+assert.ok(html.includes('rack-plan-layout'));
 assert.ok(html.includes('Racks y ocupación'));
 assert.ok(html.includes('Matrices de puertos por equipo'));
 assert.ok(html.includes('Destino'));
 assert.ok(html.includes('Puerto remoto'));
 assert.ok(html.includes('Medio'));
 assert.ok(html.includes('Ruta / uso'));
+assert.ok(html.includes('matrix-screen'));
+assert.ok(html.includes('matrix-print'));
+assert.ok(html.includes('Banco 1/3'));
+assert.ok(html.includes('Banco 3/3'));
+assert.ok(html.includes('.matrix-screen{display:none!important}'));
+assert.ok(html.includes('table-layout:fixed'));
 assert.ok(html.includes('Gi1/0/1'));
 assert.ok(html.includes('Eth0'));
 assert.ok(html.includes('OM4 multimode'));
@@ -120,4 +139,4 @@ assert.ok(html.includes('☐ Conforme'));
 assert.ok(html.includes('@page{size:A4 landscape'));
 assert.ok(html.includes('Manual técnico de instalación</title>'));
 assert.ok(html.includes('🧰 Informe de instalación')===false,'El texto del botón se inyecta en la UI, no dentro del HTML generado');
-console.log('✓ Informe de instalación fase 3 añade elevaciones frontal/trasera, PDF A4 y cierre listo para técnico');
+console.log('✓ Bloque B: matrices paginadas para papel y plano visual de replanteo por rack');
