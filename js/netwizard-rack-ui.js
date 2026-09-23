@@ -50,11 +50,11 @@ function upsertRackItem(project,input){
   syncRackItemRelations(next,item,previous);
   return next;
 }
-function rackItemPlacement(project,itemId,rackId,startUnit){
+function rackItemPlacement(project,itemId,rackId,startUnit,heightOverride){
   const item=MODEL.allRackItems(project).find(x=>x.id===itemId);
   const rack=arr(project.racks).find(x=>x.id===rackId);
   if(!item||!rack)return{ok:false,message:'Elemento o rack inexistente.'};
-  const start=Math.floor(num(startUnit)||0),height=Math.max(1,Math.floor(num(item.heightUnits)||1));
+  const start=Math.floor(num(startUnit)||0),height=Math.max(1,Math.floor(num(heightOverride)!=null?num(heightOverride):(num(item.heightUnits)||1)));
   if(start<1||start+height-1>Number(rack.rackUnits||42))return{ok:false,message:`La posición U${start} no admite ${height}U dentro de ${rack.rackUnits||42}U.`};
   const face=item.face||'front',movingUnits=new Set(Array.from({length:height},(_,i)=>start+i));
   for(const other of MODEL.allRackItems(project)){
@@ -178,9 +178,9 @@ function rerenderMount(mount,state){
 }
 function bind(mount,state){
   mount.onclick=e=>{
-    const action=e.target&&e.target.dataset&&e.target.dataset.action;if(!action)return;
+    const actionNode=e.target&&e.target.closest&&e.target.closest('[data-action]');const action=actionNode&&actionNode.dataset.action;if(!action)return;
     if(action==='select-rack-item'){
-      selectedRackItemId=e.target.dataset.itemId||'';rackEditorNotice='';rerenderMount(mount,state);return;
+      selectedRackItemId=actionNode.dataset.itemId||'';rackEditorNotice='';rerenderMount(mount,state);return;
     }
     const snapshot=state.getSnapshot();let next=snapshot;
     if(action==='add-rack'){const f=mount.querySelector('[data-form="rack"]');const r=f.elementsRef;next=addRack(snapshot,{name:r.rackName.value,rackUnits:r.rackUnits.value,locationId:r.rackLocation.value,powerCapacityWatts:r.rackPower.value});}
@@ -188,9 +188,9 @@ function bind(mount,state){
     if(action==='add-pdu'){const f=mount.querySelector('[data-form="pdu"]');const r=f.elementsRef;next=addPdu(snapshot,{rackId:r.pduRack.value,name:r.pduName.value,feed:r.pduFeed.value,outletCount:r.pduOutlets.value,maxPowerWatts:r.pduPower.value});}
     if(action==='add-power'){const f=mount.querySelector('[data-form="power"]');const r=f.elementsRef;const pdu=arr(snapshot.pdus).find(x=>x.id===r.powerPdu.value);next=addPowerConnection(snapshot,{deviceId:r.powerDevice.value,pduId:r.powerPdu.value,outlet:r.powerOutlet.value,powerSupplyIndex:r.powerPsu.value,feed:pdu&&pdu.feed});}
     if(action==='update-selected-item'){
-      const form=mount.querySelector('[data-form="selected-item"]'),r=form&&form.elementsRef,item=MODEL.allRackItems(snapshot).find(x=>x.id===e.target.dataset.id);
+      const form=mount.querySelector('[data-form="selected-item"]'),r=form&&form.elementsRef,item=MODEL.allRackItems(snapshot).find(x=>x.id===actionNode.dataset.id);
       if(r&&item){
-        const placement=rackItemPlacement(snapshot,item.id,r.rack.value,r.start.value);
+        const placement=rackItemPlacement(snapshot,item.id,r.rack.value,r.start.value,r.height.value);
         if(!placement.ok){rackEditorNotice=placement.message;rerenderMount(mount,state);return;}
         next=upsertRackItem(snapshot,{
           id:item.id,rackId:r.rack.value,type:item.type,deviceId:item.deviceId,patchPanelId:item.patchPanelId,
@@ -203,11 +203,11 @@ function bind(mount,state){
       }
     }
     if(action==='remove-rack-item'){
-      selectedRackItemId='';rackEditorNotice='';next=removeEntity(snapshot,'rackItem',e.target.dataset.id);
+      selectedRackItemId='';rackEditorNotice='';next=removeEntity(snapshot,'rackItem',actionNode.dataset.id);
     }
-    if(action==='remove-rack')next=removeEntity(snapshot,'rack',e.target.dataset.id);
-    if(action==='remove-pdu')next=removeEntity(snapshot,'pdu',e.target.dataset.id);
-    if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',e.target.dataset.id);
+    if(action==='remove-rack')next=removeEntity(snapshot,'rack',actionNode.dataset.id);
+    if(action==='remove-pdu')next=removeEntity(snapshot,'pdu',actionNode.dataset.id);
+    if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',actionNode.dataset.id);
     if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});
   };
   mount.ondragstart=e=>{
