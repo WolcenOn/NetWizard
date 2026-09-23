@@ -2,7 +2,7 @@
 
 ## Estructura mental del proyecto
 
-NetWizard sigue siendo una aplicación web estática. Los módulos nuevos están separados para reducir el riesgo sobre `js/netwizard.js`.
+NetWizard sigue siendo **client-first** y conserva su modo local, pero ya dispone de un backend Go para serving/API base y fundamentos de colaboración. Los módulos nuevos deben mantenerse separados para reducir el riesgo sobre `js/netwizard.js` y evitar duplicar lógica de dominio entre JavaScript y Go.
 
 Capas principales:
 
@@ -13,6 +13,7 @@ Capas principales:
 5. Modelo físico: racks, rack items, PDU/alimentación y cableado estructurado (`netwizard-rack-model.js`, `netwizard-structured-cabling.js`).
 6. Exportación: configuraciones vendor, inventario, documentación y paquete de despliegue.
 7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`; la vista V5 sigue siendo un área prioritaria para modularización.
+8. Backend: `backend/internal/config`, `httpapi` y `realtime`; su frontera con el cliente se define en `docs/BACKEND_BOUNDARIES.md`.
 
 ## Reglas para cambios futuros
 
@@ -25,6 +26,9 @@ Capas principales:
 - Mantener sincronizados schema externo y `NetWizardProjectSchema`; cualquier nueva rama física debe tener test de contrato externo.
 - No introducir campos opcionales ausentes como `null` si un validador legacy diferencia entre ausencia y valor; preservar semántica de importación existente.
 - Añadir tests unitarios y, si afecta a UI, tests Playwright.
+- Todo cambio Go debe quedar cubierto por `go test ./...`; si afecta al despliegue, validar también `docker build .`.
+- No duplicar validadores, generadores o reglas de negocio frontend en Go sin un contrato versionado y tests de paridad.
+- Mantener el modo local funcional mientras el modo colaborativo no se declare como requisito obligatorio.
 
 ## Comentarios de código
 
