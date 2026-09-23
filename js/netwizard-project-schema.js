@@ -232,7 +232,10 @@ Mantenimiento:
       x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
       x.physicalLocation = cleanText(x.physicalLocation || '', 160);
       for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts']){
-        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+        if(x[key] == null || x[key] === '') { delete x[key]; continue; }
+        const n = Number(x[key]);
+        if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
+        else delete x[key];
       }
       return x;
     });
@@ -272,7 +275,10 @@ Mantenimiento:
       x.rackUnits = Math.max(1, Math.min(100, cleanNumber(x.rackUnits, 42)));
       x.numberingDirection = x.numberingDirection === 'top-down' ? 'top-down' : 'bottom-up';
       for(const key of ['widthMm','depthMm','maxLoadKg','powerCapacityWatts','coolingCapacityWatts']){
-        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+        if(x[key] == null || x[key] === '') { delete x[key]; continue; }
+        const n = Number(x[key]);
+        if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
+        else delete x[key];
       }
       return x;
     });
@@ -285,12 +291,17 @@ Mantenimiento:
       x.deviceId = cleanId(x.deviceId, '');
       x.patchPanelId = cleanId(x.patchPanelId, '');
       x.label = cleanText(x.label || x.name || x.id, 160);
-      const start = Number(x.startUnit); x.startUnit = Number.isFinite(start) && start >= 1 ? Math.round(start * 100) / 100 : null;
-      const height = Number(x.heightUnits); x.heightUnits = Number.isFinite(height) && height > 0 ? Math.round(height * 100) / 100 : null;
+      if(x.startUnit == null || x.startUnit === '') delete x.startUnit;
+      else { const start = Number(x.startUnit); if(Number.isFinite(start) && start >= 1) x.startUnit = Math.round(start * 100) / 100; else delete x.startUnit; }
+      if(x.heightUnits == null || x.heightUnits === '') delete x.heightUnits;
+      else { const height = Number(x.heightUnits); if(Number.isFinite(height) && height > 0) x.heightUnits = Math.round(height * 100) / 100; else delete x.heightUnits; }
       x.face = cleanText(x.face || 'front', 30);
       x.mounting = cleanText(x.mounting || '', 40);
       for(const key of ['weightKg','powerDrawWatts']){
-        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+        if(x[key] == null || x[key] === '') { delete x[key]; continue; }
+        const n = Number(x[key]);
+        if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
+        else delete x[key];
       }
       return x;
     });
@@ -303,7 +314,10 @@ Mantenimiento:
       x.feed = cleanText(x.feed || '', 30);
       x.mounting = cleanText(x.mounting || '', 40);
       for(const key of ['voltage','maxCurrentAmps','maxPowerWatts']){
-        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+        if(x[key] == null || x[key] === '') { delete x[key]; continue; }
+        const n = Number(x[key]);
+        if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
+        else delete x[key];
       }
       x.outletCount = Math.max(1, cleanNumber(x.outletCount, 1));
       return x;
