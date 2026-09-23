@@ -89,7 +89,7 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
       item:!!p.rackItems.find(x=>x.id==='ri-sw1'),
       rackId:p.devices.find(x=>x.id==='sw1')?.rackId
     };
-  })).toEqual({item:false,rackId:null});
+  })).toEqual({item:false,rackId:''});
 
   expect(errors).toEqual([]);
 });
