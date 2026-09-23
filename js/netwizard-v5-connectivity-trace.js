@@ -52,6 +52,7 @@
     btn.type='button';
     btn.textContent='✕ Limpiar ruta';
     btn.hidden=true;
+    btn.style.display='none';
     btn.onclick=clear;
     toolbar.appendChild(btn);
   }
@@ -242,7 +243,7 @@
     const clearBtn=$('v5TraceClear');
     if(!result||!result.visualTrace){
       badge.hidden=true;
-      if(clearBtn)clearBtn.hidden=true;
+      if(clearBtn){clearBtn.hidden=true;clearBtn.style.display='none';}
       canvas.dataset.status='';
       canvas.dataset.linkCount='0';
       canvas.dataset.blockKind='';
@@ -253,7 +254,7 @@
     canvas.dataset.status=result.ok?(result.partial?'partial':'ok'):'blocked';
     canvas.dataset.linkCount=String(arr(trace.linkIds).length);
     canvas.dataset.blockKind=block&&block.kind||'';
-    if(clearBtn)clearBtn.hidden=false;
+    if(clearBtn){clearBtn.hidden=false;clearBtn.style.display='';}
 
     ctx.fillStyle='rgba(2,6,12,.62)';
     ctx.fillRect(0,0,w,h);
