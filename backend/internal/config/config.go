@@ -11,12 +11,18 @@ type Config struct {
 	Addr           string
 	AllowedOrigins []string
 	Version        string
+	StaticDir      string
 }
 
 func FromEnv() Config {
 	addr := strings.TrimSpace(os.Getenv("NETWIZARD_ADDR"))
 	if addr == "" {
-		addr = ":8080"
+		port := strings.TrimSpace(os.Getenv("PORT"))
+		if port != "" {
+			addr = ":" + strings.TrimPrefix(port, ":")
+		} else {
+			addr = ":8080"
+		}
 	}
 
 	originsRaw := strings.TrimSpace(os.Getenv("NETWIZARD_ALLOWED_ORIGINS"))
@@ -35,5 +41,7 @@ func FromEnv() Config {
 		version = "netwizard-backend-v0.1"
 	}
 
-	return Config{Addr: addr, AllowedOrigins: origins, Version: version}
+	staticDir := strings.TrimSpace(os.Getenv("NETWIZARD_STATIC_DIR"))
+
+	return Config{Addr: addr, AllowedOrigins: origins, Version: version, StaticDir: staticDir}
 }

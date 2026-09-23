@@ -52,3 +52,27 @@ NETWIZARD_ALLOWED_ORIGINS=http://localhost:4173,http://localhost:8080
 3. Guardar/cargar snapshot JSON compatible con el schema actual.
 4. Añadir endpoint de validación de proyecto.
 5. Añadir WebSocket por proyecto.
+
+
+## Railway
+
+El repositorio incluye un `Dockerfile` en la raíz. Railway lo detecta automáticamente y compila el binario correcto:
+
+```text
+./backend/cmd/netwizard-server
+```
+
+El servidor usa `PORT` cuando Railway lo inyecta, salvo que `NETWIZARD_ADDR` esté definido explícitamente.
+
+El contenedor sirve también el frontend estático desde `/app/public`, por lo que API y aplicación web quedan en el mismo servicio y origen.
+
+Configuración recomendada en Railway:
+
+1. Conectar el repositorio y la rama deseada.
+2. Dejar vacío cualquier **Build Command** personalizado anterior (por ejemplo `go build -ldflags=-w -s -o out`).
+3. Dejar vacío el **Start Command** para usar el `CMD` del Dockerfile.
+4. Opcionalmente configurar health check en `/api/health`.
+
+No hace falta definir `PORT`: Railway lo proporciona.
+
+> El frontend sigue ejecutándose en el navegador. Alojarlo en Railway o en un repositorio privado evita exponer el repositorio, pero no puede ocultar el JavaScript que el navegador necesita descargar. La lógica que deba mantenerse privada debe ejecutarse en el backend.
