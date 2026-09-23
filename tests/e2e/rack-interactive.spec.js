@@ -45,8 +45,9 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     if(window.navTo)window.navTo('dev');
   });
 
-  await page.waitForSelector('#rackPlannerMount [data-item-id="ri-sw1"]');
-  await page.locator('#rackPlannerMount [data-item-id="ri-sw1"]').first().click();
+  const initialRow=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="10"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
+  await expect(initialRow).toBeVisible();
+  await initialRow.click();
 
   const selected=page.locator('#rackPlannerMount [data-form="selected-item"]');
   await expect(selected).toBeVisible();
@@ -62,7 +63,7 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     return{label:item&&item.label,itemU:item&&item.startUnit,deviceU:dev&&dev.rackUnit};
   })).toEqual({label:'SW-01 editado',itemU:12,deviceU:12});
 
-  const source=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="12"] [data-action="select-rack-item"][data-item-id="ri-sw1"]');
+  const source=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="12"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
   const target=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"]');
   await expect(source).toBeVisible();
   await pointerDrag(page,source,target);
@@ -75,7 +76,7 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     };
   })).toEqual({itemU:15,deviceU:15});
 
-  const moved=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"] [data-action="select-rack-item"][data-item-id="ri-sw1"]');
+  const moved=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
   const occupied=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="7"]');
   await expect(moved).toBeVisible();
   await pointerDrag(page,moved,occupied);
