@@ -228,6 +228,12 @@ Mantenimiento:
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
       x.poeBudgetW = Number.isFinite(poeBudget) && poeBudget >= 0 ? Math.round(poeBudget * 10) / 10 : null;
       x.poeBudgetWatts = x.poeBudgetW;
+      x.rackId = cleanId(x.rackId || x.rack, '');
+      x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
+      x.physicalLocation = cleanText(x.physicalLocation || '', 160);
+      for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts']){
+        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+      }
       return x;
     });
 
@@ -255,6 +261,65 @@ Mantenimiento:
       x.bpduGuard = !(x.bpduGuard === false || x.bpduguard === false || x.bpduGuard === 'false' || x.bpduguard === 'false');
       x.uplink = x.uplink === true || x.isUplink === true || x.uplink === 'true' || x.isUplink === 'true';
       x.desc = cleanText(x.desc, 240);
+      return x;
+    });
+
+    p.racks = p.racks.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `rack_${idx+1}`);
+      x.name = cleanText(x.name || `Rack ${idx+1}`, 160);
+      x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
+      x.rackUnits = Math.max(1, Math.min(100, cleanNumber(x.rackUnits, 42)));
+      x.numberingDirection = x.numberingDirection === 'top-down' ? 'top-down' : 'bottom-up';
+      for(const key of ['widthMm','depthMm','maxLoadKg','powerCapacityWatts','coolingCapacityWatts']){
+        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+      }
+      return x;
+    });
+
+    p.rackItems = p.rackItems.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `rackitem_${idx+1}`);
+      x.rackId = cleanId(x.rackId, '');
+      x.type = cleanText(x.type || 'rack-item', 60);
+      x.deviceId = cleanId(x.deviceId, '');
+      x.patchPanelId = cleanId(x.patchPanelId, '');
+      x.label = cleanText(x.label || x.name || x.id, 160);
+      const start = Number(x.startUnit); x.startUnit = Number.isFinite(start) && start >= 1 ? Math.round(start * 100) / 100 : null;
+      const height = Number(x.heightUnits); x.heightUnits = Number.isFinite(height) && height > 0 ? Math.round(height * 100) / 100 : null;
+      x.face = cleanText(x.face || 'front', 30);
+      x.mounting = cleanText(x.mounting || '', 40);
+      for(const key of ['weightKg','powerDrawWatts']){
+        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+      }
+      return x;
+    });
+
+    p.pdus = p.pdus.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `pdu_${idx+1}`);
+      x.rackId = cleanId(x.rackId, '');
+      x.name = cleanText(x.name || `PDU ${idx+1}`, 160);
+      x.feed = cleanText(x.feed || '', 30);
+      x.mounting = cleanText(x.mounting || '', 40);
+      for(const key of ['voltage','maxCurrentAmps','maxPowerWatts']){
+        const n = Number(x[key]); x[key] = Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+      }
+      x.outletCount = Math.max(1, cleanNumber(x.outletCount, 1));
+      return x;
+    });
+
+    p.powerConnections = p.powerConnections.map((d, idx) => {
+      const x = sanitizeObjectStrings(d, 500);
+      x.id = cleanId(x.id, `power_${idx+1}`);
+      x.deviceId = cleanId(x.deviceId, '');
+      x.pduId = cleanId(x.pduId, '');
+      if(typeof x.outlet === 'string') x.outlet = cleanText(x.outlet, 40);
+      else {
+        const outlet = Number(x.outlet); x.outlet = Number.isFinite(outlet) && outlet >= 1 ? Math.floor(outlet) : null;
+      }
+      const psu = Number(x.powerSupplyIndex); x.powerSupplyIndex = Number.isFinite(psu) && psu >= 0 ? Math.floor(psu) : null;
+      x.feed = cleanText(x.feed || '', 30);
       return x;
     });
 
@@ -343,6 +408,7 @@ Mantenimiento:
       x.vlanRef = cleanId(x.vlanRef, '');
       x.cidr = cleanText(x.cidr, 80);
       x.gateway = cleanText(x.gateway, 80);
+      x.gatewayDeviceRef = cleanId(x.gatewayDeviceRef, '');
       return x;
     });
 
@@ -357,6 +423,8 @@ Mantenimiento:
       x.ipMode = cleanText(x.ipMode || 'dhcp', 20);
       x.staticIp = cleanText(x.staticIp, 80);
       x.notes = cleanText(x.notes, 1000);
+      x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
+      x.physicalLocation = cleanText(x.physicalLocation || '', 160);
       x.poeMode = cleanText(x.poeMode || x.poe || 'auto', 40);
       if(x.poeRequired === true || x.poeRequired === 'true' || x.poeRequired === '1' || x.poeRequired === 1) x.poeRequired = true;
       else if(x.poeRequired === false || x.poeRequired === 'false' || x.poeRequired === '0' || x.poeRequired === 0) x.poeRequired = false;
@@ -385,6 +453,8 @@ Mantenimiento:
       x.speed = cleanText(x.speed || 'auto', 40);
       x.poeRequired = x.poeRequired === true || x.poeRequired === 'true' || x.poeRequired === '1' || x.poeRequired === 1;
       x.notes = cleanText(x.notes, 500);
+      x.physicalPath = cleanText(x.physicalPath || '', 500);
+      const capacity = Number(x.capacityMbps); x.capacityMbps = Number.isFinite(capacity) && capacity >= 0 ? Math.round(capacity * 100) / 100 : null;
       return x;
     });
 
