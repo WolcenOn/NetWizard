@@ -7,13 +7,81 @@ const clean=v=>String(v==null?'':v).trim();
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
 const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
+let selectedRackItemId='';
+let rackEditorNotice='';
 function ensureArrays(project){for(const key of ['racks','rackItems','pdus','powerConnections'])if(!Array.isArray(project[key]))project[key]=[];return project;}
 function addRack(project,input){const next=ensureArrays(clone(project));const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||'Rack sin nombre',locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.floor(num(input.rackUnits)||42)),widthMm:num(input.widthMm),depthMm:num(input.depthMm),maxLoadKg:num(input.maxLoadKg),powerCapacityWatts:num(input.powerCapacityWatts),coolingCapacityWatts:num(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
-function upsertRackItem(project,input){const next=ensureArrays(clone(project));const type=clean(input.type)||'other';const item={id:clean(input.id)||uid('rackitem'),rackId:clean(input.rackId),type,label:clean(input.label)||clean(input.name)||type,startUnit:num(input.startUnit),heightUnits:Math.max(1,Math.floor(num(input.heightUnits)||1)),face:clean(input.face)||'front',mounting:clean(input.mounting)||null,weightKg:num(input.weightKg),powerDrawWatts:num(input.powerDrawWatts)};if(type==='device'&&clean(input.deviceId))item.deviceId=clean(input.deviceId);const index=next.rackItems.findIndex(x=>x.id===item.id);if(index>=0)next.rackItems[index]=Object.assign({},next.rackItems[index],item);else next.rackItems.push(item);if(item.deviceId){const d=arr(next.devices).find(x=>x.id===item.deviceId);if(d){d.rackId=item.rackId;d.rackUnit=item.startUnit;d.rackUnits=item.heightUnits;d.rackFace=item.face;}}
-return next;}
+function syncRackItemRelations(project,item,previous){
+  if(previous&&previous.deviceId&&previous.deviceId!==item.deviceId){
+    const old=arr(project.devices).find(x=>x.id===previous.deviceId);
+    if(old){old.rackId=null;old.rack=null;old.rackUnit=null;old.rackUnits=null;old.rackFace=null;}
+  }
+  if(item.deviceId){
+    const d=arr(project.devices).find(x=>x.id===item.deviceId);
+    if(d){d.rackId=item.rackId;d.rack=item.rackId;d.rackUnit=item.startUnit;d.rackUnits=item.heightUnits;d.rackFace=item.face;}
+  }
+  if(previous&&previous.patchPanelId&&previous.patchPanelId!==item.patchPanelId){
+    const old=arr(project.patchPanels).find(x=>x.id===previous.patchPanelId);
+    if(old){old.rackId=null;old.rackUnit=null;}
+  }
+  if(item.patchPanelId){
+    const p=arr(project.patchPanels).find(x=>x.id===item.patchPanelId);
+    if(p){p.rackId=item.rackId;p.rackUnit=item.startUnit;}
+  }
+}
+function upsertRackItem(project,input){
+  const next=ensureArrays(clone(project));if(!Array.isArray(next.patchPanels))next.patchPanels=[];
+  const id=clean(input.id)||uid('rackitem'),previous=next.rackItems.find(x=>x.id===id)||null;
+  const type=clean(input.type)||clean(previous&&previous.type)||'other';
+  const item=Object.assign({},previous||{},{
+    id,rackId:clean(input.rackId),type,
+    label:clean(input.label)||clean(input.name)||clean(previous&&previous.label)||type,
+    startUnit:num(input.startUnit),
+    heightUnits:Math.max(1,Math.floor(num(input.heightUnits)||1)),
+    face:clean(input.face)||clean(previous&&previous.face)||'front',
+    mounting:clean(input.mounting)||null,
+    weightKg:num(input.weightKg),
+    powerDrawWatts:num(input.powerDrawWatts)
+  });
+  if(clean(input.deviceId)||previous&&previous.deviceId)item.deviceId=clean(input.deviceId||previous.deviceId);
+  if(clean(input.patchPanelId)||previous&&previous.patchPanelId)item.patchPanelId=clean(input.patchPanelId||previous.patchPanelId);
+  const index=next.rackItems.findIndex(x=>x.id===item.id);
+  if(index>=0)next.rackItems[index]=item;else next.rackItems.push(item);
+  syncRackItemRelations(next,item,previous);
+  return next;
+}
+function rackItemPlacement(project,itemId,rackId,startUnit){
+  const item=MODEL.allRackItems(project).find(x=>x.id===itemId);
+  const rack=arr(project.racks).find(x=>x.id===rackId);
+  if(!item||!rack)return{ok:false,message:'Elemento o rack inexistente.'};
+  const start=Math.floor(num(startUnit)||0),height=Math.max(1,Math.floor(num(item.heightUnits)||1));
+  if(start<1||start+height-1>Number(rack.rackUnits||42))return{ok:false,message:`La posición U${start} no admite ${height}U dentro de ${rack.rackUnits||42}U.`};
+  const face=item.face||'front',movingUnits=new Set(Array.from({length:height},(_,i)=>start+i));
+  for(const other of MODEL.allRackItems(project)){
+    if(other.id===itemId||other.rackId!==rackId||(other.face||'front')!==face)continue;
+    for(const u of MODEL.occupiedUnits(other))if(movingUnits.has(u))return{ok:false,message:`${item.label||item.id} colisionaría con ${other.label||other.id} en U${u}.`};
+  }
+  return{ok:true,startUnit:start,heightUnits:height};
+}
+function moveRackItem(project,itemId,rackId,startUnit){
+  const check=rackItemPlacement(project,itemId,rackId,startUnit);
+  if(!check.ok)return{ok:false,project:clone(project),message:check.message};
+  const current=MODEL.allRackItems(project).find(x=>x.id===itemId);
+  let next=ensureArrays(clone(project));if(!Array.isArray(next.patchPanels))next.patchPanels=[];
+  let explicit=next.rackItems.find(x=>x.id===itemId);
+  if(!explicit&&current&&current.deviceId){
+    explicit=Object.assign({},current);next.rackItems.push(explicit);
+  }
+  if(!explicit)return{ok:false,project:next,message:'El elemento no puede editarse porque no existe en el modelo de rack.'};
+  const previous=Object.assign({},explicit);
+  explicit.rackId=rackId;explicit.startUnit=check.startUnit;
+  syncRackItemRelations(next,explicit,previous);
+  return{ok:true,project:next,item:explicit};
+}
+
 function addPdu(project,input){const next=ensureArrays(clone(project));next.pdus.push({id:clean(input.id)||uid('pdu'),rackId:clean(input.rackId),name:clean(input.name)||'PDU',feed:clean(input.feed)||'A',mounting:clean(input.mounting)||'vertical-rear',voltage:num(input.voltage)||230,maxCurrentAmps:num(input.maxCurrentAmps),maxPowerWatts:num(input.maxPowerWatts),outletCount:Math.max(1,Math.floor(num(input.outletCount)||8))});return next;}
 function addPowerConnection(project,input){const next=ensureArrays(clone(project));next.powerConnections.push({id:clean(input.id)||uid('power'),deviceId:clean(input.deviceId),powerSupplyIndex:Math.max(0,Math.floor(num(input.powerSupplyIndex)||0)),pduId:clean(input.pduId),outlet:Math.max(1,Math.floor(num(input.outlet)||1)),feed:clean(input.feed)||null});return next;}
-function removeEntity(project,kind,id){const next=ensureArrays(clone(project));const map={rack:'racks',rackItem:'rackItems',pdu:'pdus',powerConnection:'powerConnections'};const key=map[kind];if(!key)return next;if(kind==='rack'){const removedPduIds=new Set(next.pdus.filter(x=>x.rackId===id).map(x=>x.id));next.racks=next.racks.filter(x=>x.id!==id);next.rackItems=next.rackItems.filter(x=>x.rackId!==id);next.pdus=next.pdus.filter(x=>x.rackId!==id);next.powerConnections=next.powerConnections.filter(x=>!removedPduIds.has(x.pduId));for(const d of arr(next.devices))if((d.rackId||d.rack)===id){d.rackId=null;d.rack=null;d.rackUnit=null;d.rackUnits=null;d.rackFace=null;}return next;}next[key]=next[key].filter(x=>x.id!==id);if(kind==='pdu')next.powerConnections=next.powerConnections.filter(x=>x.pduId!==id);if(kind==='rackItem'){for(const d of arr(next.devices))if(d.id===arr(project.rackItems).find(x=>x.id===id)?.deviceId){d.rackId=null;d.rack=null;d.rackUnit=null;d.rackUnits=null;d.rackFace=null;}}return next;}
+function removeEntity(project,kind,id){const next=ensureArrays(clone(project));const map={rack:'racks',rackItem:'rackItems',pdu:'pdus',powerConnection:'powerConnections'};const key=map[kind];if(!key)return next;if(kind==='rack'){const removedPduIds=new Set(next.pdus.filter(x=>x.rackId===id).map(x=>x.id));next.racks=next.racks.filter(x=>x.id!==id);next.rackItems=next.rackItems.filter(x=>x.rackId!==id);next.pdus=next.pdus.filter(x=>x.rackId!==id);next.powerConnections=next.powerConnections.filter(x=>!removedPduIds.has(x.pduId));for(const d of arr(next.devices))if((d.rackId||d.rack)===id){d.rackId=null;d.rack=null;d.rackUnit=null;d.rackUnits=null;d.rackFace=null;}return next;}next[key]=next[key].filter(x=>x.id!==id);if(kind==='pdu')next.powerConnections=next.powerConnections.filter(x=>x.pduId!==id);if(kind==='rackItem'){const removed=MODEL.allRackItems(project).find(x=>x.id===id);for(const d of arr(next.devices))if(d.id===removed?.deviceId){d.rackId=null;d.rack=null;d.rackUnit=null;d.rackUnits=null;d.rackFace=null;}for(const p of arr(next.patchPanels))if(p.id===removed?.patchPanelId){p.rackId=null;p.rackUnit=null;}}return next;}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text??'');return n;}
 function field(label,node){const w=el('div','');w.append(el('label','fl',label),node);return w;}
 function input(type,placeholder,value){const n=document.createElement('input');n.type=type||'text';if(placeholder)n.placeholder=placeholder;if(value!=null)n.value=value;return n;}
