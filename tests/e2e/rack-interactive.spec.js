@@ -7,6 +7,7 @@ async function resetStorage(page){
 }
 
 async function pointerDrag(page,source,target){
+  await target.scrollIntoViewIfNeeded();
   const sourceBox=await source.boundingBox(),targetBox=await target.boundingBox();
   if(!sourceBox||!targetBox)throw new Error('No se pudo calcular la geometría del drag de rack.');
   const from={x:sourceBox.x+sourceBox.width/2,y:sourceBox.y+sourceBox.height/2};
