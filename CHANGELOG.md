@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.50.0 · Modelo físico, cableado estructurado y multisede
+
+- Añadido modelo de racks, elementos de rack, PDU y conexiones eléctricas con validación de colisiones, capacidad, peso, refrigeración y alimentación redundante.
+- Añadido modelo de cableado estructurado con patch panels, tomas, tramos permanentes, parcheos rack y conexión toma↔host.
+- Integradas rutas físicas completas en informes, topología de rack, materiales y Puerta de Producción.
+- Añadido golden sample determinista de cuatro sedes con VLANs/VLSM, trunks, PCs, APs, voz, servidores, PoE y alimentación A/B equilibrada.
+- La vista V5 prioriza ubicaciones físicas reales de racks/tomas sobre agrupaciones legacy y evita contenedores jerárquicos vacíos.
+- El cableado base se dibuja por debajo de tarjetas/etiquetas y la ruta relacionada con la selección se eleva al primer plano.
+- pfSense genera ahora scripts PHP de aprovisionamiento revisables, limitados a las VLANs del firewall/sede correspondiente.
+- Formalizado `gatewayDeviceRef` para asociar subredes con su dispositivo gateway cuando está disponible.
+- El schema externo 3.50 documenta el modelo físico completo y se valida contra el golden sample multisede.
+- Añadida normalización defensiva para racks/PDU/alimentación preservando la semántica de campos opcionales ausentes.
+
 ## 3.50.0 · Generadores incrementales seguros
 
 - Añadido panel de captura observada por dispositivo con persistencia, preflight aislado y descarga de candidato/rollback.
