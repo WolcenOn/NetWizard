@@ -77,6 +77,17 @@
 .rack-u-used, .rack-u-free { padding: 4px 8px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rack-u-used { background: var(--acd); font-weight: 700; color: var(--t1); }
 .rack-u-free { color: var(--t4); }
+.rack-u-used { cursor: grab; position: relative; transition: background .12s ease, box-shadow .12s ease, opacity .12s ease; user-select: none; touch-action: none; }
+.rack-u-used:hover { box-shadow: inset 0 0 0 1px var(--ac); }
+.rack-u-used.is-selected { box-shadow: inset 0 0 0 2px var(--gn); background: color-mix(in srgb, var(--gn) 18%, var(--acd)); }
+.rack-u-used.is-dragging { opacity: .5; cursor: grabbing; }
+.rack-u.is-drop-target .rack-u-free,
+.rack-u.is-drop-target .rack-u-used { box-shadow: inset 0 0 0 2px var(--ac); background: color-mix(in srgb, var(--ac) 14%, var(--s2)); }
+.rack-u-meta { display: block; margin-top: 2px; font-size: 9px; font-weight: 500; color: var(--t4); pointer-events: none; }
+.rack-selected-editor { scroll-margin-top: 72px; }
+.rack-selected-form { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rack-selected-actions { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+.rack-selected-actions .btn { min-width: 150px; }
 .rack-list-row {
   display: flex;
   align-items: center;
