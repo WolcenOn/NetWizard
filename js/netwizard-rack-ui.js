@@ -98,6 +98,8 @@ function rackDiagram(project,rack){
     const hit=items.find(i=>u>=Number(i.startUnit)&&u<Number(i.startUnit)+Number(i.heightUnits||1));
     const content=el('div',hit?'rack-u-used':'rack-u-free',hit?(hit.label||hit.name||hit.type):'Libre');
     if(hit){
+      row.dataset.action='select-rack-item';row.dataset.itemId=hit.id;row.dataset.dragRackItem='1';
+      row.title='Clic para editar · arrastra la fila completa para cambiar de U o rack';
       content.dataset.action='select-rack-item';content.dataset.itemId=hit.id;content.dataset.rackId=rack.id;
       content.draggable=false;content.title='Clic para editar · arrastra para cambiar de U o rack';
       if(hit.id===selectedRackItemId)content.classList.add('is-selected');
@@ -230,11 +232,12 @@ function bind(mount,state){
       state.replaceProject(removeEntity(state.getSnapshot(),'rackItem',id),{source:'rack-item-editor-remove'});
     };
   }
-  for(const node of mount.querySelectorAll('[data-action="select-rack-item"][data-item-id]')){
+  for(const node of mount.querySelectorAll('[data-drag-rack-item="1"][data-item-id]')){
     let pointer=null;
     const clearTargets=()=>mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
     node.onpointerdown=e=>{
       if(e.button!==0)return;
+      e.preventDefault();
       pointer={id:e.pointerId,x:e.clientX,y:e.clientY,dragging:false};
       selectedRackItemId=node.dataset.itemId||'';rackEditorNotice='';
       try{node.setPointerCapture(e.pointerId);}catch(_){}
