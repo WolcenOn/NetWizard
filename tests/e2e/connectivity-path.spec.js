@@ -70,13 +70,25 @@ test('V5 diagnostica una ruta física y diferencia servicios firewall', async ({
   await expect(page.locator('#nwConnResult')).toContainText('CORE-RTR');
   await expect(page.locator('#nwConnResult')).toContainText('Permitir DNS');
   await expect(page.locator('.nw-conn-path')).toBeVisible();
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-status','ok');
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-link-count','2');
+  await expect(page.locator('#v5TraceStatus')).toContainText('RUTA PERMITIDA');
+  await expect(page.locator('#v5TraceClear')).toBeVisible();
 
   await page.locator('#nwConnService').selectOption('https');
   await page.locator('#nwConnRun').click();
 
   await expect(page.locator('#nwConnResult')).toContainText('CONECTIVIDAD NO GARANTIZADA / BLOQUEADA');
   await expect(page.locator('#nwConnResult')).toContainText('Bloquear HTTPS');
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-status','blocked');
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-block-kind','firewall');
+  await expect(page.locator('#v5TraceStatus')).toContainText('BLOQUEO DETECTADO');
+  await expect(page.locator('#v5TraceStatus')).toContainText('Bloquear HTTPS');
 
   await page.getByRole('button',{name:'✕ Cerrar'}).click();
   await expect(page.locator('#nwV5ConnectivityDrawer')).toBeHidden();
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-status','blocked');
+  await page.locator('#v5TraceClear').click();
+  await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-status','');
+  await expect(page.locator('#v5TraceClear')).toBeHidden();
 });
