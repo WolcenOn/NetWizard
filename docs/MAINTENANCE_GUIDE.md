@@ -10,8 +10,9 @@ Capas principales:
 2. Utilidades base: `netwizard-core-utils.js`, `netwizard-network-utils.js`.
 3. Planificación: VLSM, DHCP, tránsito L3, rutas, políticas.
 4. Auditorías: L1/L2/IP/DHCP/PoE/Broadcast/Vendor/Producción.
-5. Exportación: configuraciones vendor, inventario, documentación.
-6. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`.
+5. Modelo físico: racks, rack items, PDU/alimentación y cableado estructurado (`netwizard-rack-model.js`, `netwizard-structured-cabling.js`).
+6. Exportación: configuraciones vendor, inventario, documentación y paquete de despliegue.
+7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`; la vista V5 sigue siendo un área prioritaria para modularización.
 
 ## Reglas para cambios futuros
 
@@ -21,6 +22,8 @@ Capas principales:
 - Antes de aplicar automatismos, generar diff y snapshot.
 - Añadir códigos de auditoría estables `NW-*` para nuevas reglas.
 - Actualizar `schemas/netwizard-project.schema.json` cuando cambie el formato exportado.
+- Mantener sincronizados schema externo y `NetWizardProjectSchema`; cualquier nueva rama física debe tener test de contrato externo.
+- No introducir campos opcionales ausentes como `null` si un validador legacy diferencia entre ausencia y valor; preservar semántica de importación existente.
 - Añadir tests unitarios y, si afecta a UI, tests Playwright.
 
 ## Comentarios de código
