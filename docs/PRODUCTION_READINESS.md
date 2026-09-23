@@ -43,8 +43,12 @@ El smoke test debe confirmar `NetWizardRuntime.status.ok === true`: ningún mód
 - Sin DHCP que pise gateway/IPs estáticas.
 - Sin VLANs críticas sin gateway o sin continuidad L2.
 - Sin PoE/cableado fuera de especificación en elementos críticos.
+- Sin colisiones de rack, referencias de PDU/tomas inválidas ni rutas de cableado estructurado incompletas en los elementos documentados.
+- En proyectos multisede, cada subnet con gateway debe quedar asociada o inferida correctamente al borde/firewall correspondiente.
 - Sin exportaciones vendor bloqueadas en modo producción.
 - Todos los vendors ofrecidos por la UI generan una salida no vacía y no caen en `Sin vendor asignado`.
+- Los scripts pfSense PHP deben revisarse en laboratorio contra la versión concreta de pfSense y ejecutarse únicamente con backup previo de `config.xml`.
+- La vista física no sustituye la validación del JSON: racks, tomas y ubicaciones deben estar correctamente referenciados en el modelo 3.50.
 - El artefacto de Pages se construye con `npm run build:pages` sin recursos locales ausentes.
 
 ## Publicación en GitHub Pages
