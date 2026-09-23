@@ -6,6 +6,18 @@ async function resetStorage(page){
   await page.reload();
 }
 
+async function pointerDrag(page,source,target){
+  const sourceBox=await source.boundingBox(),targetBox=await target.boundingBox();
+  if(!sourceBox||!targetBox)throw new Error('No se pudo calcular la geometría del drag de rack.');
+  const from={x:sourceBox.x+sourceBox.width/2,y:sourceBox.y+sourceBox.height/2};
+  const to={x:targetBox.x+targetBox.width/2,y:targetBox.y+targetBox.height/2};
+  await page.mouse.move(from.x,from.y);
+  await page.mouse.down();
+  await page.mouse.move((from.x+to.x)/2,(from.y+to.y)/2,{steps:4});
+  await page.mouse.move(to.x,to.y,{steps:8});
+  await page.mouse.up();
+}
+
 test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemento', async ({page})=>{
   const errors=[];page.on('pageerror',err=>errors.push(err.message));
   await resetStorage(page);
@@ -49,9 +61,9 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     return{label:item&&item.label,itemU:item&&item.startUnit,deviceU:dev&&dev.rackUnit};
   })).toEqual({label:'SW-01 editado',itemU:12,deviceU:12});
 
-  const source=page.locator('#rackPlannerMount [data-item-id="ri-sw1"]').first();
+  const source=page.locator('#rackPlannerMount [data-action="select-rack-item"][data-item-id="ri-sw1"]').first();
   const target=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"]');
-  await source.dragTo(target);
+  await pointerDrag(page,source,target);
 
   await expect.poll(()=>page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
@@ -61,9 +73,9 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     };
   })).toEqual({itemU:15,deviceU:15});
 
-  const moved=page.locator('#rackPlannerMount [data-item-id="ri-sw1"]').first();
+  const moved=page.locator('#rackPlannerMount [data-action="select-rack-item"][data-item-id="ri-sw1"]').first();
   const occupied=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="7"]');
-  await moved.dragTo(occupied);
+  await pointerDrag(page,moved,occupied);
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().rackItems.find(x=>x.id==='ri-sw1')?.startUnit)).toBe(15);
   await expect(page.locator('#rackPlannerMount .rack-selected-editor')).toContainText('colisionaría');
 
