@@ -2,10 +2,10 @@
 
 ## Alcance de producción
 
-- Aplicación estática/local, sin backend.
-- Sin usuarios, roles ni permisos.
-- Sin logs centralizados de cambios.
-- Sin backup remoto.
+- Aplicación client-first con backend Go base para serving/API; todavía sin persistencia remota de proyectos.
+- Sin autenticación, autorización por proyecto ni roles multiusuario activos.
+- Sin logs centralizados de acciones de usuario.
+- Sin backup remoto de proyectos/base de datos.
 - Sin integración directa con equipos reales.
 
 ## Validaciones
@@ -29,8 +29,9 @@
 
 ## Informes e impresión
 
-- Las matrices de puertos están optimizadas para consulta digital y pueden usar desplazamiento horizontal.
-- En impresión/PDF, proyectos con muchos puertos todavía necesitan una paginación dedicada por bancos para garantizar que ningún puerto quede fuera del área imprimible. Esta optimización queda pendiente de una pasada específica de maquetación para papel.
+- En pantalla, las matrices de puertos conservan bloques amplios con desplazamiento horizontal cuando resulta útil.
+- En impresión/PDF, el informe genera una representación independiente en bancos de 6 puertos con ancho fijo, texto ajustable y repetición de equipo/rack/rango para evitar columnas fuera del A4 apaisado.
+- El plano visual de replanteo resume los enlaces principales por rack; cuando hay muchos enlaces, el diagrama limita el número de caminos dibujados para mantener legibilidad, pero la tabla de referencias conserva todos los enlaces documentados.
 
 ## Seguridad
 
