@@ -31,10 +31,12 @@ function rackTopology(project,rackId){
  const devMap=new Map(arr(project&&project.devices).map(d=>[d.id,d]));
  const dataEdges=[];
  for(const link of arr(project&&project.links)){
-   const a=portMap.get(link.aPortId),b=portMap.get(link.bPortId);if(!a||!b)continue;
+   const aId=link.aPortId||link.a||link.fromPortId||link.from||link.portA;
+   const bId=link.bPortId||link.b||link.toPortId||link.to||link.portB;
+   const a=portMap.get(aId),b=portMap.get(bId);if(!a||!b)continue;
    const aIn=deviceIds.has(a.deviceId),bIn=deviceIds.has(b.deviceId);if(!aIn&&!bIn)continue;
    const da=devMap.get(a.deviceId),db=devMap.get(b.deviceId);
-   dataEdges.push({id:link.id,kind:'data',internal:aIn&&bIn,fromDeviceId:a.deviceId,toDeviceId:b.deviceId,fromLabel:`${da?.name||a.deviceId} · ${a.name||a.id}`,toLabel:`${db?.name||b.deviceId} · ${b.name||b.id}`,media:link.media||link.cableType||null,capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||null});
+   dataEdges.push({id:link.id,kind:'data',internal:aIn&&bIn,fromDeviceId:a.deviceId,toDeviceId:b.deviceId,fromLabel:`${da?.name||a.deviceId} · ${a.name||a.id}`,toLabel:`${db?.name||b.deviceId} · ${b.name||b.id}`,media:link.media||link.medium||link.cableType||null,capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||link.route||null});
  }
  const pduMap2=new Map(arr(project&&project.pdus).map(p=>[p.id,p]));
  const powerEdges=arr(project&&project.powerConnections).filter(x=>deviceIds.has(x.deviceId)||pduMap2.get(x.pduId)?.rackId===rackId).map(x=>{const d=devMap.get(x.deviceId),p=pduMap2.get(x.pduId);return{id:x.id,kind:'power',deviceId:x.deviceId,pduId:x.pduId,fromLabel:`${d?.name||x.deviceId} PSU-${Number(x.powerSupplyIndex||0)+1}`,toLabel:`${p?.name||x.pduId} · toma ${x.outlet||'—'}`,feed:x.feed||p?.feed||null,outlet:x.outlet||null};});

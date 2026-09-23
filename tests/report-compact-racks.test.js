@@ -16,7 +16,8 @@ const project={
   rackItems:[
     {id:'ri-sw1',rackId:'rack1',type:'device',deviceId:'sw1',startUnit:20,heightUnits:1,label:'SW-CORE',face:'front',powerDrawWatts:180},
     {id:'ri-srv1',rackId:'rack1',type:'device',deviceId:'srv1',startUnit:16,heightUnits:2,label:'SRV-01',face:'front',powerDrawWatts:420},
-    {id:'ri-pp1',rackId:'rack1',type:'patch-panel',patchPanelId:'pp1',startUnit:22,heightUnits:1,label:'Patch panel Cat6A',face:'front'}
+    {id:'ri-pp1',rackId:'rack1',type:'patch-panel',patchPanelId:'pp1',startUnit:22,heightUnits:1,label:'Patch panel Cat6A',face:'front'},
+    {id:'ri-rear1',rackId:'rack1',type:'cable-manager',startUnit:10,heightUnits:1,label:'Pasacables trasero',face:'rear'}
   ],
   pdus:[
     {id:'pdu1',rackId:'rack1',name:'PDU A',feed:'A',outletCount:12,maxPowerWatts:3680},
@@ -58,12 +59,24 @@ assert.strictEqual(model.structuredChains[0].outletName,'TO-01');
 assert.strictEqual(model.structuredChains[0].hostName,'PC-01');
 assert.strictEqual(model.structuredChains[0].totalLengthM,33);
 assert.ok(model.rackSummaries.some(x=>x.rackId==='rack1'&&x.dataLinks===1&&x.structuredRuns===1));
+assert.strictEqual(model.rackTopologies[0].dataEdges.length,1);
+assert.strictEqual(model.rackTopologies[0].dataEdges[0].media,'OM4 multimode');
 assert.ok(model.installationChecklist.some(x=>x.category==='Parcheo'&&x.task.includes('Gi1/0/2')));
 assert.ok(model.installationChecklist.some(x=>x.category==='Energía'&&x.task.includes('SRV-01')&&!x.documented));
 
 const html=report.build(project,{gateReport:gate});
-assert.ok(html.includes('Manual de instalación física'));
+assert.ok(html.includes('Manual técnico de instalación'));
+assert.ok(html.includes('Estado de preparación para instalación'));
+assert.ok(html.includes('Preparación'));
+assert.ok(html.includes('Documento operativo para montaje, alimentación, cableado, etiquetado, certificación y aceptación.'));
+assert.ok(html.includes('readiness-pending'));
 assert.ok(html.includes('Resumen por armario / rack'));
+assert.ok(html.includes('Elevaciones frontal y trasera'));
+assert.ok(html.includes('Vista frontal'));
+assert.ok(html.includes('Vista trasera'));
+assert.ok(html.includes('Pasacables trasero'));
+assert.ok(html.includes('rear-pdu-rail'));
+assert.ok(html.includes('U42'));
 assert.ok(html.includes('Racks y ocupación'));
 assert.ok(html.includes('Matrices de puertos por equipo'));
 assert.ok(html.includes('Destino'));
@@ -101,5 +114,10 @@ assert.ok(html.includes('☐'));
 assert.ok(html.includes('CPD → oficina'));
 assert.ok(html.includes('PC-01'));
 assert.ok(html.includes('BLOQUEADO'));
+assert.ok(html.includes('Aceptación y cierre de instalación'));
+assert.ok(html.includes('Técnico instalador'));
+assert.ok(html.includes('☐ Conforme'));
+assert.ok(html.includes('@page{size:A4 landscape'));
+assert.ok(html.includes('Manual técnico de instalación</title>'));
 assert.ok(html.includes('🧰 Informe de instalación')===false,'El texto del botón se inyecta en la UI, no dentro del HTML generado');
-console.log('✓ Informe de instalación fase 2 resuelve aliases de enlaces, cadenas completas, checklist y resumen por rack');
+console.log('✓ Informe de instalación fase 3 añade elevaciones frontal/trasera, PDF A4 y cierre listo para técnico');
