@@ -85,6 +85,7 @@ Mantenimiento:
     const p = { ...def, ...asObject(project) };
     const arrayKeys = [
       'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations',
+      'racks','rackItems','pdus','powerConnections',
       'patchPanels','telecomOutlets','cableRuns','patchConnections','hostOutletConnections',
       ...ADVANCED_ARRAY_KEYS
     ];
