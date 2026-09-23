@@ -29,7 +29,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - `package-lock.json`, licencia, changelog y script de empaquetado reproducible.
 - Golden sample determinista de cuatro sedes con VLANs/VLSM, trunks, racks, cableado, PoE y alimentación A/B.
 - Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
-- Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada.
+- Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada. Su estado, geometría, aliases e inferencia física ya disponen de un core puro y un bridge estable para extensiones.
 - Diagnóstico de conectividad reutilizable desde V5: reconstruye la ruta física documentada y simula ICMP, DNS, HTTPS, MQTT y RTSP contra VLANs, gateways, matriz inter-VLAN y firewall; la traza puede superponerse sobre V5 para resaltar los saltos recorridos y localizar bloqueos de acceso, ruta física, gateway, política o firewall.
 - Backend Go para serving/API base en despliegues como Railway, con contratos internos iniciales de colaboración en tiempo real; el modo local del frontend sigue siendo plenamente funcional.
 
@@ -80,6 +80,7 @@ El ZIP se genera en `dist/`.
 - `docs/STABLE_BASELINE_3_48.md`
 - `docs/PRODUCTION_READINESS.md`
 - `docs/MAINTENANCE_GUIDE.md`
+- `docs/V5_MODULARIZATION.md`
 - `docs/BACKEND_BOUNDARIES.md`
 - `docs/BACKEND_GO_COLLABORATION_PLAN.md`
 - `docs/RELEASE_CHECKLIST.md`
