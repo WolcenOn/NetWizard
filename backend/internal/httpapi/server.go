@@ -32,6 +32,40 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
+	if s.cfg.StaticDir != "" {
+		s.mux.Handle("/", s.staticHandler())
+	}
+}
+
+func (s *Server) staticHandler() http.Handler {
+	files := http.FileServer(http.Dir(s.cfg.StaticDir))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		if r.URL.Path == "/" {
+			files.ServeHTTP(w, r)
+			return
+		}
+
+		requested := strings.TrimPrefix(r.URL.Path, "/")
+		if file, err := http.Dir(s.cfg.StaticDir).Open(requested); err == nil {
+			_ = file.Close()
+			files.ServeHTTP(w, r)
+			return
+		}
+
+		fallback := r.Clone(r.Context())
+		fallback.URL.Path = "/"
+		files.ServeHTTP(w, fallback)
+	})
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
