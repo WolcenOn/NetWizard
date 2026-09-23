@@ -183,11 +183,12 @@ function primaryDataEdges(edges){
 function rackInstallationPlan(project,model){
  const racks=arr(model.racks&&model.racks.racks);
  if(!racks.length)return'<p class="empty">No hay racks definidos para generar el plano de replanteo.</p>';
- return racks.map(rack=>{
+ return racks.map((rack,rackIndex)=>{
+   const rackRef=`R${String(rackIndex+1).padStart(2,'0')}`;
    const topology=arr(model.rackTopologies).find(t=>t&&t.rack&&t.rack.id===rack.id)||{dataEdges:[],powerEdges:[]};
-   const data=primaryDataEdges(topology.dataEdges).map((e,i)=>Object.assign({ref:planRef('DATA',i)},e));
-   const chains=arr(model.structuredChains).filter(x=>x.rackId===rack.id).slice().sort((a,b)=>clean(a.label||a.id).localeCompare(clean(b.label||b.id),undefined,{numeric:true,sensitivity:'base'})).map((x,i)=>Object.assign({ref:planRef('CAB',i)},x));
-   const power=arr(topology.powerEdges).slice().sort((a,b)=>clean(a.fromLabel).localeCompare(clean(b.fromLabel),undefined,{numeric:true,sensitivity:'base'})).map((e,i)=>Object.assign({ref:planRef('PWR',i)},e));
+   const data=primaryDataEdges(topology.dataEdges).map((e,i)=>Object.assign({ref:planRef(rackRef+'-DATA',i)},e));
+   const chains=arr(model.structuredChains).filter(x=>x.rackId===rack.id).slice().sort((a,b)=>clean(a.label||a.id).localeCompare(clean(b.label||b.id),undefined,{numeric:true,sensitivity:'base'})).map((x,i)=>Object.assign({ref:planRef(rackRef+'-CAB',i)},x));
+   const power=arr(topology.powerEdges).slice().sort((a,b)=>clean(a.fromLabel).localeCompare(clean(b.fromLabel),undefined,{numeric:true,sensitivity:'base'})).map((e,i)=>Object.assign({ref:planRef(rackRef+'-PWR',i)},e));
    const dataVisual=data.slice(0,8).map(e=>{const a=splitEndpoint(e.fromLabel),b=splitEndpoint(e.toLabel);const detail=[e.label,e.cableId,e.media,e.capacityMbps?`${e.capacityMbps} Mbps`:null,e.internal?'interno':'hacia otro rack/equipo'].filter(Boolean).join(' · ');return`<div class="plan-path plan-data"><span class="plan-ref">${esc(e.ref)}</span>${planNode(a.label,a.detail)}<div class="plan-edge"><b>→ ${esc(e.label||e.id||'Enlace')} →</b><small>${esc(detail)}</small></div>${planNode(b.label,b.detail)}</div>`;}).join('');
    const chainVisual=chains.slice(0,6).map(x=>`<div class="plan-path plan-cabling"><span class="plan-ref">${esc(x.ref)}</span>${planNode(x.switchDeviceName,x.switchPortName)}<div class="plan-arrow">→</div>${planNode(x.patchPanelName,'P'+(x.patchPort||'—'))}<div class="plan-arrow">→</div>${planNode(x.outletName,'P'+(x.outletPort||1))}<div class="plan-arrow">→</div>${planNode(x.hostName,x.locationName)}<small class="plan-path-note">${esc([x.label,x.cableType,x.lengthM!=null?x.lengthM+' m':null,x.route].filter(Boolean).join(' · '))}</small></div>`).join('');
    const powerVisual=power.slice(0,6).map(e=>{const a=splitEndpoint(e.fromLabel),b=splitEndpoint(e.toLabel);return`<div class="plan-path plan-power"><span class="plan-ref">${esc(e.ref)}</span>${planNode(a.label,a.detail)}<div class="plan-edge"><b>→ Feed ${esc(e.feed||'—')} →</b><small>${esc(e.label||e.id||'Alimentación')}</small></div>${planNode(b.label,b.detail)}</div>`;}).join('');
