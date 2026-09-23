@@ -76,4 +76,36 @@ assert.ok(brokenDeviceRef.errors.some(message=>message.includes('deviceRef inexi
 const generatedId = schema.prepareImport({devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],wanCircuits:[{name:'WAN'}]});
 assert.strictEqual(generatedId.project.wanCircuits[0].id, 'wanCircuits_1');
 
+const physical = schema.prepareImport({
+  devices:[{id:' sw 1 ',name:'SW',type:'switch',rackId:' rack 1 ',rackUnit:'10',rackUnits:'1',weightKg:'8.5',powerDrawWatts:'120'}],
+  ports:[],vlans:[{id:'v10',vlanId:10,name:'LAN'}],
+  subnets:[{id:'sn10',vlanRef:'v10',cidr:'10.0.0.0/24',gateway:'10.0.0.1',gatewayDeviceRef:' fw 1 '}],
+  hosts:[{id:'h1',name:'PC',type:'pc',vlanRef:'v10',locationId:' office 1 '}],links:[],fwRules:[],
+  racks:[{id:' rack 1 ',name:'Rack',locationId:' cpd 1 ',rackUnits:'24',powerCapacityWatts:'2500'}],
+  rackItems:[{id:' item 1 ',rackId:' rack 1 ',type:'shelf',startUnit:'4',heightUnits:'1'}],
+  pdus:[{id:' pdu 1 ',rackId:' rack 1 ',outletCount:'12',maxPowerWatts:'3680'}],
+  powerConnections:[{id:' power 1 ',deviceId:' sw 1 ',pduId:' pdu 1 ',outlet:'2',powerSupplyIndex:'0'}]
+});
+assert.strictEqual(physical.ok,true);
+assert.strictEqual(physical.project.racks[0].id,'rack_1');
+assert.strictEqual(physical.project.racks[0].locationId,'cpd_1');
+assert.strictEqual(physical.project.racks[0].rackUnits,24);
+assert.strictEqual(physical.project.racks[0].powerCapacityWatts,2500);
+assert.strictEqual(physical.project.rackItems[0].rackId,'rack_1');
+assert.strictEqual(physical.project.pdus[0].outletCount,12);
+assert.strictEqual(physical.project.powerConnections[0].deviceId,'sw_1');
+assert.strictEqual(physical.project.devices[0].rackId,'rack_1');
+assert.strictEqual(physical.project.devices[0].rackUnit,10);
+assert.strictEqual(physical.project.hosts[0].locationId,'office_1');
+assert.strictEqual(physical.project.subnets[0].gatewayDeviceRef,'fw_1');
+
+const malformedPhysical = schema.prepareImport({
+  devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
+  racks:{bad:true},rackItems:'bad',pdus:{},powerConnections:42
+});
+assert.deepStrictEqual(malformedPhysical.project.racks,[]);
+assert.deepStrictEqual(malformedPhysical.project.rackItems,[]);
+assert.deepStrictEqual(malformedPhysical.project.pdus,[]);
+assert.deepStrictEqual(malformedPhysical.project.powerConnections,[]);
+
 console.log('✓ Schema 3.50 normaliza y sanea las ramas avanzadas sin romper compatibilidad');
