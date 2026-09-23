@@ -59,6 +59,8 @@ assert.strictEqual(model.structuredChains[0].outletName,'TO-01');
 assert.strictEqual(model.structuredChains[0].hostName,'PC-01');
 assert.strictEqual(model.structuredChains[0].totalLengthM,33);
 assert.ok(model.rackSummaries.some(x=>x.rackId==='rack1'&&x.dataLinks===1&&x.structuredRuns===1));
+assert.strictEqual(model.rackTopologies[0].dataEdges.length,1);
+assert.strictEqual(model.rackTopologies[0].dataEdges[0].media,'OM4 multimode');
 assert.ok(model.installationChecklist.some(x=>x.category==='Parcheo'&&x.task.includes('Gi1/0/2')));
 assert.ok(model.installationChecklist.some(x=>x.category==='Energía'&&x.task.includes('SRV-01')&&!x.documented));
 
