@@ -31,6 +31,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
 - Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada.
 - Diagnóstico de conectividad reutilizable desde V5: reconstruye la ruta física documentada y simula ICMP, DNS, HTTPS, MQTT y RTSP contra VLANs, gateways, matriz inter-VLAN y firewall.
+- Backend Go para serving/API base en despliegues como Railway, con contratos internos iniciales de colaboración en tiempo real; el modo local del frontend sigue siendo plenamente funcional.
 
 ## Uso rápido
 
@@ -38,6 +39,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 npm install
 npm test
 npm run check:syntax
+go test ./...
 python3 -m http.server 8000
 ```
 
@@ -57,11 +59,13 @@ Para considerar una entrega lista en tu entorno, ejecuta también los E2E con Ch
 Esta versión queda como **candidata de producción local/controlada** cuando pasan:
 
 1. `npm run release:check`
-2. `npm run test:e2e`
-3. Puerta de producción sin errores bloqueantes en el proyecto real
-4. Revisión manual de las exportaciones vendor utilizadas
+2. `go test ./...`
+3. `npm run test:e2e`
+4. `docker build .`
+5. Puerta de producción sin errores bloqueantes en el proyecto real
+6. Revisión manual de las exportaciones vendor utilizadas
 
-No es todavía una plataforma SaaS multiusuario: no incluye backend, autenticación, roles, logs centralizados ni backups remotos.
+Existe un backend Go mínimo para serving, API base y fundamentos internos de colaboración, pero NetWizard sigue siendo principalmente client-first. Todavía no es una plataforma SaaS multiusuario: no hay autenticación, autorización por proyecto, persistencia remota de proyectos, auditoría centralizada ni backups de base de datos.
 
 ## Empaquetado
 
@@ -76,6 +80,8 @@ El ZIP se genera en `dist/`.
 - `docs/STABLE_BASELINE_3_48.md`
 - `docs/PRODUCTION_READINESS.md`
 - `docs/MAINTENANCE_GUIDE.md`
+- `docs/BACKEND_BOUNDARIES.md`
+- `docs/BACKEND_GO_COLLABORATION_PLAN.md`
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/V3_50_PRODUCTION_SCENARIOS.md`
 - `docs/V3_50_DEPLOYMENT_BUNDLE.md`
