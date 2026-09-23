@@ -39,6 +39,24 @@ jobs:
       - name: Release checks
         run: npm run release:check
 
+  backend:
+    name: Go backend tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run backend tests
+        run: go test ./...
+
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-24.04
@@ -82,12 +100,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  container:
+    name: Docker build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs:
+      - quality
+      - backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        run: docker build --pull --tag netwizard-ci:${{ github.sha }} .
+
   pages-artifact:
     name: Package tested Pages artifact
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - quality
+      - backend
       - e2e
+      - container
     runs-on: ubuntu-24.04
     permissions:
       contents: read
