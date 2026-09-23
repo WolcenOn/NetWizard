@@ -10,6 +10,8 @@
 (function(){
   'use strict';
 
+  const V5=window.NetWizardV5;
+  const CORE=window.NetWizardV5Core;
   const SK = 'netwizard_v5_layout_manager_v29';
   const UNIFIED_MANUAL_SK = 'netwizard_unified_manual_positions_v29';
   const UNIFIED_VIEW_SK = 'netwizard_unified_view_v30';
@@ -52,29 +54,25 @@
     if(selected) opt.selected=true;
     select.appendChild(opt);
   }
-  function S(){
-    try{ if(window.NetWizardState?.getSnapshot) return window.NetWizardState.getSnapshot() || {}; }catch(e){}
-    try{ if(window.NetWizardBridge?.getProjectSnapshot){ const snap=window.NetWizardBridge.getProjectSnapshot(); if(snap?.ok) return snap.project || {}; } }catch(e){}
-    return window.S || {};
-  }
-  function V(){ return typeof window.vv === 'function' ? window.vv() : null; }
+  function S(){ return V5?.project?.()||{}; }
+  function V(){ return V5?.visual?.()||null; }
   function safe(fn, fallback){ try{return fn();}catch(e){ console.warn('[V5 layout manager v2.8.1]', e); return fallback; } }
   function readCfg(){ try{return {...{v5Mode:'treeBlocks',unifiedMode:'treeBlocks'},...JSON.parse(localStorage.getItem(SK)||'{}')};}catch{return {v5Mode:'treeBlocks',unifiedMode:'treeBlocks'};} }
   function saveCfg(cfg){ localStorage.setItem(SK, JSON.stringify(cfg)); }
   function cfg(){ return readCfg(); }
   function byName(a,b){ return String(a?.name||a?.label||a?.id||'').localeCompare(String(b?.name||b?.label||b?.id||''), undefined, {numeric:true,sensitivity:'base'}); }
 
-  function ensureV5(){ if(typeof window.vv !== 'function' || typeof window.vLocs !== 'function') return false; const v=V(); if(!v.layoutManager) v.layoutManager={}; return true; }
+  function ensureV5(){ if(!V5||!CORE)return false; const v=V(); if(!v)return false; if(!v.layoutManager)v.layoutManager={}; return true; }
   function devById(id){ return (S().devices||[]).find(d=>d.id===id); }
   function portById(id){ return (S().ports||[]).find(p=>p.id===id); }
-  function visibleDevsInLoc(locId){ return safe(()=>window.devsInVisualLoc(locId).slice().sort(deviceOrder), []); }
-  function visibleHostsInLoc(locId){ return safe(()=>window.hostsInVisualLoc(locId).slice().sort(hostOrder), []); }
-  function vLocs(){ return safe(()=>window.vLocs(), []); }
-  function vLocById(id){ return safe(()=>window.vLocById(id), null); }
-  function vLocRoots(){ return safe(()=>window.vLocRoots(), vLocs().filter(l=>!l.parentId)); }
-  function vLocChildren(id){ return safe(()=>window.vLocChildren(id).slice().sort(byName), []); }
-  function vLocDepth(id){ return safe(()=>window.vLocDepth(id), 0); }
-  function deviceVisualLoc(id){ return safe(()=>window.deviceVisualLoc(id), '') || ''; }
+  function visibleDevsInLoc(locId){ return (V5?.locationItems?.(locId).devices||[]).slice().sort(deviceOrder); }
+  function visibleHostsInLoc(locId){ return (V5?.locationItems?.(locId).hosts||[]).slice().sort(hostOrder); }
+  function vLocs(){ return V5?.locations?.()||[]; }
+  function vLocById(id){ return V5?.locationById?.(id)||null; }
+  function vLocRoots(){ return V5?.locationRoots?.()||[]; }
+  function vLocChildren(id){ return (V5?.locationChildren?.(id)||[]).slice().sort(byName); }
+  function vLocDepth(id){ return V5?.locationDepth?.(id)||0; }
+  function deviceVisualLoc(id){ return V5?.deviceVisualLocation?.(id)||''; }
   function hostConnectedDeviceId(h){ return safe(()=>window.hostConnectedDeviceId(h), h?.connectedDeviceId||'') || ''; }
   function isNetworkDevice(d){ return d && ['firewall','router','switch','ap'].includes(d.type||''); }
 
@@ -303,26 +301,9 @@
   }
 
   // ───────── Layout V5: ubicación de cajas ─────────
-  function rootOfLocId(id){
-    let loc=vLocById(id), guard=0;
-    while(loc && loc.parentId && guard++<20){ loc=vLocById(loc.parentId); }
-    return loc ? loc.id : id;
-  }
+  function rootOfLocId(id){ return CORE.rootLocationId(V(),id); }
 
-  function buildRootGraph(){
-    const roots = vLocRoots();
-    const rootIds = new Set(roots.map(l=>l.id));
-    const adj = new Map(roots.map(l=>[l.id,new Set()]));
-    for(const lk of (S().links||[])){
-      const a=portById(lk.aPortId), b=portById(lk.bPortId); if(!a||!b) continue;
-      const da=devById(a.deviceId), db=devById(b.deviceId); if(!da||!db) continue;
-      const la=rootOfLocId(deviceVisualLoc(da.id)), lb=rootOfLocId(deviceVisualLoc(db.id));
-      if(!la||!lb||la===lb||!rootIds.has(la)||!rootIds.has(lb)) continue;
-      if(!adj.has(la)) adj.set(la,new Set()); if(!adj.has(lb)) adj.set(lb,new Set());
-      adj.get(la).add(lb); adj.get(lb).add(la);
-    }
-    return {roots, adj};
-  }
+  function buildRootGraph(){ return CORE.buildRootGraph(S(),V()); }
 
   function chooseRoot(){
     const {roots, adj}=buildRootGraph();
@@ -409,8 +390,8 @@
     layoutLocationsGrid(mode);
     vLocs().slice().sort((a,b)=>vLocDepth(a.id)-vLocDepth(b.id)).forEach(loc=>arrangeLocInternals(loc,{x:loc.x,y:loc.y,w:loc.w,h:loc.h},mode));
     if(persist!==false) safe(()=>window.save(), null);
-    safe(()=>window.drawV5(), null);
-    safe(()=>window.renderV5Panel(), null);
+    safe(()=>V5.redraw(), null);
+    safe(()=>V5.renderPanel(), null);
   }
   window.applyV5SmartLayout = applyV5SmartLayout;
   window.autoVisualAssign = function(){ applyV5SmartLayout(true); };
