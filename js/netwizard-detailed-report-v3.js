@@ -106,11 +106,89 @@ function installationChecklistReport(project,model){
    return`<article class="check-card"><h3>${esc(rack?rack.name||rack.id:'Tareas sin rack asignado')}</h3><div class="table-wrap"><table class="check-table"><thead><tr><th>Hecho</th><th>Área</th><th>Tarea</th><th>Referencia</th><th>Documentación</th></tr></thead><tbody>${own.map(t=>`<tr class="${t.documented?'':'check-pending'}"><td class="checkbox">☐</td><td>${esc(t.category)}</td><td>${esc(t.task)}</td><td>${esc(t.reference)}</td><td>${esc(t.documented?'Lista':'Pendiente')}</td></tr>`).join('')}</tbody></table></div></article>`;
  }).join('');
 }
+function rackItemFace(item){
+ const face=clean(item&&item.face).toLowerCase();
+ if(face==='rear'||face==='back'||face==='trasera')return'rear';
+ if(face==='both'||face==='front-rear'||face==='both-sides')return'both';
+ return'front';
+}
+function rackItemClass(item){
+ const t=clean(item&&item.type).toLowerCase();
+ if(t.includes('patch'))return'rack-item-patch';
+ if(t.includes('cable'))return'rack-item-cable';
+ if(t.includes('shelf')||t.includes('tray'))return'rack-item-shelf';
+ if(item&&item.deviceId)return'rack-item-device';
+ return'rack-item-passive';
+}
+function rackFaceVisual(project,rack,items,face){
+ const units=Math.max(1,Number(rack&&rack.rackUnits||42));
+ const own=arr(items).filter(i=>i&&i.rackId===rack.id);
+ const rows=[];
+ for(let u=units;u>=1;u--){
+   const hit=own.find(item=>{
+     const start=Number(item.startUnit),height=Math.max(1,Number(item.heightUnits||1)),f=rackItemFace(item);
+     return Number.isFinite(start)&&u>=start&&u<start+height&&(f===face||f==='both');
+   });
+   let content='<span class="rack-empty">Libre</span>';
+   let cls='rack-slot-empty';
+   if(hit){
+     const start=Number(hit.startUnit),height=Math.max(1,Number(hit.heightUnits||1)),end=start+height-1;
+     const label=rackAssociation(project,hit);
+     const isTop=u===end;
+     content=isTop?`<strong>${esc(label)}</strong><small>${esc(hit.type||'elemento')} · ${esc(rackRange(hit))}</small>`:'<span class="rack-continuation">│</span>';
+     cls=rackItemClass(hit);
+   }
+   rows.push(`<div class="rack-face-row ${cls}"><span class="rack-unit">U${u}</span><div class="rack-slot">${content}</div></div>`);
+ }
+ const pdus=face==='rear'?arr(project.pdus).filter(p=>p&&p.rackId===rack.id):[];
+ const pduRail=pdus.length?`<div class="rear-pdu-rail">${pdus.map(p=>`<div class="rear-pdu ${feedClass(p.feed)}"><b>${esc(p.name||p.id)}</b><span>Feed ${esc(p.feed||'—')}</span><small>${esc(p.outletCount||0)} tomas</small></div>`).join('')}</div>`:'';
+ return`<div class="rack-face-card"><div class="rack-face-head"><b>${face==='rear'?'Vista trasera':'Vista frontal'}</b><span>${units}U</span></div><div class="rack-face-body"><div class="rack-unit-stack">${rows.join('')}</div>${pduRail}</div></div>`;
+}
+function rackVisualReport(project,model){
+ const racks=arr(model.racks&&model.racks.racks),items=arr(model.racks&&model.racks.items);
+ if(!racks.length)return'<p class="empty">No hay racks definidos para generar elevaciones.</p>';
+ return racks.map(rack=>{
+   const loc=byId(project.physicalLocations,rack.locationId);
+   return`<article class="rack-visual-card"><div class="rack-visual-title"><div><h3>${esc(rack.name||rack.id)}</h3><span>${esc(loc?loc.name||loc.id:'Ubicación no documentada')}</span></div><span class="rack-visual-hint">Frontal / trasera</span></div><div class="rack-elevations">${rackFaceVisual(project,rack,items,'front')}${rackFaceVisual(project,rack,items,'rear')}</div></article>`;
+ }).join('');
+}
+function technicianReadiness(project,model,statusInfo){
+ const incomplete=arr(model.structuredChains).filter(x=>!x.complete).length;
+ const pendingTasks=arr(model.installationChecklist).filter(x=>!x.documented).length;
+ const missingPower=arr(model.powerMap&&model.powerMap.rows).filter(x=>x.status!=='connected').length;
+ const rackIssues=arr(model.racks&&model.racks.issues).length;
+ const rows=[
+  ['Estado global',statusInfo.state,statusInfo.blocking?'Resolver bloqueantes antes de la puesta en marcha':'Revisar advertencias y proceder según checklist'],
+  ['Cadenas físicas incompletas',incomplete,incomplete?'Completar patch panel, toma, puerto o equipo final':'Todas las cadenas documentadas están completas'],
+  ['Tareas con documentación pendiente',pendingTasks,pendingTasks?'Completar referencias antes del cierre de instalación':'Checklist documental completo'],
+  ['Alimentaciones pendientes',missingPower,missingPower?'Asignar PDU, toma y feed':'Alimentación documentada'],
+  ['Incidencias de rack',rackIssues,rackIssues?'Resolver colisiones, capacidad o referencias':'Sin incidencias de rack']
+ ];
+ return`<div class="readiness-grid">${rows.map(([k,v,n])=>`<div class="readiness-card ${Number(v)>0&&k!=='Estado global'?'readiness-pending':'readiness-ok'}"><span>${esc(k)}</span><b>${esc(v)}</b><small>${esc(n)}</small></div>`).join('')}</div>`;
+}
+function workSequenceReport(){
+ const steps=[
+  ['1','Preparación','Confirmar rack, U, material pasivo, equipos, PDU, latiguillos y cableado antes de montar.'],
+  ['2','Montaje','Instalar elementos siguiendo las elevaciones frontal/trasera y respetando U y cara indicadas.'],
+  ['3','Alimentación','Conectar cada PSU a la PDU y toma documentadas, manteniendo separados los feeds A/B.'],
+  ['4','Datos en rack','Ejecutar enlaces directos y parcheos switch ↔ patch panel según matrices y cadenas físicas.'],
+  ['5','Cableado horizontal','Tender y certificar los enlaces permanentes hasta las tomas respetando tipo, longitud y ruta.'],
+  ['6','Puesto final','Conectar toma ↔ equipo final, etiquetar ambos extremos y comprobar enlace físico.'],
+  ['7','Verificación','Completar el checklist, resolver pendientes y registrar la aceptación del rack.']
+ ];
+ return`<div class="work-sequence">${steps.map(([n,t,d])=>`<div class="work-step"><b>${esc(n)}</b><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></div>`).join('')}</div>`;
+}
+function acceptanceReport(project,model){
+ const racks=arr(model.rackSummaries);
+ if(!racks.length)return'<p class="empty">No hay racks para hoja de aceptación.</p>';
+ return racks.map(r=>`<article class="acceptance-card"><h3>${esc(r.rackName)}</h3><div class="acceptance-grid"><div><span>Técnico instalador</span><b>________________________________</b></div><div><span>Fecha / hora</span><b>________________________________</b></div><div><span>Resultado</span><b>☐ Conforme &nbsp;&nbsp; ☐ Pendiente</b></div><div><span>Firma</span><b>________________________________</b></div></div><p><b>Observaciones:</b></p><div class="notes-lines">________________________________________________________________________________<br>________________________________________________________________________________<br>________________________________________________________________________________</div></article>`).join('');
+}
 function build(project,options){
  project=project||{};options=options||{};
  const g=gate(project,options),model=MODEL?MODEL.build(project,{gateReport:g}):null;
  if(!model)throw new Error('NetWizardReportModel no está disponible.');
  const s=status(g),findings=arr(g.issues);
+ const readiness=technicianReadiness(project,model,s);
  const summary=`<div class="stats">${[['Dispositivos',model.summary.devices],['Puertos',model.summary.ports],['Enlaces',model.summary.links],['Hosts',model.summary.hosts],['Racks',model.summary.racks],['Carga PoE',`${Math.round(model.summary.poeLoadWatts*10)/10} W`]].map(([k,v])=>`<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}</div><div class="risk"><b>${esc(s.state)}</b><span>Riesgo ${esc(s.risk)} · ${s.blocking} bloqueantes · ${s.errors} errores · ${s.warnings} advertencias</span></div>`;
  const rackSummary=table(['Rack','Ocupación','Elementos','Potencia','Refrigeración'],rackRows(model),'No hay racks definidos.');
  const connectivity=table(['Enlace','Extremo A','Extremo B','Medio','Capacidad','Ruta física'],model.connectivity.map(x=>[x.name,x.aPort,x.bPort,x.media,x.capacityMbps?`${x.capacityMbps} Mbps`:'—',x.physicalPath]),'No hay enlaces documentados.');
@@ -127,19 +205,21 @@ function build(project,options){
  const cablePaths=table(['Ruta','Switch','Patch panel','Toma','Host','Cable','Longitud','Estado'],cablePathRows,'No hay cableado estructurado documentado.');
  const issueRows=findings.map(i=>[i.code||'—',i.severity||'info',i.category||'general',i.blocking?'Sí':'No',i.message||'']);
  const body=[
-  `<header><div><span>NETWIZARD 3.50.0 · Manual de instalación física</span><h1>${esc(model.project.name)}</h1></div><strong>${esc(s.state)}</strong></header>`,
-  section(1,'Resumen ejecutivo',summary),
+  `<section class="cover"><div class="cover-kicker">NETWIZARD 3.50.0</div><h1>Manual técnico de instalación</h1><h2>${esc(model.project.name)}</h2><div class="cover-status"><b>${esc(s.state)}</b><span>Riesgo ${esc(s.risk)}</span></div><div class="cover-meta"><span>Esquema ${esc(model.project.schemaVersion||'—')}</span><span>${esc(model.summary.racks)} rack(s)</span><span>${esc(model.summary.devices)} equipo(s)</span><span>${esc(model.summary.ports)} puerto(s)</span></div><p>Documento operativo para montaje, alimentación, cableado, etiquetado, certificación y aceptación.</p></section>`,
+  section(1,'Estado de preparación para instalación',readiness+workSequenceReport()),
   section(2,'Resumen por armario / rack',rackSummaryReport(project,model)),
-  section(3,'Racks y ocupación',rackSummary+rackDetails(project,model)),
-  section(4,'Matrices de puertos por equipo',portMatrices(model,project)),
-  section(5,'Leyenda de medios y cableado',mediaLegend()),
-  section(6,'Mapa de alimentación PDU / PSU',powerMap(project,model)),
-  section(7,'Cadena completa de cableado estructurado',structuredChainsReport(model)),
-  section(8,'Checklist de instalación',installationChecklistReport(project,model)),
-  section(9,'Conectividad directa de datos',connectivity),
-  section(10,'Inventario y materiales',inventory+'<h3>Material pasivo</h3>'+materials),
-  section(11,'Conexiones físicas por rack',rackConnections),
-  section(12,'Validación e incidencias',table(['Código','Severidad','Categoría','Bloqueante','Descripción'],issueRows,'No se han detectado incidencias.'))
+  section(3,'Elevaciones frontal y trasera',rackVisualReport(project,model)),
+  section(4,'Racks y ocupación',rackSummary+rackDetails(project,model)),
+  section(5,'Matrices de puertos por equipo',portMatrices(model,project)),
+  section(6,'Leyenda de medios y cableado',mediaLegend()),
+  section(7,'Mapa de alimentación PDU / PSU',powerMap(project,model)),
+  section(8,'Cadena completa de cableado estructurado',structuredChainsReport(model)),
+  section(9,'Checklist de instalación',installationChecklistReport(project,model)),
+  section(10,'Conectividad directa de datos',connectivity),
+  section(11,'Inventario y materiales',inventory+'<h3>Material pasivo</h3>'+materials),
+  section(12,'Conexiones físicas por rack',rackConnections),
+  section(13,'Validación e incidencias',table(['Código','Severidad','Categoría','Bloqueante','Descripción'],issueRows,'No se han detectado incidencias.')),
+  section(14,'Aceptación y cierre de instalación',acceptanceReport(project,model))
  ].join('');
  const css=':root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#172033;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;background:#eef2f7}.toolbar{position:sticky;top:0;background:#111827;padding:10px;text-align:right;z-index:5}.toolbar button{padding:9px 14px;border:0;border-radius:8px;font-weight:700}.page{max-width:1180px;margin:20px auto;background:#fff;padding:36px;box-shadow:0 10px 35px #0002}header{display:flex;justify-content:space-between;gap:20px;border-bottom:4px solid #2563eb;padding-bottom:20px}header span{font-size:12px;color:#2563eb;font-weight:800}header h1{margin:6px 0}.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0}.stats div{padding:12px;border:1px solid #dbe3ee;border-radius:8px;background:#f8fafc}.stats b{display:block;font-size:20px}.stats span{font-size:11px;color:#64748b}.risk{padding:14px;background:#eff6ff;border-left:4px solid #2563eb;display:flex;justify-content:space-between}section{margin:30px 0}h2{font-size:21px;border-bottom:1px solid #dbe3ee;padding-bottom:7px}h3{font-size:15px}.table-wrap,.port-matrix-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #dbe3ee;padding:7px;text-align:left;vertical-align:top}th{background:#eff6ff}.empty{padding:12px;background:#f8fafc;border-left:4px solid #94a3b8}.rack-card,.matrix-card,.power-card{border:1px solid #dbe3ee;border-radius:10px;padding:14px;margin:14px 0;break-inside:avoid}.rack-title,.matrix-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.rack-title h3,.matrix-title h3,.power-card h3{margin:0 0 4px}.rack-title span,.matrix-title span{font-size:11px;color:#64748b}.rack-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.rack-meta span{padding:6px 9px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:999px;font-size:11px}.rack-pdu{font-size:11px;color:#475569}.rack-warnings{margin-top:9px;padding:9px;background:#fff7ed;border-left:4px solid #f97316}.rack-warnings ul{margin:5px 0 0 18px}.port-matrix{width:max-content;min-width:100%;table-layout:auto}.port-matrix th,.port-matrix td{min-width:105px;max-width:170px}.port-matrix .matrix-label{position:sticky;left:0;z-index:2;min-width:105px;background:#eff6ff;font-weight:800}.matrix-block{margin:10px 0 18px}.matrix-range{font-size:11px;color:#64748b;margin:0 0 5px}.media-cell{border-top-width:3px}.mini-swatch,.legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}.legend{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:8px}.legend-item{display:flex;align-items:center;padding:9px;border:1px solid #dbe3ee;border-radius:8px;background:#fff}.media-copper{background:#dbeafe!important;border-color:#2563eb!important}.media-fiber-mm{background:#ffedd5!important;border-color:#f97316!important}.media-fiber-sm{background:#fef9c3!important;border-color:#ca8a04!important}.media-fiber{background:#cffafe!important;border-color:#0891b2!important}.media-dac-aoc{background:#ede9fe!important;border-color:#7c3aed!important}.media-console{background:#e5e7eb!important;border-color:#6b7280!important}.media-other{background:#f1f5f9!important;border-color:#64748b!important}.media-free{background:#f8fafc!important;border-color:#cbd5e1!important;color:#64748b}.pdu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0}.pdu-card{border:1px solid #dbe3ee;border-radius:8px;padding:10px;display:grid;gap:5px}.pdu-card small{color:#64748b}.feed-badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800;width:max-content}.feed-a{background:#fee2e2!important;border-color:#dc2626!important;color:#991b1b}.feed-b{background:#dcfce7!important;border-color:#16a34a!important;color:#166534}.feed-ups{background:#fef3c7!important;border-color:#d97706!important;color:#92400e}.feed-other{background:#e2e8f0!important;border-color:#64748b!important;color:#334155}.power-missing td{background:#fff7ed}.chain-card,.check-card{border:1px solid #dbe3ee;border-radius:10px;padding:14px;margin:14px 0;break-inside:avoid}.chain-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.chain-title h3,.check-card h3{margin:0 0 5px}.chain-title span{font-size:11px;color:#64748b}.chain-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr auto 1fr;gap:6px;align-items:stretch;margin:12px 0}.chain-flow>div{border:1px solid #dbe3ee;border-radius:8px;padding:9px;background:#f8fafc;display:grid;gap:3px}.chain-flow small{color:#64748b}.chain-flow i{align-self:center;font-style:normal;font-size:18px;color:#64748b}.chain-pending{border-left:4px solid #f97316}.chain-ok{border-left:4px solid #16a34a}.checkbox{font-size:18px;text-align:center;width:42px}.check-pending td{background:#fff7ed}.check-table th:first-child,.check-table td:first-child{text-align:center}@media print{body{background:#fff}.toolbar{display:none}.page{margin:0;max-width:none;box-shadow:none;padding:0}.rack-card,.matrix-card,.power-card{break-inside:avoid}}@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.legend{grid-template-columns:1fr}.chain-flow{display:flex;flex-direction:column}.chain-flow i{transform:rotate(90deg);align-self:center}.page{margin:0;padding:18px}}';
  return`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(model.project.name)} · Informe de instalación</title><style>${css}</style></head><body><div class="toolbar"><button onclick="window.print()">🖨 Imprimir / Guardar PDF</button></div><main class="page">${body}</main></body></html>`;
