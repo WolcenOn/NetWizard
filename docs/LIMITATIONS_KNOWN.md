@@ -2,10 +2,10 @@
 
 ## Alcance de producción
 
-- Aplicación estática/local, sin backend.
-- Sin usuarios, roles ni permisos.
-- Sin logs centralizados de cambios.
-- Sin backup remoto.
+- Aplicación client-first con backend Go base para serving/API; todavía sin persistencia remota de proyectos.
+- Sin autenticación, autorización por proyecto ni roles multiusuario activos.
+- Sin logs centralizados de acciones de usuario.
+- Sin backup remoto de proyectos/base de datos.
 - Sin integración directa con equipos reales.
 
 ## Validaciones
