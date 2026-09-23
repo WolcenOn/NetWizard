@@ -174,6 +174,20 @@ function selectedItemEditor(project){
 function summaryCard(project,rack,validation){const card=el('div','card');const h=el('div','card-h');h.append(el('div','card-t',`🗄 ${rack.name||rack.id}`),el('span','b bac',`${rack.rackUnits}U`));const del=button('Eliminar','bd bxs','remove-rack');del.dataset.id=rack.id;h.appendChild(del);card.appendChild(h);const loc=arr(project.physicalLocations).find(x=>x.id===rack.locationId);card.appendChild(el('div','hint',`${loc?loc.name:'Ubicación no definida'} · ${rack.widthMm||'—'}×${rack.depthMm||'—'} mm`));const grid=el('div','g2 nw-grid-adaptive');grid.appendChild(rackDiagram(project,rack));const details=el('div','nw-panel-stack');const issues=arr(validation.issues).filter(i=>i.rackId===rack.id);const items=MODEL.allRackItems(project).filter(i=>i.rackId===rack.id);const used=new Set();items.forEach(i=>{for(let u=Number(i.startUnit);u<Number(i.startUnit)+Number(i.heightUnits||1);u++)used.add(u);});details.append(el('p','',`Ocupación: ${used.size}/${rack.rackUnits}U`),el('p','',`Elementos: ${items.length}`),el('p','',`Incidencias: ${issues.length}`));const pdus=arr(project.pdus).filter(x=>x.rackId===rack.id);details.appendChild(el('p','',`PDU/regletas: ${pdus.length}`));for(const pdu of pdus){const line=el('div','rack-list-row');line.append(el('span','',`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas · feed ${pdu.feed||'—'}`));const b=button('Quitar','bd bxs','remove-pdu');b.dataset.id=pdu.id;line.appendChild(b);details.appendChild(line);}if(issues.length){const ul=el('ul','rack-issues');issues.slice(0,8).forEach(i=>ul.appendChild(el('li','',i.message)));details.appendChild(ul);}grid.append(details);card.appendChild(grid);card.appendChild(rackTopologyView(project,rack));return card;}
 function connectionsCard(project){const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','🔌 Conexiones de alimentación'));const list=el('div','nw-panel-stack');for(const c of arr(project.powerConnections)){const d=arr(project.devices).find(x=>x.id===c.deviceId),p=arr(project.pdus).find(x=>x.id===c.pduId);const row=el('div','rack-list-row');row.appendChild(el('span','',`${d?.name||c.deviceId||'Equipo'} PSU-${Number(c.powerSupplyIndex||0)+1} → ${p?.name||c.pduId||'PDU'} / toma ${c.outlet||'—'}`));const b=button('Quitar','bd bxs','remove-power');b.dataset.id=c.id;row.appendChild(b);list.appendChild(row);}if(!arr(project.powerConnections).length)list.appendChild(el('div','empty','No hay conexiones eléctricas definidas.'));card.appendChild(list);return card;}
 function render(project){ensureLayoutCss();project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');const validation=MODEL.validate(project);const head=el('div','card nw-card-wide');const hh=el('div','card-h');hh.append(el('div','card-t','🗄 Racks, alimentación y material pasivo'),el('span',`b ${validation.ok?'bgn':'brd'}`,validation.ok?'Sin bloqueos':`${validation.issues.length} incidencias`));head.appendChild(hh);head.appendChild(el('p','hint','Crea racks, coloca equipos y material pasivo por unidades, define PDU y conecta fuentes de alimentación.'));wrap.append(head,editorCard(project),selectedItemEditor(project));if(validation.racks.length){const rackGrid=el('div','nw-card-grid');validation.racks.forEach(r=>rackGrid.appendChild(summaryCard(project,r,validation)));wrap.appendChild(rackGrid);}else wrap.appendChild(el('div','co co-yw','No hay racks definidos. Usa el editor para crear el primero.'));wrap.appendChild(connectionsCard(project));const bom=MODEL.billOfMaterials(project);const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','📦 Materiales de rack'));const ul=el('ul','');bom.forEach(x=>ul.appendChild(el('li','',`${x.quantity} × ${x.description||x.label||x.name||x.kind||x.type||'Material'}`)));if(!bom.length)ul.appendChild(el('li','empty','No hay materiales definidos.'));card.appendChild(ul);wrap.appendChild(card);return wrap;}
+function updateRackItemFromEditor(project,itemId,values){
+  const item=MODEL.allRackItems(project).find(x=>x.id===itemId);
+  if(!item)return{ok:false,project:clone(project),message:'Elemento de rack inexistente.'};
+  const placement=rackItemPlacement(project,item.id,values.rackId,values.startUnit,values.heightUnits);
+  if(!placement.ok)return{ok:false,project:clone(project),message:placement.message};
+  const next=upsertRackItem(project,{
+    id:item.id,rackId:values.rackId,type:item.type,deviceId:item.deviceId,patchPanelId:item.patchPanelId,
+    label:values.label,startUnit:values.startUnit,heightUnits:values.heightUnits,face:values.face,
+    mounting:values.mounting,weightKg:values.weightKg,powerDrawWatts:values.powerDrawWatts
+  });
+  const audit=MODEL.validate(next),blocking=arr(audit.issues).find(i=>i.rackItemId===item.id&&i.blocking);
+  if(blocking)return{ok:false,project:clone(project),message:blocking.message};
+  return{ok:true,project:next,item:MODEL.allRackItems(next).find(x=>x.id===item.id)};
+}
 function rerenderMount(mount,state){
   mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);
 }
@@ -189,29 +203,33 @@ function bind(mount,state){
     if(action==='add-item'){const f=mount.querySelector('[data-form="item"]');const r=f.elementsRef;next=upsertRackItem(snapshot,{rackId:r.itemRack.value,type:r.itemType.value,deviceId:r.itemDevice.value,label:r.itemLabel.value,startUnit:r.itemStart.value,heightUnits:r.itemHeight.value});}
     if(action==='add-pdu'){const f=mount.querySelector('[data-form="pdu"]');const r=f.elementsRef;next=addPdu(snapshot,{rackId:r.pduRack.value,name:r.pduName.value,feed:r.pduFeed.value,outletCount:r.pduOutlets.value,maxPowerWatts:r.pduPower.value});}
     if(action==='add-power'){const f=mount.querySelector('[data-form="power"]');const r=f.elementsRef;const pdu=arr(snapshot.pdus).find(x=>x.id===r.powerPdu.value);next=addPowerConnection(snapshot,{deviceId:r.powerDevice.value,pduId:r.powerPdu.value,outlet:r.powerOutlet.value,powerSupplyIndex:r.powerPsu.value,feed:pdu&&pdu.feed});}
-    if(action==='update-selected-item'){
-      const form=mount.querySelector('[data-form="selected-item"]'),r=form&&form.elementsRef,item=MODEL.allRackItems(snapshot).find(x=>x.id===actionNode.dataset.id);
-      if(r&&item){
-        const placement=rackItemPlacement(snapshot,item.id,r.rack.value,r.start.value,r.height.value);
-        if(!placement.ok){rackEditorNotice=placement.message;rerenderMount(mount,state);return;}
-        next=upsertRackItem(snapshot,{
-          id:item.id,rackId:r.rack.value,type:item.type,deviceId:item.deviceId,patchPanelId:item.patchPanelId,
-          label:r.label.value,startUnit:r.start.value,heightUnits:r.height.value,face:r.face.value,mounting:r.mounting.value,
-          weightKg:r.weight.value,powerDrawWatts:r.power.value
-        });
-        const audit=MODEL.validate(next),blocking=arr(audit.issues).find(i=>i.rackItemId===item.id&&i.blocking);
-        if(blocking){rackEditorNotice=blocking.message;rerenderMount(mount,state);return;}
-        selectedRackItemId=item.id;rackEditorNotice='Cambios guardados. Las referencias de cableado y equipo se han conservado.';
-      }
-    }
-    if(action==='remove-rack-item'){
-      selectedRackItemId='';rackEditorNotice='';next=removeEntity(snapshot,'rackItem',actionNode.dataset.id);
-    }
     if(action==='remove-rack')next=removeEntity(snapshot,'rack',actionNode.dataset.id);
     if(action==='remove-pdu')next=removeEntity(snapshot,'pdu',actionNode.dataset.id);
     if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',actionNode.dataset.id);
     if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});
   };
+  const selectedForm=mount.querySelector('[data-form="selected-item"]');
+  if(selectedForm&&selectedForm.elementsRef){
+    const save=selectedForm.querySelector('[data-action="update-selected-item"]');
+    const remove=selectedForm.querySelector('[data-action="remove-rack-item"]');
+    if(save)save.onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      const r=selectedForm.elementsRef,id=save.dataset.id;
+      const result=updateRackItemFromEditor(state.getSnapshot(),id,{
+        rackId:r.rack.value,label:r.label.value,startUnit:r.start.value,heightUnits:r.height.value,
+        face:r.face.value,mounting:r.mounting.value,weightKg:r.weight.value,powerDrawWatts:r.power.value
+      });
+      selectedRackItemId=id;
+      if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
+      rackEditorNotice='Cambios guardados. Las referencias de cableado y equipo se han conservado.';
+      state.replaceProject(result.project,{source:'rack-item-editor'});
+    };
+    if(remove)remove.onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      const id=remove.dataset.id;selectedRackItemId='';rackEditorNotice='';
+      state.replaceProject(removeEntity(state.getSnapshot(),'rackItem',id),{source:'rack-item-editor-remove'});
+    };
+  }
   for(const node of mount.querySelectorAll('[data-item-id]')){
     let pointer=null;
     const clearTargets=()=>mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
@@ -257,5 +275,5 @@ function bind(mount,state){
   }
 }
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
-const api={version:'netwizard-rack-ui-v6',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,rackItemPlacement,moveRackItem,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
+const api={version:'netwizard-rack-ui-v7',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,rackItemPlacement,moveRackItem,updateRackItemFromEditor,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
 })(typeof window!=='undefined'?window:globalThis);
