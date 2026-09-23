@@ -9,6 +9,7 @@ const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 let selectedRackItemId='';
 let rackEditorNotice='';
+let suppressRackClickUntil=0;
 function ensureArrays(project){for(const key of ['racks','rackItems','pdus','powerConnections'])if(!Array.isArray(project[key]))project[key]=[];return project;}
 function addRack(project,input){const next=ensureArrays(clone(project));const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||'Rack sin nombre',locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.floor(num(input.rackUnits)||42)),widthMm:num(input.widthMm),depthMm:num(input.depthMm),maxLoadKg:num(input.maxLoadKg),powerCapacityWatts:num(input.powerCapacityWatts),coolingCapacityWatts:num(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
 function syncRackItemRelations(project,item,previous){
@@ -98,7 +99,7 @@ function rackDiagram(project,rack){
     const content=el('div',hit?'rack-u-used':'rack-u-free',hit?(hit.label||hit.name||hit.type):'Libre');
     if(hit){
       content.dataset.action='select-rack-item';content.dataset.itemId=hit.id;content.dataset.rackId=rack.id;
-      content.draggable=true;content.title='Clic para editar · arrastra para cambiar de U o rack';
+      content.draggable=false;content.title='Clic para editar · arrastra para cambiar de U o rack';
       if(hit.id===selectedRackItemId)content.classList.add('is-selected');
       const meta=el('small','rack-u-meta',`${hit.type||'elemento'} · ${hit.heightUnits||1}U`);
       content.appendChild(meta);
@@ -180,6 +181,7 @@ function bind(mount,state){
   mount.onclick=e=>{
     const actionNode=e.target&&e.target.closest&&e.target.closest('[data-action]');const action=actionNode&&actionNode.dataset.action;if(!action)return;
     if(action==='select-rack-item'){
+      if(Date.now()<suppressRackClickUntil)return;
       selectedRackItemId=actionNode.dataset.itemId||'';rackEditorNotice='';rerenderMount(mount,state);return;
     }
     const snapshot=state.getSnapshot();let next=snapshot;
@@ -211,36 +213,48 @@ function bind(mount,state){
     if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});
   };
   for(const node of mount.querySelectorAll('[data-item-id]')){
-    node.ondragstart=e=>{
+    let pointer=null;
+    const clearTargets=()=>mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
+    node.onpointerdown=e=>{
+      if(e.button!==0)return;
+      pointer={id:e.pointerId,x:e.clientX,y:e.clientY,dragging:false};
       selectedRackItemId=node.dataset.itemId||'';rackEditorNotice='';
-      if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/netwizard-rack-item',selectedRackItemId);e.dataTransfer.setData('text/plain',selectedRackItemId);}
-      node.classList.add('is-dragging');
+      try{node.setPointerCapture(e.pointerId);}catch(_){}
     };
-    node.ondragend=()=>{
+    node.onpointermove=e=>{
+      if(!pointer||pointer.id!==e.pointerId)return;
+      if(!pointer.dragging&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)>=5){
+        pointer.dragging=true;node.classList.add('is-dragging');
+      }
+      if(!pointer.dragging)return;
+      e.preventDefault();clearTargets();
+      const hit=root.document.elementFromPoint(e.clientX,e.clientY);
+      const row=hit&&hit.closest&&hit.closest('[data-drop-rack-item="1"]');
+      if(row)row.classList.add('is-drop-target');
+    };
+    const finishPointer=e=>{
+      if(!pointer||pointer.id!==e.pointerId)return;
+      const wasDragging=pointer.dragging;pointer=null;
+      try{node.releasePointerCapture(e.pointerId);}catch(_){}
       node.classList.remove('is-dragging');
-      mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
-    };
-  }
-  for(const row of mount.querySelectorAll('[data-drop-rack-item="1"]')){
-    row.ondragenter=e=>{e.preventDefault();row.classList.add('is-drop-target');};
-    row.ondragleave=e=>{if(!row.contains(e.relatedTarget))row.classList.remove('is-drop-target');};
-    row.ondragover=e=>{
-      e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';
-      mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>{if(x!==row)x.classList.remove('is-drop-target');});
-      row.classList.add('is-drop-target');
-    };
-    row.ondrop=e=>{
-      e.preventDefault();row.classList.remove('is-drop-target');
-      const id=(e.dataTransfer&&(e.dataTransfer.getData('text/netwizard-rack-item')||e.dataTransfer.getData('text/plain')))||selectedRackItemId;
-      if(!id)return;
+      const hit=root.document.elementFromPoint(e.clientX,e.clientY);
+      const row=hit&&hit.closest&&hit.closest('[data-drop-rack-item="1"]');
+      clearTargets();
+      if(!wasDragging||!row)return;
+      e.preventDefault();suppressRackClickUntil=Date.now()+300;
+      const id=node.dataset.itemId||selectedRackItemId;if(!id)return;
       const result=moveRackItem(state.getSnapshot(),id,row.dataset.rackId,Number(row.dataset.unit));
       selectedRackItemId=id;
       if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
       rackEditorNotice=`Movido a ${arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId} · U${row.dataset.unit}. Cableado y referencias conservados.`;
-      state.replaceProject(result.project,{source:'rack-drag-drop'});
+      state.replaceProject(result.project,{source:'rack-pointer-drag'});
+    };
+    node.onpointerup=finishPointer;
+    node.onpointercancel=e=>{
+      if(pointer&&pointer.id===e.pointerId)pointer=null;
+      node.classList.remove('is-dragging');clearTargets();
     };
   }
-}
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
 const api={version:'netwizard-rack-ui-v6',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,rackItemPlacement,moveRackItem,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
 })(typeof window!=='undefined'?window:globalThis);
