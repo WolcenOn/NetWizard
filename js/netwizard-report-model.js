@@ -9,7 +9,9 @@ const CABLING=root.NetWizardStructuredCabling||(typeof require==='function'?requ
 const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
 function labelDevice(project,id){const d=byId(project&&project.devices,id);return d?d.name||d.id:'Sin equipo asignado';}
 function labelPort(project,id){const p=byId(project&&project.ports,id);return p?`${labelDevice(project,p.deviceId)} · ${p.name||p.id}`:'Sin puerto asignado';}
-function connectivity(project){return arr(project&&project.links).map(link=>({id:link.id,name:link.name||'Enlace',aPort:labelPort(project,link.aPortId||link.a),bPort:labelPort(project,link.bPortId||link.b),media:link.media||link.cableType||'No documentado',capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||'No documentada',cableId:link.cableId||null}));}
+function linkPortA(link){return link&&(link.aPortId||link.a||link.fromPortId||link.from||link.portA)||null;}
+function linkPortB(link){return link&&(link.bPortId||link.b||link.toPortId||link.to||link.portB)||null;}
+function connectivity(project){return arr(project&&project.links).map(link=>({id:link.id,name:link.name||link.label||'Enlace',aPort:labelPort(project,linkPortA(link)),bPort:labelPort(project,linkPortB(link)),media:link.media||link.medium||link.cableType||'No documentado',capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||link.route||'No documentada',cableId:link.cableId||null}));}
 function inventory(project){return arr(project&&project.devices).map(d=>({id:d.id,name:d.name||d.id,type:d.type||'unknown',vendor:d.vendor||d.vendorOs||d.platform||'',model:d.model||'',rackId:d.rackId||d.rack||null,rackUnit:d.rackUnit||null,heightUnits:d.rackUnits||d.heightU||1,powerDrawWatts:d.powerDrawWatts||null,poeBudgetWatts:d.poeBudgetW||d.poeBudgetWatts||null}));}
 function mediaKind(value){
  const s=clean(value).toLowerCase();
@@ -23,7 +25,7 @@ function mediaKind(value){
  return'other';
 }
 function mediaLabel(value){return clean(value)||'No documentado';}
-function portIdFromLink(link,key){return link&&(link[key+'PortId']||link[key])||null;}
+function portIdFromLink(link,key){return key==='a'?linkPortA(link):linkPortB(link);}
 function buildPortMatrices(project,structuredCabling){
  const ports=arr(project&&project.ports),links=arr(project&&project.links),hosts=arr(project&&project.hosts);
  const linkByPort=new Map();
@@ -46,8 +48,8 @@ function buildPortMatrices(project,structuredCabling){
      const direct=linkByPort.get(port.id);
      if(direct){
        const remote=byId(ports,direct.otherId),link=direct.link;
-       const medium=link.media||link.cableType||port.media||'No documentado';
-       return{id:port.id,name:port.name||port.id,destination:remote?labelDevice(project,remote.deviceId):'Extremo no documentado',remotePort:remote?remote.name||remote.id:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:link.physicalPath||link.name||'Enlace directo',connectionType:'direct'};
+       const medium=link.media||link.medium||link.cableType||port.media||'No documentado';
+       return{id:port.id,name:port.name||port.id,destination:remote?labelDevice(project,remote.deviceId):'Extremo no documentado',remotePort:remote?remote.name||remote.id:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:link.physicalPath||link.route||link.name||link.label||'Enlace directo',connectionType:'direct'};
      }
      const path=structuredByPort.get(port.id);
      if(path){
@@ -64,6 +66,69 @@ function buildPortMatrices(project,structuredCabling){
    });
    return{deviceId:device.id,deviceName:device.name||device.id,rackId:device.rackId||device.rack||null,ports:mapped};
  }).filter(x=>x.ports.length);
+}
+function buildStructuredChains(project,structuredCabling){
+ const ports=arr(project&&project.ports),devices=arr(project&&project.devices),panels=arr(project&&project.patchPanels),outlets=arr(project&&project.telecomOutlets),hosts=arr(project&&project.hosts),locations=arr(project&&project.physicalLocations);
+ return arr(structuredCabling&&structuredCabling.paths).map(path=>{
+   const port=byId(ports,path.switchPortId),device=port?byId(devices,port.deviceId):null,panel=byId(panels,path.patchPanelId),outlet=byId(outlets,path.outletId),host=byId(hosts,path.hostId),location=outlet?byId(locations,outlet.locationId):null;
+   const missing=[];
+   if(!port)missing.push('puerto de switch');
+   if(!panel)missing.push('patch panel');
+   if(!outlet)missing.push('toma');
+   if(!host)missing.push('equipo final');
+   const lengths=[path.patchCordLengthM,path.lengthM,path.hostCordLengthM].map(Number).filter(Number.isFinite);
+   return{
+     id:path.id,label:path.label||path.id,rackId:panel&&panel.rackId||null,
+     switchPortId:path.switchPortId||null,switchDeviceId:device&&device.id||null,switchDeviceName:device?device.name||device.id:'Sin switch',switchPortName:port?port.name||port.id:'Sin puerto',
+     patchCordLengthM:path.patchCordLengthM,patchPanelId:path.patchPanelId||null,patchPanelName:panel?panel.name||panel.id:path.panelLabel||'Sin patch panel',patchPort:path.patchPort||null,
+     cableType:path.cableType||'No documentado',lengthM:path.lengthM,route:path.route||'Ruta no documentada',
+     outletId:path.outletId||null,outletName:outlet?outlet.name||outlet.id:path.outletLabel||'Sin toma',outletPort:path.outletPort||1,locationName:location?location.name||location.id:'Ubicación no documentada',
+     hostId:path.hostId||null,hostName:host?host.name||host.hostname||host.id:path.hostLabel||'Sin equipo final',hostCordLengthM:path.hostCordLengthM,
+     totalLengthM:lengths.length?lengths.reduce((a,b)=>a+b,0):null,complete:!!path.complete&&!missing.length,missing
+   };
+ });
+}
+function buildRackSummaries(project,racks,structuredChains,powerMap){
+ const devices=arr(project&&project.devices),ports=arr(project&&project.ports),links=arr(project&&project.links),items=arr(racks&&racks.items),rackIssues=arr(racks&&racks.issues),panels=arr(project&&project.patchPanels),pdus=arr(project&&project.pdus);
+ const rackByDevice=new Map();
+ for(const d of devices)if(d&&(d.rackId||d.rack))rackByDevice.set(d.id,d.rackId||d.rack);
+ for(const item of items)if(item&&item.deviceId&&item.rackId&&!rackByDevice.has(item.deviceId))rackByDevice.set(item.deviceId,item.rackId);
+ const portById=new Map(ports.map(p=>[p.id,p]));
+ return arr(racks&&racks.racks).map(rack=>{
+   const ownItems=items.filter(i=>i.rackId===rack.id),ownDevices=devices.filter(d=>rackByDevice.get(d.id)===rack.id),deviceIds=new Set(ownDevices.map(d=>d.id)),used=new Set();
+   for(const item of ownItems)for(let u=Number(item.startUnit);Number.isFinite(u)&&u<Number(item.startUnit)+Number(item.heightUnits||1);u++)used.add(u);
+   const dataLinks=links.filter(link=>{const a=portById.get(linkPortA(link)),b=portById.get(linkPortB(link));return !!((a&&deviceIds.has(a.deviceId))||(b&&deviceIds.has(b.deviceId)));});
+   const chains=structuredChains.filter(x=>x.rackId===rack.id);
+   const ownPower=arr(powerMap&&powerMap.rows).filter(x=>x.rackId===rack.id);
+   const feeds=[...new Set(ownPower.map(x=>clean(x.feed)).filter(Boolean))];
+   return{
+     rackId:rack.id,rackName:rack.name||rack.id,locationId:rack.locationId||null,totalUnits:rack.rackUnits||42,usedUnits:used.size,freeUnits:Math.max(0,Number(rack.rackUnits||42)-used.size),
+     devices:ownDevices.length,passiveItems:ownItems.filter(i=>!i.deviceId).length,patchPanels:panels.filter(p=>p.rackId===rack.id).length,pdus:pdus.filter(p=>p.rackId===rack.id).length,
+     dataLinks:dataLinks.length,structuredRuns:chains.length,powerConnections:ownPower.filter(x=>x.status==='connected').length,missingPower:ownPower.filter(x=>x.status!=='connected').length,feeds,issues:rackIssues.filter(i=>i.rackId===rack.id).length
+   };
+ });
+}
+function buildInstallationChecklist(project,rackSummaries,structuredChains,powerMap){
+ const tasks=[],devices=arr(project&&project.devices),items=arr(project&&project.rackItems),ports=arr(project&&project.ports),portById=new Map(ports.map(p=>[p.id,p]));
+ const rackByDevice=new Map();
+ for(const d of devices)if(d&&(d.rackId||d.rack))rackByDevice.set(d.id,d.rackId||d.rack);
+ for(const item of items)if(item&&item.deviceId&&item.rackId&&!rackByDevice.has(item.deviceId))rackByDevice.set(item.deviceId,item.rackId);
+ const push=(rackId,category,task,reference,documented=true)=>tasks.push({rackId:rackId||null,category,task,reference:reference||'—',documented:!!documented});
+ for(const item of items)push(item.rackId,'Montaje',`Montar ${item.label||item.name||item.id} en ${Number.isFinite(Number(item.startUnit))?'U'+item.startUnit:'posición definida'}`,item.face||'front',Number.isFinite(Number(item.startUnit))||String(item.mounting||'').startsWith('vertical'));
+ for(const link of arr(project&&project.links)){
+   const a=portById.get(linkPortA(link)),b=portById.get(linkPortB(link)),rackId=a&&rackByDevice.get(a.deviceId)||b&&rackByDevice.get(b.deviceId)||null;
+   push(rackId,'Datos',`Conectar ${labelPort(project,linkPortA(link))} ↔ ${labelPort(project,linkPortB(link))}`,[link.media||link.medium||link.cableType,link.physicalPath||link.route].filter(Boolean).join(' · '),!!(a&&b));
+ }
+ for(const chain of structuredChains){
+   push(chain.rackId,'Parcheo',`Conectar ${chain.switchDeviceName} · ${chain.switchPortName} → ${chain.patchPanelName} · P${chain.patchPort||'—'}`,chain.patchCordLengthM!=null?`Latiguillo ${chain.patchCordLengthM} m`:'Latiguillo rack',!!chain.switchPortId);
+   push(chain.rackId,'Cableado',`Tender ${chain.patchPanelName} · P${chain.patchPort||'—'} → ${chain.outletName} · P${chain.outletPort||1}`,[chain.cableType,chain.lengthM!=null?`${chain.lengthM} m`:null,chain.route].filter(Boolean).join(' · '),!!(chain.patchPanelId&&chain.outletId));
+   push(chain.rackId,'Puesto final',`Conectar ${chain.outletName} · P${chain.outletPort||1} → ${chain.hostName}`,chain.hostCordLengthM!=null?`Latiguillo ${chain.hostCordLengthM} m`:'Latiguillo usuario',!!chain.hostId);
+   push(chain.rackId,'Etiquetado',`Etiquetar ambos extremos de ${chain.label}`,`${chain.patchPanelName} P${chain.patchPort||'—'} / ${chain.outletName} P${chain.outletPort||1}`,chain.complete);
+   push(chain.rackId,'Certificación',`Certificar enlace ${chain.label}`,chain.cableType,chain.complete);
+ }
+ for(const row of arr(powerMap&&powerMap.rows))push(row.rackId,'Energía',`Conectar ${row.deviceName} PSU-${row.psu} → ${row.pduName}`,row.outlet?`Toma ${row.outlet} · feed ${row.feed||'—'}`:'Sin toma documentada',row.status==='connected');
+ for(const rack of rackSummaries)push(rack.rackId,'Verificación',`Verificar rack ${rack.rackName}: enlaces, alimentación y etiquetado`,`${rack.devices} equipos · ${rack.dataLinks+rack.structuredRuns} enlaces de datos`,rack.missingPower===0&&rack.issues===0);
+ return tasks;
 }
 function buildPowerMap(project,racks){
  const devices=arr(project&&project.devices),items=arr(racks&&racks.items),pdus=arr(project&&project.pdus),connections=arr(project&&project.powerConnections);
@@ -98,14 +163,17 @@ function build(project,options){
  const rackTopologies=RACK&&typeof RACK.rackTopology==='function'?racks.racks.map(r=>RACK.rackTopology(project,r.id)):[];
  const portMatrices=buildPortMatrices(project,structuredCabling);
  const powerMap=buildPowerMap(project,racks);
+ const structuredChains=buildStructuredChains(project,structuredCabling);
+ const rackSummaries=buildRackSummaries(project,racks,structuredChains,powerMap);
+ const installationChecklist=buildInstallationChecklist(project,rackSummaries,structuredChains,powerMap);
  return{
    version:'netwizard-report-model-v3',
    project:{name:project.projName||project.name||'Red',schemaVersion:project._schemaVersion||null},
    summary:{devices:arr(project.devices).length,ports:arr(project.ports).length,links:arr(project.links).length,hosts:arr(project.hosts).length,vlans:arr(project.vlans).length,racks:racks.racks.length,wanCircuits:arr(project.wanCircuits).length,poeLoadWatts:Object.values(poe.loadsByDevice).reduce((a,b)=>a+Number(b||0),0)},
-   connectivity:connectivity(project),inventory:inventory(project),materials,racks,rackTopologies,structuredCabling,portMatrices,powerMap,poe,findings:arr(gate.issues)
+   connectivity:connectivity(project),inventory:inventory(project),materials,racks,rackTopologies,structuredCabling,structuredChains,portMatrices,powerMap,rackSummaries,installationChecklist,poe,findings:arr(gate.issues)
  };
 }
-const api={version:'netwizard-report-model-v2',build,connectivity,inventory,labelDevice,labelPort,mediaKind,mediaLabel,buildPortMatrices,buildPowerMap};
+const api={version:'netwizard-report-model-v3',build,connectivity,inventory,labelDevice,labelPort,linkPortA,linkPortB,mediaKind,mediaLabel,buildPortMatrices,buildPowerMap,buildStructuredChains,buildRackSummaries,buildInstallationChecklist};
 root.NetWizardReportModel=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
