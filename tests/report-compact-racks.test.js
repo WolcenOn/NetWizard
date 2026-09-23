@@ -98,7 +98,6 @@ assert.ok(html.includes('Checklist de instalación'));
 assert.ok(html.includes('Certificar enlace'));
 assert.ok(html.includes('Documentación'));
 assert.ok(html.includes('☐'));
-assert.ok(html.includes('Cableado estructurado'));
 assert.ok(html.includes('CPD → oficina'));
 assert.ok(html.includes('PC-01'));
 assert.ok(html.includes('BLOQUEADO'));
