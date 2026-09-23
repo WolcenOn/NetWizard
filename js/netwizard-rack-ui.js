@@ -88,7 +88,25 @@ function input(type,placeholder,value){const n=document.createElement('input');n
 function select(options,value){const n=document.createElement('select');for(const [v,l] of options){const o=document.createElement('option');o.value=v;o.textContent=l;o.selected=String(v)===String(value??'');n.appendChild(o);}return n;}
 function button(text,cls,action){const b=el('button',`btn ${cls||'bs'}`,text);b.type='button';if(action)b.dataset.action=action;return b;}
 function ensureLayoutCss(){if(!root.document||root.document.querySelector('link[data-netwizard-layout]'))return;const link=root.document.createElement('link');link.rel='stylesheet';link.href='./css/netwizard-layout.css';link.dataset.netwizardLayout='1';root.document.head.appendChild(link);}
-function rackDiagram(project,rack){const box=el('div','rack-diagram');const items=MODEL.allRackItems(project).filter(x=>x.rackId===rack.id);for(let u=rack.rackUnits;u>=1;u--){const row=el('div','rack-u');const label=el('div','rack-u-label',`U${u}`);const hit=items.find(i=>u>=Number(i.startUnit)&&u<Number(i.startUnit)+Number(i.heightUnits||1));const content=el('div',hit?'rack-u-used':'rack-u-free',hit?(hit.label||hit.name||hit.type):'Libre');row.append(label,content);box.appendChild(row);}return box;}
+function rackDiagram(project,rack){
+  const box=el('div','rack-diagram');box.dataset.rackId=rack.id;
+  const items=MODEL.allRackItems(project).filter(x=>x.rackId===rack.id);
+  for(let u=rack.rackUnits;u>=1;u--){
+    const row=el('div','rack-u');row.dataset.rackId=rack.id;row.dataset.unit=String(u);row.dataset.dropRackItem='1';
+    const label=el('div','rack-u-label',`U${u}`);
+    const hit=items.find(i=>u>=Number(i.startUnit)&&u<Number(i.startUnit)+Number(i.heightUnits||1));
+    const content=el('div',hit?'rack-u-used':'rack-u-free',hit?(hit.label||hit.name||hit.type):'Libre');
+    if(hit){
+      content.dataset.action='select-rack-item';content.dataset.itemId=hit.id;content.dataset.rackId=rack.id;
+      content.draggable=true;content.title='Clic para editar · arrastra para cambiar de U o rack';
+      if(hit.id===selectedRackItemId)content.classList.add('is-selected');
+      const meta=el('small','rack-u-meta',`${hit.type||'elemento'} · ${hit.heightUnits||1}U`);
+      content.appendChild(meta);
+    }
+    row.append(label,content);box.appendChild(row);
+  }
+  return box;
+}
 function rackTopologyView(project,rack){
   const topology=MODEL.rackTopology?MODEL.rackTopology(project,rack.id):{dataEdges:[],powerEdges:[]};
   const wrap=el('div','rack-topology');
@@ -122,9 +140,39 @@ const itemForm=el('form','rack-editor-form');itemForm.dataset.form='item';const 
 const pduForm=el('form','rack-editor-form');pduForm.dataset.form='pdu';const pduRack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),'');const pduName=input('text','PDU-A');const pduFeed=select([['A','Alimentación A'],['B','Alimentación B'],['UPS','UPS']],'A');const pduOutlets=input('number','12',12);pduOutlets.min='1';const pduPower=input('number','3680');pduForm.append(field('Rack',pduRack),field('Nombre',pduName),field('Feed',pduFeed),field('Tomas',pduOutlets),field('Potencia máxima W',pduPower),button('➕ Crear PDU','bp','add-pdu'));pduForm.elementsRef={pduRack,pduName,pduFeed,pduOutlets,pduPower};
 const powerForm=el('form','rack-editor-form');powerForm.dataset.form='power';const powerDevice=select(arr(project.devices).map(x=>[x.id,x.name||x.id]),'');const powerPdu=select(arr(project.pdus).map(x=>[x.id,x.name||x.id]),'');const powerOutlet=input('number','1',1);powerOutlet.min='1';const powerPsu=input('number','0',0);powerPsu.min='0';powerForm.append(field('Equipo',powerDevice),field('PDU',powerPdu),field('Toma',powerOutlet),field('Fuente nº',powerPsu),button('🔌 Conectar alimentación','bp','add-power'));powerForm.elementsRef={powerDevice,powerPdu,powerOutlet,powerPsu};
 for(const [title,form] of [['Nuevo rack',rackForm],['Elemento de rack',itemForm],['PDU / regleta',pduForm],['Conexión eléctrica',powerForm]]){const group=el('section','rack-editor-group');group.append(el('h3','',title),form);tabs.appendChild(group);}card.appendChild(tabs);return card;}
+function selectedItemEditor(project){
+  const item=MODEL.allRackItems(project).find(x=>x.id===selectedRackItemId);
+  const card=el('div','card nw-card-wide rack-selected-editor');
+  const title=el('div','card-h');title.append(el('div','card-t','🎛 Elemento seleccionado'));
+  if(!item){card.append(title,el('p','hint','Haz clic en un elemento del rack para cargar sus propiedades. También puedes arrastrarlo directamente a otra U.'));return card;}
+  title.appendChild(el('span','b bac',item.type||'elemento'));card.appendChild(title);
+  if(rackEditorNotice)card.appendChild(el('div','co co-yw',rackEditorNotice));
+  const form=el('form','rack-editor-form rack-selected-form');form.dataset.form='selected-item';form.dataset.itemId=item.id;
+  const rack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),item.rackId);
+  const label=input('text','Etiqueta',item.label||item.name||'');
+  const start=input('number','U',item.startUnit);start.min='1';
+  const height=input('number','Altura U',item.heightUnits||1);height.min='1';
+  const face=select([['front','Frontal'],['rear','Trasera']],item.face||'front');
+  const mounting=input('text','Montaje',item.mounting||'');
+  const weight=input('number','Peso kg',item.weightKg);weight.min='0';weight.step='0.1';
+  const power=input('number','Consumo W',item.powerDrawWatts);power.min='0';power.step='0.1';
+  form.append(
+    field('Rack',rack),field('Etiqueta',label),field('Unidad inicial',start),field('Altura U',height),
+    field('Cara',face),field('Montaje',mounting),field('Peso kg',weight),field('Consumo W',power)
+  );
+  const actions=el('div','rack-selected-actions');
+  const save=button('💾 Guardar cambios','bp','update-selected-item');save.dataset.id=item.id;
+  const remove=button('🗑 Eliminar del rack','bd','remove-rack-item');remove.dataset.id=item.id;
+  actions.append(save,remove);form.appendChild(actions);form.elementsRef={rack,label,start,height,face,mounting,weight,power};
+  const relation=[];
+  if(item.deviceId)relation.push('Equipo: '+(arr(project.devices).find(x=>x.id===item.deviceId)?.name||item.deviceId));
+  if(item.patchPanelId)relation.push('Patch panel: '+(arr(project.patchPanels).find(x=>x.id===item.patchPanelId)?.name||item.patchPanelId));
+  if(relation.length)card.appendChild(el('p','hint',relation.join(' · ')+' · Las conexiones se conservan al moverlo.'));
+  card.appendChild(form);return card;
+}
 function summaryCard(project,rack,validation){const card=el('div','card');const h=el('div','card-h');h.append(el('div','card-t',`🗄 ${rack.name||rack.id}`),el('span','b bac',`${rack.rackUnits}U`));const del=button('Eliminar','bd bxs','remove-rack');del.dataset.id=rack.id;h.appendChild(del);card.appendChild(h);const loc=arr(project.physicalLocations).find(x=>x.id===rack.locationId);card.appendChild(el('div','hint',`${loc?loc.name:'Ubicación no definida'} · ${rack.widthMm||'—'}×${rack.depthMm||'—'} mm`));const grid=el('div','g2 nw-grid-adaptive');grid.appendChild(rackDiagram(project,rack));const details=el('div','nw-panel-stack');const issues=arr(validation.issues).filter(i=>i.rackId===rack.id);const items=MODEL.allRackItems(project).filter(i=>i.rackId===rack.id);const used=new Set();items.forEach(i=>{for(let u=Number(i.startUnit);u<Number(i.startUnit)+Number(i.heightUnits||1);u++)used.add(u);});details.append(el('p','',`Ocupación: ${used.size}/${rack.rackUnits}U`),el('p','',`Elementos: ${items.length}`),el('p','',`Incidencias: ${issues.length}`));const pdus=arr(project.pdus).filter(x=>x.rackId===rack.id);details.appendChild(el('p','',`PDU/regletas: ${pdus.length}`));for(const pdu of pdus){const line=el('div','rack-list-row');line.append(el('span','',`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas · feed ${pdu.feed||'—'}`));const b=button('Quitar','bd bxs','remove-pdu');b.dataset.id=pdu.id;line.appendChild(b);details.appendChild(line);}if(issues.length){const ul=el('ul','rack-issues');issues.slice(0,8).forEach(i=>ul.appendChild(el('li','',i.message)));details.appendChild(ul);}grid.append(details);card.appendChild(grid);card.appendChild(rackTopologyView(project,rack));return card;}
 function connectionsCard(project){const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','🔌 Conexiones de alimentación'));const list=el('div','nw-panel-stack');for(const c of arr(project.powerConnections)){const d=arr(project.devices).find(x=>x.id===c.deviceId),p=arr(project.pdus).find(x=>x.id===c.pduId);const row=el('div','rack-list-row');row.appendChild(el('span','',`${d?.name||c.deviceId||'Equipo'} PSU-${Number(c.powerSupplyIndex||0)+1} → ${p?.name||c.pduId||'PDU'} / toma ${c.outlet||'—'}`));const b=button('Quitar','bd bxs','remove-power');b.dataset.id=c.id;row.appendChild(b);list.appendChild(row);}if(!arr(project.powerConnections).length)list.appendChild(el('div','empty','No hay conexiones eléctricas definidas.'));card.appendChild(list);return card;}
-function render(project){ensureLayoutCss();project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');const validation=MODEL.validate(project);const head=el('div','card nw-card-wide');const hh=el('div','card-h');hh.append(el('div','card-t','🗄 Racks, alimentación y material pasivo'),el('span',`b ${validation.ok?'bgn':'brd'}`,validation.ok?'Sin bloqueos':`${validation.issues.length} incidencias`));head.appendChild(hh);head.appendChild(el('p','hint','Crea racks, coloca equipos y material pasivo por unidades, define PDU y conecta fuentes de alimentación.'));wrap.append(head,editorCard(project));if(validation.racks.length){const rackGrid=el('div','nw-card-grid');validation.racks.forEach(r=>rackGrid.appendChild(summaryCard(project,r,validation)));wrap.appendChild(rackGrid);}else wrap.appendChild(el('div','co co-yw','No hay racks definidos. Usa el editor para crear el primero.'));wrap.appendChild(connectionsCard(project));const bom=MODEL.billOfMaterials(project);const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','📦 Materiales de rack'));const ul=el('ul','');bom.forEach(x=>ul.appendChild(el('li','',`${x.quantity} × ${x.description||x.label||x.name||x.kind||x.type||'Material'}`)));if(!bom.length)ul.appendChild(el('li','empty','No hay materiales definidos.'));card.appendChild(ul);wrap.appendChild(card);return wrap;}
+function render(project){ensureLayoutCss();project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');const validation=MODEL.validate(project);const head=el('div','card nw-card-wide');const hh=el('div','card-h');hh.append(el('div','card-t','🗄 Racks, alimentación y material pasivo'),el('span',`b ${validation.ok?'bgn':'brd'}`,validation.ok?'Sin bloqueos':`${validation.issues.length} incidencias`));head.appendChild(hh);head.appendChild(el('p','hint','Crea racks, coloca equipos y material pasivo por unidades, define PDU y conecta fuentes de alimentación.'));wrap.append(head,editorCard(project),selectedItemEditor(project));if(validation.racks.length){const rackGrid=el('div','nw-card-grid');validation.racks.forEach(r=>rackGrid.appendChild(summaryCard(project,r,validation)));wrap.appendChild(rackGrid);}else wrap.appendChild(el('div','co co-yw','No hay racks definidos. Usa el editor para crear el primero.'));wrap.appendChild(connectionsCard(project));const bom=MODEL.billOfMaterials(project);const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','📦 Materiales de rack'));const ul=el('ul','');bom.forEach(x=>ul.appendChild(el('li','',`${x.quantity} × ${x.description||x.label||x.name||x.kind||x.type||'Material'}`)));if(!bom.length)ul.appendChild(el('li','empty','No hay materiales definidos.'));card.appendChild(ul);wrap.appendChild(card);return wrap;}
 function bind(mount,state){mount.onclick=e=>{const action=e.target&&e.target.dataset&&e.target.dataset.action;if(!action)return;const snapshot=state.getSnapshot();let next=snapshot;if(action==='add-rack'){const f=mount.querySelector('[data-form="rack"]');const r=f.elementsRef;next=addRack(snapshot,{name:r.rackName.value,rackUnits:r.rackUnits.value,locationId:r.rackLocation.value,powerCapacityWatts:r.rackPower.value});}
 if(action==='add-item'){const f=mount.querySelector('[data-form="item"]');const r=f.elementsRef;next=upsertRackItem(snapshot,{rackId:r.itemRack.value,type:r.itemType.value,deviceId:r.itemDevice.value,label:r.itemLabel.value,startUnit:r.itemStart.value,heightUnits:r.itemHeight.value});}
 if(action==='add-pdu'){const f=mount.querySelector('[data-form="pdu"]');const r=f.elementsRef;next=addPdu(snapshot,{rackId:r.pduRack.value,name:r.pduName.value,feed:r.pduFeed.value,outletCount:r.pduOutlets.value,maxPowerWatts:r.pduPower.value});}
