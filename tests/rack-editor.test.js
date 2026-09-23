@@ -43,6 +43,16 @@ let interactive={
   patchConnections:[{id:'pc1',patchPanelId:'pp1',patchPort:1,switchPortId:'p1'}],
   pdus:[],powerConnections:[]
 };
+const edited=UI.updateRackItemFromEditor(interactive,'ri-sw2',{
+  rackId:'rackA',label:'SW-02 editado',startUnit:12,heightUnits:1,face:'front',
+  mounting:'',weightKg:'8.5',powerDrawWatts:'95'
+});
+assert.strictEqual(edited.ok,true);
+assert.strictEqual(edited.project.rackItems.find(x=>x.id==='ri-sw2').label,'SW-02 editado');
+assert.strictEqual(edited.project.rackItems.find(x=>x.id==='ri-sw2').startUnit,12);
+assert.strictEqual(edited.project.devices.find(x=>x.id==='sw2').rackUnit,12);
+assert.strictEqual(edited.project.rackItems.find(x=>x.id==='ri-sw2').powerDrawWatts,95);
+
 let moved=UI.moveRackItem(interactive,'ri-sw2','rackB',15);
 assert.strictEqual(moved.ok,true);
 assert.strictEqual(moved.project.rackItems.find(x=>x.id==='ri-sw2').rackId,'rackB');
