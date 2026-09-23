@@ -12,7 +12,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - VLANs, VLSM, DHCP avanzado, tránsito L3 e IPs de interfaces routed.
 - Rutas estáticas básicas.
 - Políticas firewall/ACL desde intención por VLAN.
-- Cableado, longitudes, PoE y riesgo broadcast.
+- Cableado estructurado extremo a extremo, racks, patch panels, tomas, PDU/alimentación, longitudes, PoE y riesgo broadcast.
 - Auditoría L1/L2/L3/IP/DHCP/PoE/políticas/vendor.
 - Puerta de producción con guía de corrección y checklist Markdown.
 - Paquete de despliegue ZIP con puerta estricta, configuraciones por dispositivo, snapshot 3.50, inventario, matriz, documentación, checklist, manifiesto CRC32 y runbook reversible.
@@ -21,12 +21,15 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Registro incremental denegado por defecto, con candidatos Junos `set/delete`, Cisco IOS jerárquico, FortiOS `config/edit/set` y RouterOS v7 `.rsc` administrados, rollback inverso y modo estricto que bloquea fabricantes sin adaptador seguro.
 - Panel por dispositivo para pegar y conservar una captura real, ejecutar el preflight observado → deseado y descargar candidato/rollback cuando el adaptador lo certifica.
 - Exportaciones individuales de configuración, inventario CSV, matriz de conectividad y documentación Markdown.
-- Schema externo, samples y tests unitarios/E2E preparados.
+- Schema externo 3.50 alineado con racks, alimentación y cableado estructurado; samples y tests unitarios/E2E preparados.
 - Matriz de escenarios de producción 3.50: oficina, campus, IoT/cámaras y tránsito L3 con estado esperado, avisos aceptados y firmas de configuración por dispositivo.
 - Registro inspeccionable de renderers y etapas de configuración, sin wrappers globales dependientes del orden de carga.
 - Registro canónico de dispositivos y fabricantes: `kind` distingue switch, router, firewall, AP, controlador WLAN, servidor gestionado y appliance; `type` se conserva como espejo compatible durante 3.50.
 - Modelo 3.50 para routing, HA, seguridad, gestión, WAN, Wi-Fi, IPv6/VRF, resiliencia, capacidad, servicios y drift.
 - `package-lock.json`, licencia, changelog y script de empaquetado reproducible.
+- Golden sample determinista de cuatro sedes con VLANs/VLSM, trunks, racks, cableado, PoE y alimentación A/B.
+- Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
+- Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada.
 
 ## Uso rápido
 
