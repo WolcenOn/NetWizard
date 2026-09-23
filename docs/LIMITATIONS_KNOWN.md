@@ -27,6 +27,11 @@
 - El pipeline 3.50 usa un registro inspeccionable de renderers/etapas y mantiene compatibilidad con integraciones legacy; todavía existe código UI histórico en `js/netwizard.js` que conviene seguir modularizando.
 - `kind` es el identificador canónico de clase de dispositivo en 3.50 y `type` se mantiene como espejo compatible durante la transición.
 
+## Informes e impresión
+
+- Las matrices de puertos están optimizadas para consulta digital y pueden usar desplazamiento horizontal.
+- En impresión/PDF, proyectos con muchos puertos todavía necesitan una paginación dedicada por bancos para garantizar que ningún puerto quede fuera del área imprimible. Esta optimización queda pendiente de una pasada específica de maquetación para papel.
+
 ## Seguridad
 
 - Se ha añadido sanitización, pero cualquier JSON importado debe considerarse no confiable.

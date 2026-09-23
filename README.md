@@ -30,6 +30,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Golden sample determinista de cuatro sedes con VLANs/VLSM, trunks, racks, cableado, PoE y alimentación A/B.
 - Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
 - Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada.
+- Diagnóstico de conectividad reutilizable desde V5: reconstruye la ruta física documentada y simula ICMP, DNS, HTTPS, MQTT y RTSP contra VLANs, gateways, matriz inter-VLAN y firewall.
 
 ## Uso rápido
 
