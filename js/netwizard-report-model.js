@@ -48,8 +48,8 @@ function buildPortMatrices(project,structuredCabling){
      const direct=linkByPort.get(port.id);
      if(direct){
        const remote=byId(ports,direct.otherId),link=direct.link;
-       const medium=link.media||link.cableType||port.media||'No documentado';
-       return{id:port.id,name:port.name||port.id,destination:remote?labelDevice(project,remote.deviceId):'Extremo no documentado',remotePort:remote?remote.name||remote.id:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:link.physicalPath||link.name||'Enlace directo',connectionType:'direct'};
+       const medium=link.media||link.medium||link.cableType||port.media||'No documentado';
+       return{id:port.id,name:port.name||port.id,destination:remote?labelDevice(project,remote.deviceId):'Extremo no documentado',remotePort:remote?remote.name||remote.id:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:link.physicalPath||link.route||link.name||link.label||'Enlace directo',connectionType:'direct'};
      }
      const path=structuredByPort.get(port.id);
      if(path){
