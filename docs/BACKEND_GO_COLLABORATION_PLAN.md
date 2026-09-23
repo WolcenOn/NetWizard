@@ -2,6 +2,12 @@
 
 Este documento define la dirección técnica para pasar de NetWizard como aplicación estática/local a una aplicación con backend en Go, proyectos compartidos y edición colaborativa en tiempo real.
 
+## Estado actual
+
+La infraestructura base ya existe: servidor Go, serving del frontend, `/api/health`, `/api/version`, Docker/Railway y un paquete `internal/realtime` con salas, presencia, operaciones y contratos de snapshot/store. El realtime todavía no está conectado a WebSocket ni persistencia y no existe autenticación/autorización multiusuario.
+
+La frontera vigente entre cliente y servidor se documenta en [`BACKEND_BOUNDARIES.md`](BACKEND_BOUNDARIES.md). Este roadmap no autoriza por sí solo a mover lógica de dominio al backend: cualquier migración debe cumplir ese contrato.
+
 ## Objetivo
 
 Mantener la app actual funcionando en modo local/offline mientras se añade progresivamente un backend que permita:
