@@ -16,7 +16,19 @@ npm test
 npm run check:syntax
 ```
 
-3. Instalar y ejecutar E2E:
+3. Ejecutar los tests del backend Go:
+
+```bash
+go test ./...
+```
+
+4. Validar que el contenedor de producción construye:
+
+```bash
+docker build .
+```
+
+5. Instalar y ejecutar E2E:
 
 ```bash
 npm run test:e2e:install
@@ -25,7 +37,7 @@ npm run test:e2e
 
 El smoke test debe confirmar `NetWizardRuntime.status.ok === true`: ningún módulo requerido ausente, ningún script duplicado, puerta de arquitectura activa y todas las etapas del pipeline de configuración instaladas.
 
-4. Abrir el proyecto real en navegador y ejecutar:
+6. Abrir el proyecto real en navegador y ejecutar:
 
 - Puerta de producción.
 - Auditoría L2 avanzada.
@@ -53,12 +65,14 @@ El smoke test debe confirmar `NetWizardRuntime.status.ok === true`: ningún mód
 
 ## Publicación en GitHub Pages
 
-El workflow `NetWizard CI` empaqueta y despliega Pages únicamente después de superar `quality` y `e2e`. En la configuración del repositorio debe seleccionarse **GitHub Actions** como origen de Pages; no debe coexistir un despliegue independiente desde rama.
+El workflow `NetWizard CI` empaqueta y despliega Pages únicamente después de superar Quality JS, tests Go, Playwright y la construcción del contenedor. En la configuración del repositorio debe seleccionarse **GitHub Actions** como origen de Pages; no debe coexistir un despliegue independiente desde rama.
 
 La rama `main` debe protegerse exigiendo como comprobaciones obligatorias:
 
 - `Quality checks`
+- `Go backend tests`
 - `Playwright E2E`
+- `Docker build`
 
 El entorno `github-pages` puede protegerse adicionalmente para limitar despliegues a `main`.
 
@@ -66,4 +80,4 @@ El entorno `github-pages` puede protegerse adicionalmente para limitar despliegu
 
 Esta preparación es para ejecución local, laboratorio, formación, preventa, documentación o uso profesional controlado.
 
-No equivale a plataforma SaaS multiusuario: no hay backend, autenticación, roles, auditoría de usuarios, backups centralizados ni despliegue cloud endurecido.
+Existe un backend Go mínimo y un despliegue de contenedor, pero esto no equivale a plataforma SaaS multiusuario: todavía no hay autenticación, autorización por proyecto, persistencia remota, auditoría de usuarios ni backups de base de datos.
