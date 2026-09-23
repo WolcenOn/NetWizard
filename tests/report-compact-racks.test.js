@@ -29,7 +29,7 @@ const project={
     {id:'p3',deviceId:'sw1',name:'Gi1/0/2',mode:'access',media:'copper'},
     {id:'p4',deviceId:'sw1',name:'Gi1/0/3',mode:'access',media:'copper'}
   ],
-  links:[{id:'l1',name:'Uplink servidor',aPortId:'p1',bPortId:'p2',media:'OM4 multimode',capacityMbps:10000,physicalPath:'Interior Rack HQ'}],
+  links:[{id:'l1',name:'Uplink servidor',fromPortId:'p1',toPortId:'p2',medium:'OM4 multimode',capacityMbps:10000,physicalPath:'Interior Rack HQ'}],
   hosts:[{id:'h1',name:'PC-01'}],
   vlans:[],wanCircuits:[],
   patchPanels:[{id:'pp1',rackId:'rack1',name:'PP-01',portCount:24,category:'Cat6A'}],
@@ -51,9 +51,19 @@ assert.strictEqual(switchMatrix.ports.find(x=>x.id==='p3').mediaKind,'copper');
 assert.strictEqual(switchMatrix.ports.find(x=>x.id==='p4').destination,'Libre');
 assert.ok(model.powerMap.rows.some(x=>x.deviceId==='sw1'&&x.pduName==='PDU A'&&x.outlet===1));
 assert.ok(model.powerMap.rows.some(x=>x.deviceId==='srv1'&&x.status==='missing'));
+assert.strictEqual(model.structuredChains.length,1);
+assert.strictEqual(model.structuredChains[0].switchDeviceName,'SW-CORE');
+assert.strictEqual(model.structuredChains[0].patchPanelName,'PP-01');
+assert.strictEqual(model.structuredChains[0].outletName,'TO-01');
+assert.strictEqual(model.structuredChains[0].hostName,'PC-01');
+assert.strictEqual(model.structuredChains[0].totalLengthM,33);
+assert.ok(model.rackSummaries.some(x=>x.rackId==='rack1'&&x.dataLinks===1&&x.structuredRuns===1));
+assert.ok(model.installationChecklist.some(x=>x.category==='Parcheo'&&x.task.includes('Gi1/0/2')));
+assert.ok(model.installationChecklist.some(x=>x.category==='Energía'&&x.task.includes('SRV-01')&&!x.documented));
 
 const html=report.build(project,{gateReport:gate});
-assert.ok(html.includes('Informe de instalación física'));
+assert.ok(html.includes('Manual de instalación física'));
+assert.ok(html.includes('Resumen por armario / rack'));
 assert.ok(html.includes('Racks y ocupación'));
 assert.ok(html.includes('Matrices de puertos por equipo'));
 assert.ok(html.includes('Destino'));
@@ -78,9 +88,19 @@ assert.ok(html.includes('Feed B'));
 assert.ok(html.includes('U20'));
 assert.ok(html.includes('U16–U17'));
 assert.ok(html.includes('Patch panel Cat6A'));
+assert.ok(html.includes('Cadena completa de cableado estructurado'));
+assert.ok(html.includes('Switch'));
+assert.ok(html.includes('Patch panel'));
+assert.ok(html.includes('Enlace permanente'));
+assert.ok(html.includes('Equipo final'));
+assert.ok(html.includes('33 m totales'));
+assert.ok(html.includes('Checklist de instalación'));
+assert.ok(html.includes('Certificar enlace'));
+assert.ok(html.includes('Documentación'));
+assert.ok(html.includes('☐'));
 assert.ok(html.includes('Cableado estructurado'));
 assert.ok(html.includes('CPD → oficina'));
 assert.ok(html.includes('PC-01'));
 assert.ok(html.includes('BLOQUEADO'));
 assert.ok(html.includes('🧰 Informe de instalación')===false,'El texto del botón se inyecta en la UI, no dentro del HTML generado');
-console.log('✓ Informe de instalación fase 1 integra racks, matrices de puertos, colores de medio y PDU/PSU');
+console.log('✓ Informe de instalación fase 2 resuelve aliases de enlaces, cadenas completas, checklist y resumen por rack');
