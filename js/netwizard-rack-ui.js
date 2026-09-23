@@ -230,7 +230,7 @@ function bind(mount,state){
       state.replaceProject(removeEntity(state.getSnapshot(),'rackItem',id),{source:'rack-item-editor-remove'});
     };
   }
-  for(const node of mount.querySelectorAll('[data-item-id]')){
+  for(const node of mount.querySelectorAll('[data-action="select-rack-item"][data-item-id]')){
     let pointer=null;
     const clearTargets=()=>mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
     node.onpointerdown=e=>{
