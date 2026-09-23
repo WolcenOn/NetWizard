@@ -210,29 +210,36 @@ function bind(mount,state){
     if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',actionNode.dataset.id);
     if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});
   };
-  mount.ondragstart=e=>{
-    const node=e.target&&e.target.closest&&e.target.closest('[data-item-id]');
-    if(!node)return;
-    selectedRackItemId=node.dataset.itemId||'';rackEditorNotice='';
-    if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/netwizard-rack-item',selectedRackItemId);e.dataTransfer.setData('text/plain',selectedRackItemId);}
-    node.classList.add('is-dragging');
-  };
-  mount.ondragend=e=>{const node=e.target&&e.target.closest&&e.target.closest('[data-item-id]');if(node)node.classList.remove('is-dragging');mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));};
-  mount.ondragover=e=>{
-    const row=e.target&&e.target.closest&&e.target.closest('[data-drop-rack-item="1"]');if(!row)return;
-    e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';
-    mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));row.classList.add('is-drop-target');
-  };
-  mount.ondrop=e=>{
-    const row=e.target&&e.target.closest&&e.target.closest('[data-drop-rack-item="1"]');if(!row)return;
-    e.preventDefault();mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
-    const id=(e.dataTransfer&&(e.dataTransfer.getData('text/netwizard-rack-item')||e.dataTransfer.getData('text/plain')))||selectedRackItemId;
-    const result=moveRackItem(state.getSnapshot(),id,row.dataset.rackId,Number(row.dataset.unit));
-    selectedRackItemId=id;
-    if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
-    rackEditorNotice=`Movido a ${arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId} · U${row.dataset.unit}. Cableado y referencias conservados.`;
-    state.replaceProject(result.project,{source:'rack-drag-drop'});
-  };
+  for(const node of mount.querySelectorAll('[data-item-id]')){
+    node.ondragstart=e=>{
+      selectedRackItemId=node.dataset.itemId||'';rackEditorNotice='';
+      if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/netwizard-rack-item',selectedRackItemId);e.dataTransfer.setData('text/plain',selectedRackItemId);}
+      node.classList.add('is-dragging');
+    };
+    node.ondragend=()=>{
+      node.classList.remove('is-dragging');
+      mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));
+    };
+  }
+  for(const row of mount.querySelectorAll('[data-drop-rack-item="1"]')){
+    row.ondragenter=e=>{e.preventDefault();row.classList.add('is-drop-target');};
+    row.ondragleave=e=>{if(!row.contains(e.relatedTarget))row.classList.remove('is-drop-target');};
+    row.ondragover=e=>{
+      e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';
+      mount.querySelectorAll('.rack-u.is-drop-target').forEach(x=>{if(x!==row)x.classList.remove('is-drop-target');});
+      row.classList.add('is-drop-target');
+    };
+    row.ondrop=e=>{
+      e.preventDefault();row.classList.remove('is-drop-target');
+      const id=(e.dataTransfer&&(e.dataTransfer.getData('text/netwizard-rack-item')||e.dataTransfer.getData('text/plain')))||selectedRackItemId;
+      if(!id)return;
+      const result=moveRackItem(state.getSnapshot(),id,row.dataset.rackId,Number(row.dataset.unit));
+      selectedRackItemId=id;
+      if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
+      rackEditorNotice=`Movido a ${arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId} · U${row.dataset.unit}. Cableado y referencias conservados.`;
+      state.replaceProject(result.project,{source:'rack-drag-drop'});
+    };
+  }
 }
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
 const api={version:'netwizard-rack-ui-v6',render,inject,ensureLayoutCss,ensureArrays,addRack,upsertRackItem,rackItemPlacement,moveRackItem,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
