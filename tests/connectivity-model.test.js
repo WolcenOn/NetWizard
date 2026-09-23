@@ -66,10 +66,17 @@ assert.ok(dns.steps.some(x=>x.msg.includes('Permitir DNS')));
 assert.ok(dns.path.some(x=>x.kind==='gateway'&&x.label.includes('10.0.10.1')));
 assert.ok(dns.path.some(x=>x.kind==='link'&&x.label.includes('Te1/1')));
 assert.ok(dns.path.some(x=>x.kind==='device'&&x.label==='CORE-RTR'));
+assert.deepStrictEqual(dns.visualTrace.deviceIds,['sw1','r1','sw2']);
+assert.deepStrictEqual(dns.visualTrace.linkIds,['l1','l2']);
+assert.strictEqual(dns.visualTrace.blockage,null);
 
 const https=model.simulate(project,'host:h1','host:h2','https');
 assert.strictEqual(https.ok,false);
 assert.ok(https.steps.some(x=>x.ok===false&&x.msg.includes('Bloquear HTTPS')));
+assert.strictEqual(https.blockage.kind,'firewall');
+assert.strictEqual(https.blockage.deviceId,'r1');
+assert.strictEqual(https.blockage.ruleId,'fw-https');
+assert.strictEqual(https.visualTrace.blockage.deviceId,'r1');
 
 const mqtt=model.simulate(project,'host:h1','iot:iot1','mqtt');
 assert.strictEqual(mqtt.ok,false,'La regla final deny debe bloquear MQTT');
@@ -81,6 +88,10 @@ broken.links=[];
 const noPhysical=model.simulate(broken,'host:h1','host:h2','dns');
 assert.strictEqual(noPhysical.ok,false);
 assert.ok(noPhysical.steps.some(x=>x.msg.includes('No hay ruta física documentada')));
+assert.strictEqual(noPhysical.blockage.kind,'physical-gap');
+assert.strictEqual(noPhysical.blockage.fromDeviceId,'sw1');
+assert.strictEqual(noPhysical.blockage.toDeviceId,'sw2');
+assert.deepStrictEqual(noPhysical.visualTrace.linkIds,[]);
 
 assert.strictEqual(model.cidrContains('10.0.20.0/24','10.0.20.53'),true);
 assert.strictEqual(model.cidrContains('10.0.20.0/24','10.0.21.53'),false);

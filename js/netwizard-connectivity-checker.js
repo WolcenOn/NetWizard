@@ -158,7 +158,7 @@
     });
 
     window.NetWizardConnectivityTrace=res;
-    try{document.dispatchEvent(new CustomEvent('netwizard:connectivity-trace',{detail:{ok:res.ok,partial:res.partial,path:res.path||[],sourceId:res.source?.id||null,targetId:res.target?.id||null,serviceId:res.service?.id||null}}));}catch{}
+    try{document.dispatchEvent(new CustomEvent('netwizard:connectivity-trace',{detail:{result:res,ok:res.ok,partial:res.partial,path:res.path||[],visualTrace:res.visualTrace||null,blockage:res.blockage||null,sourceId:res.source?.id||null,targetId:res.target?.id||null,serviceId:res.service?.id||null}}));}catch{}
     return res;
   }
 
@@ -179,7 +179,7 @@
     if(!drawer){
       drawer=document.createElement('div');
       drawer.id='nwV5ConnectivityDrawer';
-      drawer.style.cssText='position:fixed;inset:5vh 5vw;z-index:5000;background:rgba(3,6,12,.96);border:1px solid var(--b1);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.6);padding:14px;overflow:auto';
+      drawer.style.cssText='position:absolute;right:12px;top:12px;bottom:12px;width:min(470px,calc(100% - 24px));z-index:5000;background:rgba(3,6,12,.97);border:1px solid var(--b1);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.6);padding:14px;overflow:auto';
       const head=document.createElement('div');
       head.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px';
       const title=document.createElement('b');title.textContent='🧪 Diagnóstico de ruta desde V5';
@@ -218,5 +218,5 @@
     if(e.target.closest('[data-step="cfg"]'))setTimeout(()=>{inject();render();},150);
     if(e.target.closest('[data-step="graphs"]'))setTimeout(attachV5,100);
   });
-  window.NetWizardConnectivityChecker={version:'netwizard-connectivity-checker-v1',render,run,simulate,endpointList,openV5Drawer,closeV5Drawer};
+  window.NetWizardConnectivityChecker={version:'netwizard-connectivity-checker-v2',render,run,simulate,endpointList,openV5Drawer,closeV5Drawer};
 })();
