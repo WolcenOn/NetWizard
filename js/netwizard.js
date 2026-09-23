@@ -2453,13 +2453,15 @@ window.addEventListener('resize',()=>{if(S.step==='graphs')drawTopo();});
 // ─────────────────── V5 VISUAL OVERLAY (driven by V4 data) ───────────────────
 const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
 const V5S={locHead:36,devW:176,devH:62,hstW:158,hstH:42,colW:190};
+const V5CORE=window.NetWizardV5Core;
+window.V5S=V5S;
 
 
 // =========================================================
 // 14. VISTA VISUAL V5
 // Motor visual V5 para ubicaciones, nodos, drag/drop, fullscreen, panel lateral y render avanzado.
 // =========================================================
-function vv(){return S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}});}
+function vv(){return V5CORE?V5CORE.ensureVisualState(S):(S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}}));}
 function v5ProMode(){return vv().proMode!==false;}
 function setV5ProMode(on){vv().proMode=!!on;if(v5ProMode())applyProfessionalLocationLayout();save();drawV5();renderV5Panel();}
 function v5FreezeAutoBounds(on){
@@ -2473,26 +2475,16 @@ function v5FreezeAutoBounds(on){
     V.dragFrozenBounds=null;
   }
 }
-function v5Filters(){
-  const base={switch:true,router:true,firewall:true,hosts:true,server:true,camera:true,ap:true,iotCandidate:true,iotAccess:true,iotDevice:true,wifi:true,lora:true,zigbee:true,thread:true,mqtt:true,ble:true,ethernet:true};
-  const V=vv(); V.filters={...base,...(V.filters||{})}; return V.filters;
-}
+function v5Filters(){return V5CORE?V5CORE.ensureFilters(vv()):(vv().filters||(vv().filters={}));}
 function v5FilterOn(k){const f=v5Filters();return f[k]!==false;}
 function v5SetFilter(k,on){v5Filters()[k]=!!on;save();drawV5();renderV5Panel();}
-function v5HostFilterKey(h){
-  const t=(h.type||'host').toLowerCase();
-  if(t==='iot')return 'iotCandidate';
-  if(t==='server')return 'server';
-  if(t==='camera')return 'camera';
-  if(t==='ap')return 'ap';
-  return 'hosts';
-}
-function v5ShowDevice(d){return v5FilterOn((d.type||'switch').toLowerCase());}
-function v5ShowHost(h){return !(h.deviceRef&&devById(h.deviceRef)) && v5FilterOn('hosts') && v5FilterOn(v5HostFilterKey(h));}
+function v5HostFilterKey(h){return V5CORE?V5CORE.hostFilterKey(h):'hosts';}
+function v5ShowDevice(d){return V5CORE?V5CORE.showDevice(vv(),d):v5FilterOn((d.type||'switch').toLowerCase());}
+function v5ShowHost(h){return V5CORE?V5CORE.showHost(vv(),h,id=>!!devById(id)):(!(h.deviceRef&&devById(h.deviceRef))&&v5FilterOn('hosts')&&v5FilterOn(v5HostFilterKey(h)));}
 function v5SyncFilterInputs(){document.querySelectorAll('[data-v5-filter]').forEach(cb=>{cb.checked=v5FilterOn(cb.dataset.v5Filter);});}
-function vLocChildren(id){return vLocs().filter(l=>(l.parentId||'')===id);}
-function vLocRoots(){return vLocs().filter(l=>!l.parentId||!vLocById(l.parentId));}
-function vLocDepth(id){let depth=0,cur=vLocById(id),guard=0;while(cur&&cur.parentId&&guard<20){const p=vLocById(cur.parentId);if(!p)break;depth++;cur=p;guard++;}return depth;}
+function vLocChildren(id){return V5CORE?V5CORE.locChildren(vv(),id):vLocs().filter(l=>(l.parentId||'')===id);}
+function vLocRoots(){return V5CORE?V5CORE.locRoots(vv()):vLocs().filter(l=>!l.parentId||!vLocById(l.parentId));}
+function vLocDepth(id){return V5CORE?V5CORE.locDepth(vv(),id):0;}
 function visualLocOwnMinHeight(loc){const rows=Math.max(devsInVisualLoc(loc.id).length,hostsInVisualLoc(loc.id).length,1);return V5S.locHead+24+rows*72;}
 function computeProfessionalLocationBounds(){
   const bounds={}; const gap=22, inset=18, minW=Math.max(330,V5S.colW*2+36);
@@ -2615,12 +2607,12 @@ Se recolocarán ${children.length} sububicación(es), ${devices.length} equipo(s
   console.log('Ubicación eliminada correctamente:',loc.name,id);
   return true;
 }
-function vLocs(){return vv().locs;}
-function vLocById(id){return vLocs().find(x=>x.id===id)||null;}
-function deviceVisualLoc(id){return vv().assign.devices[id]||'';}
-function hostVisualLoc(id){return vv().assign.hosts[id]||'';}
-function setDeviceVisualLoc(id,lid){vv().assign.devices[id]=lid;}
-function setHostVisualLoc(id,lid){vv().assign.hosts[id]=lid;}
+function vLocs(){return V5CORE?V5CORE.locations(vv()):vv().locs;}
+function vLocById(id){return V5CORE?V5CORE.locById(vv(),id):(vLocs().find(x=>x.id===id)||null);}
+function deviceVisualLoc(id){return V5CORE?V5CORE.deviceVisualLoc(vv(),id):(vv().assign.devices[id]||'');}
+function hostVisualLoc(id){return V5CORE?V5CORE.hostVisualLoc(vv(),id):(vv().assign.hosts[id]||'');}
+function setDeviceVisualLoc(id,lid){return V5CORE?V5CORE.setDeviceVisualLoc(vv(),id,lid):(vv().assign.devices[id]=lid);}
+function setHostVisualLoc(id,lid){return V5CORE?V5CORE.setHostVisualLoc(vv(),id,lid):(vv().assign.hosts[id]=lid);}
 function v5ApplyRefresh(sel){save();refresh();if(sel)selectV5(sel.t,sel.id);}
 function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;if(key==='type'||key==='kind'){d.type=val;d.kind=val;if(!isEdgeDevice(d)){d.internetEdge='no';d.wanIf=null;}}else d[key]=val;v5ApplyRefresh({t:'device',id});}
 function v5UpdateHost(id,key,val){const h=S.hosts.find(x=>x.id===id);if(!h)return;h[key]=val;v5ApplyRefresh({t:'host',id});}
@@ -2640,52 +2632,11 @@ async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)r
   layout.classList.toggle('fs',next);
 }
 syncV5FullscreenState();}
-function visualLocForPhysicalLocationId(id){
-  if(!id)return '';
-  return vv().locs.find(l=>l.physicalLocationId===id)?.id||'';
-}
-function visualLocForPhysicalLocationName(name){
-  const key=cleanStr(name).toLowerCase();if(!key)return '';
-  return vv().locs.find(l=>cleanStr(l.name).toLowerCase()===key)?.id||'';
-}
-function inferredDeviceVisualLoc(d){
-  if(!d)return '';
-  let lid=visualLocForPhysicalLocationId(d.locationId||d.physicalLocationId);
-  if(lid)return lid;
-  lid=visualLocForPhysicalLocationName(d.physicalLocation);if(lid)return lid;
-  const rack=(S.racks||[]).find(r=>r.id===(d.rackId||d.rack));
-  if(rack){
-    lid=visualLocForPhysicalLocationId(rack.locationId||rack.physicalLocationId);
-    if(lid)return lid;
-    lid=visualLocForPhysicalLocationName(rack.location||rack.physicalLocation);
-    if(lid)return lid;
-  }
-  return '';
-}
-function inferredHostVisualLoc(h){
-  if(!h)return '';
-  let lid=visualLocForPhysicalLocationId(h.locationId||h.physicalLocationId);
-  if(lid)return lid;
-  lid=visualLocForPhysicalLocationName(h.physicalLocation);if(lid)return lid;
-  const hc=(S.hostOutletConnections||[]).find(x=>x.hostId===h.id);
-  const outlet=hc&&(S.telecomOutlets||[]).find(x=>x.id===hc.outletId);
-  if(outlet){
-    lid=visualLocForPhysicalLocationId(outlet.locationId||outlet.physicalLocationId);
-    if(lid)return lid;
-    lid=visualLocForPhysicalLocationName(outlet.location||outlet.physicalLocation);
-    if(lid)return lid;
-  }
-  return '';
-}
-function isSyntheticDefaultVisualLoc(loc){
-  if(!loc)return false;
-  const names=['Core / Perímetro','Acceso / Usuarios','Servicios'];
-  if(!names.includes(cleanStr(loc.name)))return false;
-  const linked=(S.physicalLocations||[]).find(pl=>pl.id===loc.physicalLocationId);
-  return !loc.physicalLocationId ||
-    cleanStr(loc.type).toLowerCase()==='zone' ||
-    !!(linked && (cleanStr(linked.type).toLowerCase()==='zone' || cleanStr(linked.notes)==='Sincronizada desde Vista V5'));
-}
+function visualLocForPhysicalLocationId(id){return V5CORE?V5CORE.visualLocationByPhysicalId(vv(),id):'';}
+function visualLocForPhysicalLocationName(name){return V5CORE?V5CORE.visualLocationByPhysicalName(vv(),name):'';}
+function inferredDeviceVisualLoc(d){return V5CORE?V5CORE.inferDeviceVisualLocation(S,vv(),d):'';}
+function inferredHostVisualLoc(h){return V5CORE?V5CORE.inferHostVisualLocation(S,vv(),h):'';}
+function isSyntheticDefaultVisualLoc(loc){return V5CORE?V5CORE.isSyntheticDefaultLocation(S,loc):false;}
 function ensureVisualModel(){
   const V=vv();
   for(const k of Object.keys(V.assign.devices))if(!S.devices.some(d=>d.id===k))delete V.assign.devices[k];
@@ -2767,7 +2718,7 @@ function effectiveHostIp(h){
   const next=(ci.fh+idx)<=ci.lh?ip4s(ci.fh+idx):'DHCP';
   return h.ipMode==='dhcp'?('DHCP · '+next):next;
 }
-function visualNodeBounds(kind,id){const pos=vv().pos[id]||{x:0,y:0};return kind==='dev'?{x:pos.x,y:pos.y,w:V5S.devW,h:V5S.devH}:{x:pos.x,y:pos.y,w:V5S.hstW,h:V5S.hstH};}
+function visualNodeBounds(kind,id){return V5CORE?V5CORE.nodeBounds(vv(),kind,id,V5S):{x:0,y:0,w:0,h:0};}
 function visualLocBoundsRaw(loc){
   if(v5ProMode()){
     const V=vv();
@@ -2811,9 +2762,9 @@ function nextNodePositionInLoc(lid,kind,excludeId){
 }
 function autoVisualAssign(){ensureVisualModel();if(v5ProMode())applyProfessionalLocationLayout();for(const loc of vLocs())layoutVisualLoc(loc,true);save();drawV5();renderV5Panel();}
 function resizeV5(){const wrap=vcv.parentElement;if(!wrap)return;const r=wrap.getBoundingClientRect();const dpr=Math.max(1,window.devicePixelRatio||1);vcv.width=Math.floor(r.width*dpr);vcv.height=Math.floor(r.height*dpr);vcv.style.width=r.width+'px';vcv.style.height=r.height+'px';vctx.setTransform(dpr,0,0,dpr,0,0);drawV5();}
-function v2s(x,y){const vw=vv().view;return{x:x*vw.zoom+vw.px,y:y*vw.zoom+vw.py};}
-function s2v(x,y){const vw=vv().view;return{x:(x-vw.px)/vw.zoom,y:(y-vw.py)/vw.zoom};}
-function nodeCenterById(kind,id){const b=visualNodeBounds(kind,id);return{x:b.x+b.w/2,y:b.y+b.h/2};}
+function v2s(x,y){return V5CORE?V5CORE.worldToScreen(vv(),x,y):{x,y};}
+function s2v(x,y){return V5CORE?V5CORE.screenToWorld(vv(),x,y):{x,y};}
+function nodeCenterById(kind,id){return V5CORE?V5CORE.nodeCenter(vv(),kind,id,V5S):{x:0,y:0};}
 function drawRound(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function v5NodeRadius(w,h,z,base=10){return Math.max(2,Math.min(base*z,w/2,h/2));}
 function v5ReadableZoom(){return vv().view.zoom>=.42;}
@@ -2829,16 +2780,7 @@ function rgbaFromCss(css,alpha){
   r=Math.round((r+m0)*255); g=Math.round((g+m0)*255); b=Math.round((b+m0)*255);
   return `rgba(${r},${g},${b},${alpha})`;
 }
-function linkedDeviceIds(devId){
-  const ids=new Set();
-  for(const lk of S.links){
-    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);
-    if(!a||!b)continue;
-    if(a.deviceId===devId&&b.deviceId!==devId)ids.add(b.deviceId);
-    if(b.deviceId===devId&&a.deviceId!==devId)ids.add(a.deviceId);
-  }
-  return [...ids];
-}
+function linkedDeviceIds(devId){return V5CORE?V5CORE.linkedDeviceIds(S,devId):[];}
 function deviceAccentColor(devId,seen){
   seen=seen||new Set();
   if(seen.has(devId))return colorFromSeed(devId);
@@ -3000,7 +2942,7 @@ function drawV5(){
 
   // Cableado base: siempre detrás de equipos y etiquetas.
   for(const lk of S.links){
-    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b)continue;
+    const a=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortA(lk):lk.aPortId)),b=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortB(lk):lk.bPortId));if(!a||!b)continue;
     const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
     if(drawV5NetworkLink(lk,a,b,false))renderState.baseNetwork++;
   }
@@ -3044,7 +2986,7 @@ function drawV5(){
 
   // Selección: solo sus enlaces vuelven a primer plano.
   for(const lk of S.links){
-    const a=S.ports.find(p=>p.id===lk.aPortId),b=S.ports.find(p=>p.id===lk.bPortId);if(!a||!b||!v5NetworkLinkSelected(a,b))continue;
+    const a=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortA(lk):lk.aPortId)),b=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortB(lk):lk.bPortId));if(!a||!b||!v5NetworkLinkSelected(a,b))continue;
     const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
     if(drawV5NetworkLink(lk,a,b,true))renderState.selectedNetwork++;
   }
