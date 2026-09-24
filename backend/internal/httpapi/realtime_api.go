@@ -85,17 +85,34 @@ func (s *Server) handleProjectOperations(w http.ResponseWriter, r *http.Request)
 		writeAuthzError(w, err)
 		return
 	}
+	baseVersion, err := parsePositiveInt64(r.URL.Query().Get("baseVersion"))
+	if err != nil {
+		http.Error(w, "invalid baseVersion", http.StatusBadRequest)
+		return
+	}
 	since, err := parseNonNegativeInt64(r.URL.Query().Get("since"))
 	if err != nil {
 		http.Error(w, "invalid since", http.StatusBadRequest)
 		return
 	}
-	items, err := s.operations.OperationsSince(r.Context(), projectID, since, 200)
+	project, _, err := s.projects.GetProject(r.Context(), projectID)
+	if err != nil {
+		s.writeProjectError(w, "load project for operation replay", err)
+		return
+	}
+	if baseVersion != project.CurrentVersion {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": "base_version_conflict", "currentVersion": project.CurrentVersion,
+			"resyncRequired": true,
+		})
+		return
+	}
+	items, err := s.operations.OperationsSince(r.Context(), projectID, baseVersion, since, 200)
 	if err != nil {
 		s.internalError(w, "replay operations", err)
 		return
 	}
-	latest, err := s.operations.LatestOperationSeq(r.Context(), projectID)
+	latest, err := s.operations.LatestOperationSeq(r.Context(), projectID, baseVersion)
 	if err != nil {
 		s.internalError(w, "latest operation seq", err)
 		return
@@ -104,6 +121,14 @@ func (s *Server) handleProjectOperations(w http.ResponseWriter, r *http.Request)
 		"operations": items,
 		"latestSeq":  latest,
 	})
+}
+
+func parsePositiveInt64(raw string) (int64, error) {
+	value, err := strconv.ParseInt(strings.TrimSpace(raw), 10, 64)
+	if err != nil || value < 1 {
+		return 0, errors.New("invalid positive integer")
+	}
+	return value, nil
 }
 
 func parseNonNegativeInt64(raw string) (int64, error) {
@@ -158,6 +183,11 @@ func (s *Server) handleProjectWebSocket(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid clientId", http.StatusBadRequest)
 		return
 	}
+	baseVersion, err := parsePositiveInt64(r.URL.Query().Get("baseVersion"))
+	if err != nil {
+		http.Error(w, "invalid baseVersion", http.StatusBadRequest)
+		return
+	}
 	sinceSeq, err := parseNonNegativeInt64(r.URL.Query().Get("sinceSeq"))
 	if err != nil {
 		http.Error(w, "invalid sinceSeq", http.StatusBadRequest)
@@ -184,14 +214,14 @@ func (s *Server) handleProjectWebSocket(w http.ResponseWriter, r *http.Request) 
 		_ = sendRealtimeError(conn, "project_unavailable", "project is unavailable")
 		return
 	}
-	latestSeq, err := s.operations.LatestOperationSeq(r.Context(), projectID)
+	latestSeq, err := s.operations.LatestOperationSeq(r.Context(), projectID, project.CurrentVersion)
 	if err != nil {
 		_ = sendRealtimeError(conn, "operation_store_unavailable", "operation replay is unavailable")
 		return
 	}
 	var backlog []realtime.OperationEnvelope
-	if latestSeq-sinceSeq <= 1000 {
-		backlog, err = s.operations.OperationsSince(r.Context(), projectID, sinceSeq, 1000)
+	if baseVersion == project.CurrentVersion && sinceSeq <= latestSeq {
+		backlog, err = s.operations.OperationsSince(r.Context(), projectID, baseVersion, sinceSeq, 1001)
 		if err != nil {
 			_ = sendRealtimeError(conn, "operation_store_unavailable", "operation replay is unavailable")
 			return
@@ -210,7 +240,23 @@ func (s *Server) handleProjectWebSocket(w http.ResponseWriter, r *http.Request) 
 	if err := conn.Send(r.Context(), hello); err != nil {
 		return
 	}
-	if latestSeq-sinceSeq > 1000 {
+	if baseVersion != project.CurrentVersion {
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "base_version_conflict", "currentVersion": project.CurrentVersion, "latestSeq": latestSeq,
+		})
+		resync.ClientID = clientID
+		_ = conn.Send(r.Context(), resync)
+		return
+	}
+	if sinceSeq > latestSeq && latestSeq > 0 {
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "invalid_sequence_cursor", "latestSeq": latestSeq,
+		})
+		resync.ClientID = clientID
+		_ = conn.Send(r.Context(), resync)
+		return
+	}
+	if len(backlog) > 1000 {
 		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
 			"reason": "replay_window_exceeded", "latestSeq": latestSeq,
 		})
