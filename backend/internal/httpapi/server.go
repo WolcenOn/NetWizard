@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
+	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 )
 
 type Server struct {
@@ -32,6 +33,7 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
+	s.mux.HandleFunc("GET /api/capabilities", s.handleCapabilities)
 	if s.cfg.StaticDir != "" {
 		s.mux.Handle("/", s.staticHandler())
 	}
@@ -79,7 +81,20 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"version": s.cfg.Version,
-		"mode":    "backend-skeleton",
+		"mode":    "saas-foundation",
+	})
+}
+
+func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"schemaVersion":       projects.SupportedSchemaVersion,
+		"localMode":           true,
+		"databaseConfigured":  s.cfg.DatabaseConfigured(),
+		"authConfigPresent":   s.cfg.AuthConfigPresent(),
+		"authEnforced":        false,
+		"remoteProjectWrites": false,
+		"collaboration":       false,
+		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
 }
 
