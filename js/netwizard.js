@@ -2631,7 +2631,8 @@ function ensureV5Commands(){
     setHostVisualLocation:setHostVisualLoc,
     nextNodePosition:nextNodePositionInLoc,
     applyProfessionalLayout:applyProfessionalLocationLayout,
-    suggestHostPort
+    suggestHostPort,
+    hostConnectedDeviceId
   });
   return v5Commands;
 }
