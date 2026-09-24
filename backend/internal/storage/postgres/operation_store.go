@@ -29,7 +29,7 @@ func (s *Store) AppendOperation(ctx context.Context, projectID string, op realti
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, projectID+"\x00"+op.OpID); err != nil {
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, projectID+"|"+op.OpID); err != nil {
 		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: lock operation idempotency key: %w", err)
 	}
 
