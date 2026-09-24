@@ -32,6 +32,7 @@ type Principal struct {
 	Email       string `json:"email,omitempty"`
 	DisplayName string `json:"displayName,omitempty"`
 	SessionID   string `json:"sessionId,omitempty"`
+	CSRFToken   string `json:"-"`
 }
 
 func (p Principal) Valid() bool { return strings.TrimSpace(p.Subject) != "" }
@@ -63,22 +64,37 @@ func (a BearerAuthenticator) Authenticate(r *http.Request) (Principal, error) {
 	return principal, nil
 }
 
-type ProjectAccessStore interface {
-	RoleForProject(ctx context.Context, projectID, subject string) (Role, error)
+type AccessStore interface {
+	RoleForProject(ctx context.Context, projectID, userID string) (Role, error)
+	RoleForWorkspace(ctx context.Context, workspaceID, userID string) (Role, error)
 }
 
 type Authorizer struct {
-	Store ProjectAccessStore
+	Store AccessStore
 }
 
 func (a Authorizer) RequireProjectRole(ctx context.Context, principal Principal, projectID string, required Role) error {
-	if !principal.Valid() {
+	if !principal.Valid() || strings.TrimSpace(principal.UserID) == "" {
 		return ErrUnauthenticated
 	}
 	if a.Store == nil {
 		return ErrForbidden
 	}
-	role, err := a.Store.RoleForProject(ctx, projectID, principal.Subject)
+	role, err := a.Store.RoleForProject(ctx, projectID, principal.UserID)
+	if err != nil || !role.Allows(required) {
+		return ErrForbidden
+	}
+	return nil
+}
+
+func (a Authorizer) RequireWorkspaceRole(ctx context.Context, principal Principal, workspaceID string, required Role) error {
+	if !principal.Valid() || strings.TrimSpace(principal.UserID) == "" {
+		return ErrUnauthenticated
+	}
+	if a.Store == nil {
+		return ErrForbidden
+	}
+	role, err := a.Store.RoleForWorkspace(ctx, workspaceID, principal.UserID)
 	if err != nil || !role.Allows(required) {
 		return ErrForbidden
 	}
