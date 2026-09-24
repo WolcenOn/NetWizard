@@ -106,14 +106,14 @@ func TestRealtimeOperationStoreIdempotencyReplayAndConflicts(t *testing.T) {
 		t.Fatalf("expected seq 2, got %d", env2.Seq)
 	}
 
-	replay, err := store.OperationsSince(ctx, project.ID, 1, 100)
+	replay, err := store.OperationsSince(ctx, project.ID, 2, 1, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(replay) != 1 || replay[0].Seq != 2 || replay[0].Operation.OpID != op2.OpID {
 		t.Fatalf("unexpected replay: %#v", replay)
 	}
-	latest, err := store.LatestOperationSeq(ctx, project.ID)
+	latest, err := store.LatestOperationSeq(ctx, project.ID, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
