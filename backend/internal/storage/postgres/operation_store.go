@@ -26,17 +26,8 @@ func (s *Store) AppendOperation(ctx context.Context, projectID string, op realti
 	}
 	defer tx.Rollback()
 
-	var currentVersion int64
-	var workspaceID string
-	if err := tx.QueryRowContext(ctx, `
-SELECT current_version, workspace_id FROM projects WHERE id = $1 AND deleted_at IS NULL FOR SHARE
-`, projectID).Scan(&currentVersion, &workspaceID); errors.Is(err, sql.ErrNoRows) {
-		return realtime.OperationEnvelope{}, realtime.ErrOperationConflict
-	} else if err != nil {
-		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: load operation base version: %w", err)
-	}
-	if currentVersion != op.BaseVersion {
-		return realtime.OperationEnvelope{}, realtime.ErrOperationConflict
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, projectID+"\x00"+op.OpID); err != nil {
+		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: lock operation idempotency key: %w", err)
 	}
 
 	var existing realtime.OperationEnvelope
@@ -57,6 +48,19 @@ FROM project_operations WHERE project_id = $1 AND op_id = $2
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: check duplicate operation: %w", err)
+	}
+
+	var currentVersion int64
+	var workspaceID string
+	if err := tx.QueryRowContext(ctx, `
+SELECT current_version, workspace_id FROM projects WHERE id = $1 AND deleted_at IS NULL FOR SHARE
+`, projectID).Scan(&currentVersion, &workspaceID); errors.Is(err, sql.ErrNoRows) {
+		return realtime.OperationEnvelope{}, realtime.ErrOperationConflict
+	} else if err != nil {
+		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: load operation base version: %w", err)
+	}
+	if currentVersion != op.BaseVersion {
+		return realtime.OperationEnvelope{}, realtime.ErrOperationConflict
 	}
 
 	var seq int64
