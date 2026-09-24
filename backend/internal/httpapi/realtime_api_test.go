@@ -41,12 +41,12 @@ func (m *memoryOperationStore) AppendOperation(_ context.Context, projectID stri
 	return env, nil
 }
 
-func (m *memoryOperationStore) OperationsSince(_ context.Context, projectID string, sinceSeq int64, limit int) ([]realtime.OperationEnvelope, error) {
+func (m *memoryOperationStore) OperationsSince(_ context.Context, projectID string, baseVersion, sinceSeq int64, limit int) ([]realtime.OperationEnvelope, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := []realtime.OperationEnvelope{}
 	for _, item := range m.items {
-		if item.ProjectID == projectID && item.Seq > sinceSeq {
+		if item.ProjectID == projectID && item.Operation.BaseVersion == baseVersion && item.Seq > sinceSeq {
 			out = append(out, item)
 			if limit > 0 && len(out) >= limit {
 				break
@@ -56,12 +56,12 @@ func (m *memoryOperationStore) OperationsSince(_ context.Context, projectID stri
 	return out, nil
 }
 
-func (m *memoryOperationStore) LatestOperationSeq(_ context.Context, projectID string) (int64, error) {
+func (m *memoryOperationStore) LatestOperationSeq(_ context.Context, projectID string, baseVersion int64) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var latest int64
 	for _, item := range m.items {
-		if item.ProjectID == projectID && item.Seq > latest {
+		if item.ProjectID == projectID && item.Operation.BaseVersion == baseVersion && item.Seq > latest {
 			latest = item.Seq
 		}
 	}
@@ -156,7 +156,7 @@ func TestCollaborationCapabilitiesETagHistoryAndReplay(t *testing.T) {
 		Kind: realtime.OperationHostUpdate, Payload: json.RawMessage(`{"name":"Host1"}`),
 	}, "sub-collab")
 
-	req = authenticatedRequest(http.MethodGet, "/api/projects/"+project.ID+"/operations?since=1", "", rawSession, false)
+	req = authenticatedRequest(http.MethodGet, "/api/projects/"+project.ID+"/operations?baseVersion=1&since=1", "", rawSession, false)
 	rec = httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"latestSeq":2`) ||
