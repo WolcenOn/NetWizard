@@ -19,7 +19,7 @@ La base incluye:
 - auditoría de creación/guardado de revisiones;
 - tests de integración contra PostgreSQL 16 en CI.
 
-E3 añade OIDC genérico y sesiones opacas server-side en PostgreSQL. Siguen **sin existir endpoints públicos de escritura de proyectos ni WebSocket público**; `remoteProjectWrites=false` y `collaboration=false` hasta E4/E5.
+E3 añadió OIDC genérico y sesiones opacas server-side en PostgreSQL. E4 añade workspaces y CRUD remoto autorizado de proyectos. Cuando PostgreSQL + OIDC + stores E4 están listos, `remoteProjectWrites=true`; `collaboration=false` sigue reservado para E5.
 
 La frontera entre cliente y servidor está definida en [`docs/BACKEND_BOUNDARIES.md`](../docs/BACKEND_BOUNDARIES.md) y la hoja de ruta SaaS en [`docs/SAAS_ARCHITECTURE.md`](../docs/SAAS_ARCHITECTURE.md).
 
@@ -48,6 +48,12 @@ NETWIZARD_ALLOWED_ORIGINS=http://localhost:4173,http://localhost:8080
 DATABASE_URL=postgres://user:password@localhost:5432/netwizard
 NETWIZARD_OIDC_ISSUER_URL=https://issuer.example
 NETWIZARD_OIDC_CLIENT_ID=netwizard-web
+NETWIZARD_OIDC_CLIENT_SECRET=optional-confidential-client-secret
+NETWIZARD_OIDC_REDIRECT_URL=https://app.example/api/auth/callback
+NETWIZARD_SESSION_COOKIE_NAME=netwizard_session
+NETWIZARD_SESSION_TTL=12h
+NETWIZARD_COOKIE_SECURE=true
+NETWIZARD_AUTH_HTTP_TIMEOUT=10s
 NETWIZARD_MAX_PROJECT_BYTES=10485760
 ```
 
@@ -84,9 +90,31 @@ docker build .
 
 El job Go de CI levanta PostgreSQL 16 y ejecuta también el test de integración del store.
 
+## API remota E4
+
+Con autenticación configurada, el backend expone:
+
+- `GET/POST /api/workspaces`;
+- `GET/POST /api/workspaces/{workspaceID}/projects`;
+- `GET/PUT/DELETE /api/projects/{projectID}`.
+
+Roles:
+
+- `viewer`: lectura;
+- `editor`: lectura, creación y guardado de revisiones;
+- `owner`: lo anterior y borrado lógico.
+
+Las mutaciones requieren `X-NetWizard-CSRF` con el token devuelto por `GET /api/auth/me`. El token CSRF está ligado a la sesión server-side; las sesiones E3 anteriores a la migración E4 se invalidan deliberadamente.
+
+Los snapshots continúan validados contra 3.50.0 y `NETWIZARD_MAX_PROJECT_BYTES`. El guardado exige `expectedVersion` y devuelve HTTP 409 ante conflicto optimista. El límite de escritura es 60 mutaciones/minuto por usuario y se aplica atómicamente en PostgreSQL, por lo que también funciona con varias instancias.
+
+La creación de workspaces, creación/guardado y borrado de proyectos quedan auditados. `DELETE` es lógico: el historial permanece en PostgreSQL pero el proyecto deja de aparecer en lecturas activas.
+
+El contrato completo está en [`docs/SAAS_REMOTE_API.md`](../docs/SAAS_REMOTE_API.md).
+
 ## Próximo paso técnico
 
-E3 será autenticación OIDC y sesiones seguras. Después, E4 expondrá workspaces y CRUD remoto únicamente con autorización owner/editor/viewer, límites, rate limiting y auditoría.
+E5 añade versionado HTTP/ETag, operation store público, WebSocket autenticado por proyecto, presencia, reconexión e idempotencia por `opId`.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 
