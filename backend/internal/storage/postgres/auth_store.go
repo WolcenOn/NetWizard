@@ -61,9 +61,9 @@ RETURNING id, external_issuer, external_subject, COALESCE(email,''), COALESCE(di
 
 func (s *Store) CreateSession(ctx context.Context, session auth.Session) error {
 	_, err := s.db.ExecContext(ctx, `
-INSERT INTO auth_sessions(id_hash, user_id, created_at, expires_at)
-VALUES ($1, $2, $3, $4)
-`, session.IDHash, session.UserID, session.CreatedAt, session.ExpiresAt)
+INSERT INTO auth_sessions(id_hash, user_id, csrf_token, created_at, expires_at)
+VALUES ($1, $2, $3, $4, $5)
+`, session.IDHash, session.UserID, session.CSRFToken, session.CreatedAt, session.ExpiresAt)
 	if err != nil {
 		return fmt.Errorf("postgres: create auth session: %w", err)
 	}
@@ -74,7 +74,7 @@ func (s *Store) GetSession(ctx context.Context, idHash []byte, now time.Time) (a
 	var session auth.Session
 	err := s.db.QueryRowContext(ctx, `
 SELECT s.id_hash, s.user_id, u.external_issuer, u.external_subject,
-       COALESCE(u.email,''), COALESCE(u.display_name,''),
+       COALESCE(u.email,''), COALESCE(u.display_name,''), s.csrf_token,
        s.created_at, s.expires_at
 FROM auth_sessions s
 JOIN users u ON u.id = s.user_id
@@ -83,7 +83,7 @@ WHERE s.id_hash = $1
   AND s.expires_at > $2
 `, idHash, now).Scan(
 		&session.IDHash, &session.UserID, &session.Issuer, &session.Subject,
-		&session.Email, &session.DisplayName,
+		&session.Email, &session.DisplayName, &session.CSRFToken,
 		&session.CreatedAt, &session.ExpiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {

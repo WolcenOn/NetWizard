@@ -116,27 +116,30 @@ WebSocket no se expondrá hasta que persistencia, autenticación, autorización 
 
 Todavía sin endpoints públicos de escritura.
 
-### E3 — Autenticación OIDC y sesiones
+### E3 — Autenticación OIDC y sesiones — implementada
 
-- login OIDC;
-- callback seguro;
-- sesión HttpOnly + Secure + SameSite;
-- logout;
-- expiración/rotación;
+- login OIDC Authorization Code + PKCE;
+- discovery/JWKS;
+- state + nonce;
+- sesión opaca server-side en PostgreSQL;
+- cookie HttpOnly + Secure + SameSite;
+- logout y expiración;
 - middleware de principal;
-- tests negativos.
+- tests negativos y proveedor OIDC falso.
 
-### E4 — Workspaces y CRUD autorizado
+### E4 — Workspaces y CRUD autorizado — implementada
 
-- crear/listar/abrir proyectos;
+- crear/listar workspaces;
+- crear/listar/abrir/guardar/borrar proyectos;
 - owner/editor/viewer;
-- autorización por recurso;
+- autorización por recurso mediante user id interno;
+- CSRF por sesión;
 - límites de tamaño;
-- rate limiting;
+- rate limiting distribuido en PostgreSQL;
 - auditoría;
-- E2E de acceso permitido/denegado.
+- tests HTTP permitido/denegado y PostgreSQL real.
 
-En este punto se activa guardado remoto.
+En este punto `remoteProjectWrites=true` cuando PostgreSQL, OIDC y todos los stores E4 están listos. `collaboration=false` continúa hasta E5.
 
 ### E5 — Sincronización y colaboración
 

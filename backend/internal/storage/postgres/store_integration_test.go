@@ -126,12 +126,20 @@ func TestStoreRoundTripAndOptimisticConcurrency(t *testing.T) {
 		t.Fatalf("expected version conflict, got %v", err)
 	}
 
-	role, err := store.RoleForProject(ctx, projectID, subject)
+	role, err := store.RoleForProject(ctx, projectID, userID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if role != auth.RoleOwner {
 		t.Fatalf("expected owner role, got %q", role)
+	}
+
+	workspaceRole, err := store.RoleForWorkspace(ctx, workspaceID, userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workspaceRole != auth.RoleOwner {
+		t.Fatalf("expected workspace owner role, got %q", workspaceRole)
 	}
 
 	var auditCount int
@@ -143,5 +151,21 @@ func TestStoreRoundTripAndOptimisticConcurrency(t *testing.T) {
 	}
 	if auditCount != 2 {
 		t.Fatalf("expected 2 audit events, got %d", auditCount)
+	}
+
+	if err := store.DeleteProject(ctx, projectID, subject); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := store.GetProject(ctx, projectID); !errors.Is(err, projects.ErrNotFound) {
+		t.Fatalf("expected deleted project to be hidden, got %v", err)
+	}
+	if err := store.db.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM audit_events WHERE project_id = $1",
+		projectID,
+	).Scan(&auditCount); err != nil {
+		t.Fatal(err)
+	}
+	if auditCount != 3 {
+		t.Fatalf("expected delete to add audit event, got %d events", auditCount)
 	}
 }

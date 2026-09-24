@@ -32,6 +32,7 @@ func (projectStoreStub) ListRevisions(context.Context, string, int) ([]projects.
 func (projectStoreStub) SaveRevision(context.Context, projects.SaveRevisionInput) (projects.Project, projects.Revision, error) {
 	return projects.Project{}, projects.Revision{}, nil
 }
+func (projectStoreStub) DeleteProject(context.Context, string, string) error { return nil }
 
 func TestServerServesAPIAndStaticFrontend(t *testing.T) {
 	dir := t.TempDir()

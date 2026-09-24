@@ -301,17 +301,50 @@ RETURNING created_at
 	return p, revision, nil
 }
 
-func (s *Store) RoleForProject(ctx context.Context, projectID, subject string) (auth.Role, error) {
+func (s *Store) DeleteProject(ctx context.Context, projectID, actor string) error {
+	projectID = strings.TrimSpace(projectID)
+	actor = strings.TrimSpace(actor)
+	if projectID == "" || actor == "" {
+		return errors.New("postgres: project id and actor are required")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		return fmt.Errorf("postgres: begin delete project: %w", err)
+	}
+	defer tx.Rollback()
+
+	var workspaceID string
+	err = tx.QueryRowContext(ctx, `
+UPDATE projects
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING workspace_id
+`, projectID).Scan(&workspaceID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return projects.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("postgres: soft delete project: %w", err)
+	}
+	if err := writeAudit(ctx, tx, workspaceID, projectID, actor, "project.delete", projectID, map[string]any{}); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("postgres: commit delete project: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) RoleForProject(ctx context.Context, projectID, userID string) (auth.Role, error) {
 	var role string
 	err := s.db.QueryRowContext(ctx, `
 SELECT wm.role
 FROM projects p
 JOIN workspace_memberships wm ON wm.workspace_id = p.workspace_id
-JOIN users u ON u.id = wm.user_id
 WHERE p.id = $1
   AND p.deleted_at IS NULL
-  AND u.external_subject = $2
-`, strings.TrimSpace(projectID), strings.TrimSpace(subject)).Scan(&role)
+  AND wm.user_id = $2
+`, strings.TrimSpace(projectID), strings.TrimSpace(userID)).Scan(&role)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", auth.ErrForbidden
 	}
