@@ -95,17 +95,17 @@ RETURNING created_at
 	return env, nil
 }
 
-func (s *Store) OperationsSince(ctx context.Context, projectID string, sinceSeq int64, limit int) ([]realtime.OperationEnvelope, error) {
+func (s *Store) OperationsSince(ctx context.Context, projectID string, baseVersion, sinceSeq int64, limit int) ([]realtime.OperationEnvelope, error) {
 	if limit <= 0 || limit > 1000 {
 		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
 SELECT project_id, seq, op_id, client_id, base_version, kind, COALESCE(entity_id,''), payload, created_by_subject, created_at
 FROM project_operations
-WHERE project_id = $1 AND seq > $2
+WHERE project_id = $1 AND base_version = $2 AND seq > $3
 ORDER BY seq ASC
-LIMIT $3
-`, strings.TrimSpace(projectID), sinceSeq, limit)
+LIMIT $4
+`, strings.TrimSpace(projectID), baseVersion, sinceSeq, limit)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: operations since: %w", err)
 	}
@@ -125,11 +125,13 @@ LIMIT $3
 	return out, rows.Err()
 }
 
-func (s *Store) LatestOperationSeq(ctx context.Context, projectID string) (int64, error) {
+func (s *Store) LatestOperationSeq(ctx context.Context, projectID string, baseVersion int64) (int64, error) {
 	var seq int64
 	err := s.db.QueryRowContext(ctx, `
-SELECT COALESCE((SELECT last_seq FROM project_operation_counters WHERE project_id = $1), 0)
-`, strings.TrimSpace(projectID)).Scan(&seq)
+SELECT COALESCE(MAX(seq), 0)
+FROM project_operations
+WHERE project_id = $1 AND base_version = $2
+`, strings.TrimSpace(projectID), baseVersion).Scan(&seq)
 	if err != nil {
 		return 0, fmt.Errorf("postgres: latest operation seq: %w", err)
 	}
