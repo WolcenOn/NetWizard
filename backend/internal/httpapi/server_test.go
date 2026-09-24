@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,7 +12,26 @@ import (
 	"testing"
 
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
+	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 )
+
+type projectStoreStub struct{}
+
+func (projectStoreStub) CreateProject(context.Context, projects.CreateInput) (projects.Project, projects.Revision, error) {
+	return projects.Project{}, projects.Revision{}, nil
+}
+func (projectStoreStub) GetProject(context.Context, string) (projects.Project, projects.Revision, error) {
+	return projects.Project{}, projects.Revision{}, nil
+}
+func (projectStoreStub) ListWorkspaceProjects(context.Context, string) ([]projects.Project, error) {
+	return nil, nil
+}
+func (projectStoreStub) ListRevisions(context.Context, string, int) ([]projects.Revision, error) {
+	return nil, nil
+}
+func (projectStoreStub) SaveRevision(context.Context, projects.SaveRevisionInput) (projects.Project, projects.Revision, error) {
+	return projects.Project{}, projects.Revision{}, nil
+}
 
 func TestServerServesAPIAndStaticFrontend(t *testing.T) {
 	dir := t.TempDir()
@@ -91,5 +111,32 @@ func TestServerServesAPIAndStaticFrontend(t *testing.T) {
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("unknown API path should be 404, got %d", resp.StatusCode)
+	}
+}
+
+
+func TestCapabilitiesReportReadyDatabaseOnlyWhenStoreInjected(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	server := NewServerWithDependencies(
+		config.Config{Version: "test-version", DatabaseURL: "postgres://configured"},
+		logger,
+		Dependencies{Projects: projectStoreStub{}},
+	)
+	req := httptest.NewRequest(http.MethodGet, "/api/capabilities", nil)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	for _, needle := range []string{
+		""databaseConfigured":true",
+		""databaseReady":true",
+		""remoteProjectWrites":false",
+	} {
+		if !strings.Contains(body, needle) {
+			t.Fatalf("capabilities missing %s: %s", needle, body)
+		}
 	}
 }
