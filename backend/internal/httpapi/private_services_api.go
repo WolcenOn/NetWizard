@@ -9,7 +9,6 @@ import (
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/privateservices"
-	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 )
 
 const maxPrivateArtifactBytes = 128 * 1024 * 1024
@@ -88,7 +87,7 @@ func (s *Server) handleCreateDeploymentAttestation(w http.ResponseWriter, r *htt
 
 	audit, ok := s.projects.(privateAuditStore)
 	if !ok {
-		s.internalError(w, "audit private deployment attestation", nil)
+		s.internalError(w, "audit private deployment attestation", privateservices.ErrInvalidInput)
 		return
 	}
 	if err := audit.RecordProjectAudit(r.Context(), project.WorkspaceID, project.ID, principal.Subject,
@@ -114,5 +113,3 @@ func isSHA256Hex(value string) bool {
 	return err == nil && len(decoded) == 32
 }
 
-// Compile-time guard: this endpoint deliberately binds attestations to stored project revisions.
-var _ projects.Store = (projects.Store)(nil)
