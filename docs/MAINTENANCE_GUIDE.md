@@ -12,7 +12,7 @@ Capas principales:
 4. Auditorías: L1/L2/IP/DHCP/PoE/Broadcast/Vendor/Producción.
 5. Modelo físico: racks, rack items, PDU/alimentación y cableado estructurado (`netwizard-rack-model.js`, `netwizard-structured-cabling.js`).
 6. Exportación: configuraciones vendor, inventario, documentación y paquete de despliegue.
-7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`. V5 se modulariza mediante `netwizard-v5-core.js` (modelo puro) y `netwizard-v5-bridge.js` (contrato estable para extensiones); el renderer legacy permanece temporalmente en `netwizard.js`.
+7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`. V5 se separa en `netwizard-v5-core.js` (modelo puro), `netwizard-v5-renderer.js` (dibujo), `netwizard-v5-interaction.js` (hit-testing/drag/pan/zoom) y `netwizard-v5-bridge.js` (contrato estable); `netwizard.js` conserva temporalmente la orquestación y mutaciones legacy.
 8. Backend: `backend/internal/config`, `httpapi` y `realtime`; su frontera con el cliente se define en `docs/BACKEND_BOUNDARIES.md`.
 
 ## Reglas para cambios futuros
@@ -31,6 +31,7 @@ Capas principales:
 - Mantener el modo local funcional mientras el modo colaborativo no se declare como requisito obligatorio.
 - Las extensiones V5 nuevas deben consumir `window.NetWizardV5` y no globals internos de `netwizard.js` cuando exista equivalente en el bridge.
 - Las reglas V5 puras de estado, filtros, aliases, jerarquía, inferencia o geometría deben añadirse a `netwizard-v5-core.js` con tests unitarios.
+- El dibujo V5 debe añadirse a `netwizard-v5-renderer.js`; hit-testing y matemáticas de interacción a `netwizard-v5-interaction.js`. Evitar reintroducir esos cálculos en `netwizard.js`.
 
 ## Comentarios de código
 

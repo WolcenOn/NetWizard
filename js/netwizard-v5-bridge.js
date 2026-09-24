@@ -6,6 +6,8 @@
 (function(){
   'use strict';
   const CORE=window.NetWizardV5Core;
+  const RENDERER=window.NetWizardV5Renderer;
+  const INTERACTION=window.NetWizardV5Interaction;
 
   function project(){
     try{return window.NetWizardState?.getSnapshot?.()||window.S||{};}catch{return window.S||{};}
@@ -63,6 +65,8 @@
   window.NetWizardV5={
     version:'netwizard-v5-bridge-v1',
     core:CORE,
+    renderer:RENDERER,
+    interaction:INTERACTION,
     project,visual,metrics,nodeBounds,nodeCenter,worldToScreen,screenToWorld,
     redraw,renderPanel,select,locationItems,
     locations:()=>CORE?.locations(visual())||[],
