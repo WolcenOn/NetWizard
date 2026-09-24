@@ -13,6 +13,7 @@ import (
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
+	"github.com/WolcenOn/NetWizard/backend/internal/realtime"
 	"github.com/WolcenOn/NetWizard/backend/internal/workspaces"
 )
 
@@ -265,7 +266,14 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 		s.writeProjectError(w, "save project", err)
 		return
 	}
-	w.Header().Set("ETag", projectETag(project, revision))
+	etag := projectETag(project, revision)
+	w.Header().Set("ETag", etag)
+	if s.collaborationReady() {
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "snapshot_saved", "currentVersion": project.CurrentVersion, "etag": etag,
+		})
+		s.realtime.Room(projectID).Broadcast(r.Context(), resync, "")
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
 }
 
@@ -283,6 +291,15 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 	if err := s.projects.DeleteProject(r.Context(), projectID, principal.Subject); err != nil {
 		s.writeProjectError(w, "delete project", err)
 		return
+	}
+	if s.collaborationReady() {
+		room := s.realtime.Room(projectID)
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "project_deleted",
+		})
+		room.Broadcast(r.Context(), resync, "")
+		room.CloseAll()
+		s.realtime.RemoveRoomIfEmpty(projectID)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
