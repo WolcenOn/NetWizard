@@ -3,6 +3,7 @@ package realtime
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 )
 
@@ -40,9 +41,15 @@ type OperationEnvelope struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+var (
+	ErrOperationConflict = errors.New("operation base version conflict")
+	ErrOperationInvalid  = errors.New("invalid operation")
+)
+
 type OperationStore interface {
-	AppendOperation(ctx context.Context, projectID string, op Operation) (OperationEnvelope, error)
-	OperationsSince(ctx context.Context, projectID string, sinceSeq int64) ([]OperationEnvelope, error)
+	AppendOperation(ctx context.Context, projectID string, op Operation, actor string) (OperationEnvelope, error)
+	OperationsSince(ctx context.Context, projectID string, sinceSeq int64, limit int) ([]OperationEnvelope, error)
+	LatestOperationSeq(ctx context.Context, projectID string) (int64, error)
 }
 
 type Snapshot struct {
