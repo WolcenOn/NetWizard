@@ -51,6 +51,15 @@ assert.strictEqual(project.hosts[0].portRef,'p1');
 assert.strictEqual(project.visual.assign.hosts.h1,'l1');
 assert.deepStrictEqual(r.selection,{t:'host',id:'h1'});
 
+project.hosts[0].portAssignMode='manual';
+project.hosts[0].portRef='p1';
+r=cmd.setHostConnectedDevice({id:'h1',deviceId:'fw1'});
+assert.strictEqual(project.hosts[0].connectedDeviceId,'fw1');
+assert.strictEqual(project.hosts[0].portRef,null);
+project.hosts[0].portAssignMode='auto';
+cmd.setHostConnectedDevice({id:'h1',deviceId:'sw1'});
+assert.strictEqual(project.hosts[0].portRef,'p1');
+
 cmd.moveDevice({id:'sw1',locationId:'l2'});
 assert.strictEqual(project.visual.assign.devices.sw1,'l2');
 assert.deepStrictEqual(project.visual.pos.sw1,{x:500,y:120});
