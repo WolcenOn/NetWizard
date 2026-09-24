@@ -11,6 +11,7 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/limits"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
+	"github.com/WolcenOn/NetWizard/backend/internal/realtime"
 	"github.com/WolcenOn/NetWizard/backend/internal/workspaces"
 )
 
@@ -20,6 +21,8 @@ type Dependencies struct {
 	Access     auth.AccessStore
 	Limits     limits.Store
 	Auth       *auth.Service
+	Operations realtime.OperationStore
+	Realtime   *realtime.Hub
 }
 
 type Server struct {
@@ -31,6 +34,8 @@ type Server struct {
 	authorizer auth.Authorizer
 	auth       *auth.Service
 	writeLimit limits.Store
+	operations realtime.OperationStore
+	realtime   *realtime.Hub
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
@@ -46,6 +51,7 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 		projects: deps.Projects, workspaces: deps.Workspaces,
 		authorizer: auth.Authorizer{Store: deps.Access},
 		auth: deps.Auth, writeLimit: deps.Limits,
+		operations: deps.Operations, realtime: deps.Realtime,
 	}
 	s.routes()
 	return s
@@ -124,7 +130,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"authConfigPresent":   s.cfg.AuthConfigPresent(),
 		"authEnforced":        s.auth != nil,
 		"remoteProjectWrites": s.remoteWritesReady(),
-		"collaboration":       false,
+		"collaboration":       s.collaborationReady(),
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
 }
