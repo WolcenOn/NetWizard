@@ -20,6 +20,11 @@
   <div class="proj-lbl"><span data-i18n="top.project">Proyecto:</span> <b id="projLbl">Sin título</b></div>
   <div class="saved" id="savedLbl" data-i18n="top.saved">✓ guardado</div>
   <div class="saved" title="Versión candidata local/controlada"><span data-i18n="app.version">NetWizard v3.50 RC</span></div>
+  <div id="authControls" style="display:flex;align-items:center;gap:6px;">
+    <span class="saved" id="authStatus" aria-live="polite">Modo local</span>
+    <button class="btn bs bsm" id="btnAuthLogin" type="button" style="display:none;">Entrar</button>
+    <button class="btn bs bsm" id="btnAuthLogout" type="button" style="display:none;">Salir</button>
+  </div>
   <div style="display:flex;gap:6px;">
     <button class="btn bs bsm" id="btnReset" data-i18n="top.new">🗑 Nuevo</button>
     <button class="btn bp bsm" id="btnExport" data-i18n="top.export">⬆ Exportar</button>
@@ -945,6 +950,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-core-utils.js"></script>
 <script src="./js/netwizard-security-utils.js"></script>
 <script src="./js/netwizard-i18n.js"></script>
+<script src="./js/netwizard-auth-client.js"></script>
 <script src="./js/netwizard-network-utils.js"></script>
 <script src="./js/netwizard-device-model.js"></script>
 <script src="./js/netwizard-project-schema.js"></script>
