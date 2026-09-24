@@ -1,3 +1,20 @@
+FROM node:24-alpine AS frontend
+
+WORKDIR /src
+COPY index.html portfolio.json ./
+COPY css ./css
+COPY js ./js
+COPY i18n ./i18n
+COPY samples ./samples
+COPY schemas ./schemas
+
+RUN mkdir -p /out/js \
+    && cp index.html portfolio.json /out/ \
+    && cp -R css i18n samples schemas /out/ \
+    && npx --yes esbuild@0.25.10 js/*.js --outdir=/out/js --minify --target=es2020 \
+    && test "$(find /out/js -type f -name '*.js' | wc -l)" -eq "$(find js -type f -name '*.js' | wc -l)" \
+    && ! find /out -type f \( -name '*.map' -o -name '*.ts' \) | grep -q .
+
 FROM golang:1.25-alpine AS build
 
 WORKDIR /src
@@ -12,13 +29,7 @@ RUN addgroup -S netwizard && adduser -S -G netwizard netwizard
 
 WORKDIR /app
 COPY --from=build /out/netwizard /app/netwizard
-COPY index.html /app/public/index.html
-COPY css /app/public/css
-COPY js /app/public/js
-COPY i18n /app/public/i18n
-COPY samples /app/public/samples
-COPY schemas /app/public/schemas
-COPY portfolio.json /app/public/portfolio.json
+COPY --from=frontend /out/ /app/public/
 
 ENV NETWIZARD_STATIC_DIR=/app/public
 
