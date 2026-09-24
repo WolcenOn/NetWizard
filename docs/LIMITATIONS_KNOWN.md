@@ -32,6 +32,7 @@
 - En pantalla, las matrices de puertos conservan bloques amplios con desplazamiento horizontal cuando resulta útil.
 - En impresión/PDF, el informe genera una representación independiente en bancos de 6 puertos con ancho fijo, texto ajustable y repetición de equipo/rack/rango para evitar columnas fuera del A4 apaisado.
 - El plano visual de replanteo resume los enlaces principales por rack; cuando hay muchos enlaces, el diagrama limita el número de caminos dibujados para mantener legibilidad, pero la tabla de referencias conserva todos los enlaces documentados.
+- Las hojas de etiquetas ofrecen presets A4 genéricos (3×8, 2×7 y 3×12). Para papel adhesivo comercial concreto, imprimir al 100 % y comprobar márgenes con una hoja de prueba; presets exactos por referencia Avery/APLI u otros fabricantes todavía no están incorporados.
 
 ## Seguridad
 

@@ -28,6 +28,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Modelo 3.50 para routing, HA, seguridad, gestión, WAN, Wi-Fi, IPv6/VRF, resiliencia, capacidad, servicios y drift.
 - `package-lock.json`, licencia, changelog y script de empaquetado reproducible.
 - Golden sample determinista de cuatro sedes con VLANs/VLSM, trunks, racks, cableado, PoE y alimentación A/B.
+- Informe técnico de instalación configurable por secciones, con esquema general de conexión de equipos, planos por rack y hojas A4 de etiquetas para racks, equipos, elementos pasivos y ambos extremos de cables.
 - Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
 - Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada. Su estado, geometría, aliases e inferencia física ya disponen de un core puro y un bridge estable para extensiones.
 - Diagnóstico de conectividad reutilizable desde V5: reconstruye la ruta física documentada y simula ICMP, DNS, HTTPS, MQTT y RTSP contra VLANs, gateways, matriz inter-VLAN y firewall; la traza puede superponerse sobre V5 para resaltar los saltos recorridos y localizar bloqueos de acceso, ruta física, gateway, política o firewall.
