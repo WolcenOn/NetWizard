@@ -78,7 +78,8 @@
 
     ctx.clearRect(0,0,rect.width,rect.height);
     const linkDots=[],renderState={
-      layerOrder:['background','locations','base-links','nodes','selected-links'],
+      layerOrder:['background','base-links','nodes','selected-links'],
+      sceneOrder:['background','locations','base-links','nodes','selected-links'],
       baseNetwork:0,baseHost:0,selectedNetwork:0,selectedHost:0,
       locationCount:arr(locations).length,
       selected:visual.sel?{...visual.sel}:null
