@@ -61,13 +61,12 @@ Las extensiones nuevas no deben depender directamente de \`vv()\`, \`vLocs()\`, 
 3. Migrar consumidores al bridge antes de eliminar un global.
 4. No mover persistencia ni mutaciones de proyecto al core.
 5. Toda regla nueva de aliases o geometría debe existir una sola vez.
-6. Añadir test unitario al core y Playwright cuando el cambio sea visual.
+6. Añadir test unitario al módulo afectado (`core`, `renderer` o `interaction`) y Playwright cuando el cambio sea visual.
 7. No hacer una reescritura completa del canvas mientras existan contratos legacy sin cobertura.
 
 ## Próximos cortes seguros
 
-- extraer cálculo de links/labels del renderer;
-- separar hit-testing y drag/drop;
-- separar renderer de nodos y renderer de enlaces;
+- mover la orquestación completa del frame (`drawV5`) a un scene renderer;
+- extraer el controlador de drag/drop para dejar las mutaciones como comandos explícitos;
 - convertir el panel lateral V5 en módulo propio;
 - retirar wrappers legacy solo cuando ningún consumidor los use.
