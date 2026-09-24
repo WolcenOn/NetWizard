@@ -2458,6 +2458,9 @@ const V5RENDER=window.NetWizardV5Renderer;
 const V5INTERACT=window.NetWizardV5Interaction;
 const V5SCENE=window.NetWizardV5Scene;
 const V5DRAG=window.NetWizardV5DragController;
+const V5COMMANDSFACTORY=window.NetWizardV5Commands;
+const V5PANELFACTORY=window.NetWizardV5Panel;
+let v5Commands=null,v5PanelController=null;
 window.V5S=V5S;
 
 
@@ -2467,7 +2470,7 @@ window.V5S=V5S;
 // =========================================================
 function vv(){return V5CORE?V5CORE.ensureVisualState(S):(S.visual||(S.visual={locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null,fs:false,compactLabels:true,proMode:true,proBounds:{}}));}
 function v5ProMode(){return vv().proMode!==false;}
-function setV5ProMode(on){vv().proMode=!!on;if(v5ProMode())applyProfessionalLocationLayout();save();drawV5();renderV5Panel();}
+function setV5ProMode(on){return v5ApplyCommand('setProMode',{on:!!on});}
 function v5FreezeAutoBounds(on){
   const V=vv();
   if(on){
@@ -2481,7 +2484,7 @@ function v5FreezeAutoBounds(on){
 }
 function v5Filters(){return V5CORE?V5CORE.ensureFilters(vv()):(vv().filters||(vv().filters={}));}
 function v5FilterOn(k){const f=v5Filters();return f[k]!==false;}
-function v5SetFilter(k,on){v5Filters()[k]=!!on;save();drawV5();renderV5Panel();}
+function v5SetFilter(k,on){return v5ApplyCommand('setFilter',{key:k,on:!!on});}
 function v5HostFilterKey(h){return V5CORE?V5CORE.hostFilterKey(h):'hosts';}
 function v5ShowDevice(d){return V5CORE?V5CORE.showDevice(vv(),d):v5FilterOn((d.type||'switch').toLowerCase());}
 function v5ShowHost(h){return V5CORE?V5CORE.showHost(vv(),h,id=>!!devById(id)):(!(h.deviceRef&&devById(h.deviceRef))&&v5FilterOn('hosts')&&v5FilterOn(v5HostFilterKey(h)));}
@@ -2617,11 +2620,44 @@ function deviceVisualLoc(id){return V5CORE?V5CORE.deviceVisualLoc(vv(),id):(vv()
 function hostVisualLoc(id){return V5CORE?V5CORE.hostVisualLoc(vv(),id):(vv().assign.hosts[id]||'');}
 function setDeviceVisualLoc(id,lid){return V5CORE?V5CORE.setDeviceVisualLoc(vv(),id,lid):(vv().assign.devices[id]=lid);}
 function setHostVisualLoc(id,lid){return V5CORE?V5CORE.setHostVisualLoc(vv(),id,lid):(vv().assign.hosts[id]=lid);}
-function v5ApplyRefresh(sel){save();refresh();if(sel)selectV5(sel.t,sel.id);}
-function v5UpdateDevice(id,key,val){const d=devById(id);if(!d)return;if(key==='type'||key==='kind'){d.type=val;d.kind=val;if(!isEdgeDevice(d)){d.internetEdge='no';d.wanIf=null;}}else d[key]=val;v5ApplyRefresh({t:'device',id});}
-function v5UpdateHost(id,key,val){const h=S.hosts.find(x=>x.id===id);if(!h)return;h[key]=val;v5ApplyRefresh({t:'host',id});}
-function v5UpdateHostPort(id,portId){const h=S.hosts.find(x=>x.id===id);if(!h)return;h.portRef=portId||null;if(portId){const p=S.ports.find(pp=>pp.id===portId);if(p){h.connectedDeviceId=p.deviceId;setHostVisualLoc(id,deviceVisualLoc(p.deviceId));}}v5ApplyRefresh({t:'host',id});}
-function v5UpdatePort(portId,key,val){const p=S.ports.find(x=>x.id===portId);if(!p)return;p[key]=val;if(key==='mode'&&val!=='access'&&p.accessVlanRef)p.accessVlanRef=null;v5ApplyRefresh(vv().sel||null);}
+function ensureV5Commands(){
+  if(v5Commands)return v5Commands;
+  v5Commands=V5COMMANDSFACTORY.create({
+    project:()=>S,
+    visual:vv,
+    isEdgeDevice,
+    deviceVisualLocation:deviceVisualLoc,
+    setDeviceVisualLocation:setDeviceVisualLoc,
+    setHostVisualLocation:setHostVisualLoc,
+    nextNodePosition:nextNodePositionInLoc,
+    applyProfessionalLayout:applyProfessionalLocationLayout,
+    suggestHostPort
+  });
+  return v5Commands;
+}
+function v5ApplyCommand(name,payload){
+  const result=ensureV5Commands().execute(name,payload||{});
+  window.NetWizardV5CommandState={name,payload:{...(payload||{})},changed:!!result.changed,selection:result.selection?{...result.selection}:null};
+  if(!result.changed)return result;
+  if(result.selection)vv().sel={...result.selection};
+  save();
+  if(result.refresh)refresh();
+  else{
+    if(result.redraw)drawV5();
+    if(result.panel)renderV5Panel();
+  }
+  return result;
+}
+function v5ApplyRefresh(sel){if(sel)vv().sel={...sel};save();refresh();}
+function v5UpdateDevice(id,key,val){return v5ApplyCommand('updateDevice',{id,key,value:val});}
+function v5UpdateHost(id,key,val){return v5ApplyCommand('updateHost',{id,key,value:val});}
+function v5UpdateHostPort(id,portId){return v5ApplyCommand('updateHostPort',{id,portId});}
+function v5UpdatePort(portId,key,val){return v5ApplyCommand('updatePort',{id:portId,key,value:val});}
+function v5MoveDevice(id,locationId){return v5ApplyCommand('moveDevice',{id,locationId});}
+function v5MoveHost(id,locationId){return v5ApplyCommand('moveHost',{id,locationId});}
+function v5SetCompactLabels(compact){return v5ApplyCommand('setCompactLabels',{compact:!!compact});}
+function v5SetHostConnectedDevice(id,deviceId){return v5ApplyCommand('setHostConnectedDevice',{id,deviceId});}
+function v5SetHostPortMode(id,mode){return v5ApplyCommand('setHostPortMode',{id,mode});}
 function syncV5FullscreenState(){const layout=$('v5Layout');const fullEl=document.fullscreenElement;const nativeFs=!!(fullEl&&fullEl===layout);const fallbackFs=layout.classList.contains('fs');const on=nativeFs||fallbackFs;layout.classList.toggle('fs',fallbackFs&&!nativeFs);document.body.classList.toggle('v5-fs-lock',on);vv().fs=on;$('v5Fs').textContent=on?'🗗 Salir pantalla completa':'⛶ Pantalla completa';setTimeout(()=>{resizeV5();fitV5(false);renderV5Panel();},30);}
 async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)return;const active=!!(document.fullscreenElement===layout)||layout.classList.contains('fs');const next=force==null?!active:!!force;try{
   if(next){
@@ -2876,118 +2912,67 @@ function visualResizeHandleHit(wx,wy){return V5INTERACT.resizeHandleHit({point:{
 function visualHit(wx,wy){return V5INTERACT.hitTest({point:{x:wx,y:wy},hosts:S.hosts,devices:S.devices,locations:vLocs(),showHost:v5ShowHost,showDevice:v5ShowDevice,nodeBounds:visualNodeBounds,locationBounds:visualLocBounds,zoom:vv().view.zoom,resizeEnabled:loc=>!(v5ProMode()&&loc.parentId)});}
 function locAt(wx,wy){return V5INTERACT.locationAt({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds});}
 function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
-function v5UpdateLocationSize(id,key,val){const l=vLocById(id);if(!l)return;const num=Math.max(key==='w'?330:160,Number(val)||0);l[key]=num;save();drawV5();}
-function addV5Location(){ensureVisualModel();const idx=vLocs().length+1;vLocs().push({id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)});save();renderV5Panel();drawV5();}
-function v5UpdateLocationMeta(id,key,val){const l=vLocById(id);if(!l)return;l[key]=val;save();drawV5();}
-function v5Field(label, control){
-  const box=makeEl('div',''); const lab=makeEl('label','fl',label); box.append(lab,control); return box;
+function v5UpdateLocationSize(id,key,val){return v5ApplyCommand('updateLocationSize',{id,key,value:val});}
+function addV5Location(){
+  ensureVisualModel();
+  const idx=vLocs().length+1;
+  return v5ApplyCommand('addLocation',{location:{id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)}});
 }
-function v5Input(value,onInput,type='text'){
-  const input=document.createElement('input'); input.type=type; input.value=value??''; input.addEventListener('input',e=>onInput&&onInput(e.target.value)); return input;
-}
-function v5Select(options,value,onChange){
-  const sel=document.createElement('select');
-  options.forEach(o=>sel.appendChild(makeOption(o.value,o.label,String(o.value)===String(value))));
-  sel.value=value??'';
-  sel.addEventListener('change',e=>onChange&&onChange(e.target.value));
-  return sel;
-}
-function v5Row(cls,...items){ const row=makeEl('div',cls||'v5-row2'); items.forEach(i=>row.appendChild(i)); return row; }
-function v5Button(label,fn,cls='btn bs bsm'){ const b=makeEl('button',cls,label); b.type='button'; b.addEventListener('click',fn); return b; }
-function v5Meta(...items){ const m=makeEl('div','v5-meta'); items.forEach(([cls,text])=>m.appendChild(makeEl('span',cls,text))); return m; }
-function v5ListItem(icon,title,mini,fn){ const item=makeEl('div','v5-item'); item.style.cursor='pointer'; item.addEventListener('click',fn); appendText(item,icon+' '); const b=makeEl('b','',title); item.appendChild(b); if(mini!==undefined)item.appendChild(makeEl('div','v5-mini',mini)); return item; }
-function appendV5Controls(box){
-  const brow=makeEl('div','brow'); brow.style.margin='0 0 10px 0';
-  brow.append(v5Button('📍 Nueva ubicación',()=>addV5Location()),v5Button(vv().fs?'🗗 Salir pantalla completa':'⛶ Pantalla completa',()=>toggleV5Fullscreen()),v5Button(v5ProMode()?'🧱 Profesional ON':'🧱 Profesional OFF',()=>setV5ProMode(!v5ProMode())));
-  box.appendChild(brow);
-}
-function renderPortEditorDom(d){
-  const ports=portsByDev(d.id).sort((a,b)=>(a.position||999)-(b.position||999)||a.name.localeCompare(b.name));
-  if(!ports.length)return makeEl('div','v5-empty','Este equipo no tiene puertos definidos todavía.');
-  const wrap=makeEl('div','v5-ports');
-  const vlanOpts=(selected)=>[{value:'',label:'—'}].concat(S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>({value:v.id,label:`VLAN ${v.vlanId} — ${v.name||''}`})));
-  ports.forEach(p=>{
-    const card=makeEl('div','v5-port'); card.appendChild(makeEl('h4','',p.name||p.id));
-    card.appendChild(v5Row('v5-row3',
-      v5Field('Nombre',v5Input(p.name||'',v=>v5UpdatePort(p.id,'name',v))),
-      v5Field('Medio',v5Select([{value:'FE',label:'FE'},{value:'GE',label:'GE'},{value:'SFP',label:'SFP'}],p.media||'GE',v=>v5UpdatePort(p.id,'media',v))),
-      v5Field('Modo',v5Select([{value:'access',label:'access'},{value:'trunk',label:'trunk'},{value:'layer3',label:'layer3'}],p.mode||'access',v=>v5UpdatePort(p.id,'mode',v)))
-    ));
-    card.appendChild(v5Row('v5-row3',
-      v5Field('VLAN access',v5Select(vlanOpts(p.accessVlanRef),p.accessVlanRef||'',v=>v5UpdatePort(p.id,'accessVlanRef',v||null))),
-      v5Field('Rol',v5Input(p.role||'',v=>v5UpdatePort(p.id,'role',v||null))),
-      v5Field('Descripción',v5Input(p.desc||'',v=>v5UpdatePort(p.id,'desc',v||null)))
-    ));
-    wrap.appendChild(card);
+function v5UpdateLocationMeta(id,key,val){return v5ApplyCommand('updateLocationMeta',{id,key,value:val});}
+function ensureV5PanelController(){
+  if(v5PanelController)return v5PanelController;
+  v5PanelController=V5PANELFACTORY.create({
+    project:()=>S,
+    visual:vv,
+    proMode:v5ProMode,
+    locations:vLocs,
+    locationById:vLocById,
+    locationDepth:vLocDepth,
+    locationChildren:vLocChildren,
+    locationBounds:visualLocBounds,
+    devicesInLocation:devsInVisualLoc,
+    hostsInLocation:hostsInVisualLoc,
+    deviceById:devById,
+    deviceVisualLocation:deviceVisualLoc,
+    hostVisualLocation:hostVisualLoc,
+    deviceKind:devKind,
+    deviceKindOptions:()=>NWDevice?NWDevice.kindOptions():[{value:'switch',label:'Switch'},{value:'router',label:'Router'},{value:'firewall',label:'Firewall'}],
+    vendors:()=>ALL_VENDORS.map(v=>({value:v.id,label:v.l})),
+    hostTypeOptions:()=>Object.entries(HT).map(([k,v])=>({value:k,label:v.l})),
+    vlanByRef:vByRef,
+    effectiveHostIp,
+    deviceLabel:devLabel,
+    portsByDevice:portsByDev,
+    hostConnectedDeviceId,
+    connectableDevices,
+    hostAssignablePorts,
+    hostPortUsedByOther,
+    actions:{
+      addLocation,
+      fit:()=>fitV5(),
+      fullscreen:()=>toggleV5Fullscreen(),
+      setProMode,
+      select:selectV5,
+      removeLocation:removeV5Location,
+      updateLocationMeta:v5UpdateLocationMeta,
+      updateLocationSize:v5UpdateLocationSize,
+      setCompactLabels:v5SetCompactLabels,
+      updateDevice:v5UpdateDevice,
+      moveDevice:v5MoveDevice,
+      updatePort:v5UpdatePort,
+      updateHost:v5UpdateHost,
+      moveHost:v5MoveHost,
+      setHostConnectedDevice:v5SetHostConnectedDevice,
+      setHostPortMode:v5SetHostPortMode,
+      updateHostPort:v5UpdateHostPort
+    }
   });
-  return wrap;
+  return v5PanelController;
 }
 function renderV5Panel(){
-  const box=$('v5Panel');if(!box)return;ensureVisualModel();clearNode(box);const sel=vv().sel;
-  if(!sel){
-    box.appendChild(makeEl('div','card-t','Panel V5'));
-    const br=makeEl('div','brow'); br.style.margin='0 0 10px 0'; br.append(v5Button('📍 Nueva ubicación',()=>addV5Location()),v5Button('⊞ Ajustar vista',()=>fitV5()),v5Button(vv().fs?'🗗 Salir pantalla completa':'⛶ Pantalla completa',()=>toggleV5Fullscreen())); box.appendChild(br);
-    const br2=makeEl('div','brow'); br2.style.margin='0 0 10px 0'; br2.appendChild(v5Button(v5ProMode()?'🧱 Modo profesional: ON':'🧱 Modo profesional: OFF',()=>setV5ProMode(!v5ProMode()))); box.appendChild(br2);
-    box.appendChild(makeEl('div','v5-empty','Selecciona una ubicación, un dispositivo o un host para retocarlo usando los datos ya construidos en V4.'));
-    box.appendChild(makeEl('div','v5-note',v5ProMode()?'Modo profesional activo: las sububicaciones se muestran anidadas y heredan su contenedor superior.':'Modo libre activo: puedes mover y redimensionar ubicaciones sin jerarquía visual automática.'));
-    const list=makeEl('div','v5-list'); vLocs().forEach(l=>list.appendChild(v5ListItem('',`${'· '.repeat(vLocDepth(l.id))}${l.name}`,`${devsInVisualLoc(l.id).length} equipos · ${hostsInVisualLoc(l.id).length} hosts`,()=>selectV5('loc',l.id)))); box.appendChild(list);
-    return;
-  }
-  if(sel.t==='loc'){
-    const l=vLocById(sel.id);if(!l)return;
-    box.appendChild(makeEl('div','card-t',`📍 ${l.name}`)); appendV5Controls(box);
-    box.appendChild(v5Meta(['b bac',`${devsInVisualLoc(l.id).length} equipos`],['b bgr',`${hostsInVisualLoc(l.id).length} hosts`],['b byw',`${vLocChildren(l.id).length} sububicaciones`]));
-    box.appendChild(v5Row('v5-row2',v5Field('Nombre',v5Input(l.name||'',v=>v5UpdateLocationMeta(l.id,'name',v))),v5Field('Color',v5Input(l.color||'#10233c',v=>v5UpdateLocationMeta(l.id,'color',v),'color'))));
-    box.appendChild(v5Row('v5-row3',
-      v5Field('Ancho',v5Input(Math.round(visualLocBounds(l).w),v=>v5UpdateLocationSize(l.id,'w',v),'number')),
-      v5Field('Alto',v5Input(Math.round(visualLocBounds(l).h),v=>v5UpdateLocationSize(l.id,'h',v),'number')),
-      v5Field('Etiquetas enlaces',v5Select([{value:'compact',label:'Compactas'},{value:'full',label:'Completas'}],vv().compactLabels===false?'full':'compact',v=>{vv().compactLabels=v==='compact'; save(); drawV5(); renderV5Panel();}))
-    ));
-    const br=makeEl('div','brow'); br.append(v5Button('🗑 Eliminar ubicación',()=>removeV5Location(l.id)),v5Button('⊞ Centrar',()=>fitV5())); box.appendChild(br);
-    box.appendChild(makeEl('div','v5-note',v5ProMode()&&l.parentId?'Esta sububicación se dibuja anidada dentro de su ubicación superior.':'Puedes reorganizar esta ubicación libremente o usar el modo profesional para anidarla visualmente.'));
-    const list=makeEl('div','v5-list');
-    devsInVisualLoc(l.id).forEach(d=>list.appendChild(v5ListItem('🔀',d.name||d.id,`${d.type||''} · ${d.mgmtIp||'sin mgmt'}`,()=>selectV5('device',d.id))));
-    hostsInVisualLoc(l.id).forEach(h=>{const v=vByRef(h.vlanRef);list.appendChild(v5ListItem('💻',h.name||h.id,`${v?('VLAN '+v.vlanId+' · '+v.name):'Sin VLAN'} · ${effectiveHostIp(h)}`,()=>selectV5('host',h.id)));});
-    box.appendChild(list); return;
-  }
-  if(sel.t==='device'){
-    const d=devById(sel.id);if(!d)return;
-    box.appendChild(makeEl('div','card-t',`🧩 ${d.name||d.id}`));
-    box.appendChild(v5Row('v5-row2',
-      v5Field('Nombre',v5Input(d.name||'',v=>v5UpdateDevice(d.id,'name',v))),
-      v5Field('Ubicación visual',v5Select(vLocs().map(l=>({value:l.id,label:l.name})),deviceVisualLoc(d.id),v=>{setDeviceVisualLoc(d.id,v);vv().pos[d.id]=nextNodePositionInLoc(v,'device',d.id);v5ApplyRefresh({t:'device',id:d.id});}))
-    ));
-    box.appendChild(v5Row('v5-row3',
-      v5Field('Tipo',v5Select((NWDevice?NWDevice.kindOptions():[{value:'switch',label:'Switch'},{value:'router',label:'Router'},{value:'firewall',label:'Firewall'}]),devKind(d),v=>v5UpdateDevice(d.id,'kind',v))),
-      v5Field('Gestión',v5Input(d.mgmtIp||'',v=>v5UpdateDevice(d.id,'mgmtIp',v))),
-      v5Field('Vendor/OS',v5Select(ALL_VENDORS.map(v=>({value:v.id,label:v.l})),d.vendorOs||'',v=>v5UpdateDevice(d.id,'vendorOs',v)))
-    ));
-    box.appendChild(v5Row('v5-row2',v5Field('Internet edge',v5Select([{value:'no',label:'No'},{value:'yes',label:'Sí'}],d.internetEdge==='yes'?'yes':'no',v=>v5UpdateDevice(d.id,'internetEdge',v))),v5Field('WAN IF',v5Input(d.wanIf||'',v=>v5UpdateDevice(d.id,'wanIf',v||null)))));
-    box.append(v5Field('Notas',v5Input(d.notes||'',v=>v5UpdateDevice(d.id,'notes',v))),v5Meta(['b bac',devLabel(d)],['b bgr',`${portsByDev(d.id).length} puertos`],['b bgr',d.vendorOs||'—']),makeEl('div','v5-note','Todos los cambios aquí alimentan la configuración generada en la V4.'),makeEl('div','card-t','Puertos del equipo'),renderPortEditorDom(d));
-    return;
-  }
-  if(sel.t==='host'){
-    const h=S.hosts.find(x=>x.id===sel.id);if(!h)return;
-    const vlan=vByRef(h.vlanRef);const linkedDev=devById(hostConnectedDeviceId(h)||'');
-    box.appendChild(makeEl('div','card-t',`🖥 ${h.name||h.id}`));
-    box.appendChild(v5Row('v5-row2',
-      v5Field('Nombre',v5Input(h.name||'',v=>v5UpdateHost(h.id,'name',v))),
-      v5Field('Ubicación en esquema',v5Select([{value:'',label:'Automática / según equipo'}].concat(vLocs().map(l=>({value:l.id,label:l.name}))),hostVisualLoc(h.id)||'',v=>{setHostVisualLoc(h.id,v);vv().pos[h.id]=nextNodePositionInLoc(v||deviceVisualLoc(linkedDev?.id||'')||vLocs()[0]?.id,'host',h.id);v5ApplyRefresh({t:'host',id:h.id});}))
-    ));
-    box.appendChild(v5Row('v5-row3',
-      v5Field('Tipo',v5Select(Object.entries(HT).map(([k,v])=>({value:k,label:v.l})),h.type||'pc',v=>v5UpdateHost(h.id,'type',v))),
-      v5Field('VLAN',v5Select([{value:'',label:'— sin VLAN —'}].concat(S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).map(v=>({value:v.id,label:`VLAN ${v.vlanId} — ${v.name||''}`}))),h.vlanRef||'',v=>v5UpdateHost(h.id,'vlanRef',v||null))),
-      v5Field('Modo IP',v5Select([{value:'dhcp',label:'DHCP'},{value:'static',label:'Static'}],h.ipMode||'dhcp',v=>v5UpdateHost(h.id,'ipMode',v)))
-    ));
-    box.appendChild(v5Row('v5-row3',v5Field('IP estática',v5Input(h.staticIp||'',v=>v5UpdateHost(h.id,'staticIp',v))),v5Field('MAC',v5Input(h.mac||'',v=>v5UpdateHost(h.id,'mac',v))),v5Field('Ubicación física',v5Input(h.physicalLocation||'',v=>v5UpdateHost(h.id,'physicalLocation',v)))));
-    box.appendChild(v5Row('v5-row3',
-      v5Field('Equipo conectado',v5Select([{value:'',label:'— sin equipo —'}].concat(connectableDevices().map(d=>({value:d.id,label:`${d.name} · ${d.type||'equipo'}`}))),hostConnectedDeviceId(h)||'',v=>{v5UpdateHost(h.id,'connectedDeviceId',v||null); if(v && (S.hosts.find(x=>x.id===h.id)?.portAssignMode||'auto')==='auto')v5UpdateHostPort(h.id,suggestHostPort(v,h.id)||''); else v5ApplyRefresh({t:'host',id:h.id});})),
-      v5Field('Modo puerto',v5Select([{value:'auto',label:'Automático'},{value:'manual',label:'Manual'}],h.portAssignMode||'manual',v=>{v5UpdateHost(h.id,'portAssignMode',v); if(v==='auto')v5UpdateHostPort(h.id,suggestHostPort(hostConnectedDeviceId(S.hosts.find(x=>x.id===h.id)),h.id)||''); else v5ApplyRefresh({t:'host',id:h.id});})),
-      v5Field('Puerto asociado',v5Select([{value:'',label:'— sin puerto —'}].concat(hostAssignablePorts(hostConnectedDeviceId(h)||'').map(p=>({value:p.id,label:`${p.name}${hostPortUsedByOther(p.id,h.id)?' · ocupado':''}`}))),h.portRef||'',v=>v5UpdateHostPort(h.id,v)))
-    ));
-    box.append(v5Field('Notas',v5Input(h.notes||'',v=>v5UpdateHost(h.id,'notes',v))),v5Meta(['b bac',h.type||'host'],['b bgr',vlan?('VLAN '+vlan.vlanId):'sin vlan'],['b bgr',effectiveHostIp(h)],['b bpu',linkedDev?linkedDev.name:'sin equipo']));
-    return;
-  }
+  const box=$('v5Panel');if(!box)return;
+  ensureVisualModel();
+  ensureV5PanelController().render(box);
 }
 function selectV5(t,id){vv().sel={t,id};renderV5Panel();drawV5();}
 function v5CanvasPoint(evt){
