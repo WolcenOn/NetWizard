@@ -26,6 +26,8 @@ func (r Role) Allows(required Role) bool {
 }
 
 type Principal struct {
+	UserID      string `json:"userId,omitempty"`
+	Issuer      string `json:"issuer,omitempty"`
 	Subject     string `json:"subject"`
 	Email       string `json:"email,omitempty"`
 	DisplayName string `json:"displayName,omitempty"`
