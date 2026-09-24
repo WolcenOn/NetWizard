@@ -28,3 +28,23 @@ func TestFoundationMigrationContainsSaaSOwnershipAndVersioning(t *testing.T) {
 		}
 	}
 }
+
+
+func TestOIDCSessionMigrationScopesIdentityAndPersistsSessions(t *testing.T) {
+	raw, err := os.ReadFile("migrations/0002_oidc_sessions.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(raw)
+	for _, needle := range []string{
+		"external_issuer",
+		"idx_users_external_identity",
+		"CREATE TABLE IF NOT EXISTS oidc_login_states",
+		"CREATE TABLE IF NOT EXISTS auth_sessions",
+		"revoked_at",
+	} {
+		if !strings.Contains(sql, needle) {
+			t.Fatalf("OIDC migration missing %q", needle)
+		}
+	}
+}
