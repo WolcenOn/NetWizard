@@ -38,6 +38,7 @@ func main() {
 		deps.Projects = store
 		deps.Workspaces = store
 		deps.Access = store
+		deps.Limits = store
 		logger.Info("postgres project/workspace store ready")
 	}
 	if postgresStore != nil {
