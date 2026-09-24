@@ -443,8 +443,8 @@ function openConfigurator(project){
  const btn=(text,fn,primary)=>{const b=root.document.createElement('button');b.type='button';b.className='btn '+(primary?'bp':'bs')+' bsm';b.textContent=text;b.addEventListener('click',fn);return b;};
  actions.append(
    btn('Cancelar',()=>overlay.remove(),false),
-   btn('🏷 Abrir solo etiquetas',()=>{saveReportPreferences(root,selected,preset.value);openReport(project,{sections:['labels'],labelsOnly:true,labelPreset:preset.value});},false),
-   btn('🧰 Generar informe',()=>{if(!selected.size){root.alert&&root.alert('Selecciona al menos una sección.');return;}saveReportPreferences(root,selected,preset.value);openReport(project,{sections:[...selected],labelPreset:preset.value});},true)
+   btn('🏷 Abrir solo etiquetas',()=>{saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:['labels'],labelsOnly:true,labelPreset:preset.value});},false),
+   btn('🧰 Generar informe',()=>{if(!selected.size){root.alert&&root.alert('Selecciona al menos una sección.');return;}saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:[...selected],labelPreset:preset.value});},true)
  );
  card.appendChild(actions);overlay.appendChild(card);overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});root.document.body.appendChild(overlay);return overlay;
 }
