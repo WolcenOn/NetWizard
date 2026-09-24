@@ -59,6 +59,36 @@
       }
       return changed({t:'host',id},'refresh');
     }
+
+    function setHostConnectedDevice({id,deviceId}){
+      const h=findHost(id);if(!h)return noop();
+      h.connectedDeviceId=deviceId||null;
+      if(deviceId&&(h.portAssignMode||'auto')==='auto'){
+        const suggested=o.suggestHostPort?o.suggestHostPort(deviceId,id):null;
+        h.portRef=suggested||null;
+        const p=suggested?findPort(suggested):null;
+        if(p&&o.setHostVisualLocation){
+          const lid=o.deviceVisualLocation?o.deviceVisualLocation(p.deviceId):'';
+          o.setHostVisualLocation(id,lid);
+        }
+      }
+      return changed({t:'host',id},'refresh');
+    }
+    function setHostPortMode({id,mode}){
+      const h=findHost(id);if(!h)return noop();
+      h.portAssignMode=mode;
+      if(mode==='auto'){
+        const deviceId=h.connectedDeviceId||null;
+        const suggested=deviceId&&o.suggestHostPort?o.suggestHostPort(deviceId,id):null;
+        h.portRef=suggested||null;
+        const p=suggested?findPort(suggested):null;
+        if(p&&o.setHostVisualLocation){
+          const lid=o.deviceVisualLocation?o.deviceVisualLocation(p.deviceId):'';
+          o.setHostVisualLocation(id,lid);
+        }
+      }
+      return changed({t:'host',id},'refresh');
+    }
     function moveDevice({id,locationId}){
       const d=findDevice(id),loc=findLocation(locationId);if(!d||!loc)return noop();
       if(o.setDeviceVisualLocation)o.setDeviceVisualLocation(id,locationId);
@@ -106,11 +136,11 @@
       return changed(visual().sel,'panel');
     }
     function execute(name,payload){
-      const map={updateDevice,updateHost,updatePort,updateHostPort,moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,setCompactLabels,setFilter,setProMode,select};
+      const map={updateDevice,updateHost,updatePort,updateHostPort,setHostConnectedDevice,setHostPortMode,moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,setCompactLabels,setFilter,setProMode,select};
       return map[name]?map[name](payload||{}):noop();
     }
     return{
-      version:'netwizard-v5-commands-v1',execute,updateDevice,updateHost,updatePort,updateHostPort,
+      version:'netwizard-v5-commands-v1',execute,updateDevice,updateHost,updatePort,updateHostPort,setHostConnectedDevice,setHostPortMode,
       moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,setCompactLabels,setFilter,setProMode,select
     };
   }
