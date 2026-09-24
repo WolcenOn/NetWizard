@@ -274,6 +274,21 @@ func (s *Server) handleOperationMessage(ctx context.Context, room *realtime.Room
 		_ = sendRealtimeError(conn, "client_mismatch", "operation client does not match connection")
 		return
 	}
+	if err := op.Validate(64 * 1024); err != nil {
+		_ = sendRealtimeError(conn, "invalid_operation", "operation is invalid")
+		return
+	}
+	allowed, err := s.writeLimit.AllowWrite(ctx, principal.UserID, time.Now().UTC(), 60, time.Minute)
+	if err != nil {
+		_ = sendRealtimeError(conn, "rate_limit_unavailable", "write limit is unavailable")
+		return
+	}
+	if !allowed {
+		rejected, _ := realtime.NewMessage(realtime.MessageOperationRejected, projectID, realtime.ErrorPayload{Code: "rate_limited", Message: "write rate limit exceeded"})
+		rejected.ClientID = clientID
+		_ = conn.Send(ctx, rejected)
+		return
+	}
 	env, err := s.operations.AppendOperation(ctx, projectID, op, principal.Subject)
 	if errors.Is(err, realtime.ErrOperationConflict) {
 		rejected, _ := realtime.NewMessage(realtime.MessageOperationRejected, projectID, realtime.ErrorPayload{Code: "base_version_conflict", Message: "project version changed; resync required"})
