@@ -1,7 +1,7 @@
 /* =========================================================
    NetWizard V5 Bridge v1
    Contrato estable para extensiones V5.
-   Mantiene netwizard.js como renderer legacy mientras migra.
+   Punto de integración estable para módulos y extensiones V5.
 ========================================================= */
 (function(){
   'use strict';
@@ -12,6 +12,8 @@
   const DRAG=window.NetWizardV5DragController;
   const COMMANDS=window.NetWizardV5Commands;
   const PANEL=window.NetWizardV5Panel;
+  const LOCATION_TX=window.NetWizardV5LocationTransactions;
+  const CONTROLS=window.NetWizardV5Controls;
 
   function project(){
     try{return window.NetWizardState?.getSnapshot?.()||window.S||{};}catch{return window.S||{};}
@@ -75,6 +77,8 @@
     dragController:DRAG,
     commands:COMMANDS,
     panel:PANEL,
+    locationTransactions:LOCATION_TX,
+    controls:CONTROLS,
     project,visual,metrics,nodeBounds,nodeCenter,worldToScreen,screenToWorld,
     redraw,renderPanel,select,locationItems,
     locations:()=>CORE?.locations(visual())||[],
