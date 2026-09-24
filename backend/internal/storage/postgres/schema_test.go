@@ -48,3 +48,21 @@ func TestOIDCSessionMigrationScopesIdentityAndPersistsSessions(t *testing.T) {
 		}
 	}
 }
+
+
+func TestAuthorizedRemoteCRUDMigrationBindsCSRFToSessions(t *testing.T) {
+	raw, err := os.ReadFile("migrations/0003_authorized_remote_crud.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(raw)
+	for _, needle := range []string{
+		"ADD COLUMN IF NOT EXISTS csrf_token",
+		"DELETE FROM auth_sessions",
+		"ALTER COLUMN csrf_token SET NOT NULL",
+	} {
+		if !strings.Contains(sql, needle) {
+			t.Fatalf("E4 migration missing %q", needle)
+		}
+	}
+}
