@@ -49,3 +49,6 @@ Los módulos críticos incluyen bloques `Mantenimiento:` que indican invariantes
 - `info`: recomendación o contexto.
 
 En modo demo se debe permitir más flexibilidad; en modo producción se puede elevar severidad solo si el dato es suficientemente concluyente.
+
+- La orquestación del frame V5 pertenece a `netwizard-v5-scene.js`; no volver a expandir `drawV5()` dentro de `netwizard.js`.
+- El ciclo pointer/drag pertenece a `netwizard-v5-drag-controller.js`; las mutaciones de dominio se inyectan como callbacks.

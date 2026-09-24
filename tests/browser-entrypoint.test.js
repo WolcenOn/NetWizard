@@ -12,6 +12,8 @@ const required = [
   'js/netwizard-v5-core.js',
   'js/netwizard-v5-renderer.js',
   'js/netwizard-v5-interaction.js',
+  'js/netwizard-v5-scene.js',
+  'js/netwizard-v5-drag-controller.js',
   'js/netwizard.js',
   'js/netwizard-v5-bridge.js',
   'js/netwizard-config-pipeline.js',
@@ -68,7 +70,11 @@ before('js/netwizard-project-schema.js', 'js/netwizard-v5-core.js');
 before('js/netwizard-v5-core.js', 'js/netwizard-v5-renderer.js');
 before('js/netwizard-v5-core.js', 'js/netwizard-v5-interaction.js');
 before('js/netwizard-v5-renderer.js', 'js/netwizard.js');
-before('js/netwizard-v5-interaction.js', 'js/netwizard.js');
+before('js/netwizard-v5-interaction.js', 'js/netwizard-v5-scene.js');
+before('js/netwizard-v5-interaction.js', 'js/netwizard-v5-drag-controller.js');
+before('js/netwizard-v5-renderer.js', 'js/netwizard-v5-scene.js');
+before('js/netwizard-v5-scene.js', 'js/netwizard.js');
+before('js/netwizard-v5-drag-controller.js', 'js/netwizard.js');
 before('js/netwizard.js', 'js/netwizard-v5-bridge.js');
 before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-layout-manager.js');
 before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-connectivity-trace.js');

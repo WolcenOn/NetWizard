@@ -66,7 +66,7 @@ Las extensiones nuevas no deben depender directamente de \`vv()\`, \`vLocs()\`, 
 
 ## Próximos cortes seguros
 
-- mover la orquestación completa del frame (`drawV5`) a un scene renderer;
-- extraer el controlador de drag/drop para dejar las mutaciones como comandos explícitos;
 - convertir el panel lateral V5 en módulo propio;
+- convertir las mutaciones de drop/edición en comandos explícitos reutilizables;
+- reducir wrappers legacy de render/interacción ya cubiertos por bridge;
 - retirar wrappers legacy solo cuando ningún consumidor los use.
