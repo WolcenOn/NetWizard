@@ -222,16 +222,22 @@ function applyHostPhysicalLocationSelection(){ const sel=$('hPhysLocSel'); if(se
 function rememberPhysicalLocation(v,meta={}){
   const val=cleanStr(v); if(!val) return null;
   ensurePhysicalLocationModel();
-  let loc=physLocByName(val);
-  if(!loc){ loc={id:uid('pl'),name:val,type:meta.type||'other',parentId:meta.parentId||'',distance:meta.distance||'',notes:meta.notes||''}; S.physicalLocations.push(loc); }
-  else {
-    if(meta.type && (!loc.type || loc.type==='other')) loc.type=meta.type;
-    if(meta.parentId && !loc.parentId) loc.parentId=meta.parentId;
-    if(meta.distance && !loc.distance) loc.distance=meta.distance;
-    if(meta.notes && !loc.notes) loc.notes=meta.notes;
+  const current=physLocByName(val);
+  const payload={
+    id:current?.id,
+    name:val,
+    type:(meta.type||(current?.type)||'other'),
+    parentId:(meta.parentId||(current?.parentId)||''),
+    distance:(meta.distance||(current?.distance)||''),
+    notes:(meta.notes||(current?.notes)||'')
+  };
+  if(window.NetWizardV5LocationTransactions){
+    const plan=window.NetWizardV5LocationTransactions.planUpsert(S,payload,{idFactory:uid,visualIdFactory:uid});
+    if(plan.ok&&window.NetWizardV5LocationTransactions.commit(S,plan).ok)return physLocById(plan.id);
   }
-  S.hostPhysicalLocations=S.physicalLocations.map(l=>l.name).sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
-  return loc;
+  if(current)return current;
+  const loc={id:uid('pl'),name:val,type:payload.type,parentId:payload.parentId,distance:payload.distance,notes:payload.notes};
+  S.physicalLocations.push(loc);syncPhysicalLocationNames();return loc;
 }
 function locTypeLabel(t){ return ({site:'Sede',campus:'Campus',building:'Edificio',floor:'Planta',room:'Habitación',rack:'Rack/Armario',zone:'Zona',desk:'Puesto',other:'Otra'})[t]||t||'Otra'; }
 
@@ -1738,24 +1744,17 @@ function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType
 function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,h.portRef||''); $('hPort').value=h.portRef||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').textContent='💾 Guardar cambios'; $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
 if($('btnCancelPhysLocEdit')) $('btnCancelPhysLocEdit').onclick=()=>clearPhysicalLocationForm();
 if($('btnAddPhysLoc')) $('btnAddPhysLoc').onclick=()=>{
-  const name=cleanStr($('plName').value); const type=$('plType').value||'other'; const parentId=$('plParent').value||''; const distance=cleanStr($('plDistance').value); const notes=cleanStr($('plNotes').value); const editId=$('plEditId').value||'';
-  if(!name) return alert('Nombre de ubicación requerido.');
-  if(editId){
-    const dup=S.physicalLocations.find(l=>l.id!==editId && l.name.toLowerCase()===name.toLowerCase());
-    if(dup) return alert('Ya existe una ubicación con ese nombre.');
-    const loc=physLocById(editId); if(!loc) return;
-    const oldName=loc.name;
-    Object.assign(loc,{name,type,parentId,distance,notes});
-    (S.hosts||[]).forEach(h=>{ if(cleanStr(h.physicalLocation).toLowerCase()===oldName.toLowerCase()) h.physicalLocation=name; });
-    (S.devices||[]).forEach(d=>{ if(cleanStr(d.physicalLocation).toLowerCase()===oldName.toLowerCase()) d.physicalLocation=name; });
-  } else {
-    if(physLocByName(name)) return alert('Esa ubicación ya existe.');
-    S.physicalLocations.push({id:uid('pl'),name,type,parentId,distance,notes});
-  }
-  syncPhysicalLocationNames();
+  const payload={
+    id:$('plEditId').value||undefined,
+    name:cleanStr($('plName').value),
+    type:$('plType').value||'other',
+    parentId:$('plParent').value||'',
+    distance:cleanStr($('plDistance').value),
+    notes:cleanStr($('plNotes').value)
+  };
+  const result=v5ApplyCommand('upsertPhysicalLocation',payload);
+  if(!result.changed)return alert(result.error||'No se ha podido guardar la ubicación.');
   clearPhysicalLocationForm();
-  save();
-  refresh();
 };
 $('hPhysLocSel').onchange=()=>applyHostPhysicalLocationSelection();
 $('hConnDev').onchange=()=>updateHostDeviceHint();
@@ -2446,7 +2445,7 @@ canvas.addEventListener('click',e=>{if(drag)return;const r=canvas.getBoundingCli
 canvas.addEventListener('touchstart',e=>{const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;for(const d of S.devices){const p=S.topo.pos[d.id];if(!p)continue;if(Math.abs(x-p.x)<72&&Math.abs(y-p.y)<25){drag={id:d.id,dx:x-p.x,dy:y-p.y};break;}}},{passive:true});
 canvas.addEventListener('touchmove',e=>{if(!drag)return;e.preventDefault();const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;S.topo.pos[drag.id].x=x-drag.dx;S.topo.pos[drag.id].y=y-drag.dy;drawTopo();},{passive:false});
 canvas.addEventListener('touchend',()=>{if(drag){save();drag=null;}});
-$('fitTopo').onclick=()=>{autoLayout();drawTopo();};$('reLy').onclick=()=>{for(const k in S.topo.pos)delete S.topo.pos[k];autoLayout();drawTopo();};$('v5AutoLoc').onclick=()=>autoVisualAssign();$('v5AddLoc').onclick=()=>addV5Location();$('v5Fit').onclick=()=>fitV5();$('v5Fs').onclick=()=>toggleV5Fullscreen();
+$('fitTopo').onclick=()=>{autoLayout();drawTopo();};$('reLy').onclick=()=>{for(const k in S.topo.pos)delete S.topo.pos[k];autoLayout();drawTopo();};
 window.addEventListener('resize',()=>{if(S.step==='graphs')drawTopo();});
 
 
@@ -2460,7 +2459,9 @@ const V5SCENE=window.NetWizardV5Scene;
 const V5DRAG=window.NetWizardV5DragController;
 const V5COMMANDSFACTORY=window.NetWizardV5Commands;
 const V5PANELFACTORY=window.NetWizardV5Panel;
-let v5Commands=null,v5PanelController=null;
+const V5LOCATIONTX=window.NetWizardV5LocationTransactions;
+const V5CONTROLSFACTORY=window.NetWizardV5Controls;
+let v5Commands=null,v5PanelController=null,v5ControlsController=null;
 window.V5S=V5S;
 
 
@@ -2488,7 +2489,7 @@ function v5SetFilter(k,on){return v5ApplyCommand('setFilter',{key:k,on:!!on});}
 function v5HostFilterKey(h){return V5CORE?V5CORE.hostFilterKey(h):'hosts';}
 function v5ShowDevice(d){return V5CORE?V5CORE.showDevice(vv(),d):v5FilterOn((d.type||'switch').toLowerCase());}
 function v5ShowHost(h){return V5CORE?V5CORE.showHost(vv(),h,id=>!!devById(id)):(!(h.deviceRef&&devById(h.deviceRef))&&v5FilterOn('hosts')&&v5FilterOn(v5HostFilterKey(h)));}
-function v5SyncFilterInputs(){document.querySelectorAll('[data-v5-filter]').forEach(cb=>{cb.checked=v5FilterOn(cb.dataset.v5Filter);});}
+function v5SyncFilterInputs(){ensureV5Controls().syncFilters();}
 function vLocChildren(id){return V5CORE?V5CORE.locChildren(vv(),id):vLocs().filter(l=>(l.parentId||'')===id);}
 function vLocRoots(){return V5CORE?V5CORE.locRoots(vv()):vLocs().filter(l=>!l.parentId||!vLocById(l.parentId));}
 function vLocDepth(id){return V5CORE?V5CORE.locDepth(vv(),id):0;}
@@ -2529,89 +2530,19 @@ function applyProfessionalLocationLayout(){
 }
 function deletePhysicalLocation(id,askConfirm=true){
   ensurePhysicalLocationModel();
-  const list=S.physicalLocations||[];
-  const locIndex=list.findIndex(x=>x.id===id);
-  if(locIndex===-1){
-    console.warn('No se encontró la ubicación a eliminar:',id);
-    alert('No se ha encontrado la ubicación a eliminar.');
-    return false;
+  if(!V5LOCATIONTX)return false;
+  const plan=V5LOCATIONTX.planDelete(S,{id});
+  if(!plan.ok){console.warn(plan.error,id);alert(plan.error||'No se ha podido eliminar la ubicación.');return false;}
+  const i=plan.impact||{};
+  let msg='¿Eliminar la ubicación "'+(i.name||id)+'"?';
+  const affected=(i.children||0)+(i.devices||0)+(i.hosts||0)+(i.racks||0)+(i.outlets||0);
+  if(affected){
+    msg+='\n\nSe recolocarán '+(i.children||0)+' sububicación(es), '+(i.devices||0)+' equipo(s), '+(i.hosts||0)+' host(s), '+(i.racks||0)+' rack(s) y '+(i.outlets||0)+' toma(s) a '+(i.fallbackName?('"'+i.fallbackName+'"'):'sin ubicación')+'.';
   }
-
-  const loc=list[locIndex];
-  const locNameLower=cleanStr(loc.name).toLowerCase();
-  const parent=loc.parentId?physLocById(loc.parentId):null;
-  const children=list.filter(x=>x.parentId===id);
-  const hosts=(S.hosts||[]).filter(h=>cleanStr(h.physicalLocation).toLowerCase()===locNameLower);
-  const devices=(S.devices||[]).filter(d=>cleanStr(d.physicalLocation).toLowerCase()===locNameLower);
-
-  let msg=`¿Eliminar la ubicación "${loc.name}"?`;
-  if(children.length||hosts.length||devices.length){
-    msg+=`
-
-Se recolocarán ${children.length} sububicación(es), ${devices.length} equipo(s) y ${hosts.length} host(s) a ${parent?`"${parent.name}"`:'sin ubicación'}.`;
-  }
-  if(askConfirm && !confirm(msg)) return false;
-
-  const fallbackParentId=parent?parent.id:'';
-  const fallbackParentName=parent?parent.name:'';
-
-  children.forEach(x=>{ x.parentId=fallbackParentId; });
-
-  (S.devices||[]).forEach(d=>{
-    if(cleanStr(d.physicalLocation).toLowerCase()===locNameLower){
-      d.physicalLocation=fallbackParentName;
-    }
-  });
-  (S.hosts||[]).forEach(h=>{
-    if(cleanStr(h.physicalLocation).toLowerCase()===locNameLower){
-      h.physicalLocation=fallbackParentName;
-    }
-  });
-
-  if(S.visual&&S.visual.assign){
-    const anotherLoc=(typeof vLocs==='function' ? vLocs().find(l=>l.id!==id) : null);
-    const fallbackVisualId=fallbackParentId || (anotherLoc?anotherLoc.id:'');
-    (S.devices||[]).forEach(d=>{
-      if(typeof deviceVisualLoc==='function' && deviceVisualLoc(d.id)===id && typeof setDeviceVisualLoc==='function'){
-        setDeviceVisualLoc(d.id,fallbackVisualId);
-      }
-    });
-    (S.hosts||[]).forEach(h=>{
-      if(typeof hostVisualLoc==='function' && hostVisualLoc(h.id)===id && typeof setHostVisualLoc==='function'){
-        setHostVisualLoc(h.id,fallbackVisualId);
-      }
-    });
-  }
-
-  list.splice(locIndex,1);
-
-  if(S.visual&&Array.isArray(S.visual.locs)){
-    S.visual.locs=S.visual.locs.filter(l=>{
-      const sameId = l.id===id;
-      const sameName = cleanStr(l.name).toLowerCase()===locNameLower;
-      if(sameName && fallbackParentName && !l.parentId) l.parentId=fallbackParentId;
-      return !sameId && !sameName;
-    });
-  }
-
-  if(vv().sel&&vv().sel.id===id) vv().sel=null;
-
-  syncPhysicalLocationNames();
+  if(askConfirm&&!confirm(msg))return false;
+  const result=v5ApplyCommand('deletePhysicalLocation',{id});
+  if(!result.changed){alert(result.error||'No se ha podido eliminar la ubicación.');return false;}
   clearPhysicalLocationForm();
-  save();
-
-  try{ renderPhysicalLocations(); }catch(e){ console.error('renderPhysicalLocations',e); }
-  try{ fillPhysicalLocationParentSel(); }catch(e){ console.error('fillPhysicalLocationParentSel',e); }
-  try{ fillHostLocSel(); }catch(e){ console.error('fillHostLocSel',e); }
-  try{ fillHostPhysLocSel(); }catch(e){ console.error('fillHostPhysLocSel',e); }
-  try{ renderHosts(); }catch(e){ console.error('renderHosts',e); }
-  try{ renderDevs(); }catch(e){ console.error('renderDevs',e); }
-  try{ renderWizard(); }catch(e){ console.error('renderWizard',e); }
-  try{ renderV5Panel(); }catch(e){ console.error('renderV5Panel',e); }
-  try{ drawV5(); }catch(e){ console.error('drawV5',e); }
-  try{ refresh(); }catch(e){ console.error('refresh',e); }
-
-  console.log('Ubicación eliminada correctamente:',loc.name,id);
   return true;
 }
 function vLocs(){return V5CORE?V5CORE.locations(vv()):vv().locs;}
@@ -2632,13 +2563,16 @@ function ensureV5Commands(){
     nextNodePosition:nextNodePositionInLoc,
     applyProfessionalLayout:applyProfessionalLocationLayout,
     suggestHostPort,
-    hostConnectedDeviceId
+    hostConnectedDeviceId,
+    locationTransactions:V5LOCATIONTX,
+    idFactory:uid,
+    visualIdFactory:uid
   });
   return v5Commands;
 }
 function v5ApplyCommand(name,payload){
   const result=ensureV5Commands().execute(name,payload||{});
-  window.NetWizardV5CommandState={name,payload:{...(payload||{})},changed:!!result.changed,selection:result.selection?{...result.selection}:null};
+  window.NetWizardV5CommandState={name,payload:{...(payload||{})},changed:!!result.changed,selection:result.selection?{...result.selection}:null,error:result.error||null,impact:result.impact||null};
   if(!result.changed)return result;
   if(result.selection)vv().sel={...result.selection};
   save();
@@ -2649,30 +2583,24 @@ function v5ApplyCommand(name,payload){
   }
   return result;
 }
-function v5ApplyRefresh(sel){if(sel)vv().sel={...sel};save();refresh();}
-function v5UpdateDevice(id,key,val){return v5ApplyCommand('updateDevice',{id,key,value:val});}
-function v5UpdateHost(id,key,val){return v5ApplyCommand('updateHost',{id,key,value:val});}
-function v5UpdateHostPort(id,portId){return v5ApplyCommand('updateHostPort',{id,portId});}
-function v5UpdatePort(portId,key,val){return v5ApplyCommand('updatePort',{id:portId,key,value:val});}
-function v5MoveDevice(id,locationId){return v5ApplyCommand('moveDevice',{id,locationId});}
-function v5MoveHost(id,locationId){return v5ApplyCommand('moveHost',{id,locationId});}
-function v5SetCompactLabels(compact){return v5ApplyCommand('setCompactLabels',{compact:!!compact});}
-function v5SetHostConnectedDevice(id,deviceId){return v5ApplyCommand('setHostConnectedDevice',{id,deviceId});}
-function v5SetHostPortMode(id,mode){return v5ApplyCommand('setHostPortMode',{id,mode});}
-function syncV5FullscreenState(){const layout=$('v5Layout');const fullEl=document.fullscreenElement;const nativeFs=!!(fullEl&&fullEl===layout);const fallbackFs=layout.classList.contains('fs');const on=nativeFs||fallbackFs;layout.classList.toggle('fs',fallbackFs&&!nativeFs);document.body.classList.toggle('v5-fs-lock',on);vv().fs=on;$('v5Fs').textContent=on?'🗗 Salir pantalla completa':'⛶ Pantalla completa';setTimeout(()=>{resizeV5();fitV5(false);renderV5Panel();},30);}
-async function toggleV5Fullscreen(force){const layout=$('v5Layout');if(!layout)return;const active=!!(document.fullscreenElement===layout)||layout.classList.contains('fs');const next=force==null?!active:!!force;try{
-  if(next){
-    if(document.fullscreenElement&&document.fullscreenElement!==layout&&document.exitFullscreen)await document.exitFullscreen();
-    if(layout.requestFullscreen)await layout.requestFullscreen();
-    else layout.classList.add('fs');
-  }else{
-    if(document.fullscreenElement===layout&&document.exitFullscreen)await document.exitFullscreen();
-    layout.classList.remove('fs');
-  }
-}catch(err){
-  layout.classList.toggle('fs',next);
+function ensureV5Controls(){
+  if(v5ControlsController)return v5ControlsController;
+  v5ControlsController=V5CONTROLSFACTORY.create({
+    document,window,
+    filterValue:v5FilterOn,
+    setFilter:v5SetFilter,
+    autoLocate:autoVisualAssign,
+    addLocation:addV5Location,
+    fit:()=>fitV5(),
+    setFullscreenState:on=>{vv().fs=!!on;},
+    afterFullscreenSync:()=>{resizeV5();fitV5(false);renderV5Panel();},
+    isActive:()=>S.step==='graphs',
+    onResize:()=>resizeV5(),
+    onError:err=>console.warn('[NetWizard V5] Fullscreen fallback:',err)
+  });
+  return v5ControlsController;
 }
-syncV5FullscreenState();}
+function toggleV5Fullscreen(force){return ensureV5Controls().toggleFullscreen(force);}
 function visualLocForPhysicalLocationId(id){return V5CORE?V5CORE.visualLocationByPhysicalId(vv(),id):'';}
 function visualLocForPhysicalLocationName(name){return V5CORE?V5CORE.visualLocationByPhysicalName(vv(),name):'';}
 function inferredDeviceVisualLoc(d){return V5CORE?V5CORE.inferDeviceVisualLocation(S,vv(),d):'';}
@@ -2912,14 +2840,32 @@ function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-
 function visualResizeHandleHit(wx,wy){return V5INTERACT.resizeHandleHit({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds,zoom:vv().view.zoom,enabled:loc=>!(v5ProMode()&&loc.parentId)});}
 function visualHit(wx,wy){return V5INTERACT.hitTest({point:{x:wx,y:wy},hosts:S.hosts,devices:S.devices,locations:vLocs(),showHost:v5ShowHost,showDevice:v5ShowDevice,nodeBounds:visualNodeBounds,locationBounds:visualLocBounds,zoom:vv().view.zoom,resizeEnabled:loc=>!(v5ProMode()&&loc.parentId)});}
 function locAt(wx,wy){return V5INTERACT.locationAt({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds});}
-function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
-function v5UpdateLocationSize(id,key,val){return v5ApplyCommand('updateLocationSize',{id,key,value:val});}
+function removeV5Location(id){
+  ensureVisualModel();
+  if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');
+  const loc=vLocById(id);
+  const physical=loc?.physicalLocationId?physLocById(loc.physicalLocationId):physLocByName(loc?.name||'');
+  if(!physical)return alert('No se ha encontrado la ubicación física asociada.');
+  return deletePhysicalLocation(physical.id,true);
+}
 function addV5Location(){
   ensureVisualModel();
-  const idx=vLocs().length+1;
-  return v5ApplyCommand('addLocation',{location:{id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)}});
+  const idx=vLocs().length+1,visualId=uid('loc');
+  return v5ApplyCommand('upsertPhysicalLocation',{
+    name:'Ubicación '+idx,type:'zone',parentId:'',distance:'',notes:'Creada desde Vista V5',
+    visual:{id:visualId,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)}
+  });
 }
-function v5UpdateLocationMeta(id,key,val){return v5ApplyCommand('updateLocationMeta',{id,key,value:val});}
+function v5UpdateLocationMeta(id,key,val){
+  const loc=vLocById(id);if(!loc)return;
+  if(key!=='name')return v5ApplyCommand('updateLocationMeta',{id,key,value:val});
+  const physical=loc.physicalLocationId?physLocById(loc.physicalLocationId):physLocByName(loc.name||'');
+  if(!physical)return v5ApplyCommand('updateLocationMeta',{id,key,value:val});
+  return v5ApplyCommand('upsertPhysicalLocation',{
+    id:physical.id,name:val,type:physical.type||loc.type||'other',parentId:physical.parentId||'',distance:physical.distance||'',notes:physical.notes||'',
+    visual:{id:loc.id,color:loc.color,x:loc.x,y:loc.y,w:loc.w,h:loc.h},mode:'redraw'
+  });
+}
 function ensureV5PanelController(){
   if(v5PanelController)return v5PanelController;
   v5PanelController=V5PANELFACTORY.create({
@@ -2956,16 +2902,16 @@ function ensureV5PanelController(){
       select:selectV5,
       removeLocation:removeV5Location,
       updateLocationMeta:v5UpdateLocationMeta,
-      updateLocationSize:v5UpdateLocationSize,
-      setCompactLabels:v5SetCompactLabels,
-      updateDevice:v5UpdateDevice,
-      moveDevice:v5MoveDevice,
-      updatePort:v5UpdatePort,
-      updateHost:v5UpdateHost,
-      moveHost:v5MoveHost,
-      setHostConnectedDevice:v5SetHostConnectedDevice,
-      setHostPortMode:v5SetHostPortMode,
-      updateHostPort:v5UpdateHostPort
+      updateLocationSize:(id,key,val)=>v5ApplyCommand('updateLocationSize',{id,key,value:val}),
+      setCompactLabels:compact=>v5ApplyCommand('setCompactLabels',{compact:!!compact}),
+      updateDevice:(id,key,val)=>v5ApplyCommand('updateDevice',{id,key,value:val}),
+      moveDevice:(id,locationId)=>v5ApplyCommand('moveDevice',{id,locationId}),
+      updatePort:(id,key,val)=>v5ApplyCommand('updatePort',{id,key,value:val}),
+      updateHost:(id,key,val)=>v5ApplyCommand('updateHost',{id,key,value:val}),
+      moveHost:(id,locationId)=>v5ApplyCommand('moveHost',{id,locationId}),
+      setHostConnectedDevice:(id,deviceId)=>v5ApplyCommand('setHostConnectedDevice',{id,deviceId}),
+      setHostPortMode:(id,mode)=>v5ApplyCommand('setHostPortMode',{id,mode}),
+      updateHostPort:(id,portId)=>v5ApplyCommand('updateHostPort',{id,portId})
     }
   });
   return v5PanelController;
@@ -3012,12 +2958,9 @@ function createV5DragController(){
 }
 v5DragController=createV5DragController();
 v5DragController.bind();
+ensureV5Controls().bind();
 vcv.addEventListener('mousemove',v5HoverMove);
 vcv.addEventListener('mouseleave',v5HideLinkTooltip);
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&vv().fs)toggleV5Fullscreen(false);});
-document.addEventListener('fullscreenchange',syncV5FullscreenState);
-document.addEventListener('change',e=>{const cb=e.target.closest('[data-v5-filter]');if(cb)v5SetFilter(cb.dataset.v5Filter,cb.checked);});
-window.addEventListener('resize',()=>{if(S.step==='graphs')resizeV5();});
 // ─────────────────── MAIN REFRESH ───────────────────
 
 
