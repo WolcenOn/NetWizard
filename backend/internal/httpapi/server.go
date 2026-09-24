@@ -11,17 +11,26 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 )
 
+type Dependencies struct {
+	Projects projects.Store
+}
+
 type Server struct {
-	cfg config.Config
-	log *slog.Logger
-	mux *http.ServeMux
+	cfg      config.Config
+	log      *slog.Logger
+	mux      *http.ServeMux
+	projects projects.Store
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
+	return NewServerWithDependencies(cfg, logger, Dependencies{})
+}
+
+func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Dependencies) *Server {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	s := &Server{cfg: cfg, log: logger, mux: http.NewServeMux()}
+	s := &Server{cfg: cfg, log: logger, mux: http.NewServeMux(), projects: deps.Projects}
 	s.routes()
 	return s
 }
@@ -90,6 +99,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"schemaVersion":       projects.SupportedSchemaVersion,
 		"localMode":           true,
 		"databaseConfigured":  s.cfg.DatabaseConfigured(),
+		"databaseReady":       s.projects != nil,
 		"authConfigPresent":   s.cfg.AuthConfigPresent(),
 		"authEnforced":        false,
 		"remoteProjectWrites": false,
