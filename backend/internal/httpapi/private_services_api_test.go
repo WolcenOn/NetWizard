@@ -128,3 +128,125 @@ func rebuildPrivateTestServer(t *testing.T, existing *Server, store *remoteStore
 		PrivateServices: privateService,
 	})
 }
+
+type fakePrivateRoutingRunner struct {
+	result privateservices.RoutingResult
+	err    error
+}
+
+func (f fakePrivateRoutingRunner) Run(_ context.Context, request privateservices.RoutingRequest) (privateservices.RoutingResult, error) {
+	if f.err != nil {
+		return privateservices.RoutingResult{}, f.err
+	}
+	out := f.result
+	out.DeviceID = request.DeviceID
+	return out, nil
+}
+
+func TestPrivateRoutingUsesStoredRevisionAndAudits(t *testing.T) {
+	server, rawSession, store := newRemoteServer(t)
+	privateService, err := privateservices.New([]byte(strings.Repeat("r", 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateService.SetRoutingRunner(fakePrivateRoutingRunner{result: privateservices.RoutingResult{
+		ContractVersion: privateservices.PrivateRoutingContractVersion,
+		PlanVersion: "netwizard-routing-plan-v1",
+		GeneratorVersion: "netwizard-cisco-routing-generator-v1",
+		Vendor: "cisco_ios",
+		Output: "!\n! Routing generado desde plan neutral\nip route 10.20.20.0 255.255.255.0 172.16.0.2",
+	}})
+	ws, err := store.CreateWorkspace(context.Background(), workspaces.CreateInput{
+		ID: "ws-routing", Name: "Routing", UserID: "usr-remote", CreatedBy: "sub-remote",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := json.RawMessage(`{"_schemaVersion":"3.50.0","projName":"Routing","devices":[{"id":"r1","type":"router","vendorOs":"cisco_ios"}],"hosts":[]}`)
+	project, _, err := store.CreateProject(context.Background(), projects.CreateInput{
+		ID: "prj-routing", WorkspaceID: ws.ID, Name: "Routing project", Snapshot: snapshot, CreatedBy: "sub-remote",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server = rebuildPrivateTestServer(t, server, store, privateService)
+
+	req := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/routing",
+		`{"expectedVersion":1,"deviceId":"r1"}`, rawSession, true)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("private routing expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var result privateservices.RoutingResult
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.ContractVersion != privateservices.PrivateRoutingContractVersion ||
+		result.DeviceID != "r1" || result.Vendor != "cisco_ios" || result.Output == "" {
+		t.Fatalf("unexpected private routing result: %#v", result)
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	found := false
+	for _, action := range store.auditActions {
+		if action == "private.routing.generate" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected private.routing.generate audit, got %#v", store.auditActions)
+	}
+}
+
+func TestPrivateRoutingRejectsViewerAndStaleVersion(t *testing.T) {
+	server, rawSession, store := newRemoteServer(t)
+	privateService, err := privateservices.New([]byte(strings.Repeat("s", 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateService.SetRoutingRunner(fakePrivateRoutingRunner{result: privateservices.RoutingResult{
+		ContractVersion: privateservices.PrivateRoutingContractVersion,
+		PlanVersion: "netwizard-routing-plan-v1",
+		GeneratorVersion: "netwizard-cisco-routing-generator-v1",
+		Vendor: "cisco_ios",
+	}})
+	ws, err := store.CreateWorkspace(context.Background(), workspaces.CreateInput{
+		ID: "ws-routing-guards", Name: "Routing", UserID: "usr-remote", CreatedBy: "sub-remote",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	project, _, err := store.CreateProject(context.Background(), projects.CreateInput{
+		ID: "prj-routing-guards", WorkspaceID: ws.ID, Name: "Routing project",
+		Snapshot: json.RawMessage(`{"_schemaVersion":"3.50.0","projName":"Routing","devices":[{"id":"r1","type":"router","vendorOs":"cisco_ios"}],"hosts":[]}`),
+		CreatedBy: "sub-remote",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server = rebuildPrivateTestServer(t, server, store, privateService)
+
+	store.mu.Lock()
+	store.roles[roleKey(ws.ID, "usr-remote")] = auth.RoleViewer
+	store.mu.Unlock()
+	req := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/routing",
+		`{"expectedVersion":1,"deviceId":"r1"}`, rawSession, true)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("viewer private routing expected 403, got %d", rec.Code)
+	}
+
+	store.mu.Lock()
+	store.roles[roleKey(ws.ID, "usr-remote")] = auth.RoleEditor
+	store.mu.Unlock()
+	req = authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/routing",
+		`{"expectedVersion":2,"deviceId":"r1"}`, rawSession, true)
+	rec = httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("stale private routing expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
