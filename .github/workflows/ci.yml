@@ -73,7 +73,15 @@ jobs:
       - name: Verify backend modules
         run: |
           go mod tidy
-          git diff --exit-code -- go.mod go.sum
+          if ! git diff --quiet -- go.mod go.sum || [ -n "$(git status --porcelain -- go.sum)" ]; then
+            echo "::group::go.mod after tidy"
+            cat go.mod
+            echo "::endgroup::"
+            echo "::group::go.sum after tidy"
+            cat go.sum
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Run backend tests
         run: go test ./...
