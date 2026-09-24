@@ -1,7 +1,7 @@
 FROM golang:1.25-alpine AS build
 
 WORKDIR /src
-COPY go.mod ./
+COPY go.mod go.sum ./
 COPY backend ./backend
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o /out/netwizard ./backend/cmd/netwizard-server
