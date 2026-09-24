@@ -96,7 +96,7 @@ func (c *wsConn) Read(ctx context.Context) (realtime.Message, error) {
 		if deadline, ok := ctx.Deadline(); ok {
 			_ = c.conn.SetReadDeadline(deadline)
 		} else {
-			_ = c.conn.SetReadDeadline(time.Time{})
+			_ = c.conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 		}
 		opcode, payload, err := c.readFrame()
 		if err != nil {
