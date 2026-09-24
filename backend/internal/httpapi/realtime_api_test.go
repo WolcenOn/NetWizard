@@ -172,7 +172,8 @@ func TestETagPreconditionAndWebSocketGuards(t *testing.T) {
 	snapshot := `{"_schemaVersion":"3.50.0","projName":"Collab","devices":[],"hosts":[]}`
 
 	req := authenticatedRequest(http.MethodPut, "/api/projects/"+project.ID,
-		`{"expectedVersion":1,"snapshot":`+snapshot+`}`, rawSession, true)
+		`{"expectedVersion":1,"snapshot":`+snapshot+`}`, rawSession, false)
+	req.Header.Set("X-NetWizard-CSRF", "csrf-collab")
 	req.Header.Set("If-Match", `"stale"`)
 	rec := httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
