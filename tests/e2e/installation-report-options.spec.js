@@ -66,7 +66,7 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
   await labels.waitForLoadState('domcontentloaded');
   await expect(labels.getByText(/Hojas de etiquetas imprimibles/)).toBeVisible();
   await expect(labels.locator('.install-label')).toHaveCount(5);
-  await expect(labels.getByText('CAB-E2E-01',{exact:true})).toHaveCount(2);
+  await expect(labels.locator('.install-label').filter({hasText:'CAB-E2E-01'})).toHaveCount(2);
   await expect(labels.getByText('Extremo A',{exact:true})).toBeVisible();
   await expect(labels.getByText('Extremo B',{exact:true})).toBeVisible();
   const css=await labels.locator('style').textContent();
