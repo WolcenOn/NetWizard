@@ -22,7 +22,7 @@ test('V5 pinta cableado base detrás de etiquetas y eleva solo la ruta seleccion
         {id:'access-uplink',deviceId:'access',name:'Te1/1',mode:'trunk'},
         {id:'access-user',deviceId:'access',name:'Gi1/0/1',mode:'access'}
       ],
-      links:[{id:'uplink',aPortId:'core-uplink',bPortId:'access-uplink'}],
+      links:[{id:'uplink',fromPortId:'core-uplink',toPortId:'access-uplink'}],
       hosts:[{id:'pc1',name:'PC-01',type:'pc',portRef:'access-user'}],
       telecomOutlets:[],hostOutletConnections:[],patchPanels:[],cableRuns:[],patchConnections:[],
       vlans:[],subnets:[],fwRules:[],visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{px:60,py:50,zoom:1},sel:null}
@@ -32,6 +32,20 @@ test('V5 pinta cableado base detrás de etiquetas y eleva solo la ruta seleccion
   });
 
   await expect.poll(()=>page.evaluate(()=>window.NetWizardV5RenderState||null)).not.toBeNull();
+  const api=await page.evaluate(()=>({
+    bridge:window.NetWizardV5?.version,
+    core:window.NetWizardV5?.core?.version,
+    linked:window.NetWizardV5?.linkedDeviceIds?.('core')||[],
+    a:window.NetWizardV5?.linkPortA?.(window.NetWizardState.getSnapshot().links[0]),
+    b:window.NetWizardV5?.linkPortB?.(window.NetWizardState.getSnapshot().links[0])
+  }));
+  expect(api).toEqual({
+    bridge:'netwizard-v5-bridge-v1',
+    core:'netwizard-v5-core-v1',
+    linked:['access'],
+    a:'core-uplink',
+    b:'access-uplink'
+  });
   let state=await page.evaluate(()=>window.NetWizardV5RenderState);
   expect(state.layerOrder).toEqual(['background','base-links','nodes','selected-links']);
   expect(state.baseNetwork).toBe(1);

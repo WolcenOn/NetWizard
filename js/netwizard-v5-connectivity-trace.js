@@ -6,15 +6,15 @@
   'use strict';
 
   const $=id=>document.getElementById(id);
+  const V5=window.NetWizardV5;
+  const CORE=window.NetWizardV5Core;
   const state={result:null,raf:0,wrapped:false,resizeObserver:null};
 
-  function project(){
-    try{return window.NetWizardState?.getSnapshot?.()||{};}catch{return{};}
-  }
+  function project(){return V5?.project?.()||{};}
   function arr(v){return Array.isArray(v)?v:[];}
   function clean(v){return String(v==null?'':v).trim();}
-  function linkPortA(link){return link&&(link.aPortId||link.a||link.fromPortId||link.from||link.portA)||null;}
-  function linkPortB(link){return link&&(link.bPortId||link.b||link.toPortId||link.to||link.portB)||null;}
+  function linkPortA(link){return V5?.linkPortA?.(link)||CORE?.linkPortA(link)||null;}
+  function linkPortB(link){return V5?.linkPortB?.(link)||CORE?.linkPortB(link)||null;}
 
   function ensureLayer(){
     const base=$('v5view');
@@ -73,55 +73,21 @@
 
   function devPoint(id){
     if(!id)return null;
-    try{
-      if(typeof window.nodeCenterById==='function'&&typeof window.v2s==='function'){
-        const p=window.nodeCenterById('dev',id);
-        return window.v2s(p.x,p.y);
-      }
-    }catch{}
-    const p=project().visual?.pos?.[id];
-    if(!p)return null;
-    return{x:Number(p.x)||0,y:Number(p.y)||0};
+    const p=V5?.nodeCenter?.('dev',id);return p?V5.worldToScreen(p.x,p.y):null;
   }
 
   function hostPoint(id){
     if(!id)return null;
-    try{
-      if(typeof window.nodeCenterById==='function'&&typeof window.v2s==='function'){
-        const p=window.nodeCenterById('host',id);
-        return window.v2s(p.x,p.y);
-      }
-    }catch{}
-    const p=project().visual?.pos?.[id];
-    if(!p)return null;
-    return{x:Number(p.x)||0,y:Number(p.y)||0};
+    const p=V5?.nodeCenter?.('host',id);return p?V5.worldToScreen(p.x,p.y):null;
   }
 
-  function deviceBox(id){
-    try{
-      if(typeof window.visualNodeBounds==='function'&&typeof window.v2s==='function'){
-        const b=window.visualNodeBounds('dev',id);
-        const p=window.v2s(b.x,b.y);
-        const q=window.v2s(b.x+b.w,b.y+b.h);
-        return{x:p.x,y:p.y,w:q.x-p.x,h:q.y-p.y};
-      }
-    }catch{}
-    const p=devPoint(id);
-    return p?{x:p.x-55,y:p.y-22,w:110,h:44}:null;
+  function screenBox(kind,id){
+    const b=V5?.nodeBounds?.(kind,id);if(!b)return null;
+    const p=V5.worldToScreen(b.x,b.y),q=V5.worldToScreen(b.x+b.w,b.y+b.h);
+    return{x:p.x,y:p.y,w:q.x-p.x,h:q.y-p.y};
   }
-
-  function hostBox(id){
-    try{
-      if(typeof window.visualNodeBounds==='function'&&typeof window.v2s==='function'){
-        const b=window.visualNodeBounds('host',id);
-        const p=window.v2s(b.x,b.y);
-        const q=window.v2s(b.x+b.w,b.y+b.h);
-        return{x:p.x,y:p.y,w:q.x-p.x,h:q.y-p.y};
-      }
-    }catch{}
-    const p=hostPoint(id);
-    return p?{x:p.x-45,y:p.y-18,w:90,h:36}:null;
-  }
+  function deviceBox(id){return screenBox('dev',id);}
+  function hostBox(id){return screenBox('host',id);}
 
   function drawRounded(ctx,b,r){
     const x=b.x,y=b.y,w=b.w,h=b.h;

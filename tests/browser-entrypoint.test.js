@@ -9,7 +9,9 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const scripts = Array.from(html.matchAll(/<script\s+[^>]*src=["']\.\/(js\/[^"']+)["'][^>]*><\/script>/g), match => match[1]);
 const required = [
   'js/netwizard-device-model.js',
+  'js/netwizard-v5-core.js',
   'js/netwizard.js',
+  'js/netwizard-v5-bridge.js',
   'js/netwizard-config-pipeline.js',
   'js/netwizard-vendor-config-generators.js',
   'js/netwizard-architecture-validator.js',
@@ -60,7 +62,11 @@ function before(first, second){
 }
 
 before('js/netwizard-device-model.js', 'js/netwizard-project-schema.js');
-before('js/netwizard-project-schema.js', 'js/netwizard.js');
+before('js/netwizard-project-schema.js', 'js/netwizard-v5-core.js');
+before('js/netwizard-v5-core.js', 'js/netwizard.js');
+before('js/netwizard.js', 'js/netwizard-v5-bridge.js');
+before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-layout-manager.js');
+before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-connectivity-trace.js');
 before('js/netwizard.js', 'js/netwizard-vendor-config-generators.js');
 before('js/netwizard.js', 'js/netwizard-config-pipeline.js');
 before('js/netwizard-config-pipeline.js', 'js/netwizard-vendor-config-generators.js');

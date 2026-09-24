@@ -12,7 +12,7 @@ Capas principales:
 4. Auditorías: L1/L2/IP/DHCP/PoE/Broadcast/Vendor/Producción.
 5. Modelo físico: racks, rack items, PDU/alimentación y cableado estructurado (`netwizard-rack-model.js`, `netwizard-structured-cabling.js`).
 6. Exportación: configuraciones vendor, inventario, documentación y paquete de despliegue.
-7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`; la vista V5 sigue siendo un área prioritaria para modularización.
+7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`. V5 se modulariza mediante `netwizard-v5-core.js` (modelo puro) y `netwizard-v5-bridge.js` (contrato estable para extensiones); el renderer legacy permanece temporalmente en `netwizard.js`.
 8. Backend: `backend/internal/config`, `httpapi` y `realtime`; su frontera con el cliente se define en `docs/BACKEND_BOUNDARIES.md`.
 
 ## Reglas para cambios futuros
@@ -29,6 +29,8 @@ Capas principales:
 - Todo cambio Go debe quedar cubierto por `go test ./...`; si afecta al despliegue, validar también `docker build .`.
 - No duplicar validadores, generadores o reglas de negocio frontend en Go sin un contrato versionado y tests de paridad.
 - Mantener el modo local funcional mientras el modo colaborativo no se declare como requisito obligatorio.
+- Las extensiones V5 nuevas deben consumir `window.NetWizardV5` y no globals internos de `netwizard.js` cuando exista equivalente en el bridge.
+- Las reglas V5 puras de estado, filtros, aliases, jerarquía, inferencia o geometría deben añadirse a `netwizard-v5-core.js` con tests unitarios.
 
 ## Comentarios de código
 
