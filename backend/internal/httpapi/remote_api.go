@@ -23,7 +23,7 @@ const (
 
 func (s *Server) remoteWritesReady() bool {
 	return s != nil && s.auth != nil && s.auth.Sessions != nil &&
-		s.projects != nil && s.workspaces != nil && s.authorizer.Store != nil
+		s.projects != nil && s.workspaces != nil && s.authorizer.Store != nil && s.writeLimit != nil
 }
 
 func (s *Server) remoteRoutes() {
@@ -54,7 +54,12 @@ func (s *Server) requireMutation(next http.Handler) http.Handler {
 			http.Error(w, "csrf check failed", http.StatusForbidden)
 			return
 		}
-		if !s.writeLimit.Allow(principal.UserID, time.Now().UTC()) {
+		allowed, err := s.writeLimit.AllowWrite(r.Context(), principal.UserID, time.Now().UTC(), 60, time.Minute)
+		if err != nil {
+			s.internalError(w, "write rate limit", err)
+			return
+		}
+		if !allowed {
 			w.Header().Set("Retry-After", "60")
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return
