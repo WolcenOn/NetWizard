@@ -98,4 +98,22 @@ func TestWorkspaceAndSessionPersistenceE4(t *testing.T) {
 	if loaded.UserID != user.ID || loaded.CSRFToken != session.CSRFToken {
 		t.Fatalf("session lost E4 identity/CSRF binding: %#v", loaded)
 	}
+
+	now := time.Now().UTC()
+	for i, expected := range []bool{true, true, false} {
+		allowed, err := store.AllowWrite(ctx, user.ID, now.Add(time.Duration(i)*time.Second), 2, time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if allowed != expected {
+			t.Fatalf("rate limit call %d expected allowed=%v, got %v", i+1, expected, allowed)
+		}
+	}
+	allowed, err := store.AllowWrite(ctx, user.ID, now.Add(2*time.Minute), 2, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !allowed {
+		t.Fatal("rate limit window should reset after one minute")
+	}
 }
