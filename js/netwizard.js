@@ -2454,6 +2454,8 @@ window.addEventListener('resize',()=>{if(S.step==='graphs')drawTopo();});
 const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
 const V5S={locHead:36,devW:176,devH:62,hstW:158,hstH:42,colW:190};
 const V5CORE=window.NetWizardV5Core;
+const V5RENDER=window.NetWizardV5Renderer;
+const V5INTERACT=window.NetWizardV5Interaction;
 window.V5S=V5S;
 
 
@@ -2765,41 +2767,15 @@ function resizeV5(){const wrap=vcv.parentElement;if(!wrap)return;const r=wrap.ge
 function v2s(x,y){return V5CORE?V5CORE.worldToScreen(vv(),x,y):{x,y};}
 function s2v(x,y){return V5CORE?V5CORE.screenToWorld(vv(),x,y):{x,y};}
 function nodeCenterById(kind,id){return V5CORE?V5CORE.nodeCenter(vv(),kind,id,V5S):{x:0,y:0};}
-function drawRound(ctx,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-function v5NodeRadius(w,h,z,base=10){return Math.max(2,Math.min(base*z,w/2,h/2));}
-function v5ReadableZoom(){return vv().view.zoom>=.42;}
-function drawNodeText(x,y,lines,mono){let yy=y;for(const ln of lines){vctx.fillText(ln,x,yy);yy+=13*vv().view.zoom;}}
-function colorFromSeed(seed){let h=0;seed=String(seed||'seed');for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))%360;return `hsl(${h} 78% 62%)`;}
-function rgbaFromCss(css,alpha){
-  const m=String(css||'').match(/hsl\(([-\d.]+)\s+([\d.]+)%\s+([\d.]+)%\)/i);
-  if(!m)return `rgba(96,165,250,${alpha})`;
-  let h=(+m[1]%360+360)%360,s=(+m[2])/100,l=(+m[3])/100;
-  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m0=l-c/2;
-  let r=0,g=0,b=0;
-  if(h<60){r=c;g=x;} else if(h<120){r=x;g=c;} else if(h<180){g=c;b=x;} else if(h<240){g=x;b=c;} else if(h<300){r=x;b=c;} else {r=c;b=x;}
-  r=Math.round((r+m0)*255); g=Math.round((g+m0)*255); b=Math.round((b+m0)*255);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+function drawRound(ctx,x,y,w,h,r){return V5RENDER.roundPath(ctx,x,y,w,h,r);}
+function v5NodeRadius(w,h,z,base=10){return V5RENDER.nodeRadius(w,h,z,base);}
+function v5ReadableZoom(){return V5RENDER.readableZoom(vv());}
+function drawNodeText(x,y,lines){return V5RENDER.drawTextLines(vctx,x,y,lines,vv().view.zoom);}
+function colorFromSeed(seed){return V5RENDER.colorFromSeed(seed);}
+function rgbaFromCss(css,alpha){return V5RENDER.rgbaFromCss(css,alpha);}
 function linkedDeviceIds(devId){return V5CORE?V5CORE.linkedDeviceIds(S,devId):[];}
-function deviceAccentColor(devId,seen){
-  seen=seen||new Set();
-  if(seen.has(devId))return colorFromSeed(devId);
-  seen.add(devId);
-  const d=devById(devId); if(!d) return colorFromSeed(devId);
-  if(d.type==='switch') return colorFromSeed((d.name||devId)+'-switch');
-  const neigh=linkedDeviceIds(devId).map(id=>devById(id)).filter(Boolean);
-  const sw=neigh.find(n=>n.type==='switch');
-  if(sw) return colorFromSeed((sw.name||sw.id)+'-switch');
-  if(neigh[0]) return deviceAccentColor(neigh[0].id,seen);
-  if(d.type==='router') return 'hsl(196 82% 63%)';
-  if(d.type==='firewall') return 'hsl(8 84% 66%)';
-  return colorFromSeed((d.name||devId)+'-'+(d.type||'dev'));
-}
-function compactLinkLabel(host,dev,port){
-  const compact=vv().compactLabels!==false;
-  if(compact) return `${dev.name||'equipo'}${port?` · ${port.name}`:''}`.slice(0,24);
-  return `${dev.name||'equipo'}${port?` · ${port.name}`:' · auto/pendiente'}`.slice(0,42);
-}
+function deviceAccentColor(devId,seen){return V5RENDER.deviceAccentColor(S,devId,seen);}
+function compactLinkLabel(host,dev,port){return V5RENDER.compactLinkLabel(vv(),host,dev,port);}
 
 let v5LinkDots=[];
 function v5LinkTooltipEl(){
@@ -2834,27 +2810,15 @@ function v5RenderLinkTooltip(el,dot){
   addLine('VLAN puerto',accessVlan?('VLAN '+accessVlan.vlanId+' · '+accessVlan.name):(p&&p.accessVlanRef?p.accessVlanRef:'—'),false);
   addLine('IP',effectiveHostIp(h)||'—',true);
 }
-function v5DrawLinkDot(mx,my,host,dev,port,accent){
-  const vlanOk=!!(port && host.vlanRef && port.accessVlanRef===host.vlanRef);
-  const pending=!port;
-  const fill=pending?'#f59e0b':(vlanOk?'#22c55e':'#ef4444');
-  vctx.save();
-  const z=vv().view.zoom;
-  const outer=Math.max(4.8,Math.min(8.5,7.6*z+2));
-  const inner=Math.max(2.8,Math.min(4.6,4.3*z+1));
-  vctx.shadowColor='rgba(0,0,0,.55)';vctx.shadowBlur=8;
-  vctx.fillStyle='rgba(7,9,15,.98)';vctx.beginPath();vctx.arc(mx,my,outer,0,Math.PI*2);vctx.fill();
-  vctx.shadowBlur=0;
-  vctx.fillStyle=fill;vctx.beginPath();vctx.arc(mx,my,inner,0,Math.PI*2);vctx.fill();
-  vctx.strokeStyle=rgbaFromCss(accent,.85);vctx.lineWidth=Math.max(.8,1.2*z);vctx.beginPath();vctx.arc(mx,my,outer+1,0,Math.PI*2);vctx.stroke();
-  vctx.restore();
-  v5LinkDots.push({x:mx,y:my,r:Math.max(10,outer+5),host,dev,port});
+function v5DrawLinkDot(geometry,host,dev,port,accent){
+  const hit=V5RENDER.drawLinkDot(vctx,{visual:vv(),geometry,host,port,accent});
+  if(hit)v5LinkDots.push({...hit,host,dev,port});
 }
 function v5HoverMove(evt){
   if(vdrag){v5HideLinkTooltip();return;}
   const r=vcv.getBoundingClientRect();
   const x=evt.clientX-r.left, y=evt.clientY-r.top;
-  const dot=[...v5LinkDots].reverse().find(d=>Math.hypot(d.x-x,d.y-y)<=d.r);
+  const dot=V5INTERACT.linkDotAt(v5LinkDots,x,y);
   if(!dot){v5HideLinkTooltip();vcv.style.cursor='grab';return;}
   const el=v5LinkTooltipEl();
   v5RenderLinkTooltip(el,dot);
@@ -2888,40 +2852,25 @@ function v5HostLinkSelected(h,linkedDev){
   if(sel.t==='host')return sel.id===h.id;
   return sel.t==='device'&&sel.id===linkedDev.id;
 }
-function v5HostLinkGeometry(h,linkedDev){
+function v5HostPort(h,linkedDev){
   let p=h.portRef?S.ports.find(x=>x.id===h.portRef):null;
-  if(!p && (h.portAssignMode||'auto')==='auto'){
-    const suggested=suggestHostPort(linkedDev.id,h.id);
-    p=suggested?S.ports.find(x=>x.id===suggested):null;
+  if(!p&&(h.portAssignMode||'auto')==='auto'){
+    const suggested=suggestHostPort(linkedDev.id,h.id);p=suggested?S.ports.find(x=>x.id===suggested):null;
   }
-  const hb=visualNodeBounds('host',h.id),db=visualNodeBounds('dev',linkedDev.id);
-  const start={x:hb.x,y:hb.y+hb.h/2},end={x:db.x+db.w,y:db.y+db.h/2};
-  const ph=v2s(start.x,start.y),pd=v2s(end.x,end.y);
-  return{p,ph,pd,midX:(ph.x+pd.x)/2,midY:(ph.y+pd.y)/2};
+  return p;
+}
+function v5HostLinkGeometry(h,linkedDev){
+  const p=v5HostPort(h,linkedDev);
+  return V5RENDER.hostLinkGeometry(vv(),h,linkedDev,p,V5S);
 }
 function drawV5NetworkLink(lk,a,b,selected){
-  const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db)return false;
-  const ca=nodeCenterById('dev',da.id),cb=nodeCenterById('dev',db.id),pa=v2s(ca.x,ca.y),pb=v2s(cb.x,cb.y);
-  const trunk=a.mode==='trunk'||b.mode==='trunk';
-  vctx.save();
-  vctx.globalAlpha=selected?1:.42;
-  vctx.lineWidth=selected?(trunk?4.2:3.2):(trunk?2.2:1.25);
-  vctx.strokeStyle=selected?'#f8fafc':(trunk?'#38bdf8':'#3b82f6');
-  vctx.setLineDash(trunk?[8,4]:[]);
-  if(selected){vctx.shadowColor=trunk?'#38bdf8':'#60a5fa';vctx.shadowBlur=8;}
-  vctx.beginPath();vctx.moveTo(pa.x,pa.y);vctx.lineTo(pb.x,pb.y);vctx.stroke();vctx.restore();
-  return true;
+  return V5RENDER.drawNetworkLink(vctx,{visual:vv(),project:S,a,b,selected,metrics:V5S});
 }
 function drawV5HostLink(h,linkedDev,selected){
-  const g=v5HostLinkGeometry(h,linkedDev),accent=deviceAccentColor(linkedDev.id);
-  vctx.save();
-  vctx.globalAlpha=selected?1:.34;
-  vctx.lineWidth=selected?4.2:1.45;
-  vctx.strokeStyle=selected?'#ede9fe':'rgba(196,181,253,1)';
-  if(selected){vctx.shadowColor=accent;vctx.shadowBlur=10;}
-  vctx.beginPath();vctx.moveTo(g.ph.x,g.ph.y);vctx.bezierCurveTo(g.midX,g.ph.y,g.midX,g.pd.y,g.pd.x,g.pd.y);vctx.stroke();
-  vctx.restore();
-  if(selected)v5DrawLinkDot(g.midX,g.midY,h,linkedDev,g.p,accent);
+  const p=v5HostPort(h,linkedDev),accent=deviceAccentColor(linkedDev.id);
+  const g=V5RENDER.drawHostLink(vctx,{visual:vv(),host:h,linkedDev,port:p,selected,accent,metrics:V5S});
+  if(!g)return false;
+  if(selected)v5DrawLinkDot(g,h,linkedDev,p,accent);
   return true;
 }
 function drawV5(){
@@ -2954,33 +2903,12 @@ function drawV5(){
   // Nodos y texto: se pintan por encima del cableado normal.
   for(const loc of vLocs()){
     for(const d of devsInVisualLoc(loc.id)){
-      const nb=visualNodeBounds('dev',d.id),np=v2s(nb.x,nb.y),accent=deviceAccentColor(d.id),accentSoft=rgbaFromCss(accent,.18);
-      vctx.fillStyle='rgba(7,12,20,.96)';const dw=nb.w*z,dh=nb.h*z,dr=v5NodeRadius(dw,dh,z,10);
-      drawRound(vctx,np.x,np.y,dw,dh,dr);vctx.fill();
-      vctx.fillStyle=accentSoft;drawRound(vctx,np.x+1,np.y+1,Math.max(0,dw-2),Math.max(0,dh-2),Math.max(2,dr-1));vctx.fill();
-      vctx.strokeStyle=vv().sel&&vv().sel.t==='device'&&vv().sel.id===d.id?'#22c55e':accent;vctx.lineWidth=Math.max(.7,1.6*z);drawRound(vctx,np.x,np.y,dw,dh,dr);vctx.stroke();
-      if(v5ReadableZoom()){
-        vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(8,12*z)+'px Space Grotesk,sans-serif';vctx.fillText((d.name||'').slice(0,22),np.x+10*z,np.y+16*z);
-        vctx.fillStyle='#8fa3c0';vctx.font=Math.max(7,10*z)+'px Fira Code,monospace';drawNodeText(np.x+10*z,np.y+31*z,[((d.type||'')+' · '+(d.mgmtIp||'sin mgmt')).slice(0,28),((d.vendorOs||'—')+(d.internetEdge==='yes'?' · EDGE':'' )).slice(0,28)]);
-      }else{
-        vctx.fillStyle='#e2eaf7';vctx.font='700 9px Space Grotesk,sans-serif';vctx.fillText((d.type||'D').slice(0,2).toUpperCase(),np.x+6,np.y+12);
-      }
+      const nb=visualNodeBounds('dev',d.id),accent=deviceAccentColor(d.id);
+      V5RENDER.drawDeviceNode(vctx,{visual:vv(),device:d,bounds:nb,selected:!!(vv().sel&&vv().sel.t==='device'&&vv().sel.id===d.id),accent});
     }
     for(const h of hostsInVisualLoc(loc.id)){
-      const nb=visualNodeBounds('host',h.id),np=v2s(nb.x,nb.y),linked=hostConnectedDeviceId(h),accent=linked?deviceAccentColor(linked):'hsl(262 83% 74%)',accentSoft=rgbaFromCss(accent,.15);
-      vctx.fillStyle='rgba(9,16,26,.96)';const hw=nb.w*z,hh=nb.h*z,hr=v5NodeRadius(hw,hh,z,10);
-      drawRound(vctx,np.x,np.y,hw,hh,hr);vctx.fill();
-      vctx.fillStyle=accentSoft;drawRound(vctx,np.x+1,np.y+1,Math.max(0,hw-2),Math.max(0,hh-2),Math.max(2,hr-1));vctx.fill();
-      vctx.strokeStyle=vv().sel&&vv().sel.t==='host'&&vv().sel.id===h.id?'#a78bfa':accent;vctx.lineWidth=Math.max(.7,1.5*z);drawRound(vctx,np.x,np.y,hw,hh,hr);vctx.stroke();
-      const vlan=vByRef(h.vlanRef);
-      if(v5ReadableZoom()){
-        vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(7.5,10.5*z)+'px Space Grotesk,sans-serif';vctx.fillText((h.name||'').slice(0,20),np.x+8*z,np.y+14*z);
-        const chip=(vlan?('V'+vlan.vlanId):'sin VLAN');vctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
-        vctx.fillStyle='rgba(15,23,42,.78)';drawRound(vctx,np.x+8*z,np.y+22*z,chipW,14*z,Math.max(2,7*z));vctx.fill();
-        vctx.fillStyle=accent;vctx.fillText(chip,np.x+14*z,np.y+32*z);
-      }else{
-        vctx.fillStyle=accent;vctx.beginPath();vctx.arc(np.x+Math.max(5,hw/2),np.y+Math.max(5,hh/2),Math.max(2,Math.min(5,Math.min(hw,hh)/4)),0,Math.PI*2);vctx.fill();
-      }
+      const nb=visualNodeBounds('host',h.id),linked=hostConnectedDeviceId(h),accent=linked?deviceAccentColor(linked):'hsl(262 83% 74%)',vlan=vByRef(h.vlanRef);
+      V5RENDER.drawHostNode(vctx,{visual:vv(),host:h,bounds:nb,selected:!!(vv().sel&&vv().sel.t==='host'&&vv().sel.id===h.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):'sin VLAN'});
     }
   }
 
@@ -2997,15 +2925,9 @@ function drawV5(){
   window.NetWizardV5RenderState=renderState;
 }
 function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;for(const loc of vLocs()){const b=visualLocBounds(loc);minx=Math.min(minx,b.x);miny=Math.min(miny,b.y);maxx=Math.max(maxx,b.x+b.w);maxy=Math.max(maxy,b.y+b.h);}if(!isFinite(minx)){vv().view={px:60,py:50,zoom:1};drawV5();return;}const r=vcv.parentElement.getBoundingClientRect();const padx=24,pady=24;const zw=Math.max(.45,Math.min(1.25,(r.width-padx*2)/(maxx-minx||1)));const zh=Math.max(.45,Math.min(1.25,(r.height-pady*2)/(maxy-miny||1)));const zoom=Math.min(zw,zh);vv().view.zoom=zoom;vv().view.px=padx-minx*zoom+(r.width-(maxx-minx)*zoom-padx*2)/2;vv().view.py=pady-miny*zoom+(r.height-(maxy-miny)*zoom-pady*2)/2;drawV5();}
-function visualResizeHandleHit(wx,wy){
-  for(const loc of [...vLocs()].reverse()){
-    const b=visualLocBounds(loc),hs=16/vv().view.zoom,hx=b.x+b.w-hs-8/vv().view.zoom,hy=b.y+b.h-hs-8/vv().view.zoom;
-    if(wx>=hx&&wx<=hx+hs&&wy>=hy&&wy<=hy+hs)return{t:'loc-resize',id:loc.id};
-  }
-  return null;
-}
-function visualHit(wx,wy){const rh=visualResizeHandleHit(wx,wy);if(rh)return rh;for(const h of [...S.hosts].reverse()){if(!v5ShowHost(h))continue;const b=visualNodeBounds('host',h.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'host',id:h.id};}for(const d of [...S.devices].reverse()){if(!v5ShowDevice(d))continue;const b=visualNodeBounds('dev',d.id);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'device',id:d.id};}for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return{t:'loc',id:loc.id};}return null;}
-function locAt(wx,wy){for(const loc of [...vLocs()].reverse()){const b=visualLocBounds(loc);if(wx>=b.x&&wx<=b.x+b.w&&wy>=b.y&&wy<=b.y+b.h)return loc;}return null;}
+function visualResizeHandleHit(wx,wy){return V5INTERACT.resizeHandleHit({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds,zoom:vv().view.zoom,enabled:loc=>!(v5ProMode()&&loc.parentId)});}
+function visualHit(wx,wy){return V5INTERACT.hitTest({point:{x:wx,y:wy},hosts:S.hosts,devices:S.devices,locations:vLocs(),showHost:v5ShowHost,showDevice:v5ShowDevice,nodeBounds:visualNodeBounds,locationBounds:visualLocBounds,zoom:vv().view.zoom,resizeEnabled:loc=>!(v5ProMode()&&loc.parentId)});}
+function locAt(wx,wy){return V5INTERACT.locationAt({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds});}
 function removeV5Location(id){ensureVisualModel();if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');deletePhysicalLocation(id,true);}
 function v5UpdateLocationSize(id,key,val){const l=vLocById(id);if(!l)return;const num=Math.max(key==='w'?330:160,Number(val)||0);l[key]=num;save();drawV5();}
 function addV5Location(){ensureVisualModel();const idx=vLocs().length+1;vLocs().push({id:uid('loc'),name:'Ubicación '+idx,color:'#12324f',x:80+(idx-1)*310,y:90+((idx-1)%2)*240,w:Math.max(330,V5S.colW*2+36),h:Math.max(170,V5S.locHead+24+72)});save();renderV5Panel();drawV5();}
@@ -3150,26 +3072,21 @@ function v5PointerDown(evt){
 function v5PointerMove(evt){
   if(!vdrag)return;
   if(vdrag.t==='pan'){
-    const dx=(evt.clientX||0)-vdrag.startX, dy=(evt.clientY||0)-vdrag.startY;
-    if(Math.abs(dx)+Math.abs(dy)>2)vdrag.moved=true;
-    vv().view.px=vdrag.startPx+dx;
-    vv().view.py=vdrag.startPy+dy;
-    drawV5();
-    return;
+    const next=V5INTERACT.panView(vdrag,evt.clientX,evt.clientY);
+    if(Math.abs(next.px-vdrag.startPx)+Math.abs(next.py-vdrag.startPy)>2)vdrag.moved=true;
+    vv().view.px=next.px;vv().view.py=next.py;drawV5();return;
   }
   const pt=v5CanvasPoint(evt);
-  if(Math.hypot(pt.x-vdrag.downX,pt.y-vdrag.downY)>4)vdrag.moved=true;
+  if(V5INTERACT.moved(vdrag,pt))vdrag.moved=true;
   if(vdrag.t==='loc-resize'){
     const loc=vLocById(vdrag.id);
-    if(loc&&vdrag.moved){loc.w=Math.max(330,vdrag.startW+(pt.x-vdrag.startX));loc.h=Math.max(160,vdrag.startH+(pt.y-vdrag.startY));drawV5();renderV5Panel();}
+    if(loc&&vdrag.moved){const size=V5INTERACT.resizeLocation(vdrag,pt);loc.w=size.w;loc.h=size.h;drawV5();renderV5Panel();}
   }else if(vdrag.t==='loc'){
     const loc=vLocById(vdrag.id);
-    if(loc&&vdrag.moved){const nx=pt.x-vdrag.dx,ny=pt.y-vdrag.dy,deltaX=nx-vdrag.startX,deltaY=ny-vdrag.startY;loc.x=nx;loc.y=ny;for(const m of (vdrag.members||[])){vv().pos[m.id]={x:m.pos.x+deltaX,y:m.pos.y+deltaY};}drawV5();}
+    if(loc&&vdrag.moved){const move=V5INTERACT.locationMove(vdrag,pt);loc.x=move.x;loc.y=move.y;for(const m of (vdrag.members||[])){vv().pos[m.id]={x:m.pos.x+move.deltaX,y:m.pos.y+move.deltaY};}drawV5();}
   }else if(vdrag.moved){
-    vv().pos[vdrag.id]={x:pt.x-vdrag.dx,y:pt.y-vdrag.dy};
-    const over=locAt(pt.x,pt.y);
-    vdrag.overLoc=over?over.id:null;
-    drawV5();
+    vv().pos[vdrag.id]=V5INTERACT.nodePosition(vdrag,pt);
+    const over=locAt(pt.x,pt.y);vdrag.overLoc=over?over.id:null;drawV5();
   }
 }
 function v5PointerUp(evt){
@@ -3220,13 +3137,8 @@ function v5Wheel(evt){
   evt.preventDefault();
   const r=vcv.getBoundingClientRect();
   const sx=evt.clientX-r.left, sy=evt.clientY-r.top;
-  const before=s2v(sx,sy);
-  const factor=evt.deltaY<0?1.12:0.89;
-  const next=Math.max(.25,Math.min(2.8,vv().view.zoom*factor));
-  vv().view.zoom=next;
-  vv().view.px=sx-before.x*next;
-  vv().view.py=sy-before.y*next;
-  drawV5();
+  const next=V5INTERACT.zoomAt(vv().view,sx,sy,evt.deltaY,.25,2.8);
+  vv().view.zoom=next.zoom;vv().view.px=next.px;vv().view.py=next.py;drawV5();
 }
 vcv.addEventListener('pointerdown',v5PointerDown);
 vcv.addEventListener('pointermove',v5PointerMove);
