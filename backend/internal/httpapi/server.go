@@ -136,6 +136,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"remoteProjectWrites": s.remoteWritesReady(),
 		"collaboration":       s.collaborationReady(),
 		"privateServices":     s.privateServicesReady(),
+		"privateRouting":      s.privateRoutingReady(),
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
 }
