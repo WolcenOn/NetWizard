@@ -156,9 +156,24 @@ En este punto `remoteProjectWrites=true` cuando PostgreSQL, OIDC y todos los sto
 
 El fan-out/presencia WebSocket es por proceso. Despliegues con varias instancias deben usar sticky routing hasta incorporar pub/sub compartido; el log durable y el replay sí son PostgreSQL-backed.
 
-### E6 — Servicios privados/premium
+### E6 — Servicios privados/premium — primera vertical implementada
 
 Mover selectivamente al backend lógica que deba protegerse o monetizarse. Nunca mediante copia paralela permanente: contrato, paridad, migración y retirada/encapsulado de la versión cliente.
+
+La primera vertical E6 introduce un servicio privado de atestación de artefactos de despliegue:
+
+- contrato versionado `netwizard-private-deployment-attestation-v1`;
+- firma HMAC-SHA256 con clave disponible únicamente en backend;
+- artefacto ligado a `projectId`, versión y checksum de la revisión remota almacenada;
+- autorización mínima `editor`;
+- CSRF, rate limit y sesión existentes;
+- rechazo de versiones obsoletas;
+- auditoría `private.deployment_attestation.create`;
+- servicio desactivado si no existe `NETWIZARD_PRIVATE_SERVICE_KEY`.
+
+Esta capacidad no sustituye los generadores locales ni duplica su implementación. El modo offline sigue pudiendo generar/exportar sin atestación remota.
+
+La imagen de producción también deja de copiar el JavaScript fuente directamente: una etapa Node minifica los módulos con esbuild y la imagen final sirve únicamente el resultado procesado, sin source maps. Esto reduce exposición accidental, pero no se considera una frontera de secreto: la lógica verdaderamente privada sigue perteneciendo al backend.
 
 ## Modo local
 
