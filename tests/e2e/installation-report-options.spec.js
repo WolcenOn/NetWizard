@@ -33,7 +33,8 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
     window.NetWizardState.replaceProject(p,{source:'e2e-install-report-options'});
   });
 
-  await expect.poll(()=>page.evaluate(()=>window.NetWizardInstallationReport?.version||null),{timeout:10000}).toBe('netwizard-installation-report-v7');\n  await expect(page.locator('#btnCompactReport')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardInstallationReport?.version||null),{timeout:10000}).toBe('netwizard-installation-report-v7');
+  await expect(page.locator('#btnCompactReport')).toBeVisible();
   await page.locator('#btnCompactReport').click();
   const cfg=page.locator('#nwInstallReportConfigurator');
   await expect(cfg).toBeVisible();
