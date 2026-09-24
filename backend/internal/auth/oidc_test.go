@@ -424,3 +424,79 @@ func TestOIDCFlowWithFakeProvider(t *testing.T) {
 		t.Fatalf("unexpected principal after callback: %#v", principal)
 	}
 }
+
+func TestOIDCDiscoveryRejectsIncompatibleAdvertisedCapabilities(t *testing.T) {
+	store := newMemorySessionStore()
+	manager := &SessionManager{Store: store}
+
+	tests := []struct {
+		name         string
+		clientSecret string
+		discovery    map[string]any
+		want         string
+	}{
+		{
+			name: "missing RS256",
+			discovery: map[string]any{
+				"id_token_signing_alg_values_supported": []string{"ES256"},
+				"code_challenge_methods_supported": []string{"S256"},
+			},
+			want: "RS256",
+		},
+		{
+			name: "missing S256",
+			discovery: map[string]any{
+				"id_token_signing_alg_values_supported": []string{"RS256"},
+				"code_challenge_methods_supported": []string{"plain"},
+			},
+			want: "S256",
+		},
+		{
+			name: "missing client secret basic",
+			clientSecret: "secret",
+			discovery: map[string]any{
+				"id_token_signing_alg_values_supported": []string{"RS256"},
+				"code_challenge_methods_supported": []string{"S256"},
+				"token_endpoint_auth_methods_supported": []string{"client_secret_post"},
+			},
+			want: "client_secret_basic",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var issuer string
+			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/.well-known/openid-configuration" {
+					http.NotFound(w, r)
+					return
+				}
+				doc := map[string]any{
+					"issuer": issuer,
+					"authorization_endpoint": issuer + "/authorize",
+					"token_endpoint": issuer + "/token",
+					"jwks_uri": issuer + "/jwks",
+				}
+				for key, value := range tc.discovery {
+					doc[key] = value
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(doc)
+			}))
+			defer provider.Close()
+			issuer = provider.URL
+
+			_, err := NewOIDCService(context.Background(), OIDCConfig{
+				IssuerURL: issuer,
+				ClientID: "client",
+				ClientSecret: tc.clientSecret,
+				RedirectURL: "https://app.example/api/auth/callback",
+				SessionTTL: time.Hour,
+				HTTPTimeout: time.Second,
+			}, manager)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected discovery rejection containing %q, got %v", tc.want, err)
+			}
+		})
+	}
+}
