@@ -46,6 +46,7 @@ type Session struct {
 	Subject     string
 	Email       string
 	DisplayName string
+	CSRFToken   string
 	CreatedAt   time.Time
 	ExpiresAt   time.Time
 }
@@ -91,10 +92,14 @@ func (m *SessionManager) Create(ctx context.Context, user User, ttl time.Duratio
 	if err != nil {
 		return "", Session{}, err
 	}
+	csrfToken, err := randomToken(32)
+	if err != nil {
+		return "", Session{}, err
+	}
 	now := time.Now().UTC()
 	session := Session{
 		IDHash: hashToken(raw), UserID: user.ID, Issuer: user.Issuer, Subject: user.Subject,
-		Email: user.Email, DisplayName: user.DisplayName,
+		Email: user.Email, DisplayName: user.DisplayName, CSRFToken: csrfToken,
 		CreatedAt: now, ExpiresAt: now.Add(ttl),
 	}
 	if err := m.Store.CreateSession(ctx, session); err != nil {
@@ -118,6 +123,7 @@ func (m *SessionManager) Authenticate(r *http.Request) (Principal, error) {
 	return Principal{
 		UserID: session.UserID, Issuer: session.Issuer, Subject: session.Subject,
 		Email: session.Email, DisplayName: session.DisplayName, SessionID: cookie.Value,
+		CSRFToken: session.CSRFToken,
 	}, nil
 }
 
