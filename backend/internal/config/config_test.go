@@ -1,6 +1,9 @@
 package config
 
-import (\n\t"testing"\n\t"time"\n)
+import (
+	"testing"
+	"time"
+)
 
 func TestFromEnvUsesRailwayPort(t *testing.T) {
 	t.Setenv("NETWIZARD_ADDR", "")
@@ -26,11 +29,11 @@ func TestFromEnvPrefersExplicitAddr(t *testing.T) {
 	}
 }
 
-
 func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://user:pass@db/netwizard")
 	t.Setenv("NETWIZARD_OIDC_ISSUER_URL", "https://issuer.example")
-	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")\n\tt.Setenv("NETWIZARD_OIDC_REDIRECT_URL", "https://app.example/api/auth/callback")
+	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")
+	t.Setenv("NETWIZARD_OIDC_REDIRECT_URL", "https://app.example/api/auth/callback")
 	t.Setenv("NETWIZARD_MAX_PROJECT_BYTES", "123456")
 
 	cfg := FromEnv()
@@ -44,7 +47,6 @@ func TestFromEnvReadsSaaSSettings(t *testing.T) {
 		t.Fatalf("expected project limit 123456, got %d", cfg.MaxProjectBytes)
 	}
 }
-
 
 func TestValidateRejectsIncompleteAndInsecureAuthConfiguration(t *testing.T) {
 	cfg := Config{OIDCIssuerURL: "https://issuer.example", DatabaseURL: "postgres://db", SessionTTL: 12 * time.Hour}
