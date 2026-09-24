@@ -45,9 +45,13 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
     commands:window.NetWizardV5Commands?.version,
     panel:window.NetWizardV5Panel?.version,
     bridgeCommands:window.NetWizardV5?.commands?.version,
-    bridgePanel:window.NetWizardV5?.panel?.version
+    bridgePanel:window.NetWizardV5?.panel?.version,
+    locationTransactions:window.NetWizardV5LocationTransactions?.version,
+    controls:window.NetWizardV5Controls?.version,
+    bridgeLocationTransactions:window.NetWizardV5?.locationTransactions?.version,
+    bridgeControls:window.NetWizardV5?.controls?.version
   }));
-  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1',scene:'netwizard-v5-scene-v1',drag:'netwizard-v5-drag-controller-factory-v1',bridgeScene:'netwizard-v5-scene-v1',bridgeDrag:'netwizard-v5-drag-controller-factory-v1',commands:'netwizard-v5-commands-factory-v1',panel:'netwizard-v5-panel-factory-v1',bridgeCommands:'netwizard-v5-commands-factory-v1',bridgePanel:'netwizard-v5-panel-factory-v1'});
+  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1',scene:'netwizard-v5-scene-v1',drag:'netwizard-v5-drag-controller-factory-v1',bridgeScene:'netwizard-v5-scene-v1',bridgeDrag:'netwizard-v5-drag-controller-factory-v1',commands:'netwizard-v5-commands-factory-v1',panel:'netwizard-v5-panel-factory-v1',bridgeCommands:'netwizard-v5-commands-factory-v1',bridgePanel:'netwizard-v5-panel-factory-v1',locationTransactions:'netwizard-v5-location-transactions-v1',controls:'netwizard-v5-controls-factory-v1',bridgeLocationTransactions:'netwizard-v5-location-transactions-v1',bridgeControls:'netwizard-v5-controls-factory-v1'});
 
   const canvas=page.locator('#v5view');
   await expect(canvas).toBeVisible();

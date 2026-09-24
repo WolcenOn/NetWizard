@@ -26,6 +26,7 @@
     const findHost=id=>arr(project().hosts).find(x=>x&&x.id===id)||null;
     const findPort=id=>arr(project().ports).find(x=>x&&x.id===id)||null;
     const findLocation=id=>arr(visual().locs).find(x=>x&&x.id===id)||null;
+    const locationTransactions=o.locationTransactions||null;
 
     function updateDevice({id,key,value}){
       const d=findDevice(id);if(!d)return noop();
@@ -120,6 +121,27 @@
       visual().locs.push({...location});
       return changed(null,'panel');
     }
+
+    function upsertPhysicalLocation(payload){
+      if(!locationTransactions)return{...noop(),error:'Location transactions no disponible.'};
+      const plan=locationTransactions.planUpsert(project(),payload||{},{
+        idFactory:o.idFactory,
+        visualIdFactory:o.visualIdFactory
+      });
+      if(!plan.ok)return{...noop(),error:plan.error,code:plan.code||null};
+      const committed=locationTransactions.commit(project(),plan);
+      if(!committed.ok)return{...noop(),error:committed.error};
+      const mode=payload&&payload.mode==='redraw'?'redraw':'refresh';
+      return{...changed(payload&&payload.selection||null,mode),transaction:committed,impact:plan.impact||{},physicalLocationId:plan.id,visualLocationId:plan.visualId||null};
+    }
+    function deletePhysicalLocation(payload){
+      if(!locationTransactions)return{...noop(),error:'Location transactions no disponible.'};
+      const plan=locationTransactions.planDelete(project(),payload||{});
+      if(!plan.ok)return{...noop(),error:plan.error,code:plan.code||null};
+      const committed=locationTransactions.commit(project(),plan);
+      if(!committed.ok)return{...noop(),error:committed.error};
+      return{...changed(null,'refresh'),transaction:committed,impact:plan.impact||{},physicalLocationId:plan.id};
+    }
     function setCompactLabels({compact}){
       visual().compactLabels=!!compact;
       return changed(visual().sel||null,'panel');
@@ -139,12 +161,12 @@
       return changed(visual().sel,'panel');
     }
     function execute(name,payload){
-      const map={updateDevice,updateHost,updatePort,updateHostPort,setHostConnectedDevice,setHostPortMode,moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,setCompactLabels,setFilter,setProMode,select};
+      const map={updateDevice,updateHost,updatePort,updateHostPort,setHostConnectedDevice,setHostPortMode,moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,upsertPhysicalLocation,deletePhysicalLocation,setCompactLabels,setFilter,setProMode,select};
       return map[name]?map[name](payload||{}):noop();
     }
     return{
       version:'netwizard-v5-commands-v1',execute,updateDevice,updateHost,updatePort,updateHostPort,setHostConnectedDevice,setHostPortMode,
-      moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,setCompactLabels,setFilter,setProMode,select
+      moveDevice,moveHost,updateLocationMeta,updateLocationSize,addLocation,upsertPhysicalLocation,deletePhysicalLocation,setCompactLabels,setFilter,setProMode,select
     };
   }
 
