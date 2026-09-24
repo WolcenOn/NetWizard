@@ -103,11 +103,17 @@ func writeClientWebSocketMessage(t *testing.T, conn net.Conn, msg realtime.Messa
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(payload) >= 126 {
-		t.Fatalf("test helper only supports short frames, got %d bytes", len(payload))
-	}
 	mask := [4]byte{0x12, 0x34, 0x56, 0x78}
-	frame := []byte{0x81, 0x80 | byte(len(payload)), mask[0], mask[1], mask[2], mask[3]}
+	frame := []byte{0x81}
+	switch {
+	case len(payload) < 126:
+		frame = append(frame, 0x80|byte(len(payload)))
+	case len(payload) <= 65535:
+		frame = append(frame, 0x80|126, byte(len(payload)>>8), byte(len(payload)))
+	default:
+		t.Fatalf("test payload unexpectedly large: %d", len(payload))
+	}
+	frame = append(frame, mask[:]...)
 	for i, b := range payload {
 		frame = append(frame, b^mask[i%4])
 	}
