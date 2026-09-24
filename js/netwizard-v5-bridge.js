@@ -10,6 +10,8 @@
   const INTERACTION=window.NetWizardV5Interaction;
   const SCENE=window.NetWizardV5Scene;
   const DRAG=window.NetWizardV5DragController;
+  const COMMANDS=window.NetWizardV5Commands;
+  const PANEL=window.NetWizardV5Panel;
 
   function project(){
     try{return window.NetWizardState?.getSnapshot?.()||window.S||{};}catch{return window.S||{};}
@@ -71,6 +73,8 @@
     interaction:INTERACTION,
     scene:SCENE,
     dragController:DRAG,
+    commands:COMMANDS,
+    panel:PANEL,
     project,visual,metrics,nodeBounds,nodeCenter,worldToScreen,screenToWorld,
     redraw,renderPanel,select,locationItems,
     locations:()=>CORE?.locations(visual())||[],

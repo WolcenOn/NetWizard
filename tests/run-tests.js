@@ -1202,13 +1202,15 @@ test('Security utils escapa literales JS inline para atributos legacy', () => {
   assert.ok(escaped.includes('&lt;img'), 'debe escapar HTML dentro del atributo');
 });
 
-test('V5 panel clásico usa construcción DOM en vez de handlers inline sensibles', () => {
-  const src = fs.readFileSync(path.join(root, 'js', 'netwizard.js'), 'utf8');
-  assert.ok(src.includes('function v5Button('), 'debe existir helper de botones DOM V5');
+test('V5 panel modular usa construcción DOM en vez de handlers inline sensibles', () => {
+  const src = fs.readFileSync(path.join(root, 'js', 'netwizard-v5-panel.js'), 'utf8');
   assert.ok(src.includes("addEventListener('click',fn)"), 'los botones V5 deben usar listeners normales');
-  assert.ok(src.includes('function renderPortEditorDom'), 'el editor de puertos V5 debe renderizar DOM seguro');
-  assert.ok(src.includes('v5ListItem('), 'las listas V5 deben crear nodos, no handlers inline');
-  assert.ok(!src.includes('function renderPortEditorHtml'), 'no debe quedar editor de puertos V5 HTML legacy');
+  assert.ok(src.includes('function portEditor('), 'el editor de puertos V5 debe renderizar DOM seguro');
+  assert.ok(src.includes('const listItem='), 'las listas V5 deben crear nodos, no handlers inline');
+  assert.ok(src.includes('textContent=String(text)'), 'los datos V5 deben escribirse mediante textContent');
+  assert.ok(!src.includes('.innerHTML'), 'el panel V5 no debe usar innerHTML');
+  const legacy = fs.readFileSync(path.join(root, 'js', 'netwizard.js'), 'utf8');
+  assert.ok(!legacy.includes('function renderPortEditorHtml'), 'no debe quedar editor de puertos V5 HTML legacy');
 });
 
 console.log('\nTests revisión XSS detallada v3.48 completados.');
