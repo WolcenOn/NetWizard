@@ -46,7 +46,7 @@ func TestAuthMeLogoutAndCapabilities(t *testing.T) {
 	sum := sha256.Sum256([]byte(raw))
 	store := &httpAuthStore{session: auth.Session{
 		IDHash: sum[:], UserID: "usr-1", Issuer: "https://issuer.example",
-		Subject: "sub-1", Email: "user@example.test", DisplayName: "Test User",
+		Subject: "sub-1", Email: "user@example.test", DisplayName: "Test User", CSRFToken: "csrf-test-token",
 		CreatedAt: time.Now().Add(-time.Minute), ExpiresAt: time.Now().Add(time.Hour),
 	}}
 	manager := &auth.SessionManager{
@@ -68,7 +68,7 @@ func TestAuthMeLogoutAndCapabilities(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "netwizard_session", Value: raw})
 	rec = httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "user@example.test") {
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "user@example.test") || !strings.Contains(rec.Body.String(), "csrf-test-token") {
 		t.Fatalf("valid session /me failed: %d %s", rec.Code, rec.Body.String())
 	}
 	if strings.Contains(rec.Body.String(), raw) {
@@ -87,7 +87,7 @@ func TestAuthMeLogoutAndCapabilities(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
-	req.Header.Set("X-NetWizard-CSRF", "1")
+	req.Header.Set("X-NetWizard-CSRF", "csrf-test-token")
 	req.AddCookie(&http.Cookie{Name: "netwizard_session", Value: raw})
 	rec = httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
