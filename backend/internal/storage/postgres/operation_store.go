@@ -16,8 +16,11 @@ func (s *Store) AppendOperation(ctx context.Context, projectID string, op realti
 	op.OpID = strings.TrimSpace(op.OpID)
 	op.ClientID = strings.TrimSpace(op.ClientID)
 	actor = strings.TrimSpace(actor)
-	if projectID == "" || op.OpID == "" || op.ClientID == "" || actor == "" || op.BaseVersion < 1 || op.Kind == "" || len(op.Payload) == 0 {
+	if projectID == "" || actor == "" {
 		return realtime.OperationEnvelope{}, realtime.ErrOperationInvalid
+	}
+	if err := op.Validate(64 * 1024); err != nil {
+		return realtime.OperationEnvelope{}, err
 	}
 
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
