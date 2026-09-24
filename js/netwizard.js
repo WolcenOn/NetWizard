@@ -2952,7 +2952,7 @@ function ensureV5PanelController(){
       addLocation:addV5Location,
       fit:()=>fitV5(),
       fullscreen:()=>toggleV5Fullscreen(),
-      setProMode,
+      setProMode:setV5ProMode,
       select:selectV5,
       removeLocation:removeV5Location,
       updateLocationMeta:v5UpdateLocationMeta,
