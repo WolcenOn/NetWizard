@@ -131,9 +131,9 @@ func TestCapabilitiesReportReadyDatabaseOnlyWhenStoreInjected(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, needle := range []string{
-		""databaseConfigured":true",
-		""databaseReady":true",
-		""remoteProjectWrites":false",
+		"\"databaseConfigured\":true",
+		"\"databaseReady\":true",
+		"\"remoteProjectWrites\":false",
 	} {
 		if !strings.Contains(body, needle) {
 			t.Fatalf("capabilities missing %s: %s", needle, body)
