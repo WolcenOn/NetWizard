@@ -31,6 +31,9 @@ Capas principales:
 - Mantener el modo local funcional mientras el modo colaborativo no se declare como requisito obligatorio.
 - Las extensiones V5 nuevas deben consumir `window.NetWizardV5` y no globals internos de `netwizard.js` cuando exista equivalente en el bridge.
 - Las reglas V5 puras de estado, filtros, aliases, jerarquía, inferencia o geometría deben añadirse a `netwizard-v5-core.js` con tests unitarios.
+- La composición del frame pertenece a `netwizard-v5-scene.js` y la sesión pointer/drag a `netwizard-v5-drag-controller.js`.
+- Las mutaciones iniciadas desde V5 deben entrar por `netwizard-v5-commands.js`; el panel `netwizard-v5-panel.js` queda limitado a presentación DOM y delegación de acciones.
+- No usar `innerHTML` en el panel V5 para datos de proyecto.
 - El dibujo V5 debe añadirse a `netwizard-v5-renderer.js`; hit-testing y matemáticas de interacción a `netwizard-v5-interaction.js`. Evitar reintroducir esos cálculos en `netwizard.js`.
 
 ## Comentarios de código
