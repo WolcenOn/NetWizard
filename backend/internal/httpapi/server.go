@@ -10,19 +10,25 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
+	"github.com/WolcenOn/NetWizard/backend/internal/workspaces"
 )
 
 type Dependencies struct {
-	Projects projects.Store
-	Auth     *auth.Service
+	Projects   projects.Store
+	Workspaces workspaces.Store
+	Access     auth.AccessStore
+	Auth       *auth.Service
 }
 
 type Server struct {
-	cfg      config.Config
-	log      *slog.Logger
-	mux      *http.ServeMux
-	projects projects.Store
-	auth     *auth.Service
+	cfg        config.Config
+	log        *slog.Logger
+	mux        *http.ServeMux
+	projects   projects.Store
+	workspaces workspaces.Store
+	authorizer auth.Authorizer
+	auth       *auth.Service
+	writeLimit *writeRateLimiter
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
@@ -35,7 +41,9 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 	}
 	s := &Server{
 		cfg: cfg, log: logger, mux: http.NewServeMux(),
-		projects: deps.Projects, auth: deps.Auth,
+		projects: deps.Projects, workspaces: deps.Workspaces,
+		authorizer: auth.Authorizer{Store: deps.Access},
+		auth: deps.Auth, writeLimit: newWriteRateLimiter(60, time.Minute),
 	}
 	s.routes()
 	return s
@@ -52,8 +60,11 @@ func (s *Server) routes() {
 	if s.auth != nil {
 		s.mux.HandleFunc("GET /api/auth/login", s.handleAuthLogin)
 		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
-		s.mux.HandleFunc("POST /api/auth/logout", s.handleAuthLogout)
+		s.mux.Handle("POST /api/auth/logout", s.auth.Sessions.Require(s.requireMutation(http.HandlerFunc(s.handleAuthLogout))))
 		s.mux.Handle("GET /api/auth/me", s.auth.Sessions.Require(http.HandlerFunc(s.handleAuthMe)))
+		if s.remoteWritesReady() {
+			s.remoteRoutes()
+		}
 	}
 	if s.cfg.StaticDir != "" {
 		s.mux.Handle("/", s.staticHandler())
@@ -110,7 +121,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"databaseReady":       s.projects != nil,
 		"authConfigPresent":   s.cfg.AuthConfigPresent(),
 		"authEnforced":        s.auth != nil,
-		"remoteProjectWrites": false,
+		"remoteProjectWrites": s.remoteWritesReady(),
 		"collaboration":       false,
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
@@ -155,18 +166,15 @@ func (s *Server) handleAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
 	noStore(w)
-	// E3 exige una cabecera no-simple además de SameSite=Lax. E4 reutilizará
-	// este patrón con un token CSRF por sesión para todas las rutas mutantes.
-	if r.Header.Get("X-NetWizard-CSRF") != "1" {
-		http.Error(w, "csrf check failed", http.StatusForbidden)
+	principal, ok := auth.PrincipalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	if cookie, err := r.Cookie(s.auth.Sessions.Cookie.Name); err == nil {
-		if err := s.auth.Sessions.Invalidate(r.Context(), cookie.Value); err != nil {
-			s.log.Error("session logout failed", "error", err)
-			http.Error(w, "logout failed", http.StatusInternalServerError)
-			return
-		}
+	if err := s.auth.Sessions.Invalidate(r.Context(), principal.SessionID); err != nil {
+		s.log.Error("session logout failed", "error", err)
+		http.Error(w, "logout failed", http.StatusInternalServerError)
+		return
 	}
 	s.auth.Sessions.ClearCookie(w)
 	w.WriteHeader(http.StatusNoContent)
@@ -183,6 +191,7 @@ func (s *Server) handleAuthMe(w http.ResponseWriter, r *http.Request) {
 		"subject": principal.Subject,
 		"email": principal.Email,
 		"displayName": principal.DisplayName,
+		"csrfToken": principal.CSRFToken,
 	})
 }
 
