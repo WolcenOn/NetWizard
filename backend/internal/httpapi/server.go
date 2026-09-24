@@ -9,6 +9,7 @@ import (
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
+	"github.com/WolcenOn/NetWizard/backend/internal/limits"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 	"github.com/WolcenOn/NetWizard/backend/internal/workspaces"
 )
@@ -17,6 +18,7 @@ type Dependencies struct {
 	Projects   projects.Store
 	Workspaces workspaces.Store
 	Access     auth.AccessStore
+	Limits     limits.Store
 	Auth       *auth.Service
 }
 
@@ -28,7 +30,7 @@ type Server struct {
 	workspaces workspaces.Store
 	authorizer auth.Authorizer
 	auth       *auth.Service
-	writeLimit *writeRateLimiter
+	writeLimit limits.Store
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
@@ -43,7 +45,7 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 		cfg: cfg, log: logger, mux: http.NewServeMux(),
 		projects: deps.Projects, workspaces: deps.Workspaces,
 		authorizer: auth.Authorizer{Store: deps.Access},
-		auth: deps.Auth, writeLimit: newWriteRateLimiter(60, time.Minute),
+		auth: deps.Auth, writeLimit: deps.Limits,
 	}
 	s.routes()
 	return s
