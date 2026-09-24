@@ -37,9 +37,13 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
   await expect.poll(()=>page.evaluate(()=>window.NetWizardV5RenderState||null)).not.toBeNull();
   const modules=await page.evaluate(()=>({
     renderer:window.NetWizardV5Renderer?.version,
-    interaction:window.NetWizardV5Interaction?.version
+    interaction:window.NetWizardV5Interaction?.version,
+    scene:window.NetWizardV5Scene?.version,
+    drag:window.NetWizardV5DragController?.version,
+    bridgeScene:window.NetWizardV5?.scene?.version,
+    bridgeDrag:window.NetWizardV5?.dragController?.version
   }));
-  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1'});
+  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1',scene:'netwizard-v5-scene-v1',drag:'netwizard-v5-drag-controller-factory-v1',bridgeScene:'netwizard-v5-scene-v1',bridgeDrag:'netwizard-v5-drag-controller-factory-v1'});
 
   const canvas=page.locator('#v5view');
   await expect(canvas).toBeVisible();
@@ -54,6 +58,7 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
 
   await page.mouse.click(box.x+start.screen.x,box.y+start.screen.y);
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().visual.sel)).toEqual({t:'device',id:'sw1'});
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardV5RenderState?.sceneOrder||[])).toEqual(['background','locations','base-links','nodes','selected-links']);
 
   await page.mouse.move(box.x+start.screen.x,box.y+start.screen.y);
   await page.mouse.down();
