@@ -17,7 +17,7 @@ La base actual incluye:
 - paquete `internal/realtime` con salas en memoria, presencia, mensajes, operaciones versionadas e interfaces de snapshot/operation store;
 - tests Go para configuración, HTTP y realtime.
 
-El paquete realtime es todavía **infraestructura interna**: no hay endpoint WebSocket registrado ni persistencia conectada. Tampoco existen todavía autenticación, autorización por proyecto, base de datos o CRUD remoto de proyectos.
+El paquete realtime sigue siendo **infraestructura interna**: no hay endpoint WebSocket registrado ni persistencia conectada. La fundación SaaS ya define contratos de identidad/autorización, proyectos versionados y el esquema PostgreSQL, pero todavía no existen login OIDC activo, store PostgreSQL conectado ni CRUD remoto de proyectos.
 
 La frontera entre cliente y servidor está definida en [`docs/BACKEND_BOUNDARIES.md`](../docs/BACKEND_BOUNDARIES.md).
 
@@ -46,7 +46,7 @@ curl http://localhost:8080/api/health
 ```bash
 NETWIZARD_ADDR=:8080
 NETWIZARD_BACKEND_VERSION=netwizard-backend-v0.1
-NETWIZARD_ALLOWED_ORIGINS=http://localhost:4173,http://localhost:8080
+NETWIZARD_ALLOWED_ORIGINS=http://localhost:4173,http://localhost:8080\nDATABASE_URL=postgres://...\nNETWIZARD_OIDC_ISSUER_URL=https://issuer.example\nNETWIZARD_OIDC_CLIENT_ID=netwizard-web\nNETWIZARD_MAX_PROJECT_BYTES=10485760
 ```
 
 `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente en desarrollo si el frontend se sirve desde otro origen. En producción no debe usarse `*`.
