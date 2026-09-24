@@ -93,6 +93,7 @@
     }
     function render(box){
       if(!box)return;
+      box.dataset.v5PanelModule='netwizard-v5-panel-v1';
       while(box.firstChild)box.removeChild(box.firstChild);
       const sel=visual().sel;
       if(!sel)return renderEmpty(box);
