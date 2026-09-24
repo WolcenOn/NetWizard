@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
 )
 
 type Dependencies struct {
 	Projects projects.Store
+	Auth     *auth.Service
 }
 
 type Server struct {
@@ -20,6 +22,7 @@ type Server struct {
 	log      *slog.Logger
 	mux      *http.ServeMux
 	projects projects.Store
+	auth     *auth.Service
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
@@ -30,7 +33,10 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 	if logger == nil {
 		logger = slog.Default()
 	}
-	s := &Server{cfg: cfg, log: logger, mux: http.NewServeMux(), projects: deps.Projects}
+	s := &Server{
+		cfg: cfg, log: logger, mux: http.NewServeMux(),
+		projects: deps.Projects, auth: deps.Auth,
+	}
 	s.routes()
 	return s
 }
@@ -43,6 +49,12 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
 	s.mux.HandleFunc("GET /api/capabilities", s.handleCapabilities)
+	if s.auth != nil {
+		s.mux.HandleFunc("GET /api/auth/login", s.handleAuthLogin)
+		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
+		s.mux.HandleFunc("POST /api/auth/logout", s.handleAuthLogout)
+		s.mux.Handle("GET /api/auth/me", s.auth.Sessions.Require(http.HandlerFunc(s.handleAuthMe)))
+	}
 	if s.cfg.StaticDir != "" {
 		s.mux.Handle("/", s.staticHandler())
 	}
@@ -60,19 +72,16 @@ func (s *Server) staticHandler() http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-
 		if r.URL.Path == "/" {
 			files.ServeHTTP(w, r)
 			return
 		}
-
 		requested := strings.TrimPrefix(r.URL.Path, "/")
 		if file, err := http.Dir(s.cfg.StaticDir).Open(requested); err == nil {
 			_ = file.Close()
 			files.ServeHTTP(w, r)
 			return
 		}
-
 		fallback := r.Clone(r.Context())
 		fallback.URL.Path = "/"
 		files.ServeHTTP(w, fallback)
@@ -81,8 +90,7 @@ func (s *Server) staticHandler() http.Handler {
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":        true,
-		"version":   s.cfg.Version,
+		"ok": true, "version": s.cfg.Version,
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	})
 }
@@ -101,11 +109,86 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"databaseConfigured":  s.cfg.DatabaseConfigured(),
 		"databaseReady":       s.projects != nil,
 		"authConfigPresent":   s.cfg.AuthConfigPresent(),
-		"authEnforced":        false,
+		"authEnforced":        s.auth != nil,
 		"remoteProjectWrites": false,
 		"collaboration":       false,
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
+}
+
+func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	if len(r.URL.RawQuery) > 4096 {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	returnTo := r.URL.Query().Get("returnTo")
+	loginURL, err := s.auth.LoginURL(r.Context(), returnTo)
+	if err != nil {
+		s.log.Warn("oidc login rejected", "error", err)
+		http.Error(w, "login unavailable", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, loginURL, http.StatusFound)
+}
+
+func (s *Server) handleAuthCallback(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	if len(r.URL.RawQuery) > 8192 {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	rawSession, session, returnTo, err := s.auth.Callback(
+		r.Context(), r.URL.Query().Get("state"), r.URL.Query().Get("code"),
+	)
+	if err != nil {
+		s.log.Warn("oidc callback rejected", "error", err)
+		http.Error(w, "authentication failed", http.StatusUnauthorized)
+		return
+	}
+	s.auth.Sessions.SetCookie(w, rawSession, session.ExpiresAt)
+	if returnTo == "" {
+		returnTo = "/"
+	}
+	http.Redirect(w, r, returnTo, http.StatusFound)
+}
+
+func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	// E3 exige una cabecera no-simple además de SameSite=Lax. E4 reutilizará
+	// este patrón con un token CSRF por sesión para todas las rutas mutantes.
+	if r.Header.Get("X-NetWizard-CSRF") != "1" {
+		http.Error(w, "csrf check failed", http.StatusForbidden)
+		return
+	}
+	if cookie, err := r.Cookie(s.auth.Sessions.Cookie.Name); err == nil {
+		if err := s.auth.Sessions.Invalidate(r.Context(), cookie.Value); err != nil {
+			s.log.Error("session logout failed", "error", err)
+			http.Error(w, "logout failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	s.auth.Sessions.ClearCookie(w)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleAuthMe(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	principal, ok := auth.PrincipalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"subject": principal.Subject,
+		"email": principal.Email,
+		"displayName": principal.DisplayName,
+	})
+}
+
+func noStore(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
 }
 
 func (s *Server) requestLog(next http.Handler) http.Handler {
@@ -130,14 +213,14 @@ func (s *Server) cors(next http.Handler) http.Handler {
 	for _, origin := range s.cfg.AllowedOrigins {
 		allowed[strings.TrimSpace(origin)] = true
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		if origin != "" && allowed[origin] {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-NetWizard-CSRF")
 		}
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
