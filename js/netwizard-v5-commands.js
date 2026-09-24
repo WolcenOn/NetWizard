@@ -115,7 +115,7 @@
     function addLocation({location}){
       if(!location||!location.id)return noop();
       visual().locs.push({...location});
-      return changed({t:'loc',id:location.id},'panel');
+      return changed(null,'panel');
     }
     function setCompactLabels({compact}){
       visual().compactLabels=!!compact;
