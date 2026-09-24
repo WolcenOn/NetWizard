@@ -56,6 +56,7 @@ NETWIZARD_COOKIE_SECURE=true
 NETWIZARD_AUTH_HTTP_TIMEOUT=10s
 NETWIZARD_MAX_PROJECT_BYTES=10485760
 NETWIZARD_PRIVATE_SERVICE_KEY=minimum-32-byte-random-secret
+NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs
 ```
 
 `DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
@@ -133,11 +134,14 @@ La presencia y el fan-out WebSocket siguen siendo por proceso. Para múltiples i
 
 La primera vertical privada expone:
 
-- `POST /api/projects/{projectID}/private/deployment-attestations`.
+- `POST /api/projects/{projectID}/private/deployment-attestations`;
+- `POST /api/projects/{projectID}/private/routing` cuando el worker privado está disponible.
 
 Requiere sesión, CSRF, rol `editor` o `owner`, `expectedVersion`, SHA-256 del artefacto y tamaño. La respuesta queda ligada al checksum de la revisión remota y firmada con HMAC-SHA256.
 
 La capacidad solo se activa si `NETWIZARD_PRIVATE_SERVICE_KEY` contiene al menos 32 bytes y la autenticación OIDC está configurada. El uso queda auditado en PostgreSQL.
+
+El routing privado ejecuta los generadores existentes dentro de un worker Node empaquetado fuera de `NETWIZARD_STATIC_DIR`. El endpoint recibe solo `expectedVersion` y `deviceId`; el backend carga el snapshot remoto almacenado y devuelve el bloque de routing. La imagen Docker define automáticamente `NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs`; normalmente no hace falta crear esa variable manualmente en Railway.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 

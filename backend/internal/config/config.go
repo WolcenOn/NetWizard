@@ -26,6 +26,7 @@ type Config struct {
 	AuthHTTPTimeout time.Duration
 	MaxProjectBytes int64
 	PrivateServiceKey string
+	PrivateRoutingWorker string
 }
 
 func (c Config) DatabaseConfigured() bool {
@@ -118,6 +119,7 @@ func FromEnv() Config {
 	oidcClientSecret := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_CLIENT_SECRET"))
 	oidcRedirectURL := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_REDIRECT_URL"))
 	privateServiceKey := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_SERVICE_KEY"))
+	privateRoutingWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_ROUTING_WORKER"))
 
 	sessionCookieName := strings.TrimSpace(os.Getenv("NETWIZARD_SESSION_COOKIE_NAME"))
 	if sessionCookieName == "" {
@@ -161,5 +163,6 @@ func FromEnv() Config {
 		SessionCookieName: sessionCookieName, SessionTTL: sessionTTL,
 		CookieSecure: cookieSecure, AuthHTTPTimeout: authHTTPTimeout,
 		MaxProjectBytes: maxProjectBytes, PrivateServiceKey: privateServiceKey,
+		PrivateRoutingWorker: privateRoutingWorker,
 	}
 }

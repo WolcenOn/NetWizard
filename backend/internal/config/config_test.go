@@ -35,6 +35,7 @@ func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")
 	t.Setenv("NETWIZARD_OIDC_REDIRECT_URL", "https://app.example/api/auth/callback")
 	t.Setenv("NETWIZARD_MAX_PROJECT_BYTES", "123456")
+	t.Setenv("NETWIZARD_PRIVATE_ROUTING_WORKER", "/app/private/routing-worker.cjs")
 
 	cfg := FromEnv()
 	if !cfg.DatabaseConfigured() {
@@ -45,6 +46,9 @@ func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	}
 	if cfg.MaxProjectBytes != 123456 {
 		t.Fatalf("expected project limit 123456, got %d", cfg.MaxProjectBytes)
+	}
+	if cfg.PrivateRoutingWorker != "/app/private/routing-worker.cjs" {
+		t.Fatalf("expected private routing worker path, got %q", cfg.PrivateRoutingWorker)
 	}
 }
 
