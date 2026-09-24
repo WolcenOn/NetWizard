@@ -96,7 +96,7 @@ RETURNING created_at
 }
 
 func (s *Store) OperationsSince(ctx context.Context, projectID string, baseVersion, sinceSeq int64, limit int) ([]realtime.OperationEnvelope, error) {
-	if limit <= 0 || limit > 1000 {
+	if limit <= 0 || limit > 1001 {
 		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
