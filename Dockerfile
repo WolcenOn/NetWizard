@@ -4,16 +4,20 @@ WORKDIR /src
 COPY index.html portfolio.json ./
 COPY css ./css
 COPY js ./js
+COPY private ./private
 COPY i18n ./i18n
 COPY samples ./samples
 COPY schemas ./schemas
 
-RUN mkdir -p /out/js \
-    && cp index.html portfolio.json /out/ \
-    && cp -R css i18n samples schemas /out/ \
-    && npx --yes esbuild@0.25.10 js/*.js --outdir=/out/js --minify --target=es2020 \
-    && test "$(find /out/js -type f -name '*.js' | wc -l)" -eq "$(find js -type f -name '*.js' | wc -l)" \
-    && ! find /out -type f \( -name '*.map' -o -name '*.ts' \) | grep -q .
+RUN mkdir -p /out/public/js /out/private \
+    && cp index.html portfolio.json /out/public/ \
+    && cp -R css i18n samples schemas /out/public/ \
+    && npx --yes esbuild@0.25.10 js/*.js --outdir=/out/public/js --minify --target=es2020 \
+    && npx --yes esbuild@0.25.10 private/routing-worker.js --bundle --platform=node --target=node24 --format=cjs --minify --outfile=/out/private/routing-worker.cjs \
+    && test "$(find /out/public/js -type f -name '*.js' | wc -l)" -eq "$(find js -type f -name '*.js' | wc -l)" \
+    && ! find /out/public -type f \( -name '*.map' -o -name '*.ts' \) | grep -q . \
+    && test ! -e /out/public/private \
+    && test -s /out/private/routing-worker.cjs
 
 FROM golang:1.25-alpine AS build
 
@@ -23,15 +27,17 @@ COPY backend ./backend
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o /out/netwizard ./backend/cmd/netwizard-server
 
-FROM alpine:3.20
+FROM node:24-alpine
 
 RUN addgroup -S netwizard && adduser -S -G netwizard netwizard
 
 WORKDIR /app
 COPY --from=build /out/netwizard /app/netwizard
-COPY --from=frontend /out/ /app/public/
+COPY --from=frontend /out/public/ /app/public/
+COPY --from=frontend /out/private/ /app/private/
 
 ENV NETWIZARD_STATIC_DIR=/app/public
+ENV NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs
 
 USER netwizard
 EXPOSE 8080
