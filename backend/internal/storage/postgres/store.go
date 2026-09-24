@@ -359,6 +359,31 @@ WHERE p.id = $1
 	}
 }
 
+func (s *Store) RecordProjectAudit(ctx context.Context, workspaceID, projectID, actor, action string, metadata map[string]any) error {
+	workspaceID = strings.TrimSpace(workspaceID)
+	projectID = strings.TrimSpace(projectID)
+	actor = strings.TrimSpace(actor)
+	action = strings.TrimSpace(action)
+	if s == nil || s.db == nil {
+		return errors.New("postgres: store is not initialized")
+	}
+	if workspaceID == "" || projectID == "" || actor == "" || action == "" {
+		return errors.New("postgres: audit workspace, project, actor and action are required")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		return fmt.Errorf("postgres: begin project audit: %w", err)
+	}
+	defer tx.Rollback()
+	if err := writeAudit(ctx, tx, workspaceID, projectID, actor, action, projectID, metadata); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("postgres: commit project audit: %w", err)
+	}
+	return nil
+}
+
 func writeAudit(ctx context.Context, tx *sql.Tx, workspaceID, projectID, actor, action, resourceID string, metadata map[string]any) error {
 	raw, err := json.Marshal(metadata)
 	if err != nil {
