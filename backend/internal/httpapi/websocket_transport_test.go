@@ -128,7 +128,7 @@ func TestAuthenticatedWebSocketOperationAckAndReconnectReplay(t *testing.T) {
 	ts := httptest.NewServer(server.Handler())
 	defer ts.Close()
 
-	conn, reader := dialTestWebSocket(t, ts.URL, "/api/projects/"+project.ID+"/ws?clientId=client-a&sinceSeq=0", rawSession)
+	conn, reader := dialTestWebSocket(t, ts.URL, "/api/projects/"+project.ID+"/ws?clientId=client-a&baseVersion=1&sinceSeq=0", rawSession)
 	hello := readServerWebSocketMessage(t, reader)
 	if hello.Type != realtime.MessageHello || hello.ProjectID != project.ID {
 		t.Fatalf("unexpected hello: %#v", hello)
@@ -148,13 +148,13 @@ func TestAuthenticatedWebSocketOperationAckAndReconnectReplay(t *testing.T) {
 	if ack.Type != realtime.MessageOperationAck || ack.Seq != 1 {
 		t.Fatalf("unexpected operation ack: %#v", ack)
 	}
-	latest, err := ops.LatestOperationSeq(t.Context(), project.ID)
+	latest, err := ops.LatestOperationSeq(t.Context(), project.ID, 1)
 	if err != nil || latest != 1 {
 		t.Fatalf("operation was not persisted: latest=%d err=%v", latest, err)
 	}
 	_ = conn.Close()
 
-	conn2, reader2 := dialTestWebSocket(t, ts.URL, "/api/projects/"+project.ID+"/ws?clientId=client-b&sinceSeq=0", rawSession)
+	conn2, reader2 := dialTestWebSocket(t, ts.URL, "/api/projects/"+project.ID+"/ws?clientId=client-b&baseVersion=1&sinceSeq=0", rawSession)
 	defer conn2.Close()
 	hello2 := readServerWebSocketMessage(t, reader2)
 	if hello2.Type != realtime.MessageHello || hello2.Seq != 1 {
@@ -170,7 +170,7 @@ func TestAuthenticatedWebSocketOperationAckAndReconnectReplay(t *testing.T) {
 func TestWebSocketUpgradeRequiresRFC6455Headers(t *testing.T) {
 	server, rawSession, store, _ := newCollaborationServer(t)
 	_, project := seedCollaborationProject(t, store)
-	req := authenticatedRequest(http.MethodGet, "/api/projects/"+project.ID+"/ws?clientId=c1", "", rawSession, false)
+	req := authenticatedRequest(http.MethodGet, "/api/projects/"+project.ID+"/ws?clientId=c1&baseVersion=1", "", rawSession, false)
 	rec := httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusBadRequest {
