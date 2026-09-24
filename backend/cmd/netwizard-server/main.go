@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/httpapi"
 	"github.com/WolcenOn/NetWizard/backend/internal/storage/postgres"
@@ -18,6 +19,10 @@ import (
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	cfg := config.FromEnv()
+	if err := cfg.Validate(); err != nil {
+		logger.Error("invalid backend configuration", "error", err)
+		os.Exit(1)
+	}
 
 	deps := httpapi.Dependencies{}
 	var postgresStore *postgres.Store
@@ -37,11 +42,41 @@ func main() {
 		defer postgresStore.Close()
 	}
 
+	if cfg.AuthRequested() {
+		sessions := &auth.SessionManager{
+			Store: postgresStore,
+			Cookie: auth.CookieConfig{
+				Name: cfg.SessionCookieName,
+				Secure: cfg.CookieSecure,
+				MaxAge: cfg.SessionTTL,
+			},
+		}
+		startupCtx, cancel := context.WithTimeout(context.Background(), cfg.AuthHTTPTimeout)
+		service, err := auth.NewOIDCService(startupCtx, auth.OIDCConfig{
+			IssuerURL: cfg.OIDCIssuerURL,
+			ClientID: cfg.OIDCClientID,
+			ClientSecret: cfg.OIDCClientSecret,
+			RedirectURL: cfg.OIDCRedirectURL,
+			SessionTTL: cfg.SessionTTL,
+			HTTPTimeout: cfg.AuthHTTPTimeout,
+		}, sessions)
+		cancel()
+		if err != nil {
+			logger.Error("oidc startup failed", "error", err)
+			os.Exit(1)
+		}
+		deps.Auth = service
+		logger.Info("oidc authentication ready", "issuer", cfg.OIDCIssuerURL)
+	}
+
 	api := httpapi.NewServerWithDependencies(cfg, logger, deps)
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           api.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       90 * time.Second,
 	}
 
 	go func() {

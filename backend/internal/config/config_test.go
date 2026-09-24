@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestFromEnvUsesRailwayPort(t *testing.T) {
 	t.Setenv("NETWIZARD_ADDR", "")
@@ -26,11 +29,11 @@ func TestFromEnvPrefersExplicitAddr(t *testing.T) {
 	}
 }
 
-
 func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://user:pass@db/netwizard")
 	t.Setenv("NETWIZARD_OIDC_ISSUER_URL", "https://issuer.example")
 	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")
+	t.Setenv("NETWIZARD_OIDC_REDIRECT_URL", "https://app.example/api/auth/callback")
 	t.Setenv("NETWIZARD_MAX_PROJECT_BYTES", "123456")
 
 	cfg := FromEnv()
@@ -42,5 +45,42 @@ func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	}
 	if cfg.MaxProjectBytes != 123456 {
 		t.Fatalf("expected project limit 123456, got %d", cfg.MaxProjectBytes)
+	}
+}
+
+func TestValidateRejectsIncompleteAndInsecureAuthConfiguration(t *testing.T) {
+	cfg := Config{OIDCIssuerURL: "https://issuer.example", DatabaseURL: "postgres://db", SessionTTL: 12 * time.Hour}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected incomplete auth configuration to fail")
+	}
+
+	cfg = Config{
+		DatabaseURL: "postgres://db",
+		OIDCIssuerURL: "https://issuer.example",
+		OIDCClientID: "client",
+		OIDCRedirectURL: "https://app.example/api/auth/callback",
+		SessionTTL: time.Hour,
+		CookieSecure: false,
+	}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected https auth with insecure cookie to fail")
+	}
+
+	cfg.CookieSecure = true
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected complete secure auth configuration, got %v", err)
+	}
+}
+
+func TestValidateRequiresDatabaseForServerSideSessions(t *testing.T) {
+	cfg := Config{
+		OIDCIssuerURL: "https://issuer.example",
+		OIDCClientID: "client",
+		OIDCRedirectURL: "https://app.example/api/auth/callback",
+		SessionTTL: time.Hour,
+		CookieSecure: true,
+	}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected auth without DATABASE_URL to fail")
 	}
 }
