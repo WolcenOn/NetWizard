@@ -36,7 +36,9 @@ func main() {
 		}
 		postgresStore = store
 		deps.Projects = store
-		logger.Info("postgres project store ready")
+		deps.Workspaces = store
+		deps.Access = store
+		logger.Info("postgres project/workspace store ready")
 	}
 	if postgresStore != nil {
 		defer postgresStore.Close()
