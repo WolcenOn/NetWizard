@@ -153,6 +153,10 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid project name", http.StatusBadRequest)
 		return
 	}
+	if _, err := projects.ValidateSnapshot(body.Snapshot, s.cfg.MaxProjectBytes); err != nil {
+		writeSnapshotValidationError(w, err)
+		return
+	}
 	id, err := newResourceID("prj")
 	if err != nil {
 		s.internalError(w, "project id", err)
@@ -163,7 +167,7 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		Snapshot: body.Snapshot, CreatedBy: principal.Subject,
 	})
 	if err != nil {
-		writeProjectError(w, err)
+		s.writeProjectError(w, "create project", err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "revision": revision})
@@ -182,7 +186,7 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 	}
 	project, revision, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
-		writeProjectError(w, err)
+		s.writeProjectError(w, "get project", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
@@ -207,12 +211,20 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 		writeDecodeError(w, err)
 		return
 	}
+	if body.ExpectedVersion < 1 {
+		http.Error(w, "expectedVersion must be positive", http.StatusBadRequest)
+		return
+	}
+	if _, err := projects.ValidateSnapshot(body.Snapshot, s.cfg.MaxProjectBytes); err != nil {
+		writeSnapshotValidationError(w, err)
+		return
+	}
 	project, revision, err := s.projects.SaveRevision(r.Context(), projects.SaveRevisionInput{
 		ProjectID: projectID, ExpectedVersion: body.ExpectedVersion,
 		Snapshot: body.Snapshot, CreatedBy: principal.Subject,
 	})
 	if err != nil {
-		writeProjectError(w, err)
+		s.writeProjectError(w, "save project", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
@@ -230,7 +242,7 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.projects.DeleteProject(r.Context(), projectID, principal.Subject); err != nil {
-		writeProjectError(w, err)
+		s.writeProjectError(w, "delete project", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -281,16 +293,22 @@ func writeAuthzError(w http.ResponseWriter, err error) {
 	http.Error(w, "forbidden", http.StatusForbidden)
 }
 
-func writeProjectError(w http.ResponseWriter, err error) {
+func writeSnapshotValidationError(w http.ResponseWriter, err error) {
+	if strings.Contains(err.Error(), "maximum size") {
+		http.Error(w, "project snapshot too large", http.StatusRequestEntityTooLarge)
+		return
+	}
+	http.Error(w, "invalid project snapshot", http.StatusBadRequest)
+}
+
+func (s *Server) writeProjectError(w http.ResponseWriter, operation string, err error) {
 	switch {
 	case errors.Is(err, projects.ErrNotFound):
 		http.Error(w, "project not found", http.StatusNotFound)
 	case errors.Is(err, projects.ErrVersionConflict):
 		http.Error(w, "project version conflict", http.StatusConflict)
-	case strings.Contains(err.Error(), "maximum size"):
-		http.Error(w, "project snapshot too large", http.StatusRequestEntityTooLarge)
 	default:
-		http.Error(w, "invalid project request", http.StatusBadRequest)
+		s.internalError(w, operation, err)
 	}
 }
 
