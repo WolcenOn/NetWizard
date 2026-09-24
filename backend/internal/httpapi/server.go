@@ -62,7 +62,7 @@ func (s *Server) routes() {
 	if s.auth != nil {
 		s.mux.HandleFunc("GET /api/auth/login", s.handleAuthLogin)
 		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
-		s.mux.Handle("POST /api/auth/logout", s.auth.Sessions.Require(s.requireMutation(http.HandlerFunc(s.handleAuthLogout))))
+		s.mux.Handle("POST /api/auth/logout", s.auth.Sessions.Require(s.requireCSRF(http.HandlerFunc(s.handleAuthLogout))))
 		s.mux.Handle("GET /api/auth/me", s.auth.Sessions.Require(http.HandlerFunc(s.handleAuthMe)))
 		if s.remoteWritesReady() {
 			s.remoteRoutes()
