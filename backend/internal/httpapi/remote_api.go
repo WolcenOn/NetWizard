@@ -40,7 +40,7 @@ func (s *Server) remoteRoutes() {
 	s.mux.Handle("DELETE /api/projects/{projectID}", require(s.requireMutation(http.HandlerFunc(s.handleDeleteProject))))
 }
 
-func (s *Server) requireMutation(next http.Handler) http.Handler {
+func (s *Server) requireCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := auth.PrincipalFromContext(r.Context())
 		if !ok || strings.TrimSpace(principal.UserID) == "" {
@@ -54,6 +54,17 @@ func (s *Server) requireMutation(next http.Handler) http.Handler {
 			http.Error(w, "csrf check failed", http.StatusForbidden)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) requireMutation(next http.Handler) http.Handler {
+	return s.requireCSRF(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		principal, _ := auth.PrincipalFromContext(r.Context())
+		if s.writeLimit == nil {
+			s.internalError(w, "write rate limit", errors.New("write limiter unavailable"))
+			return
+		}
 		allowed, err := s.writeLimit.AllowWrite(r.Context(), principal.UserID, time.Now().UTC(), 60, time.Minute)
 		if err != nil {
 			s.internalError(w, "write rate limit", err)
@@ -65,7 +76,7 @@ func (s *Server) requireMutation(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
-	})
+	}))
 }
 
 func (s *Server) handleListWorkspaces(w http.ResponseWriter, r *http.Request) {
