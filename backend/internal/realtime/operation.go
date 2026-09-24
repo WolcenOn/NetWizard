@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,32 @@ var (
 	ErrOperationConflict = errors.New("operation base version conflict")
 	ErrOperationInvalid  = errors.New("invalid operation")
 )
+
+func (op Operation) Validate(maxPayloadBytes int) error {
+	if strings.TrimSpace(op.OpID) == "" || len(op.OpID) > 128 ||
+		strings.TrimSpace(op.ClientID) == "" || len(op.ClientID) > 128 ||
+		op.BaseVersion < 1 || !validOperationKind(op.Kind) ||
+		len(op.Payload) == 0 || (maxPayloadBytes > 0 && len(op.Payload) > maxPayloadBytes) ||
+		!json.Valid(op.Payload) {
+		return ErrOperationInvalid
+	}
+	if len(op.EntityID) > 256 {
+		return ErrOperationInvalid
+	}
+	return nil
+}
+
+func validOperationKind(kind OperationKind) bool {
+	switch kind {
+	case OperationDeviceUpdate, OperationPortUpdate, OperationHostUpdate,
+		OperationHostAssignPort, OperationVLANUpdate, OperationLinkUpdate,
+		OperationLocationUpdate, OperationFirewallUpdate, OperationViewNodeMove,
+		OperationLayoutApply:
+		return true
+	default:
+		return false
+	}
+}
 
 type OperationStore interface {
 	AppendOperation(ctx context.Context, projectID string, op Operation, actor string) (OperationEnvelope, error)
