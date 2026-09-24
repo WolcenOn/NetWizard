@@ -41,9 +41,13 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
     scene:window.NetWizardV5Scene?.version,
     drag:window.NetWizardV5DragController?.version,
     bridgeScene:window.NetWizardV5?.scene?.version,
-    bridgeDrag:window.NetWizardV5?.dragController?.version
+    bridgeDrag:window.NetWizardV5?.dragController?.version,
+    commands:window.NetWizardV5Commands?.version,
+    panel:window.NetWizardV5Panel?.version,
+    bridgeCommands:window.NetWizardV5?.commands?.version,
+    bridgePanel:window.NetWizardV5?.panel?.version
   }));
-  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1',scene:'netwizard-v5-scene-v1',drag:'netwizard-v5-drag-controller-factory-v1',bridgeScene:'netwizard-v5-scene-v1',bridgeDrag:'netwizard-v5-drag-controller-factory-v1'});
+  expect(modules).toEqual({renderer:'netwizard-v5-renderer-v1',interaction:'netwizard-v5-interaction-v1',scene:'netwizard-v5-scene-v1',drag:'netwizard-v5-drag-controller-factory-v1',bridgeScene:'netwizard-v5-scene-v1',bridgeDrag:'netwizard-v5-drag-controller-factory-v1',commands:'netwizard-v5-commands-factory-v1',panel:'netwizard-v5-panel-factory-v1',bridgeCommands:'netwizard-v5-commands-factory-v1',bridgePanel:'netwizard-v5-panel-factory-v1'});
 
   const canvas=page.locator('#v5view');
   await expect(canvas).toBeVisible();
@@ -59,6 +63,15 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
   await page.mouse.click(box.x+start.screen.x,box.y+start.screen.y);
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().visual.sel)).toEqual({t:'device',id:'sw1'});
   await expect.poll(()=>page.evaluate(()=>window.NetWizardV5RenderState?.sceneOrder||[])).toEqual(['background','locations','base-links','nodes','selected-links']);
+
+  await expect(page.locator('#v5Panel')).toHaveAttribute('data-v5-panel-module','netwizard-v5-panel-v1');
+  await page.locator('#v5Panel input').first().evaluate(el=>{
+    el.value='SW-EDIT';
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().devices.find(d=>d.id==='sw1')?.name)).toBe('SW-EDIT');
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardV5CommandState?.name)).toBe('updateDevice');
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardV5CommandState?.payload?.key)).toBe('name');
 
   await page.mouse.move(box.x+start.screen.x,box.y+start.screen.y);
   await page.mouse.down();
