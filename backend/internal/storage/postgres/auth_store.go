@@ -73,7 +73,7 @@ VALUES ($1, $2, $3, $4)
 func (s *Store) GetSession(ctx context.Context, idHash []byte, now time.Time) (auth.Session, error) {
 	var session auth.Session
 	err := s.db.QueryRowContext(ctx, `
-SELECT s.id_hash, s.user_id, u.external_subject,
+SELECT s.id_hash, s.user_id, u.external_issuer, u.external_subject,
        COALESCE(u.email,''), COALESCE(u.display_name,''),
        s.created_at, s.expires_at
 FROM auth_sessions s
@@ -82,7 +82,7 @@ WHERE s.id_hash = $1
   AND s.revoked_at IS NULL
   AND s.expires_at > $2
 `, idHash, now).Scan(
-		&session.IDHash, &session.UserID, &session.Subject,
+		&session.IDHash, &session.UserID, &session.Issuer, &session.Subject,
 		&session.Email, &session.DisplayName,
 		&session.CreatedAt, &session.ExpiresAt,
 	)
