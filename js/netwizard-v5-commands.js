@@ -63,6 +63,8 @@
     function setHostConnectedDevice({id,deviceId}){
       const h=findHost(id);if(!h)return noop();
       h.connectedDeviceId=deviceId||null;
+      const currentPort=h.portRef?findPort(h.portRef):null;
+      if(!deviceId||(currentPort&&currentPort.deviceId!==deviceId))h.portRef=null;
       if(deviceId&&(h.portAssignMode||'auto')==='auto'){
         const suggested=o.suggestHostPort?o.suggestHostPort(deviceId,id):null;
         h.portRef=suggested||null;
@@ -78,7 +80,7 @@
       const h=findHost(id);if(!h)return noop();
       h.portAssignMode=mode;
       if(mode==='auto'){
-        const deviceId=h.connectedDeviceId||null;
+        const deviceId=o.hostConnectedDeviceId?o.hostConnectedDeviceId(h):(h.connectedDeviceId||null);
         const suggested=deviceId&&o.suggestHostPort?o.suggestHostPort(deviceId,id):null;
         h.portRef=suggested||null;
         const p=suggested?findPort(suggested):null;
@@ -97,7 +99,8 @@
     }
     function moveHost({id,locationId}){
       const h=findHost(id);if(!h)return noop();
-      const fallback=locationId||(h.connectedDeviceId&&o.deviceVisualLocation?o.deviceVisualLocation(h.connectedDeviceId):'')||arr(visual().locs)[0]?.id||'';
+      const connectedId=o.hostConnectedDeviceId?o.hostConnectedDeviceId(h):(h.connectedDeviceId||null);
+      const fallback=locationId||(connectedId&&o.deviceVisualLocation?o.deviceVisualLocation(connectedId):'')||arr(visual().locs)[0]?.id||'';
       if(o.setHostVisualLocation)o.setHostVisualLocation(id,locationId||'');
       if(fallback&&o.nextNodePosition)visual().pos[id]=o.nextNodePosition(fallback,'host',id);
       return changed({t:'host',id},'refresh');
