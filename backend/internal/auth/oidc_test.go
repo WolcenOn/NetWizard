@@ -294,3 +294,133 @@ func TestValidReturnTo(t *testing.T) {
 
 var _ = strings.TrimSpace
 var _ = big.NewInt
+
+
+func TestOIDCFlowWithFakeProvider(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const kid = "fake-provider-key"
+	const clientID = "netwizard-test"
+	const redirectURL = "https://app.example/api/auth/callback"
+
+	n := base64.RawURLEncoding.EncodeToString(key.PublicKey.N.Bytes())
+	eBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(eBytes, uint32(key.PublicKey.E))
+	eBytes = bytesTrimLeftZero(eBytes)
+	jwksRaw, _ := json.Marshal(map[string]any{"keys": []map[string]any{{
+		"kty": "RSA", "kid": kid, "alg": "RS256", "n": n,
+		"e": base64.RawURLEncoding.EncodeToString(eBytes),
+	}}})
+
+	var issuer string
+	var expectedNonce string
+	var sawPKCE bool
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"issuer": issuer,
+				"authorization_endpoint": issuer + "/authorize",
+				"token_endpoint": issuer + "/token",
+				"jwks_uri": issuer + "/jwks",
+			})
+		case "/token":
+			if err := r.ParseForm(); err != nil {
+				http.Error(w, "bad form", http.StatusBadRequest)
+				return
+			}
+			if r.Form.Get("grant_type") != "authorization_code" ||
+				r.Form.Get("code") != "code-1" ||
+				r.Form.Get("client_id") != clientID ||
+				r.Form.Get("redirect_uri") != redirectURL ||
+				r.Form.Get("code_verifier") == "" {
+				http.Error(w, "invalid token request", http.StatusBadRequest)
+				return
+			}
+			sawPKCE = true
+			token := signTestToken(t, key, kid, map[string]any{
+				"iss": issuer,
+				"sub": "fake-user-subject",
+				"aud": clientID,
+				"exp": time.Now().Add(10 * time.Minute).Unix(),
+				"nonce": expectedNonce,
+				"email": "fake@example.test",
+				"name": "Fake User",
+			})
+			_ = json.NewEncoder(w).Encode(map[string]any{"id_token": token})
+		case "/jwks":
+			_, _ = w.Write(jwksRaw)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer provider.Close()
+	issuer = provider.URL
+
+	store := newMemorySessionStore()
+	manager := &SessionManager{
+		Store: store,
+		Cookie: CookieConfig{Name: "netwizard_session", Secure: true},
+	}
+	service, err := NewOIDCService(context.Background(), OIDCConfig{
+		IssuerURL: issuer,
+		ClientID: clientID,
+		RedirectURL: redirectURL,
+		SessionTTL: time.Hour,
+		HTTPTimeout: 2 * time.Second,
+	}, manager)
+	if err != nil {
+		t.Fatalf("discovery failed: %v", err)
+	}
+
+	loginURL, err := service.LoginURL(context.Background(), "/workspace")
+	if err != nil {
+		t.Fatal(err)
+	}
+	authorizationURL, err := url.Parse(loginURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if authorizationURL.String() == "" || authorizationURL.Path != "/authorize" {
+		t.Fatalf("unexpected authorization URL: %s", loginURL)
+	}
+	state := authorizationURL.Query().Get("state")
+	expectedNonce = authorizationURL.Query().Get("nonce")
+	if state == "" || expectedNonce == "" ||
+		authorizationURL.Query().Get("code_challenge") == "" ||
+		authorizationURL.Query().Get("code_challenge_method") != "S256" {
+		t.Fatalf("authorization URL missing state/nonce/PKCE: %s", loginURL)
+	}
+
+	if _, _, _, err := service.Callback(context.Background(), "wrong-state", "code-1"); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("wrong state should fail before token exchange, got %v", err)
+	}
+
+	rawSession, session, returnTo, err := service.Callback(context.Background(), state, "code-1")
+	if err != nil {
+		t.Fatalf("callback failed: %v", err)
+	}
+	if !sawPKCE {
+		t.Fatal("token endpoint did not receive PKCE verifier")
+	}
+	if rawSession == "" || session.Subject != "fake-user-subject" ||
+		session.Issuer != issuer || session.Email != "fake@example.test" {
+		t.Fatalf("unexpected session: raw=%t session=%#v", rawSession != "", session)
+	}
+	if returnTo != "/workspace" {
+		t.Fatalf("unexpected returnTo %q", returnTo)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(&http.Cookie{Name: "netwizard_session", Value: rawSession})
+	principal, err := manager.Authenticate(req)
+	if err != nil {
+		t.Fatalf("new session should authenticate: %v", err)
+	}
+	if principal.UserID == "" || principal.Issuer != issuer || principal.Subject != "fake-user-subject" {
+		t.Fatalf("unexpected principal after callback: %#v", principal)
+	}
+}
