@@ -15,8 +15,16 @@ func (f verifierFunc) Verify(ctx context.Context, token string) (Principal, erro
 
 type accessStore map[string]Role
 
-func (s accessStore) RoleForProject(ctx context.Context, projectID, subject string) (Role, error) {
-	role, ok := s[projectID+":"+subject]
+func (s accessStore) RoleForProject(ctx context.Context, projectID, userID string) (Role, error) {
+	role, ok := s[projectID+":"+userID]
+	if !ok {
+		return "", errors.New("not found")
+	}
+	return role, nil
+}
+
+func (s accessStore) RoleForWorkspace(ctx context.Context, workspaceID, userID string) (Role, error) {
+	role, ok := s[workspaceID+":"+userID]
 	if !ok {
 		return "", errors.New("not found")
 	}
@@ -56,7 +64,7 @@ func TestAuthorizerUsesRoleHierarchy(t *testing.T) {
 		{"viewer", RoleViewer, true},
 		{"viewer", RoleEditor, false},
 	} {
-		err := a.RequireProjectRole(context.Background(), Principal{Subject: tc.subject}, "p1", tc.required)
+		err := a.RequireProjectRole(context.Background(), Principal{Subject: tc.subject, UserID: tc.subject}, "p1", tc.required)
 		if tc.allowed && err != nil {
 			t.Fatalf("%s should allow %s: %v", tc.subject, tc.required, err)
 		}
