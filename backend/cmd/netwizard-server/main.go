@@ -13,6 +13,7 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/httpapi"
+	"github.com/WolcenOn/NetWizard/backend/internal/realtime"
 	"github.com/WolcenOn/NetWizard/backend/internal/storage/postgres"
 )
 
@@ -39,6 +40,8 @@ func main() {
 		deps.Workspaces = store
 		deps.Access = store
 		deps.Limits = store
+		deps.Operations = store
+		deps.Realtime = realtime.NewHub()
 		logger.Info("postgres project/workspace store ready")
 	}
 	if postgresStore != nil {
