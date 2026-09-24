@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"strings"
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
@@ -54,6 +55,13 @@ func main() {
 		if err != nil {
 			logger.Error("private services startup failed", "error", err)
 			os.Exit(1)
+		}
+		if strings.TrimSpace(cfg.PrivateRoutingWorker) != "" {
+			service.SetRoutingRunner(privateservices.NodeRoutingRunner{
+				ScriptPath: cfg.PrivateRoutingWorker,
+				Timeout: 5 * time.Second,
+			})
+			logger.Info("private routing worker configured", "path", cfg.PrivateRoutingWorker)
 		}
 		deps.PrivateServices = service
 		logger.Info("private services configured")
