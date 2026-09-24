@@ -2949,7 +2949,7 @@ function ensureV5PanelController(){
     hostAssignablePorts,
     hostPortUsedByOther,
     actions:{
-      addLocation,
+      addLocation:addV5Location,
       fit:()=>fitV5(),
       fullscreen:()=>toggleV5Fullscreen(),
       setProMode,
