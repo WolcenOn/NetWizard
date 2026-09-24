@@ -56,7 +56,22 @@ func (s *Server) handleProjectRevisions(w http.ResponseWriter, r *http.Request) 
 		s.writeProjectError(w, "list revisions", err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"revisions": items})
+	type revisionMeta struct {
+		ProjectID     string    `json:"projectId"`
+		Version       int64     `json:"version"`
+		SchemaVersion string    `json:"schemaVersion"`
+		Checksum      string    `json:"checksum"`
+		CreatedBy     string    `json:"createdBy"`
+		CreatedAt     time.Time `json:"createdAt"`
+	}
+	history := make([]revisionMeta, 0, len(items))
+	for _, item := range items {
+		history = append(history, revisionMeta{
+			ProjectID: item.ProjectID, Version: item.Version, SchemaVersion: item.SchemaVersion,
+			Checksum: item.Checksum, CreatedBy: item.CreatedBy, CreatedAt: item.CreatedAt,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"revisions": history})
 }
 
 func (s *Server) handleProjectOperations(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +90,7 @@ func (s *Server) handleProjectOperations(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "invalid since", http.StatusBadRequest)
 		return
 	}
-	items, err := s.operations.OperationsSince(r.Context(), projectID, since, 500)
+	items, err := s.operations.OperationsSince(r.Context(), projectID, since, 200)
 	if err != nil {
 		s.internalError(w, "replay operations", err)
 		return
@@ -174,10 +189,13 @@ func (s *Server) handleProjectWebSocket(w http.ResponseWriter, r *http.Request) 
 		_ = sendRealtimeError(conn, "operation_store_unavailable", "operation replay is unavailable")
 		return
 	}
-	backlog, err := s.operations.OperationsSince(r.Context(), projectID, sinceSeq, 500)
-	if err != nil {
-		_ = sendRealtimeError(conn, "operation_store_unavailable", "operation replay is unavailable")
-		return
+	var backlog []realtime.OperationEnvelope
+	if latestSeq-sinceSeq <= 1000 {
+		backlog, err = s.operations.OperationsSince(r.Context(), projectID, sinceSeq, 1000)
+		if err != nil {
+			_ = sendRealtimeError(conn, "operation_store_unavailable", "operation replay is unavailable")
+			return
+		}
 	}
 
 	hello, _ := realtime.NewMessage(realtime.MessageHello, projectID, map[string]any{
@@ -190,6 +208,14 @@ func (s *Server) handleProjectWebSocket(w http.ResponseWriter, r *http.Request) 
 	hello.ClientID = clientID
 	hello.Seq = latestSeq
 	if err := conn.Send(r.Context(), hello); err != nil {
+		return
+	}
+	if latestSeq-sinceSeq > 1000 {
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "replay_window_exceeded", "latestSeq": latestSeq,
+		})
+		resync.ClientID = clientID
+		_ = conn.Send(r.Context(), resync)
 		return
 	}
 	for _, env := range backlog {
