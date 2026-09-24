@@ -13,6 +13,7 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/httpapi"
+	"github.com/WolcenOn/NetWizard/backend/internal/privateservices"
 	"github.com/WolcenOn/NetWizard/backend/internal/realtime"
 	"github.com/WolcenOn/NetWizard/backend/internal/storage/postgres"
 )
@@ -46,6 +47,16 @@ func main() {
 	}
 	if postgresStore != nil {
 		defer postgresStore.Close()
+	}
+
+	if cfg.PrivateServicesConfigured() {
+		service, err := privateservices.New([]byte(cfg.PrivateServiceKey))
+		if err != nil {
+			logger.Error("private services startup failed", "error", err)
+			os.Exit(1)
+		}
+		deps.PrivateServices = service
+		logger.Info("private services configured")
 	}
 
 	if cfg.AuthRequested() {
