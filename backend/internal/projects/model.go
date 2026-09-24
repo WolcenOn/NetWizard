@@ -62,6 +62,7 @@ type Store interface {
 	ListWorkspaceProjects(ctx context.Context, workspaceID string) ([]Project, error)
 	ListRevisions(ctx context.Context, projectID string, limit int) ([]Revision, error)
 	SaveRevision(ctx context.Context, input SaveRevisionInput) (Project, Revision, error)
+	DeleteProject(ctx context.Context, projectID, actor string) error
 }
 
 func ValidateSnapshot(raw json.RawMessage, maxBytes int64) (string, error) {
