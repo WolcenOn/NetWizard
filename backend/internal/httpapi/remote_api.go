@@ -38,6 +38,9 @@ func (s *Server) remoteRoutes() {
 	s.mux.Handle("GET /api/projects/{projectID}", require(http.HandlerFunc(s.handleGetProject)))
 	s.mux.Handle("PUT /api/projects/{projectID}", require(s.requireMutation(http.HandlerFunc(s.handleSaveProject))))
 	s.mux.Handle("DELETE /api/projects/{projectID}", require(s.requireMutation(http.HandlerFunc(s.handleDeleteProject))))
+	if s.collaborationReady() {
+		s.collaborationRoutes()
+	}
 }
 
 func (s *Server) requireCSRF(next http.Handler) http.Handler {
@@ -186,6 +189,7 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		s.writeProjectError(w, "create project", err)
 		return
 	}
+	w.Header().Set("ETag", projectETag(project, revision))
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "revision": revision})
 }
 
@@ -203,6 +207,12 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 	project, revision, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
 		s.writeProjectError(w, "get project", err)
+		return
+	}
+	etag := projectETag(project, revision)
+	w.Header().Set("ETag", etag)
+	if strings.TrimSpace(r.Header.Get("If-None-Match")) == etag {
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
@@ -231,6 +241,18 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "expectedVersion must be positive", http.StatusBadRequest)
 		return
 	}
+	ifMatch := strings.TrimSpace(r.Header.Get("If-Match"))
+	if ifMatch != "" {
+		current, currentRevision, err := s.projects.GetProject(r.Context(), projectID)
+		if err != nil {
+			s.writeProjectError(w, "get project for If-Match", err)
+			return
+		}
+		if ifMatch != projectETag(current, currentRevision) {
+			http.Error(w, "project etag conflict", http.StatusPreconditionFailed)
+			return
+		}
+	}
 	if _, err := projects.ValidateSnapshot(body.Snapshot, s.cfg.MaxProjectBytes); err != nil {
 		writeSnapshotValidationError(w, err)
 		return
@@ -243,6 +265,7 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 		s.writeProjectError(w, "save project", err)
 		return
 	}
+	w.Header().Set("ETag", projectETag(project, revision))
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
 }
 
