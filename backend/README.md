@@ -19,7 +19,7 @@ La base incluye:
 - auditoría de creación/guardado de revisiones;
 - tests de integración contra PostgreSQL 16 en CI.
 
-Todavía **no existen endpoints públicos de escritura de proyectos**, login OIDC activo ni WebSocket público. La persistencia está conectada internamente, pero `remoteProjectWrites=false` hasta completar autenticación/autorización.
+E3 añade OIDC genérico y sesiones opacas server-side en PostgreSQL. Siguen **sin existir endpoints públicos de escritura de proyectos ni WebSocket público**; `remoteProjectWrites=false` y `collaboration=false` hasta E4/E5.
 
 La frontera entre cliente y servidor está definida en [`docs/BACKEND_BOUNDARIES.md`](../docs/BACKEND_BOUNDARIES.md) y la hoja de ruta SaaS en [`docs/SAAS_ARCHITECTURE.md`](../docs/SAAS_ARCHITECTURE.md).
 
@@ -51,7 +51,7 @@ NETWIZARD_OIDC_CLIENT_ID=netwizard-web
 NETWIZARD_MAX_PROJECT_BYTES=10485760
 ```
 
-`DATABASE_URL` es opcional mientras se use únicamente el modo local. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
+`DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
 
 ## Migraciones
 
