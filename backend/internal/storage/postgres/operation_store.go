@@ -27,9 +27,10 @@ func (s *Store) AppendOperation(ctx context.Context, projectID string, op realti
 	defer tx.Rollback()
 
 	var currentVersion int64
+	var workspaceID string
 	if err := tx.QueryRowContext(ctx, `
-SELECT current_version FROM projects WHERE id = $1 AND deleted_at IS NULL FOR SHARE
-`, projectID).Scan(&currentVersion); errors.Is(err, sql.ErrNoRows) {
+SELECT current_version, workspace_id FROM projects WHERE id = $1 AND deleted_at IS NULL FOR SHARE
+`, projectID).Scan(&currentVersion, &workspaceID); errors.Is(err, sql.ErrNoRows) {
 		return realtime.OperationEnvelope{}, realtime.ErrOperationConflict
 	} else if err != nil {
 		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: load operation base version: %w", err)
@@ -78,7 +79,7 @@ RETURNING created_at
 		return realtime.OperationEnvelope{}, fmt.Errorf("postgres: insert operation: %w", err)
 	}
 
-	if err := writeAudit(ctx, tx, "", projectID, actor, "project.operation.append", projectID, map[string]any{"seq": seq, "opId": op.OpID, "kind": op.Kind}); err != nil {
+	if err := writeAudit(ctx, tx, workspaceID, projectID, actor, "project.operation.append", projectID, map[string]any{"seq": seq, "opId": op.OpID, "kind": op.Kind}); err != nil {
 		return realtime.OperationEnvelope{}, err
 	}
 	if err := tx.Commit(); err != nil {
