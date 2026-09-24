@@ -60,6 +60,7 @@ func TestAuthorizedRemoteCRUDMigrationBindsCSRFToSessions(t *testing.T) {
 		"ADD COLUMN IF NOT EXISTS csrf_token",
 		"DELETE FROM auth_sessions",
 		"ALTER COLUMN csrf_token SET NOT NULL",
+		"CREATE TABLE IF NOT EXISTS api_write_limits",
 	} {
 		if !strings.Contains(sql, needle) {
 			t.Fatalf("E4 migration missing %q", needle)
