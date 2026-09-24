@@ -141,16 +141,20 @@ Todavía sin endpoints públicos de escritura.
 
 En este punto `remoteProjectWrites=true` cuando PostgreSQL, OIDC y todos los stores E4 están listos. `collaboration=false` continúa hasta E5.
 
-### E5 — Sincronización y colaboración
+### E5 — Sincronización y colaboración — implementada
 
-- versión base/ETag;
+- versión base + ETag/If-Match/If-None-Match;
 - historial de revisiones;
-- operation store;
-- WebSocket autenticado por proyecto;
-- presencia;
-- conflictos;
-- reconexión;
-- idempotencia por `opId`.
+- operation store durable en PostgreSQL;
+- secuencia por proyecto e idempotencia por `opId`;
+- WebSocket autenticado y autorizado por proyecto;
+- presencia efímera;
+- replay por `baseVersion` + `sinceSeq`;
+- `resync_required` ante cambio de snapshot, cursor inválido o ventana de replay excesiva;
+- heartbeat/expiración de sockets;
+- límites de payload y rate limiting reutilizado.
+
+El fan-out/presencia WebSocket es por proceso. Despliegues con varias instancias deben usar sticky routing hasta incorporar pub/sub compartido; el log durable y el replay sí son PostgreSQL-backed.
 
 ### E6 — Servicios privados/premium
 
