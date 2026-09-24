@@ -13,7 +13,7 @@ NetWizard sigue siendo **client-first**:
 - el backend expone actualmente `GET /api/health` y `GET /api/version`;
 - `backend/internal/realtime` contiene contratos y lógica en memoria para salas, presencia, operaciones y snapshots;
 - realtime todavía **no está expuesto como WebSocket ni conectado a persistencia**;
-- no hay autenticación, autorización por proyecto, base de datos ni CRUD remoto de proyectos.
+- PostgreSQL puede conectarse mediante `DATABASE_URL` y `projects.Store` ya persiste proyectos/revisiones con control optimista; todavía no hay autenticación activa, autorización expuesta por API ni CRUD remoto público.
 
 ## Responsabilidad del frontend
 
@@ -163,7 +163,7 @@ La arquitectura objetivo y la secuencia E1–E6 se documentan en [SAAS_ARCHITECT
 
 La primera migración PostgreSQL existe como contrato de datos, pero en E1:
 
-- no hay conexión activa a base de datos;
+- PostgreSQL ya puede conectarse y migrarse al arrancar cuando `DATABASE_URL` está definida;
 - no hay login activo;
 - no se aceptan escrituras remotas;
 - no hay WebSocket público.

@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     external_subject TEXT NOT NULL UNIQUE,
@@ -85,5 +83,3 @@ CREATE INDEX IF NOT EXISTS idx_audit_workspace_created
 
 CREATE INDEX IF NOT EXISTS idx_audit_project_created
     ON audit_events(project_id, created_at DESC);
-
-COMMIT;

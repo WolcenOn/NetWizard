@@ -12,13 +12,32 @@ import (
 
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/httpapi"
+	"github.com/WolcenOn/NetWizard/backend/internal/storage/postgres"
 )
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	cfg := config.FromEnv()
 
-	api := httpapi.NewServer(cfg, logger)
+	deps := httpapi.Dependencies{}
+	var postgresStore *postgres.Store
+	if cfg.DatabaseConfigured() {
+		startupCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		store, err := postgres.Open(startupCtx, cfg.DatabaseURL, cfg.MaxProjectBytes)
+		cancel()
+		if err != nil {
+			logger.Error("postgres startup failed", "error", err)
+			os.Exit(1)
+		}
+		postgresStore = store
+		deps.Projects = store
+		logger.Info("postgres project store ready")
+	}
+	if postgresStore != nil {
+		defer postgresStore.Close()
+	}
+
+	api := httpapi.NewServerWithDependencies(cfg, logger, deps)
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           api.Handler(),

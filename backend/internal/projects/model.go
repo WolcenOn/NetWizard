@@ -60,6 +60,7 @@ type Store interface {
 	CreateProject(ctx context.Context, input CreateInput) (Project, Revision, error)
 	GetProject(ctx context.Context, projectID string) (Project, Revision, error)
 	ListWorkspaceProjects(ctx context.Context, workspaceID string) ([]Project, error)
+	ListRevisions(ctx context.Context, projectID string, limit int) ([]Revision, error)
 	SaveRevision(ctx context.Context, input SaveRevisionInput) (Project, Revision, error)
 }
 

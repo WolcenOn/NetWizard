@@ -103,14 +103,16 @@ WebSocket no se expondrá hasta que persistencia, autenticación, autorización 
 - endpoint público de capacidades;
 - escritura remota deshabilitada.
 
-### E2 — Persistencia PostgreSQL real
+### E2 — Persistencia PostgreSQL real — implementada
 
-- driver PostgreSQL;
-- migraciones automáticas/administradas;
-- implementación del store de proyectos;
-- transacciones y control de versión;
-- tests de integración;
-- backups documentados.
+- driver PostgreSQL conectado en el arranque;
+- migraciones embebidas, transaccionales y serializadas;
+- implementación de `projects.Store`;
+- revisiones inmutables y checksum;
+- optimistic concurrency mediante `expectedVersion`;
+- auditoría de persistencia;
+- tests de integración contra PostgreSQL 16 en CI;
+- backup/restore documentado en `SAAS_OPERATIONS.md`.
 
 Todavía sin endpoints públicos de escritura.
 

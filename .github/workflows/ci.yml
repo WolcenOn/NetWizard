@@ -43,6 +43,22 @@ jobs:
     name: Go backend tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: netwizard
+          POSTGRES_PASSWORD: netwizard
+          POSTGRES_DB: netwizard_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U netwizard -d netwizard_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NETWIZARD_TEST_DATABASE_URL: postgres://netwizard:netwizard@localhost:5432/netwizard_test?sslmode=disable
 
     steps:
       - name: Checkout
@@ -53,6 +69,19 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Verify backend modules
+        run: |
+          go mod tidy
+          if ! git diff --quiet -- go.mod go.sum || [ -n "$(git status --porcelain -- go.sum)" ]; then
+            echo "::group::go.mod after tidy"
+            cat go.mod
+            echo "::endgroup::"
+            echo "::group::go.sum after tidy"
+            cat go.sum
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Run backend tests
         run: go test ./...
