@@ -12,7 +12,7 @@ Capas principales:
 4. Auditorías: L1/L2/IP/DHCP/PoE/Broadcast/Vendor/Producción.
 5. Modelo físico: racks, rack items, PDU/alimentación y cableado estructurado (`netwizard-rack-model.js`, `netwizard-structured-cabling.js`).
 6. Exportación: configuraciones vendor, inventario, documentación y paquete de despliegue.
-7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`. V5 se separa en `netwizard-v5-core.js` (modelo puro), `netwizard-v5-renderer.js` (dibujo), `netwizard-v5-interaction.js` (hit-testing/drag/pan/zoom) y `netwizard-v5-bridge.js` (contrato estable); `netwizard.js` conserva temporalmente la orquestación y mutaciones legacy.
+7. UI: tarjetas inyectadas por módulos y vistas existentes en `netwizard.js`. V5 está separada en core, renderer, interaction, scene, drag controller, panel, commands, location transactions, controls y bridge; `netwizard.js` actúa como adaptador hacia el estado/persistencia legacy.
 8. Backend: `backend/internal/config`, `httpapi` y `realtime`; su frontera con el cliente se define en `docs/BACKEND_BOUNDARIES.md`.
 
 ## Reglas para cambios futuros
@@ -34,6 +34,9 @@ Capas principales:
 - La composición del frame pertenece a `netwizard-v5-scene.js` y la sesión pointer/drag a `netwizard-v5-drag-controller.js`.
 - Las mutaciones iniciadas desde V5 deben entrar por `netwizard-v5-commands.js`; el panel `netwizard-v5-panel.js` queda limitado a presentación DOM y delegación de acciones.
 - No usar `innerHTML` en el panel V5 para datos de proyecto.
+- Las altas, renombres y bajas de ubicaciones que afecten a referencias físicas/visuales deben planificarse con `netwizard-v5-location-transactions.js` antes de aplicar el commit.
+- Toolbar, filtros, fullscreen, Escape y resize V5 pertenecen a `netwizard-v5-controls.js`; no añadir listeners globales equivalentes a `netwizard.js`.
+- Al eliminar una ubicación deben quedar resueltas también referencias de equipos, hosts, racks, tomas y asignaciones V5.
 - El dibujo V5 debe añadirse a `netwizard-v5-renderer.js`; hit-testing y matemáticas de interacción a `netwizard-v5-interaction.js`. Evitar reintroducir esos cálculos en `netwizard.js`.
 
 ## Comentarios de código
