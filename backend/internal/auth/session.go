@@ -40,13 +40,14 @@ type LoginState struct {
 }
 
 type Session struct {
-	IDHash    []byte
-	UserID    string
-	Subject   string
-	Email     string
+	IDHash      []byte
+	UserID      string
+	Issuer      string
+	Subject     string
+	Email       string
 	DisplayName string
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	CreatedAt   time.Time
+	ExpiresAt   time.Time
 }
 
 type SessionStore interface {
@@ -92,7 +93,7 @@ func (m *SessionManager) Create(ctx context.Context, user User, ttl time.Duratio
 	}
 	now := time.Now().UTC()
 	session := Session{
-		IDHash: hashToken(raw), UserID: user.ID, Subject: user.Subject,
+		IDHash: hashToken(raw), UserID: user.ID, Issuer: user.Issuer, Subject: user.Subject,
 		Email: user.Email, DisplayName: user.DisplayName,
 		CreatedAt: now, ExpiresAt: now.Add(ttl),
 	}
@@ -115,8 +116,8 @@ func (m *SessionManager) Authenticate(r *http.Request) (Principal, error) {
 		return Principal{}, ErrUnauthenticated
 	}
 	return Principal{
-		Subject: session.Subject, Email: session.Email,
-		DisplayName: session.DisplayName, SessionID: cookie.Value,
+		UserID: session.UserID, Issuer: session.Issuer, Subject: session.Subject,
+		Email: session.Email, DisplayName: session.DisplayName, SessionID: cookie.Value,
 	}, nil
 }
 
