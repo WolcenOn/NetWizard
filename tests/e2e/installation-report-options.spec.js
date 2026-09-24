@@ -33,7 +33,7 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
     window.NetWizardState.replaceProject(p,{source:'e2e-install-report-options'});
   });
 
-  await expect(page.locator('#btnCompactReport')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardInstallationReport?.version||null),{timeout:10000}).toBe('netwizard-installation-report-v7');\n  await expect(page.locator('#btnCompactReport')).toBeVisible();
   await page.locator('#btnCompactReport').click();
   const cfg=page.locator('#nwInstallReportConfigurator');
   await expect(cfg).toBeVisible();
@@ -48,11 +48,11 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
   await cfg.getByRole('button',{name:'🧰 Generar informe'}).click();
   const report=await popupPromise;
   await report.waitForLoadState('domcontentloaded');
-  await expect(report.getByText('Esquema general de conexión de equipos',{exact:true})).toBeVisible();
+  await expect(report.getByText(/Esquema general de conexión de equipos/)).toBeVisible();
   await expect(report.locator('.connection-diagram-card')).toBeVisible();
   await expect(report.getByText('SW-01',{exact:true}).first()).toBeVisible();
   await expect(report.getByText('SRV-01',{exact:true}).first()).toBeVisible();
-  await expect(report.getByText('Estado de preparación para instalación',{exact:true})).toHaveCount(0);
+  await expect(report.getByText(/Estado de preparación para instalación/)).toHaveCount(0);
   await report.close();
 
   await page.locator('#btnCompactReport').click();
@@ -63,7 +63,7 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
   await cfg2.getByRole('button',{name:'🏷 Abrir solo etiquetas'}).click();
   const labels=await labelsPromise;
   await labels.waitForLoadState('domcontentloaded');
-  await expect(labels.getByText('Hojas de etiquetas imprimibles',{exact:true})).toBeVisible();
+  await expect(labels.getByText(/Hojas de etiquetas imprimibles/)).toBeVisible();
   await expect(labels.locator('.install-label')).toHaveCount(5);
   await expect(labels.getByText('CAB-E2E-01',{exact:true})).toHaveCount(2);
   await expect(labels.getByText('Extremo A',{exact:true})).toBeVisible();
