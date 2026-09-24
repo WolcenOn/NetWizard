@@ -30,7 +30,7 @@ func TestFromEnvPrefersExplicitAddr(t *testing.T) {
 func TestFromEnvReadsSaaSSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://user:pass@db/netwizard")
 	t.Setenv("NETWIZARD_OIDC_ISSUER_URL", "https://issuer.example")
-	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")
+	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")\n\tt.Setenv("NETWIZARD_OIDC_REDIRECT_URL", "https://app.example/api/auth/callback")
 	t.Setenv("NETWIZARD_MAX_PROJECT_BYTES", "123456")
 
 	cfg := FromEnv()
