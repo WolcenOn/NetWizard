@@ -61,6 +61,14 @@ NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs
 
 `DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
 
+## Login OIDC en producción
+
+La UI incluye controles de sesión same-origin que usan `/api/auth/login`, `/api/auth/me` y `/api/auth/logout`. No se expone el client secret al navegador.
+
+Para Auth0, usa una **Regular Web Application** con Authorization Code, RS256 y **Client Secret (Basic)**. La configuración completa de Auth0 y Railway está en [`docs/AUTH0_SETUP.md`](../docs/AUTH0_SETUP.md).
+
+El discovery OIDC se valida al arrancar: si el proveedor anuncia algoritmos/métodos incompatibles con RS256, PKCE S256 o `client_secret_basic`, el backend falla de forma explícita.
+
 ## Migraciones
 
 Las migraciones SQL viven en:
