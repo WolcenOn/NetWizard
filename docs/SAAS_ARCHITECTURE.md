@@ -173,6 +173,18 @@ La primera vertical E6 introduce un servicio privado de atestación de artefacto
 
 Esta capacidad no sustituye los generadores locales ni duplica su implementación. El modo offline sigue pudiendo generar/exportar sin atestación remota.
 
+La segunda vertical E6 prepara la migración de routing avanzado al servidor sin reescribirlo en Go:
+
+- worker privado Node empaquetado fuera del directorio estático;
+- contrato `netwizard-private-routing-v1`;
+- reutiliza exactamente `routing-plan` y los generadores Cisco/Junos/Huawei/MikroTik existentes;
+- tests de paridad comparan el worker con los generadores del navegador;
+- endpoint ligado al snapshot remoto almacenado, `expectedVersion`, sesión y rol `editor`;
+- auditoría `private.routing.generate`;
+- el código del worker no se sirve por HTTP.
+
+Durante esta etapa de transición los generadores siguen presentes en el bundle público para conservar funcionalidad local mientras OIDC aún no está desplegado. La retirada del bundle público se hará después de conectar la UI productiva al endpoint autenticado.
+
 La imagen de producción también deja de copiar el JavaScript fuente directamente: una etapa Node minifica los módulos con esbuild y la imagen final sirve únicamente el resultado procesado, sin source maps. Esto reduce exposición accidental, pero no se considera una frontera de secreto: la lógica verdaderamente privada sigue perteneciendo al backend.
 
 ## Modo local
