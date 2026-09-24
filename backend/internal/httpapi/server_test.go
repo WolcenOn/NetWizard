@@ -61,6 +61,29 @@ func TestServerServesAPIAndStaticFrontend(t *testing.T) {
 		t.Fatalf("health endpoint returned %d: %s", resp.StatusCode, string(body))
 	}
 
+	resp, err = http.Get(ts.URL + "/api/capabilities")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err = io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("capabilities endpoint returned %d: %s", resp.StatusCode, string(body))
+	}
+	for _, needle := range []string{
+		"\"schemaVersion\":\"3.50.0\"",
+		"\"remoteProjectWrites\":false",
+		"\"collaboration\":false",
+		"\"authEnforced\":false",
+	} {
+		if !strings.Contains(string(body), needle) {
+			t.Fatalf("capabilities missing %s: %s", needle, string(body))
+		}
+	}
+
 	resp, err = http.Get(ts.URL + "/api/missing")
 	if err != nil {
 		t.Fatal(err)

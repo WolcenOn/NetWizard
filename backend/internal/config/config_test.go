@@ -25,3 +25,22 @@ func TestFromEnvPrefersExplicitAddr(t *testing.T) {
 		t.Fatalf("expected NETWIZARD_ADDR override, got %q", cfg.Addr)
 	}
 }
+
+
+func TestFromEnvReadsSaaSSettings(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://user:pass@db/netwizard")
+	t.Setenv("NETWIZARD_OIDC_ISSUER_URL", "https://issuer.example")
+	t.Setenv("NETWIZARD_OIDC_CLIENT_ID", "netwizard-web")
+	t.Setenv("NETWIZARD_MAX_PROJECT_BYTES", "123456")
+
+	cfg := FromEnv()
+	if !cfg.DatabaseConfigured() {
+		t.Fatal("expected database configuration to be detected")
+	}
+	if !cfg.AuthConfigPresent() {
+		t.Fatal("expected OIDC configuration to be detected")
+	}
+	if cfg.MaxProjectBytes != 123456 {
+		t.Fatalf("expected project limit 123456, got %d", cfg.MaxProjectBytes)
+	}
+}

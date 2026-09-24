@@ -153,3 +153,19 @@ Hasta una decisión de producto posterior:
 - la sincronización remota nunca debe sobrescribir silenciosamente cambios locales incompatibles.
 
 Esta separación permite evolucionar el backend sin bloquear la utilidad actual de NetWizard.
+
+
+## Dirección SaaS desde E1
+
+A partir de la fundación SaaS, reducir `netwizard.js` deja de ser un objetivo por sí mismo. Una extracción solo se prioriza cuando habilita persistencia, colaboración, privacidad de lógica o una frontera de dominio reutilizable.
+
+La arquitectura objetivo y la secuencia E1–E6 se documentan en [SAAS_ARCHITECTURE.md](./SAAS_ARCHITECTURE.md).
+
+La primera migración PostgreSQL existe como contrato de datos, pero en E1:
+
+- no hay conexión activa a base de datos;
+- no hay login activo;
+- no se aceptan escrituras remotas;
+- no hay WebSocket público.
+
+El endpoint `GET /api/capabilities` debe reflejar estas capacidades de forma explícita para evitar que el frontend asuma servicios que todavía no están disponibles.
