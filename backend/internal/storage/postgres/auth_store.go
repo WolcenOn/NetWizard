@@ -94,7 +94,7 @@ WHERE s.id_hash = $1
 	}
 	_, _ = s.db.ExecContext(ctx, `
 UPDATE auth_sessions SET last_seen_at = $2
-WHERE id_hash = $1 AND (last_seen_at IS NULL OR last_seen_at < $2 - INTERVAL '5 minutes')
+WHERE id_hash = $1 AND (last_seen_at IS NULL OR last_seen_at < ($2::timestamptz - INTERVAL '5 minutes'))
 `, idHash, now)
 	return session, nil
 }

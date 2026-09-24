@@ -19,7 +19,7 @@ La base incluye:
 - auditoría de creación/guardado de revisiones;
 - tests de integración contra PostgreSQL 16 en CI.
 
-E3 añadió OIDC genérico y sesiones opacas server-side en PostgreSQL. E4 añade workspaces y CRUD remoto autorizado de proyectos. Cuando PostgreSQL + OIDC + stores E4 están listos, `remoteProjectWrites=true`; `collaboration=false` sigue reservado para E5.
+E3 añadió OIDC genérico y sesiones opacas server-side en PostgreSQL. E4 añadió workspaces y CRUD remoto autorizado. E5 añade ETag, historial, operation log durable, WebSocket autenticado, presencia, replay e idempotencia por `opId`. `collaboration=true` solo cuando también están disponibles el operation store y el hub realtime.
 
 La frontera entre cliente y servidor está definida en [`docs/BACKEND_BOUNDARIES.md`](../docs/BACKEND_BOUNDARIES.md) y la hoja de ruta SaaS en [`docs/SAAS_ARCHITECTURE.md`](../docs/SAAS_ARCHITECTURE.md).
 
@@ -112,9 +112,25 @@ La creación de workspaces, creación/guardado y borrado de proyectos quedan aud
 
 El contrato completo está en [`docs/SAAS_REMOTE_API.md`](../docs/SAAS_REMOTE_API.md).
 
+## Sincronización y colaboración E5
+
+Además del CRUD E4:
+
+- `GET /api/projects/{projectID}` devuelve `ETag` y soporta `If-None-Match`;
+- `PUT /api/projects/{projectID}` admite `If-Match` además de `expectedVersion`;
+- `GET /api/projects/{projectID}/revisions` expone metadatos del historial;
+- `GET /api/projects/{projectID}/operations?baseVersion=N&since=S` permite replay durable;
+- `GET /api/projects/{projectID}/ws?clientId=...&baseVersion=N&sinceSeq=S` abre el canal colaborativo autenticado.
+
+Las operaciones se secuencian en PostgreSQL, se deduplican por `opId`, validan `baseVersion` y consumen el mismo rate limit distribuido que las mutaciones REST. Un nuevo snapshot invalida la base anterior y emite `resync_required`.
+
+El protocolo completo está en [`docs/SAAS_COLLABORATION.md`](../docs/SAAS_COLLABORATION.md).
+
+La presencia y el fan-out WebSocket siguen siendo por proceso. Para múltiples instancias hace falta sticky routing hasta añadir pub/sub compartido; la recuperación durable por PostgreSQL sí funciona entre instancias.
+
 ## Próximo paso técnico
 
-E5 añade versionado HTTP/ETag, operation store público, WebSocket autenticado por proyecto, presencia, reconexión e idempotencia por `opId`.
+E6 moverá selectivamente al backend servicios privados/premium que necesiten una frontera de ejecución server-side.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 

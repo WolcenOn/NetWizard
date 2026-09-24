@@ -72,6 +72,21 @@ func (r *Room) Leave(clientID string) {
 	delete(r.presence, clientID)
 }
 
+func (r *Room) CloseAll() {
+	r.mu.Lock()
+	clients := make([]ClientConn, 0, len(r.clients))
+	for _, client := range r.clients {
+		clients = append(clients, client)
+	}
+	r.clients = map[string]ClientConn{}
+	r.presence = map[string]PresenceState{}
+	r.mu.Unlock()
+
+	for _, client := range clients {
+		_ = client.Close()
+	}
+}
+
 func (r *Room) Empty() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

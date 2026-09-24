@@ -1,10 +1,10 @@
-# NetWizard SaaS remote API — E4
+# NetWizard SaaS remote API — E4/E5
 
 ## Preconditions
 
 Remote project writes are enabled only when all of these are ready: PostgreSQL, OIDC sessions, workspace/project stores, authorization, and the PostgreSQL-backed write limiter.
 
-`GET /api/capabilities` reports `remoteProjectWrites=true` only in that state. `collaboration` remains `false` until E5.
+`GET /api/capabilities` reports `remoteProjectWrites=true` only in that state. E5 additionally reports `collaboration=true` when the durable operation store and realtime hub are wired.
 
 ## Authentication
 
@@ -49,11 +49,11 @@ Requires at least `editor`. The body contains `name` and a NetWizard 3.50.0 `sna
 
 ### `GET /api/projects/{projectID}`
 
-Requires at least `viewer`. Returns project metadata and the current revision snapshot.
+Requires at least `viewer`. Returns project metadata and the current revision snapshot. E5 also returns an `ETag`; `If-None-Match` may return 304.
 
 ### `PUT /api/projects/{projectID}`
 
-Requires at least `editor`. The body contains `expectedVersion` and `snapshot`. If another client already advanced the version, the server returns HTTP 409 and does not overwrite the current snapshot.
+Requires at least `editor`. The body contains `expectedVersion` and `snapshot`. If another client already advanced the version, the server returns HTTP 409 and does not overwrite the current snapshot. E5 accepts `If-Match`; a stale ETag returns 412 and a successful save broadcasts `resync_required` to active project sockets.
 
 ### `DELETE /api/projects/{projectID}`
 
@@ -81,6 +81,16 @@ E4 records `workspace.create`, `project.create`, `project.revision.save`, and `p
 
 Audit events keep the external actor subject for traceability while authorization itself uses the internal user id.
 
-## Deliberately not in E4
+## E5 additions
 
-Membership invitation/administration UI, WebSocket, presence, operation streaming, public revision history, and collaborative conflict resolution remain for later SaaS stages.
+E5 adds authenticated revision metadata, durable operation replay and WebSocket collaboration:
+
+- `GET /api/projects/{projectID}/revisions?limit=N`;
+- `GET /api/projects/{projectID}/operations?baseVersion=N&since=S`;
+- `GET /api/projects/{projectID}/ws?clientId=...&baseVersion=N&sinceSeq=S`.
+
+See [`SAAS_COLLABORATION.md`](./SAAS_COLLABORATION.md) for the realtime protocol, replay/resync rules, idempotency and scaling constraints.
+
+## Deliberately not included yet
+
+Membership invitation/administration UI and shared cross-instance realtime pub/sub remain future work.

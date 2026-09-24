@@ -67,3 +67,21 @@ func TestAuthorizedRemoteCRUDMigrationBindsCSRFToSessions(t *testing.T) {
 		}
 	}
 }
+
+
+func TestRealtimeCollaborationMigrationAddsDurableSequenceCounters(t *testing.T) {
+	raw, err := os.ReadFile("migrations/0004_realtime_collaboration.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(raw)
+	for _, needle := range []string{
+		"CREATE TABLE IF NOT EXISTS project_operation_counters",
+		"last_seq BIGINT",
+		"idx_project_operations_project_seq",
+	} {
+		if !strings.Contains(sql, needle) {
+			t.Fatalf("E5 migration missing %q", needle)
+		}
+	}
+}

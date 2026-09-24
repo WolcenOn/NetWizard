@@ -13,6 +13,7 @@ import (
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
+	"github.com/WolcenOn/NetWizard/backend/internal/realtime"
 	"github.com/WolcenOn/NetWizard/backend/internal/workspaces"
 )
 
@@ -38,6 +39,9 @@ func (s *Server) remoteRoutes() {
 	s.mux.Handle("GET /api/projects/{projectID}", require(http.HandlerFunc(s.handleGetProject)))
 	s.mux.Handle("PUT /api/projects/{projectID}", require(s.requireMutation(http.HandlerFunc(s.handleSaveProject))))
 	s.mux.Handle("DELETE /api/projects/{projectID}", require(s.requireMutation(http.HandlerFunc(s.handleDeleteProject))))
+	if s.collaborationReady() {
+		s.collaborationRoutes()
+	}
 }
 
 func (s *Server) requireCSRF(next http.Handler) http.Handler {
@@ -186,6 +190,7 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		s.writeProjectError(w, "create project", err)
 		return
 	}
+	w.Header().Set("ETag", projectETag(project, revision))
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "revision": revision})
 }
 
@@ -203,6 +208,12 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 	project, revision, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
 		s.writeProjectError(w, "get project", err)
+		return
+	}
+	etag := projectETag(project, revision)
+	w.Header().Set("ETag", etag)
+	if strings.TrimSpace(r.Header.Get("If-None-Match")) == etag {
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
@@ -231,6 +242,18 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "expectedVersion must be positive", http.StatusBadRequest)
 		return
 	}
+	ifMatch := strings.TrimSpace(r.Header.Get("If-Match"))
+	if ifMatch != "" {
+		current, currentRevision, err := s.projects.GetProject(r.Context(), projectID)
+		if err != nil {
+			s.writeProjectError(w, "get project for If-Match", err)
+			return
+		}
+		if ifMatch != projectETag(current, currentRevision) {
+			http.Error(w, "project etag conflict", http.StatusPreconditionFailed)
+			return
+		}
+	}
 	if _, err := projects.ValidateSnapshot(body.Snapshot, s.cfg.MaxProjectBytes); err != nil {
 		writeSnapshotValidationError(w, err)
 		return
@@ -242,6 +265,14 @@ func (s *Server) handleSaveProject(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.writeProjectError(w, "save project", err)
 		return
+	}
+	etag := projectETag(project, revision)
+	w.Header().Set("ETag", etag)
+	if s.collaborationReady() {
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "snapshot_saved", "currentVersion": project.CurrentVersion, "etag": etag,
+		})
+		s.realtime.Room(projectID).Broadcast(r.Context(), resync, "")
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"project": project, "revision": revision})
 }
@@ -260,6 +291,15 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 	if err := s.projects.DeleteProject(r.Context(), projectID, principal.Subject); err != nil {
 		s.writeProjectError(w, "delete project", err)
 		return
+	}
+	if s.collaborationReady() {
+		room := s.realtime.Room(projectID)
+		resync, _ := realtime.NewMessage(realtime.MessageResyncRequired, projectID, map[string]any{
+			"reason": "project_deleted",
+		})
+		room.Broadcast(r.Context(), resync, "")
+		room.CloseAll()
+		s.realtime.RemoveRoomIfEmpty(projectID)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

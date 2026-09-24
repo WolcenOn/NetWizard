@@ -52,3 +52,21 @@ func TestRoomLeaveClosesClientAndClearsPresence(t *testing.T) {
 		t.Fatalf("presence should be cleared")
 	}
 }
+
+
+func TestRoomCloseAllClosesClientsAndClearsPresence(t *testing.T) {
+	room := NewRoom("p1")
+	a := &fakeConn{id: "a"}
+	b := &fakeConn{id: "b"}
+	room.Join(a)
+	room.Join(b)
+	room.SetPresence(PresenceState{ProjectID: "p1", ClientID: "a", View: "v1"})
+	room.SetPresence(PresenceState{ProjectID: "p1", ClientID: "b", View: "v2"})
+	room.CloseAll()
+	if !a.closed || !b.closed {
+		t.Fatal("CloseAll should close every client")
+	}
+	if !room.Empty() || len(room.Presence()) != 0 {
+		t.Fatal("CloseAll should empty clients and presence")
+	}
+}
