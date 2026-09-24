@@ -165,6 +165,10 @@ func (s *remoteStore) DeleteProject(_ context.Context, projectID, _ string) erro
 	return nil
 }
 
+func (s *remoteStore) AllowWrite(context.Context, string, time.Time, int, time.Duration) (bool, error) {
+	return true, nil
+}
+
 func (s *remoteStore) RoleForProject(_ context.Context, projectID, userID string) (auth.Role, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -193,7 +197,7 @@ func newRemoteServer(t *testing.T) (*Server, string, *remoteStore) {
 	store := newRemoteStore()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	server := NewServerWithDependencies(config.Config{Version: "test", MaxProjectBytes: 1024}, logger, Dependencies{
-		Projects: store, Workspaces: store, Access: store, Auth: service,
+		Projects: store, Workspaces: store, Access: store, Limits: store, Auth: service,
 	})
 	return server, rawSession, store
 }
@@ -326,9 +330,23 @@ func TestRemoteCRUDRoleMatrixAndCSRF(t *testing.T) {
 	}
 }
 
+type sequenceLimiter struct {
+	mu        sync.Mutex
+	remaining int
+}
+
+func (l *sequenceLimiter) AllowWrite(context.Context, string, time.Time, int, time.Duration) (bool, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.remaining <= 0 {
+		return false, nil
+	}
+	l.remaining--
+	return true, nil
+}
+
 func TestRemoteWritesRateLimitAndVersionConflict(t *testing.T) {
 	server, rawSession, store := newRemoteServer(t)
-	server.writeLimit = newWriteRateLimiter(10, time.Minute)
 
 	ws, err := store.CreateWorkspace(context.Background(), workspaces.CreateInput{
 		ID: "ws-test", Name: "Test", UserID: "usr-remote", CreatedBy: "sub-remote",
@@ -352,7 +370,7 @@ func TestRemoteWritesRateLimitAndVersionConflict(t *testing.T) {
 		t.Fatalf("version conflict expected 409, got %d: %s", rec.Code, rec.Body.String())
 	}
 
-	server.writeLimit = newWriteRateLimiter(1, time.Minute)
+	server.writeLimit = &sequenceLimiter{remaining: 1}
 	req = authenticatedRequest(http.MethodPost, "/api/workspaces", `{"name":"First"}`, rawSession, true)
 	rec = httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
