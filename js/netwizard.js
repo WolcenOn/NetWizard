@@ -2451,11 +2451,13 @@ window.addEventListener('resize',()=>{if(S.step==='graphs')drawTopo();});
 
 
 // ─────────────────── V5 VISUAL OVERLAY (driven by V4 data) ───────────────────
-const vcv=$('v5view');const vctx=vcv.getContext('2d');let vdrag=null;
+const vcv=$('v5view');const vctx=vcv.getContext('2d');let v5DragController=null;
 const V5S={locHead:36,devW:176,devH:62,hstW:158,hstH:42,colW:190};
 const V5CORE=window.NetWizardV5Core;
 const V5RENDER=window.NetWizardV5Renderer;
 const V5INTERACT=window.NetWizardV5Interaction;
+const V5SCENE=window.NetWizardV5Scene;
+const V5DRAG=window.NetWizardV5DragController;
 window.V5S=V5S;
 
 
@@ -2815,7 +2817,7 @@ function v5DrawLinkDot(geometry,host,dev,port,accent){
   if(hit)v5LinkDots.push({...hit,host,dev,port});
 }
 function v5HoverMove(evt){
-  if(vdrag){v5HideLinkTooltip();return;}
+  if(v5DragController&&v5DragController.isActive()){v5HideLinkTooltip();return;}
   const r=vcv.getBoundingClientRect();
   const x=evt.clientX-r.left, y=evt.clientY-r.top;
   const dot=V5INTERACT.linkDotAt(v5LinkDots,x,y);
@@ -2832,26 +2834,6 @@ function v5HoverMove(evt){
   el.style.top=Math.max(8,top)+'px';
   vcv.style.cursor='help';
 }
-function v5SelectedDeviceId(){
-  const sel=vv().sel;
-  if(!sel)return '';
-  if(sel.t==='device')return sel.id;
-  if(sel.t==='host'){
-    const h=S.hosts.find(x=>x.id===sel.id);
-    return h?hostConnectedDeviceId(h)||'':'';
-  }
-  return '';
-}
-function v5NetworkLinkSelected(a,b){
-  const id=v5SelectedDeviceId();
-  return !!id&&(a.deviceId===id||b.deviceId===id);
-}
-function v5HostLinkSelected(h,linkedDev){
-  const sel=vv().sel;
-  if(!sel)return false;
-  if(sel.t==='host')return sel.id===h.id;
-  return sel.t==='device'&&sel.id===linkedDev.id;
-}
 function v5HostPort(h,linkedDev){
   let p=h.portRef?S.ports.find(x=>x.id===h.portRef):null;
   if(!p&&(h.portAssignMode||'auto')==='auto'){
@@ -2859,70 +2841,35 @@ function v5HostPort(h,linkedDev){
   }
   return p;
 }
-function v5HostLinkGeometry(h,linkedDev){
-  const p=v5HostPort(h,linkedDev);
-  return V5RENDER.hostLinkGeometry(vv(),h,linkedDev,p,V5S);
-}
-function drawV5NetworkLink(lk,a,b,selected){
-  return V5RENDER.drawNetworkLink(vctx,{visual:vv(),project:S,a,b,selected,metrics:V5S});
-}
-function drawV5HostLink(h,linkedDev,selected){
-  const p=v5HostPort(h,linkedDev),accent=deviceAccentColor(linkedDev.id);
-  const g=V5RENDER.drawHostLink(vctx,{visual:vv(),host:h,linkedDev,port:p,selected,accent,metrics:V5S});
-  if(!g)return false;
-  if(selected)v5DrawLinkDot(g,h,linkedDev,p,accent);
-  return true;
-}
 function drawV5(){
-  if(!vcv)return;v5SyncFilterInputs();ensureVisualModel();if(v5ProMode()&&!vv().freezeLocAutoBounds)computeProfessionalLocationBounds();const r=vcv.getBoundingClientRect();if(!r.width||!r.height)return;vctx.clearRect(0,0,r.width,r.height);
-  v5LinkDots=[];
-  const z=vv().view.zoom,renderState={layerOrder:['background','base-links','nodes','selected-links'],baseNetwork:0,baseHost:0,selectedNetwork:0,selectedHost:0,selected:vv().sel?{...vv().sel}:null};
-  vctx.globalAlpha=.05;vctx.strokeStyle='#3b82f6';vctx.lineWidth=1;for(let x=0;x<r.width;x+=26){vctx.beginPath();vctx.moveTo(x,0);vctx.lineTo(x,r.height);vctx.stroke();}for(let y=0;y<r.height;y+=26){vctx.beginPath();vctx.moveTo(0,y);vctx.lineTo(r.width,y);vctx.stroke();}vctx.globalAlpha=1;
-  for(const loc of vLocs())layoutVisualLoc(loc,false);
-  const ordered=[...vLocs()].sort((a,b)=>vLocDepth(a.id)-vLocDepth(b.id));
-  for(const loc of ordered){
-    const b=visualLocBounds(loc),p=v2s(b.x,b.y),w=b.w*z,h=b.h*z,depth=vLocDepth(loc.id);
-    vctx.fillStyle=loc.color||'#10233c';vctx.globalAlpha=Math.max(.16,.33-depth*.05);drawRound(vctx,p.x,p.y,w,h,Math.max(4,(18-depth*2)*z));vctx.fill();vctx.globalAlpha=1;vctx.strokeStyle=vv().sel&&vv().sel.t==='loc'&&vv().sel.id===loc.id?'#93c5fd':(v5ProMode()&&loc.parentId?'rgba(125,211,252,.75)':'rgba(58,77,102,.9)');vctx.lineWidth=v5ProMode()&&loc.parentId?1.1:1.4;drawRound(vctx,p.x,p.y,w,h,Math.max(4,(18-depth*2)*z));vctx.stroke();
-    if(vdrag&&vdrag.overLoc===loc.id){vctx.strokeStyle='#60a5fa';vctx.lineWidth=2;vctx.setLineDash([8,5]);drawRound(vctx,p.x+4,p.y+4,w-8,h-8,Math.max(4,15*z));vctx.stroke();vctx.setLineDash([]);}
-    vctx.fillStyle='#e2eaf7';vctx.font='600 '+Math.max(11,13-depth)+'px Space Grotesk,sans-serif';vctx.fillText((depth?('↳ '.repeat(Math.min(depth,2))):'')+loc.name,p.x+12*z,p.y+22*z);vctx.fillStyle='#8fa3c0';vctx.font='11px Space Grotesk,sans-serif';vctx.fillText(devsInVisualLoc(loc.id).length+' equipos · '+hostsInVisualLoc(loc.id).length+' hosts',p.x+12*z,p.y+37*z);
-    const hs=12*z,hx=p.x+w-hs-8*z,hy=p.y+h-hs-8*z;
-    if(!(v5ProMode()&&loc.parentId)){vctx.fillStyle='rgba(148,163,184,.95)';vctx.fillRect(hx,hy,hs,hs);vctx.strokeStyle='rgba(15,23,42,.95)';vctx.strokeRect(hx,hy,hs,hs);vctx.beginPath();vctx.moveTo(hx+3*z,hy+hs-3*z);vctx.lineTo(hx+hs-3*z,hy+3*z);vctx.stroke();}
-  }
-
-  // Cableado base: siempre detrás de equipos y etiquetas.
-  for(const lk of S.links){
-    const a=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortA(lk):lk.aPortId)),b=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortB(lk):lk.bPortId));if(!a||!b)continue;
-    const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
-    if(drawV5NetworkLink(lk,a,b,false))renderState.baseNetwork++;
-  }
-  for(const h of S.hosts){
-    const linkedDev=devById(hostConnectedDeviceId(h)||'');if(!linkedDev||!v5ShowHost(h)||!v5ShowDevice(linkedDev))continue;
-    if(drawV5HostLink(h,linkedDev,false))renderState.baseHost++;
-  }
-
-  // Nodos y texto: se pintan por encima del cableado normal.
-  for(const loc of vLocs()){
-    for(const d of devsInVisualLoc(loc.id)){
-      const nb=visualNodeBounds('dev',d.id),accent=deviceAccentColor(d.id);
-      V5RENDER.drawDeviceNode(vctx,{visual:vv(),device:d,bounds:nb,selected:!!(vv().sel&&vv().sel.t==='device'&&vv().sel.id===d.id),accent});
-    }
-    for(const h of hostsInVisualLoc(loc.id)){
-      const nb=visualNodeBounds('host',h.id),linked=hostConnectedDeviceId(h),accent=linked?deviceAccentColor(linked):'hsl(262 83% 74%)',vlan=vByRef(h.vlanRef);
-      V5RENDER.drawHostNode(vctx,{visual:vv(),host:h,bounds:nb,selected:!!(vv().sel&&vv().sel.t==='host'&&vv().sel.id===h.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):'sin VLAN'});
-    }
-  }
-
-  // Selección: solo sus enlaces vuelven a primer plano.
-  for(const lk of S.links){
-    const a=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortA(lk):lk.aPortId)),b=S.ports.find(p=>p.id===(V5CORE?V5CORE.linkPortB(lk):lk.bPortId));if(!a||!b||!v5NetworkLinkSelected(a,b))continue;
-    const da=devById(a.deviceId),db=devById(b.deviceId);if(!da||!db||!v5ShowDevice(da)||!v5ShowDevice(db))continue;
-    if(drawV5NetworkLink(lk,a,b,true))renderState.selectedNetwork++;
-  }
-  for(const h of S.hosts){
-    const linkedDev=devById(hostConnectedDeviceId(h)||'');if(!linkedDev||!v5ShowHost(h)||!v5ShowDevice(linkedDev)||!v5HostLinkSelected(h,linkedDev))continue;
-    if(drawV5HostLink(h,linkedDev,true))renderState.selectedHost++;
-  }
-  window.NetWizardV5RenderState=renderState;
+  if(!vcv||!V5SCENE)return;
+  v5SyncFilterInputs();
+  ensureVisualModel();
+  if(v5ProMode()&&!vv().freezeLocAutoBounds)computeProfessionalLocationBounds();
+  const r=vcv.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  const result=V5SCENE.render(vctx,{
+    project:S,
+    visual:vv(),
+    rect:{width:r.width,height:r.height},
+    metrics:V5S,
+    locations:vLocs(),
+    locationDepth:vLocDepth,
+    locationBounds:visualLocBounds,
+    devicesInLocation:devsInVisualLoc,
+    hostsInLocation:hostsInVisualLoc,
+    layoutLocation:layoutVisualLoc,
+    showDevice:v5ShowDevice,
+    showHost:v5ShowHost,
+    deviceById:devById,
+    hostConnectedDeviceId,
+    vlanByRef:vByRef,
+    hostPort:v5HostPort,
+    proMode:v5ProMode(),
+    drag:v5DragController?v5DragController.getSession():null
+  });
+  v5LinkDots=result.linkDots||[];
+  window.NetWizardV5RenderState=result.renderState;
 }
 function fitV5(centerOnly=true){ensureVisualModel();let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;for(const loc of vLocs()){const b=visualLocBounds(loc);minx=Math.min(minx,b.x);miny=Math.min(miny,b.y);maxx=Math.max(maxx,b.x+b.w);maxy=Math.max(maxy,b.y+b.h);}if(!isFinite(minx)){vv().view={px:60,py:50,zoom:1};drawV5();return;}const r=vcv.parentElement.getBoundingClientRect();const padx=24,pady=24;const zw=Math.max(.45,Math.min(1.25,(r.width-padx*2)/(maxx-minx||1)));const zh=Math.max(.45,Math.min(1.25,(r.height-pady*2)/(maxy-miny||1)));const zoom=Math.min(zw,zh);vv().view.zoom=zoom;vv().view.px=padx-minx*zoom+(r.width-(maxx-minx)*zoom-padx*2)/2;vv().view.py=pady-miny*zoom+(r.height-(maxy-miny)*zoom-pady*2)/2;drawV5();}
 function visualResizeHandleHit(wx,wy){return V5INTERACT.resizeHandleHit({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds,zoom:vv().view.zoom,enabled:loc=>!(v5ProMode()&&loc.parentId)});}
@@ -3043,111 +2990,44 @@ function renderV5Panel(){
   }
 }
 function selectV5(t,id){vv().sel={t,id};renderV5Panel();drawV5();}
-function v5CanvasPoint(evt){const r=vcv.getBoundingClientRect();const clientX=evt.clientX ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientX) ?? 0;const clientY=evt.clientY ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientY) ?? 0;return s2v(clientX-r.left,clientY-r.top);}
-function v5PointerDown(evt){
-  const pt=v5CanvasPoint(evt);
-  const hit=visualHit(pt.x,pt.y);
-  if(hit){
-    selectV5(hit.t==='loc-resize'?'loc':hit.t,hit.id);
-    if(hit.t==='loc-resize'){
-      const loc=vLocById(hit.id),b=visualLocBounds(loc);
-      vdrag={t:'loc-resize',id:hit.id,startW:b.w,startH:b.h,startX:pt.x,startY:pt.y,downX:pt.x,downY:pt.y,moved:false};
-    }else if(hit.t==='loc'){
-      const loc=vLocById(hit.id);
-      const members=[...devsInVisualLoc(hit.id).map(d=>({id:d.id,pos:{...(vv().pos[d.id]||{x:0,y:0})}})),...hostsInVisualLoc(hit.id).map(h=>({id:h.id,pos:{...(vv().pos[h.id]||{x:0,y:0})}}))];
-      vdrag={t:'loc',id:hit.id,dx:pt.x-loc.x,dy:pt.y-loc.y,startX:loc.x,startY:loc.y,members,downX:pt.x,downY:pt.y,moved:false};
-    }else{
-      const b=visualNodeBounds(hit.t==='device'?'dev':'host',hit.id);
-      vdrag={t:hit.t,id:hit.id,dx:pt.x-b.x,dy:pt.y-b.y,fromLoc:hit.t==='device'?deviceVisualLoc(hit.id):hostVisualLoc(hit.id),startPos:{...(vv().pos[hit.id]||{x:b.x,y:b.y})},downX:pt.x,downY:pt.y,moved:false};
-    }
-  }else{
-    vv().sel=null;
-    renderV5Panel();
-    vdrag={t:'pan',startPx:vv().view.px,startPy:vv().view.py,startX:evt.clientX||0,startY:evt.clientY||0,downX:pt.x,downY:pt.y,moved:false};
-  }
-  if(vdrag&&(vdrag.t==='device'||vdrag.t==='host'))v5FreezeAutoBounds(true);
-  vcv.classList.add('dragging');
-  if(vcv.setPointerCapture&&evt.pointerId!=null)vcv.setPointerCapture(evt.pointerId);
-}
-function v5PointerMove(evt){
-  if(!vdrag)return;
-  if(vdrag.t==='pan'){
-    const next=V5INTERACT.panView(vdrag,evt.clientX,evt.clientY);
-    if(Math.abs(next.px-vdrag.startPx)+Math.abs(next.py-vdrag.startPy)>2)vdrag.moved=true;
-    vv().view.px=next.px;vv().view.py=next.py;drawV5();return;
-  }
-  const pt=v5CanvasPoint(evt);
-  if(V5INTERACT.moved(vdrag,pt))vdrag.moved=true;
-  if(vdrag.t==='loc-resize'){
-    const loc=vLocById(vdrag.id);
-    if(loc&&vdrag.moved){const size=V5INTERACT.resizeLocation(vdrag,pt);loc.w=size.w;loc.h=size.h;drawV5();renderV5Panel();}
-  }else if(vdrag.t==='loc'){
-    const loc=vLocById(vdrag.id);
-    if(loc&&vdrag.moved){const move=V5INTERACT.locationMove(vdrag,pt);loc.x=move.x;loc.y=move.y;for(const m of (vdrag.members||[])){vv().pos[m.id]={x:m.pos.x+move.deltaX,y:m.pos.y+move.deltaY};}drawV5();}
-  }else if(vdrag.moved){
-    vv().pos[vdrag.id]=V5INTERACT.nodePosition(vdrag,pt);
-    const over=locAt(pt.x,pt.y);vdrag.overLoc=over?over.id:null;drawV5();
-  }
-}
-function v5PointerUp(evt){
-  if(!vdrag)return;
-  const d=vdrag;
-  vdrag=null;
-  if(d&&(d.t==='device'||d.t==='host'))v5FreezeAutoBounds(false);
-  vcv.classList.remove('dragging');
-  if(d.t==='pan'){
-    save();
-    drawV5();
-    return;
-  }
-  if(d.t==='loc-resize'){
-    save();drawV5();renderV5Panel();return;
-  }
-  if(d.t==='device'||d.t==='host'){
-    if(!d.moved){vv().pos[d.id]=d.startPos||vv().pos[d.id];drawV5();renderV5Panel();return;}
-    const targetId=d.overLoc||d.fromLoc;
-    const over=targetId?vLocById(targetId):null;
-    if(over){
-      if(d.t==='device'){
-        setDeviceVisualLoc(d.id,over.id);
-        if(over.id!==d.fromLoc)vv().pos[d.id]=nextNodePositionInLoc(over.id,'device',d.id);
-      }else{
-        const h=S.hosts.find(x=>x.id===d.id);
-        setHostVisualLoc(d.id,over.id);
-        if(over.id!==d.fromLoc){
-          vv().pos[d.id]=nextNodePositionInLoc(over.id,'host',d.id);
-          const res=autoAssignHostToLocation(d.id,over.id);
-          if(res.ok){
-            const dev=devById(res.deviceId), port=S.ports.find(p=>p.id===res.portId);
-            if(port) vv().pos[d.id]=nextNodePositionInLoc(over.id,'host',d.id);
-            if(h) h.notes = h.notes || '';
-          }else if(res.reason && res.reason!=='Modo manual'){
-            console.warn('[NetWizard V5] Autoasignación no aplicada:', res.reason);
-          }
-        }
-      }
-    }
-    save();refresh();selectV5(d.t,d.id);
-  }else{
-    save();drawV5();
-  }
-}
-function v5Wheel(evt){
-  if(!vcv || !vv().view)return;
-  evt.preventDefault();
+function v5CanvasPoint(evt){
   const r=vcv.getBoundingClientRect();
-  const sx=evt.clientX-r.left, sy=evt.clientY-r.top;
-  const next=V5INTERACT.zoomAt(vv().view,sx,sy,evt.deltaY,.25,2.8);
-  vv().view.zoom=next.zoom;vv().view.px=next.px;vv().view.py=next.py;drawV5();
+  const clientX=evt.clientX ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientX) ?? 0;
+  const clientY=evt.clientY ?? (evt.touches&&evt.touches[0]&&evt.touches[0].clientY) ?? 0;
+  return s2v(clientX-r.left,clientY-r.top);
 }
-vcv.addEventListener('pointerdown',v5PointerDown);
-vcv.addEventListener('pointermove',v5PointerMove);
+function createV5DragController(){
+  return V5DRAG.create({
+    canvas:vcv,
+    visual:vv,
+    canvasPoint:v5CanvasPoint,
+    hitTest:pt=>visualHit(pt.x,pt.y),
+    select:selectV5,
+    clearSelection:()=>{vv().sel=null;renderV5Panel();},
+    draw:drawV5,
+    renderPanel:renderV5Panel,
+    save,
+    refresh,
+    freezeAutoBounds:v5FreezeAutoBounds,
+    locationById:vLocById,
+    locationBounds:visualLocBounds,
+    devicesInLocation:devsInVisualLoc,
+    hostsInLocation:hostsInVisualLoc,
+    nodeBounds:visualNodeBounds,
+    deviceVisualLocation:deviceVisualLoc,
+    hostVisualLocation:hostVisualLoc,
+    setDeviceVisualLocation:setDeviceVisualLoc,
+    setHostVisualLocation:setHostVisualLoc,
+    nextNodePosition:nextNodePositionInLoc,
+    locationAt:pt=>locAt(pt.x,pt.y),
+    autoAssignHost:autoAssignHostToLocation,
+    warn:reason=>console.warn('[NetWizard V5] Autoasignación no aplicada:',reason)
+  });
+}
+v5DragController=createV5DragController();
+v5DragController.bind();
 vcv.addEventListener('mousemove',v5HoverMove);
 vcv.addEventListener('mouseleave',v5HideLinkTooltip);
-vcv.addEventListener('pointerup',v5PointerUp);
-vcv.addEventListener('pointercancel',v5PointerUp);
-vcv.addEventListener('lostpointercapture',v5PointerUp);
-vcv.addEventListener('wheel',v5Wheel,{passive:false});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&vv().fs)toggleV5Fullscreen(false);});
 document.addEventListener('fullscreenchange',syncV5FullscreenState);
 document.addEventListener('change',e=>{const cb=e.target.closest('[data-v5-filter]');if(cb)v5SetFilter(cb.dataset.v5Filter,cb.checked);});
