@@ -84,3 +84,28 @@ func TestValidateRequiresDatabaseForServerSideSessions(t *testing.T) {
 		t.Fatal("expected auth without DATABASE_URL to fail")
 	}
 }
+
+func TestValidatePrivateServicesRequireStrongKeyAndOIDC(t *testing.T) {
+	cfg := Config{PrivateServiceKey: "short"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected short private service key to fail")
+	}
+
+	cfg = Config{PrivateServiceKey: "12345678901234567890123456789012"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected private services without OIDC to fail")
+	}
+
+	cfg = Config{
+		DatabaseURL: "postgres://db",
+		OIDCIssuerURL: "https://issuer.example",
+		OIDCClientID: "client",
+		OIDCRedirectURL: "https://app.example/api/auth/callback",
+		SessionTTL: time.Hour,
+		CookieSecure: true,
+		PrivateServiceKey: "12345678901234567890123456789012",
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected private services with secure OIDC config, got %v", err)
+	}
+}
