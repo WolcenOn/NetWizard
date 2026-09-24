@@ -55,6 +55,7 @@ NETWIZARD_SESSION_TTL=12h
 NETWIZARD_COOKIE_SECURE=true
 NETWIZARD_AUTH_HTTP_TIMEOUT=10s
 NETWIZARD_MAX_PROJECT_BYTES=10485760
+NETWIZARD_PRIVATE_SERVICE_KEY=minimum-32-byte-random-secret
 ```
 
 `DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
@@ -128,11 +129,23 @@ El protocolo completo está en [`docs/SAAS_COLLABORATION.md`](../docs/SAAS_COLLA
 
 La presencia y el fan-out WebSocket siguen siendo por proceso. Para múltiples instancias hace falta sticky routing hasta añadir pub/sub compartido; la recuperación durable por PostgreSQL sí funciona entre instancias.
 
-## Próximo paso técnico
+## E6 · Servicios privados/premium
 
-E6 moverá selectivamente al backend servicios privados/premium que necesiten una frontera de ejecución server-side.
+La primera vertical privada expone:
+
+- `POST /api/projects/{projectID}/private/deployment-attestations`.
+
+Requiere sesión, CSRF, rol `editor` o `owner`, `expectedVersion`, SHA-256 del artefacto y tamaño. La respuesta queda ligada al checksum de la revisión remota y firmada con HMAC-SHA256.
+
+La capacidad solo se activa si `NETWIZARD_PRIVATE_SERVICE_KEY` contiene al menos 32 bytes y la autenticación OIDC está configurada. El uso queda auditado en PostgreSQL.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
+
+## Empaquetado frontend de producción
+
+El Dockerfile usa una etapa Node para minificar cada módulo JavaScript con esbuild y no genera source maps. La imagen runtime recibe únicamente los assets procesados y el binario Go; no copia el directorio fuente `js/` directamente desde el repositorio.
+
+La minificación no hace secreto el código que debe ejecutar el navegador. Las capacidades que requieran confidencialidad deben implementarse como servicios backend E6.
 
 ## Railway
 

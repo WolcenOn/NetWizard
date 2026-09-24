@@ -27,6 +27,7 @@ type remoteStore struct {
 	roles      map[string]auth.Role
 	projects   map[string]projects.Project
 	revisions  map[string]projects.Revision
+	auditActions []string
 }
 
 func newRemoteStore() *remoteStore {
@@ -187,6 +188,13 @@ func (s *remoteStore) RoleForProject(_ context.Context, projectID, userID string
 		return "", auth.ErrForbidden
 	}
 	return role, nil
+}
+
+func (s *remoteStore) RecordProjectAudit(_ context.Context, _, _, _, action string, _ map[string]any) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.auditActions = append(s.auditActions, action)
+	return nil
 }
 
 func newRemoteServer(t *testing.T) (*Server, string, *remoteStore) {

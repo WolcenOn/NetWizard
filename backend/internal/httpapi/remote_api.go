@@ -42,6 +42,9 @@ func (s *Server) remoteRoutes() {
 	if s.collaborationReady() {
 		s.collaborationRoutes()
 	}
+	if s.privateServicesReady() {
+		s.privateServiceRoutes()
+	}
 }
 
 func (s *Server) requireCSRF(next http.Handler) http.Handler {

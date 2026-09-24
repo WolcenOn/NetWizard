@@ -25,6 +25,7 @@ type Config struct {
 	CookieSecure    bool
 	AuthHTTPTimeout time.Duration
 	MaxProjectBytes int64
+	PrivateServiceKey string
 }
 
 func (c Config) DatabaseConfigured() bool {
@@ -46,7 +47,17 @@ func (c Config) AuthConfigPresent() bool {
 		strings.TrimSpace(c.OIDCRedirectURL) != ""
 }
 
+func (c Config) PrivateServicesConfigured() bool {
+	return strings.TrimSpace(c.PrivateServiceKey) != ""
+}
+
 func (c Config) Validate() error {
+	if c.PrivateServicesConfigured() && len([]byte(c.PrivateServiceKey)) < 32 {
+		return fmt.Errorf("NETWIZARD_PRIVATE_SERVICE_KEY must be at least 32 bytes")
+	}
+	if c.PrivateServicesConfigured() && !c.AuthRequested() {
+		return fmt.Errorf("private services require OIDC authentication configuration")
+	}
 	if !c.AuthRequested() {
 		return nil
 	}
@@ -106,6 +117,7 @@ func FromEnv() Config {
 	oidcClientID := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_CLIENT_ID"))
 	oidcClientSecret := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_CLIENT_SECRET"))
 	oidcRedirectURL := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_REDIRECT_URL"))
+	privateServiceKey := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_SERVICE_KEY"))
 
 	sessionCookieName := strings.TrimSpace(os.Getenv("NETWIZARD_SESSION_COOKIE_NAME"))
 	if sessionCookieName == "" {
@@ -148,6 +160,6 @@ func FromEnv() Config {
 		OIDCClientSecret: oidcClientSecret, OIDCRedirectURL: oidcRedirectURL,
 		SessionCookieName: sessionCookieName, SessionTTL: sessionTTL,
 		CookieSecure: cookieSecure, AuthHTTPTimeout: authHTTPTimeout,
-		MaxProjectBytes: maxProjectBytes,
+		MaxProjectBytes: maxProjectBytes, PrivateServiceKey: privateServiceKey,
 	}
 }
