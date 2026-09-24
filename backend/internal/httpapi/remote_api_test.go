@@ -123,8 +123,14 @@ func (s *remoteStore) ListWorkspaceProjects(_ context.Context, workspaceID strin
 	return out, nil
 }
 
-func (s *remoteStore) ListRevisions(context.Context, string, int) ([]projects.Revision, error) {
-	return nil, nil
+func (s *remoteStore) ListRevisions(_ context.Context, projectID string, _ int) ([]projects.Revision, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rev, ok := s.revisions[projectID]
+	if !ok {
+		return nil, projects.ErrNotFound
+	}
+	return []projects.Revision{rev}, nil
 }
 
 func (s *remoteStore) SaveRevision(_ context.Context, input projects.SaveRevisionInput) (projects.Project, projects.Revision, error) {
