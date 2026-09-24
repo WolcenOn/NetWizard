@@ -39,8 +39,8 @@ func TestStoreRoundTripAndOptimisticConcurrency(t *testing.T) {
 	projectID := "prj-" + suffix
 
 	if _, err := store.db.ExecContext(ctx,
-		"INSERT INTO users(id, external_subject, email) VALUES ($1, $2, $3)",
-		userID, subject, "owner@example.test",
+		"INSERT INTO users(id, external_issuer, external_subject, email) VALUES ($1, $2, $3, $4)",
+		userID, "https://issuer.example", subject, "owner@example.test",
 	); err != nil {
 		t.Fatal(err)
 	}
