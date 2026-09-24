@@ -75,8 +75,8 @@ func validOperationKind(kind OperationKind) bool {
 
 type OperationStore interface {
 	AppendOperation(ctx context.Context, projectID string, op Operation, actor string) (OperationEnvelope, error)
-	OperationsSince(ctx context.Context, projectID string, sinceSeq int64, limit int) ([]OperationEnvelope, error)
-	LatestOperationSeq(ctx context.Context, projectID string) (int64, error)
+	OperationsSince(ctx context.Context, projectID string, baseVersion, sinceSeq int64, limit int) ([]OperationEnvelope, error)
+	LatestOperationSeq(ctx context.Context, projectID string, baseVersion int64) (int64, error)
 }
 
 type Snapshot struct {
