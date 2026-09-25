@@ -27,6 +27,7 @@ Mantenimiento:
     'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
   ];
   const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy','deployment'];
+  const WORKFLOW_MODES = Object.freeze(['inventory','design']);
 
   function clone(value){
     return JSON.parse(JSON.stringify(value == null ? null : value));
@@ -91,6 +92,7 @@ Mantenimiento:
     ];
     for(const key of arrayKeys) p[key] = asArray(p[key]);
     for(const key of ADVANCED_OBJECT_KEYS) p[key] = asObject(p[key]);
+    p.workflow = asObject(p.workflow);
     p.observedState = p.observedState && typeof p.observedState === 'object' && !Array.isArray(p.observedState) ? p.observedState : null;
     p.vlanMatrix = asObject(p.vlanMatrix);
     p.dhcp = asObject(p.dhcp);
@@ -213,6 +215,11 @@ Mantenimiento:
     p.projName = cleanText(p.projName, 160);
     p.step = cleanText(p.step || 'dash', 40);
     p.selected = p.selected ? cleanId(p.selected, '') : null;
+    const workflowMode = cleanText(asObject(p.workflow).mode || 'design', 20).toLowerCase();
+    p.workflow = {
+      ...sanitizeObjectStrings(asObject(p.workflow), 240),
+      mode: WORKFLOW_MODES.includes(workflowMode) ? workflowMode : 'design'
+    };
     p.dhcp = sanitizeDhcpMap(p.dhcp);
 
     p.devices = p.devices.map((d, idx) => {
@@ -539,6 +546,9 @@ Mantenimiento:
     const errors = [];
     const warnings = [];
     const infos = [];
+    if(!WORKFLOW_MODES.includes(cleanText(asObject(p.workflow).mode || 'design', 20).toLowerCase())){
+      errors.push('workflow.mode debe ser inventory o design.');
+    }
 
     function checkIds(items, label){
       const seen = new Set();
@@ -691,7 +701,8 @@ Mantenimiento:
       version:SCHEMA_VERSION,
       deviceKinds:DEVICE_KINDS.slice(),
       advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
-      advancedObjects:ADVANCED_OBJECT_KEYS.slice()
+      advancedObjects:ADVANCED_OBJECT_KEYS.slice(),
+      workflowModes:WORKFLOW_MODES.slice()
     },
     normalizeDeviceKind,
     cleanText,
