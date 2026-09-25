@@ -328,6 +328,19 @@
           "items": {
             "$ref": "#/$defs/hostOutletConnection"
           }
+        },
+        "workflow": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "inventory",
+                "design"
+              ]
+            }
+          }
         }
       }
     },
