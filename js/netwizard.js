@@ -49,6 +49,7 @@ const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
 const SCENARIOS=[
+  {id:'production-office',ico:'✅',name:'Producción · Oficina pequeña',desc:'Ejemplo certificado: exporta sin bloqueos',presetId:'production-small-office',certified:true,vlans:[{id:10,n:'Users',c:'#3b82f6'},{id:20,n:'Guests',c:'#10b981'},{id:99,n:'Management-Native',c:'#8b5cf6'}]},
   {id:'home',ico:'🏠',name:'Home Lab',desc:'Router + switch + PCs',vlans:[{id:10,n:'LAN',c:'#3b82f6'},{id:20,n:'IoT',c:'#10b981'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
   {id:'office',ico:'🏢',name:'Oficina pequeña',desc:'< 50 usuarios',vlans:[{id:10,n:'Usuarios',c:'#3b82f6'},{id:20,n:'Servidores',c:'#10b981'},{id:30,n:'WiFi',c:'#f59e0b'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
   {id:'corp',ico:'🏙',name:'Empresa mediana',desc:'Departamentos + servidores',vlans:[{id:10,n:'Dirección',c:'#ef4444'},{id:20,n:'Ventas',c:'#3b82f6'},{id:30,n:'IT',c:'#10b981'},{id:40,n:'RRHH',c:'#f59e0b'},{id:50,n:'Servidores',c:'#8b5cf6'},{id:60,n:'WiFi',c:'#06b6d4'},{id:70,n:'Cámaras',c:'#f97316'},{id:99,n:'Gestión',c:'#e879f9'}]},
@@ -1087,7 +1088,7 @@ function renderDash(){
 $('saveProj').onclick=()=>{S.projName=($('projName').value||'').trim();save();$('projLbl').textContent=S.projName||'Sin título';};
 
 // ─────────────────── WIZARD ───────────────────
-let wScene=null;const wDevSel=new Set();
+let wScene='production-office';const wDevSel=new Set();
 function renderWizard(){
   const grid=$('scGrid'); clearNode(grid);
   SCENARIOS.forEach(sc=>{
@@ -1100,6 +1101,11 @@ function renderWizard(){
 }
 function renderDevPicker(){
   const root=$('devPicker'); clearNode(root);
+  const sc=SCENARIOS.find(x=>x.id===wScene);
+  if(sc&&sc.presetId){
+    root.appendChild(makeEl('div','co co-gn','✓ Esta plantilla incluye dispositivos, puertos, enlaces, VLANs, subnets, DHCP, hosts y reglas necesarias para superar la puerta estricta de producción.'));
+    return;
+  }
   DEV_PICKER.forEach(d=>{
     const card=makeEl('div',`dpcard${wDevSel.has(d.id)?' on':''}`); card.dataset.dp=d.id;
     card.append(makeEl('div','dpico',d.ico), makeEl('div','dpn',d.n), makeEl('div','dpc',d.d));
@@ -1116,6 +1122,13 @@ function updateWizPreview(){
   const b2=document.createElement('b'); b2.textContent='VLANs:'; out.appendChild(b2); out.appendChild(document.createElement('br'));
   for(const v of sc.vlans)addLine(`• VLAN ${v.id} — ${v.n}`);
   out.appendChild(document.createElement('br'));
+  if(sc.presetId){
+    out.appendChild(document.createElement('br'));
+    const ok=document.createElement('b');ok.textContent='✓ Plantilla certificada de producción';out.appendChild(ok);out.appendChild(document.createElement('br'));
+    addLine('Incluye topología, puertos, enlaces, gateways, DHCP, hosts y políticas de ejemplo.');
+    addLine('CI verifica puerta estricta READY, configuraciones vendor y ZIP de deployment.');
+    return;
+  }
   const b3=document.createElement('b'); b3.textContent='Dispositivos seleccionados:'; out.appendChild(b3); out.appendChild(document.createElement('br'));
   if(!wDevSel.size)addLine('(ninguno seleccionado)');
   else for(const id of wDevSel){const d=DEV_PICKER.find(x=>x.id===id);if(d)addLine(`• ${d.ico} ${d.n}`);}
@@ -1131,6 +1144,14 @@ $('wApply').onclick=()=>{
   const base=$('wBase').value||'10.10.0.0/16';const szPfx=parseInt($('wSize').value)||24;
   const fwN=($('wFwN').value||'FW-EDGE-01').trim();const swN=($('wSwN').value||'SW-CORE-01').trim();
   const secLevel=$('wSec').value;
+  if(sc.presetId){
+    const preset=window.NetWizardWizardPresets&&window.NetWizardWizardPresets.get?window.NetWizardWizardPresets.get(sc.presetId):null;
+    if(!preset)return alert('La plantilla certificada no está disponible.');
+    if(!confirm(`¿Cargar "${sc.name}"? Reemplazará el proyecto actual por un ejemplo completo y validado para producción.`))return;
+    window.NetWizardState.replaceProject(preset,{source:'wizard-certified-preset'});
+    navTo('dash');
+    return;
+  }
   if(!confirm(`¿Aplicar escenario "${sc.name}"? Se añadirá al proyecto actual.`))return;
   const bCidr=parseCidr(base);const step=2**(32-szPfx);let snIdx=0;
   // Devices
