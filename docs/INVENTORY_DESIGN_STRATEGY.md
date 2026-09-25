@@ -13,6 +13,105 @@ También debe ser posible definir **equipos personalizados por proyecto** cuando
 
 ---
 
+## Flujo físico obligatorio del inventario
+
+El modo Inventario debe empezar siempre por **qué existe físicamente**, antes de pedir información lógica.
+
+Orden recomendado:
+
+1. **Ubicación**
+   - sede;
+   - edificio/planta/sala;
+   - sala técnica o armario de comunicaciones.
+
+2. **¿Hay rack?**
+   - sí / no;
+   - nombre o identificador;
+   - fabricante/modelo opcional;
+   - altura total en U;
+   - ancho/profundidad opcionales;
+   - capacidad de carga;
+   - estado general.
+
+3. **Qué ocupa el rack**
+   - equipo;
+   - patch panel;
+   - organizador;
+   - PDU;
+   - bandeja;
+   - elemento pasivo;
+   - hueco libre.
+
+4. **Para cada equipo**
+   - fabricante;
+   - modelo;
+   - tipo;
+   - número de serie/asset tag opcional;
+   - U inicial;
+   - altura en U;
+   - orientación/cara;
+   - peso;
+   - consumo;
+   - fuentes de alimentación.
+
+5. **Alimentación**
+   - PDU;
+   - feed A/B;
+   - toma;
+   - PSU asociada;
+   - potencia disponible;
+   - redundancia;
+   - conexión observada.
+
+6. **Puertos físicos**
+   - nombre/posición;
+   - tipo/media;
+   - velocidad máxima;
+   - velocidad negociada observada;
+   - PoE;
+   - transceptor;
+   - estado up/down.
+
+7. **Cableado y conexiones**
+   - puerto origen;
+   - puerto destino;
+   - patch panel;
+   - toma;
+   - tipo de cable;
+   - longitud;
+   - ruta física;
+   - etiqueta;
+   - estado.
+
+8. **Datos lógicos observados (opcionales)**
+   - VLAN;
+   - IP;
+   - gateway;
+   - configuración capturada;
+   - notas.
+
+La UI debe permitir completar un inventario útil aunque no se conozca todavía ninguna información lógica.
+
+### Regla de captura
+
+La secuencia de campo debe ser:
+
+```text
+CONTENEDOR FÍSICO
+ubicación -> rack -> U disponibles
+
+CONTENIDO
+equipos -> ocupación -> alimentación
+
+CONECTIVIDAD
+puertos -> cableado -> enlaces
+
+LÓGICA OBSERVADA
+VLAN/IP/configuración, solo si se conoce
+```
+
+El sistema no debe pedir primero VLANs, direccionamiento, routing o políticas cuando el workflow sea `inventory`.
+
 ## 1. Modo Inventario
 
 ### Propósito
