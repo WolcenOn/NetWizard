@@ -203,6 +203,17 @@ Durante esta etapa de transición los generadores siguen presentes en el bundle 
 
 La imagen de producción también deja de copiar el JavaScript fuente directamente: una etapa Node minifica los módulos con esbuild y la imagen final sirve únicamente el resultado procesado, sin source maps. Esto reduce exposición accidental, pero no se considera una frontera de secreto: la lógica verdaderamente privada sigue perteneciendo al backend.
 
+## Inventario As-Built y Diseño To-Be
+
+NetWizard soportará dos intenciones de trabajo sin duplicar el modelo de dominio:
+
+- inventario descriptivo de una red existente;
+- diseño de una red nueva o futura.
+
+La estrategia completa, incluida la conversión As-Built -> To-Be y los modelos de dispositivo personalizados por proyecto, está en [INVENTORY_DESIGN_STRATEGY.md](./INVENTORY_DESIGN_STRATEGY.md).
+
+El modo Inventario tendrá su propio criterio de completitud y no quedará bloqueado por requisitos de deployment que no correspondan a un trabajo descriptivo. El modo Diseño seguirá utilizando Production Gate y las capacidades del Private Engine.
+
 ## Modo local
 
 El modo local se mantiene como capacidad de producto:
