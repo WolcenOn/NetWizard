@@ -28,10 +28,13 @@ type OIDCConfig struct {
 }
 
 type discoveryDocument struct {
-	Issuer                 string
-	Authorization_endpoint string
-	Token_endpoint         string
-	Jwks_uri               string
+	Issuer                               string
+	Authorization_endpoint               string
+	Token_endpoint                       string
+	Jwks_uri                             string
+	Token_endpoint_auth_methods_supported []string
+	Id_token_signing_alg_values_supported []string
+	Code_challenge_methods_supported      []string
 }
 
 type jwkSet struct {
@@ -104,6 +107,20 @@ func NewOIDCService(ctx context.Context, cfg OIDCConfig, sessions *SessionManage
 		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
 			return nil, fmt.Errorf("oidc discovery %s is invalid", name)
 		}
+	}
+
+	if len(doc.Id_token_signing_alg_values_supported) > 0 &&
+		!containsString(doc.Id_token_signing_alg_values_supported, "RS256") {
+		return nil, errors.New("oidc provider does not advertise RS256 id token signing")
+	}
+	if len(doc.Code_challenge_methods_supported) > 0 &&
+		!containsString(doc.Code_challenge_methods_supported, "S256") {
+		return nil, errors.New("oidc provider does not advertise S256 PKCE")
+	}
+	if strings.TrimSpace(cfg.ClientSecret) != "" &&
+		len(doc.Token_endpoint_auth_methods_supported) > 0 &&
+		!containsString(doc.Token_endpoint_auth_methods_supported, "client_secret_basic") {
+		return nil, errors.New("oidc provider does not advertise client_secret_basic")
 	}
 	return &Service{cfg: cfg, http: client, discovery: doc, Sessions: sessions}, nil
 }
@@ -346,4 +363,13 @@ func validReturnTo(value string) bool {
 	}
 	u, err := url.Parse(value)
 	return err == nil && !u.IsAbs() && u.Host == ""
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if strings.EqualFold(strings.TrimSpace(value), target) {
+			return true
+		}
+	}
+	return false
 }
