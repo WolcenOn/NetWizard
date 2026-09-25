@@ -269,6 +269,15 @@ El servidor debe ejecutar trabajo cuando aporta autoridad, privacidad o valor ce
 
 La métrica de éxito no es maximizar el porcentaje de código server-side. Es maximizar la protección del valor relevante manteniendo una aplicación rápida y rica en cliente.
 
+## Flujos de producto: Inventario y Diseño
+
+La separación de ejecución Client Engine / Private Engine se complementa con dos flujos de trabajo de producto definidos en [INVENTORY_DESIGN_STRATEGY.md](./INVENTORY_DESIGN_STRATEGY.md):
+
+- **Inventario / As-Built**: captura descriptiva de racks, equipos, puertos, alimentación y conexiones; principalmente Client Engine y apto para offline.
+- **Diseño / To-Be**: planificación, validación, generación y deployment; usa Client Engine para interacción y Private Engine para lógica propietaria.
+
+Ambos comparten las entidades canónicas del proyecto para evitar duplicar dispositivos, puertos o enlaces. Los proyectos pueden incluir además modelos de dispositivo personalizados locales al proyecto cuando el equipo no exista en el catálogo global.
+
 ## Criterio para publicar NetWizard
 
 La aplicación puede considerarse preparada para publicación con protección razonable cuando:
