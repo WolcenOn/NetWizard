@@ -215,9 +215,14 @@ Mantenimiento:
     p.projName = cleanText(p.projName, 160);
     p.step = cleanText(p.step || 'dash', 40);
     p.selected = p.selected ? cleanId(p.selected, '') : null;
-    const workflowMode = cleanText(asObject(p.workflow).mode || 'design', 20).toLowerCase();
+    const workflowSource = asObject(p.workflow);
+    const workflowMode = cleanText(workflowSource.mode || 'design', 20).toLowerCase();
+    const workflowWarnings = [];
+    if(workflowSource.mode != null && !WORKFLOW_MODES.includes(workflowMode)){
+      workflowWarnings.push(`workflow.mode desconocido (${cleanText(workflowSource.mode, 40)}); se usa design por compatibilidad.`);
+    }
     p.workflow = {
-      ...sanitizeObjectStrings(asObject(p.workflow), 240),
+      ...sanitizeObjectStrings(workflowSource, 240),
       mode: WORKFLOW_MODES.includes(workflowMode) ? workflowMode : 'design'
     };
     p.dhcp = sanitizeDhcpMap(p.dhcp);
@@ -537,7 +542,7 @@ Mantenimiento:
     for(const key of ADVANCED_OBJECT_KEYS) p[key] = sanitizeLooseValue(p[key], 1000);
     p.observedState = sanitizeObservedState(p.observedState);
 
-    return { project: p, warnings: [] };
+    return { project: p, warnings: workflowWarnings };
   }
 
   function validateProject(project, options){
