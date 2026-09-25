@@ -11,6 +11,22 @@ El criterio a partir de esta fase es simple:
 - mantener contratos versionados entre frontend y backend;
 - no exponer escritura remota hasta que autenticación, autorización y auditoría estén activas.
 
+## Arquitectura de ejecución objetivo
+
+La estrategia detallada de ejecución vive en [CLIENT_PRIVATE_ENGINE_STRATEGY.md](./CLIENT_PRIVATE_ENGINE_STRATEGY.md).
+
+NetWizard seguirá siendo **client-first en interacción** y **server-authoritative en identidad/datos**, con un **Private Engine** para la lógica que aporte valor diferencial o requiera confidencialidad.
+
+La intención no es mover la mayor cantidad posible de código al servidor. La intención es que:
+
+- UI, canvas, topología e interacción sigan ejecutándose en el navegador;
+- Railway mantenga autenticación, persistencia, colaboración y permisos;
+- los algoritmos propietarios seleccionados se ejecuten exclusivamente en el Private Engine;
+- Auth0 sea un proveedor OIDC reemplazable, no la base de datos de negocio;
+- el mismo origen frontend/API se mantenga mientras simplifique seguridad y despliegue.
+
+El primer caso de referencia será routing avanzado: actualmente está en estado de transición con worker privado y paridad; tras activar OIDC, la UI cloud pasará a usar el endpoint privado y se retirará el código completo de routing del artefacto público.
+
 ## Protección del código
 
 El JavaScript que necesita el navegador no puede considerarse secreto. Minificación u ofuscación pueden elevar el coste de inspección, pero no ofrecen una frontera de seguridad.

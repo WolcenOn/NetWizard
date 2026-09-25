@@ -155,6 +155,20 @@ Hasta una decisión de producto posterior:
 Esta separación permite evolucionar el backend sin bloquear la utilidad actual de NetWizard.
 
 
+## Dirección Client Engine / Private Engine
+
+La frontera operativa concreta se define en [CLIENT_PRIVATE_ENGINE_STRATEGY.md](./CLIENT_PRIVATE_ENGINE_STRATEGY.md).
+
+A partir de ahora, una nueva capacidad no se clasifica simplemente como "frontend" o "backend", sino como:
+
+- **Client Engine**: interacción, visualización, estado temporal y capacidades que aceptamos como inspeccionables;
+- **SaaS API**: identidad, permisos, persistencia, colaboración, auditoría y coordinación;
+- **Private Engine**: algoritmos propietarios, generación avanzada y capacidades que no deben publicarse en el navegador.
+
+Servir el frontend desde Railway no implica ejecutar esa lógica en Railway: el código estático se descarga y corre en el navegador. Solo lo que permanezca fuera del artefacto público y se invoque mediante API se considera privado.
+
+Las migraciones de capacidades sensibles deben pasar explícitamente de pública -> transición con paridad -> cloud autoritativa -> privada, y CI debe impedir que una capacidad ya privada vuelva a aparecer en el artefacto público.
+
 ## Dirección SaaS desde E1
 
 A partir de la fundación SaaS, reducir `netwizard.js` deja de ser un objetivo por sí mismo. Una extracción solo se prioriza cuando habilita persistencia, colaboración, privacidad de lógica o una frontera de dominio reutilizable.
