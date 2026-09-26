@@ -44,7 +44,7 @@ const devIcon=d=>NWDevice?NWDevice.icon(d):(devKind(d)==='switch'?'🔀':devKind
 const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 
 // ── CONSTANTS ──
-const STEP_ORDER=['dash','wiz','loc','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
+const STEP_ORDER=['dash','wiz','loc','physical','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
