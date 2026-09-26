@@ -43,6 +43,7 @@
     <div class="sb-div"></div>
     <div class="sb-sec">Red</div>
     <div class="sb-it" data-step="loc"><div class="sb-num">0</div>📍 Ubicaciones</div>
+    <div class="sb-it" data-step="physical"><div class="sb-num">◆</div>🗄 Inventario físico</div>
     <div class="sb-it" data-step="dev"><div class="sb-num">1</div>🖥 Dispositivos</div>
     <div class="sb-it" data-step="ports"><div class="sb-num">2</div>🔌 Puertos & Interfaces</div>
     <div class="sb-it" data-step="vlan"><div class="sb-num">3</div>🏷 VLANs & Subnets</div>
@@ -88,6 +89,12 @@
     <div class="card"><div class="card-h"><div class="card-t">🏷 VLANs</div></div><div id="dVlans"></div></div>
   </div>
   <div class="card"><div class="card-h"><div class="card-t">💻 Hosts por VLAN</div></div><div id="dHosts"></div></div>
+</div>
+
+<!-- ═══════════ INVENTARIO FÍSICO ═══════════ -->
+<div class="pg" id="pg-physical">
+  <div class="ph"><h1>🗄 Inventario físico / As-Built</h1><p>Documenta racks, ocupación, alimentación, puertos y cableado tal como existen.</p></div>
+  <div id="inventoryGoldenPathMount"></div>
 </div>
 
 <!-- ═══════════ WIZARD ═══════════ -->
@@ -1011,7 +1018,9 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-custom-device-models.js"></script>
 <script src="./js/netwizard-custom-device-model-ui.js"></script>
 <script src="./js/netwizard-physical-inventory.js"></script>
+<script src="./js/netwizard-inventory-gate.js"></script>
 <script src="./js/netwizard-physical-inventory-ui.js"></script>
+<script src="./js/netwizard-inventory-golden-path-ui.js"></script>
 <script src="./js/netwizard-resilience-topology.js"></script>
 <script src="./js/netwizard-resilience-ui.js"></script>
 <script src="./js/netwizard-wan-circuits.js"></script>

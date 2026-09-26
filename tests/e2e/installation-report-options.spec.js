@@ -39,7 +39,7 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
   const cfg=page.locator('#nwInstallReportConfigurator');
   await expect(cfg).toBeVisible();
   await expect(cfg.locator('input[data-report-section="connection-diagram"]')).toBeChecked();
-  await expect(cfg.locator('input[data-report-section="labels"]')).not.toBeChecked();
+  await expect(cfg.locator('input[data-report-section="labels"]')).toBeChecked();
 
   await cfg.getByRole('button',{name:'Solo conexiones'}).click();
   await expect(cfg.locator('input[data-report-section="connection-diagram"]')).toBeChecked();

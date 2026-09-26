@@ -42,7 +42,7 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
       pdus:[],powerConnections:[],patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[]
     });
     window.NetWizardState.replaceProject(p,{source:'e2e-interactive-rack'});
-    if(window.navTo)window.navTo('dev');
+    if(window.navTo)window.navTo('physical');
   });
 
   const initialRow=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="10"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
