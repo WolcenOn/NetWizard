@@ -614,6 +614,11 @@ Mantenimiento:
       x.type = cleanText(x.type || 'other', 40);
       x.parentId = cleanId(x.parentId, '');
       x.notes = cleanText(x.notes, 1000);
+      const rackMode=cleanText(x.inventoryRackMode||'',20).toLowerCase();
+      if(rackMode&&!['rack','wall-cabinet','none','unknown'].includes(rackMode)){
+        workflowWarnings.push(`${x.name}: inventoryRackMode desconocido (${rackMode}); se usa unknown.`);
+      }
+      x.inventoryRackMode=rackMode?(['rack','wall-cabinet','none','unknown'].includes(rackMode)?rackMode:'unknown'):'';
       return x;
     });
 
