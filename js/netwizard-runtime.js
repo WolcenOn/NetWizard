@@ -23,6 +23,8 @@
     'NetWizardDesignRequirementsUi',
     'NetWizardPhysicalInventory',
     'NetWizardPhysicalInventoryUi',
+    'NetWizardInventoryGate',
+    'NetWizardInventoryWorkflowUi',
     'NetWizardResilienceTopology',
     'NetWizardResilienceUi',
     'NetWizardWanCircuits',
