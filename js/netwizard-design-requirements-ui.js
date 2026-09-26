@@ -182,7 +182,8 @@ function renderDemands(project,plan){
   }
 }
 function switchDescription(sw,index){
-  return `SW${index+1}: ${sw.ports}p ${sw.speedClass==='multigig'?'2.5G':'1G'}${sw.poeRequired?` PoE (≥${sw.poePortsRequired}p / ≥${sw.minimumPoeBudgetWatts}W`:'')${sw.poeRequired?')':''}`;
+  const poe=sw.poeRequired?` PoE (≥${sw.poePortsRequired}p / ≥${sw.minimumPoeBudgetWatts}W)`:'';
+  return `SW${index+1}: ${sw.ports}p ${sw.speedClass==='multigig'?'2.5G':'1G'}${poe}`;
 }
 function renderSummary(project,plan){
   const host=el('nwReqSummary');if(!host)return;host.textContent='';
