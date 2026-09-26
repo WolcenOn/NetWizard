@@ -42,10 +42,17 @@ function select(options,value){
 function ensureScript(globalName,src){
   return new Promise(resolve=>{
     if(root[globalName]){resolve(root[globalName]);return;}
-    let script=doc().querySelector(`script[data-inventory-runtime="${globalName}"]`);
+    const targetPath=new URL(src,root.location&&root.location.href||undefined).pathname;
+    let script=Array.from(doc().scripts||[]).find(node=>{
+      if(!node.src)return false;
+      try{return new URL(node.src,root.location&&root.location.href||undefined).pathname===targetPath;}catch{return false;}
+    })||doc().querySelector(`script[data-inventory-runtime="${globalName}"]`);
     if(script){
       if(root[globalName])resolve(root[globalName]);
-      else script.addEventListener('load',()=>resolve(root[globalName]||null),{once:true});
+      else{
+        script.addEventListener('load',()=>resolve(root[globalName]||null),{once:true});
+        script.addEventListener('error',()=>resolve(null),{once:true});
+      }
       return;
     }
     script=doc().createElement('script');script.src=src;script.async=false;script.defer=false;script.dataset.inventoryRuntime=globalName;
