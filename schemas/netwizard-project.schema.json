@@ -341,6 +341,12 @@
               ]
             }
           }
+        },
+        "customDeviceModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/customDeviceModel"
+          }
         }
       }
     },
@@ -429,6 +435,40 @@
         "physicalLocation": {
           "type": "string",
           "maxLength": 160
+        },
+        "modelSource": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "global",
+            "custom"
+          ]
+        },
+        "modelRef": {
+          "$ref": "#/$defs/idNullable"
+        },
+        "manufacturer": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "model": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "serialNumber": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "assetTag": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "powerMaxWatts": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
         }
       }
     },
@@ -1956,6 +1996,158 @@
             "null"
           ],
           "minimum": 0
+        }
+      }
+    },
+    "customDeviceModel": {
+      "type": "object",
+      "required": [
+        "id",
+        "manufacturer",
+        "model",
+        "kind"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "manufacturer": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "model": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "sku": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "revision": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "switch",
+            "router",
+            "firewall",
+            "access_point",
+            "wlan_controller",
+            "server",
+            "appliance"
+          ]
+        },
+        "rackUnits": {
+          "type": "number",
+          "minimum": 0.5
+        },
+        "widthMm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "depthMm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "weightKg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "powerTypicalWatts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "powerMaxWatts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "poeBudgetWatts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "powerSupplies": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16
+            },
+            "redundant": {
+              "type": "boolean"
+            },
+            "voltage": {
+              "type": "string",
+              "maxLength": 40
+            }
+          }
+        },
+        "portGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "namePattern",
+              "count"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "namePattern": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2048
+              },
+              "startIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "media": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "speedMaxMbps": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "supportedSpeedsMbps": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "uniqueItems": true
+              },
+              "poeCapable": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "capabilities": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
         }
       }
     }
