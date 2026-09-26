@@ -741,3 +741,104 @@ Políticas iniciales:
 - modo manual sin auto-layout.
 
 El Golden Path de Diseño se oculta cuando `workflow.mode = inventory`.
+
+
+## I4 implementado — Golden Path de Inventario / As-Built
+
+El flujo de Inventario reutiliza las entidades físicas canónicas existentes y no crea colecciones paralelas.
+
+La navegación prioritaria es:
+
+```text
+Panel
+  -> Ubicaciones
+  -> Inventario físico
+  -> Dispositivos
+  -> Puertos
+  -> Hosts/endpoints
+  -> Enlaces
+  -> Vistas
+```
+
+En modo Inventario se ocultan del recorrido principal el Asistente de Diseño, VLANs, IoT de diseño, Firewall y Configuración vendor. Los datos siguen siendo compatibles con el proyecto y pueden existir, pero no son obligatorios para que el As-Built sea válido.
+
+### Declaración de infraestructura por ubicación
+
+Cada `physicalLocation` puede indicar:
+
+- `inventoryRackMode: rack`
+- `inventoryRackMode: wall-cabinet`
+- `inventoryRackMode: none`
+- `inventoryRackMode: unknown`
+
+Si se declara rack o armario, debe existir una entidad `racks[]` asociada y tener una altura válida en U. `none` es un estado documental válido y no obliga a crear un rack ficticio.
+
+### Inventory Gate
+
+`NetWizardInventoryGate` combina:
+
+- coherencia documental del inventario;
+- `NetWizardPhysicalInventory`;
+- `NetWizardRackModel`;
+- `NetWizardStructuredCabling`.
+
+Comprueba, entre otros:
+
+- existencia de ubicaciones;
+- referencias de rack y ubicación;
+- altura del rack;
+- colisiones de U;
+- referencias de PDU/tomas;
+- consumo y velocidad observada;
+- puertos físicos;
+- puertos usados en más de un enlace;
+- referencias de cableado estructurado;
+- números de serie y asset tags duplicados;
+- fabricante/modelo/identificador no documentados como avisos.
+
+No exige:
+
+- VLANs;
+- subnets;
+- DHCP;
+- routing;
+- firewall;
+- deployment.
+
+El resultado es `ready | review | blocked` y expone `canExportAsBuilt`.
+
+### Captura de dispositivos y puertos
+
+El formulario físico de dispositivos conserva correctamente los datos tanto en altas como en edición y añade:
+
+- fabricante;
+- número de serie;
+- asset tag;
+- ubicación observada;
+- rack/armario;
+- unidad inicial;
+- altura U;
+- consumo/presupuesto;
+- número de PSU y redundancia.
+
+Los campos físicos de puerto conservan:
+
+- velocidad máxima;
+- velocidad negociada;
+- MTU;
+- transceptor;
+- conector;
+- utilización;
+- estado administrativo;
+- estado operativo.
+
+Los patches físicos no sobrescriben propiedades procedentes del catálogo global o de `customDeviceModels` cuando el usuario no introduce un override.
+
+### Reutilización de UI física
+
+La página `Inventario físico` carga y reutiliza:
+
+- `NetWizardRackUi`;
+- `NetWizardStructuredCablingUi`.
+
+Por tanto, rack, PDU, alimentación, patch panels, tomas y rutas físicas siguen usando el mismo modelo canónico que Diseño y los informes.
