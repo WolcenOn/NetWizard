@@ -149,7 +149,7 @@ function loadPort(){
   Object.entries(map).forEach(([id,v])=>{if(el(id))el(id).value=v==null?'':v;});
 }
 function wrapDeviceSave(){
-  const b=el('btnAddDev');if(!b||b.__nwPhysicalWrapped||typeof b.onclick!=='function')return false;
+  const b=el('btnAddDev');if(!b||typeof b.onclick!=='function')return false;if(b.__nwPhysicalWrapped)return true;
   const original=b.onclick;
   b.onclick=function(event){
     const before=snapshot()||{},context={editId:clean(el('devEditId')?.value),name:clean(el('devName')?.value),beforeIds:arr(before.devices).map(d=>d.id)},patch=readDevicePatch();
@@ -167,7 +167,7 @@ function wrapDeviceSave(){
   b.__nwPhysicalWrapped=true;return true;
 }
 function wrapPortSave(){
-  const b=el('btnAddPort');if(!b||b.__nwPhysicalWrapped||typeof b.onclick!=='function')return false;
+  const b=el('btnAddPort');if(!b||typeof b.onclick!=='function')return false;if(b.__nwPhysicalWrapped)return true;
   const original=b.onclick;
   b.onclick=function(event){
     const before=snapshot()||{},context={editId:clean(el('portEditId')?.value),deviceId:clean(el('pDev')?.value),name:clean(el('pName')?.value),beforeIds:arr(before.ports).map(p=>p.id)},patch=readPortPatch();
