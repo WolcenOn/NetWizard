@@ -159,7 +159,7 @@ function estimateRackPlan(summary,switches,rackPolicy,capacityPolicy){
   const switchUnits=arr(switches).length;
   const patchPanels=Math.ceil(Math.max(0,int(summary&&summary.targetCopperPorts,0))/rp.patchPanelPorts);
   const patchPanelUnits=patchPanels;
-  const organizerUnits=rp.organizerPerSwitch?switchUnits:0;
+  const organizerUnits=(rp.layoutPattern==='patch-manager-switch'&&rp.organizerPerSwitch)?switchUnits:0;
   const fiberPanelUnits=(summary&&summary.targetFiberPorts)>0?1:0;
   const baseUnits=switchUnits+patchPanelUnits+organizerUnits+fiberPanelUnits;
   const reserveUnits=Math.max(cp.minFreeRackUnits,Math.ceil(baseUnits*cp.rackGrowthPercent/100));
@@ -213,6 +213,7 @@ function materializeLocationPlan(project,locationId,options){
   const req=planByLocation(next,locationId);
   if(!req||req.rackMode!=='own')return{ok:false,code:'rack_not_owned',message:'La ubicación debe estar configurada con rack propio para materializar su infraestructura.',project:next,plan};
   if(!plan.summary.targetPorts)return{ok:false,code:'no_demand',message:'No hay demanda de conexiones que materializar.',project:next,plan};
+  if(plan.rack.rackPolicy.layoutPattern==='manual')return{ok:false,code:'manual_layout',message:'La política de rack está en modo manual. Cambia a un patrón automático o crea la infraestructura desde el editor de racks.',project:next,plan};
   const existing=generatedFor(next,locationId);
   if(existing.racks.length||existing.devices.length||existing.patchPanels.length)return{ok:false,code:'already_materialized',message:'Esta ubicación ya tiene infraestructura generada por el planificador. Revísala antes de volver a generar.',project:next,plan,existing};
 
@@ -253,7 +254,7 @@ function materializeLocationPlan(project,locationId,options){
       next.rackItems.push(Object.assign({id:idFactory('rackitem'),type:'patch-panel',patchPanelId:ppId,label:pp.name,face:'front'},pos,tag));
       patchIndex++;
     }
-    if(plan.rack.rackPolicy.organizerPerSwitch){
+    if(plan.rack.rackPolicy.layoutPattern==='patch-manager-switch'&&plan.rack.rackPolicy.organizerPerSwitch){
       const pos=place(1);if(!pos)return{ok:false,code:'rack_capacity_error',message:'No hay espacio suficiente para colocar los organizadores propuestos.',project:clone(project),plan};
       next.rackItems.push(Object.assign({id:idFactory('rackitem'),type:'cable-manager',label:`Organizador horizontal ${switchIndex}`,face:'front'},pos,tag));
     }
@@ -277,9 +278,23 @@ function materializeLocationPlan(project,locationId,options){
     }
     switchIndex++;
   }
+
+  // Diferencia entre U realmente libres y U reservadas para crecimiento.
+  let reserveLeft=plan.rack.reserveUnits,reservedBlocks=0;
+  for(let i=rackRefs.length-1;i>=0&&reserveLeft>0;i--){
+    const ref=rackRefs[i],available=Math.max(0,ref.cursor);
+    const amount=Math.min(available,reserveLeft);
+    if(amount>0){
+      next.rackItems.push(Object.assign({
+        id:idFactory('rackitem'),rackId:ref.rack.id,type:'reserved',label:'Reserva para crecimiento',
+        startUnit:1,heightUnits:amount,face:'front',mounting:'reserved'
+      },tag));
+      reserveLeft-=amount;reservedBlocks++;
+    }
+  }
   return{
     ok:true,code:'materialized',project:next,plan,
-    created:{racks:rackRefs.length,devices:plan.switches.length,ports:plan.switches.reduce((s,x)=>s+x.ports,0),patchPanels:patchIndex-1,organizers:plan.rack.organizerUnits,fiberPanels:fiberPanel?1:0}
+    created:{racks:rackRefs.length,devices:plan.switches.length,ports:plan.switches.reduce((s,x)=>s+x.ports,0),patchPanels:patchIndex-1,organizers:plan.rack.organizerUnits,fiberPanels:fiberPanel?1:0,reservedBlocks}
   };
 }
 
