@@ -43,6 +43,7 @@
     <div class="sb-div"></div>
     <div class="sb-sec">Red</div>
     <div class="sb-it" data-step="loc"><div class="sb-num">0</div>📍 Ubicaciones</div>
+    <div class="sb-it" data-step="physical" data-workflow-only="inventory" style="display:none;"><div class="sb-num">▣</div>🗄 Inventario físico</div>
     <div class="sb-it" data-step="dev"><div class="sb-num">1</div>🖥 Dispositivos</div>
     <div class="sb-it" data-step="ports"><div class="sb-num">2</div>🔌 Puertos & Interfaces</div>
     <div class="sb-it" data-step="vlan"><div class="sb-num">3</div>🏷 VLANs & Subnets</div>
@@ -55,10 +56,10 @@
     <div class="sb-sec">Conectividad</div>
     <div class="sb-it" data-step="links"><div class="sb-num">6</div>🔗 Puertos & Enlaces</div>
     <div class="sb-div"></div>
-    <div class="sb-sec">Seguridad</div>
+    <div class="sb-sec" id="sbSecSecurity">Seguridad</div>
     <div class="sb-it" data-step="fw"><div class="sb-num">7</div>🔒 Firewall</div>
     <div class="sb-div"></div>
-    <div class="sb-sec">Exportar</div>
+    <div class="sb-sec" id="sbSecExport">Exportar</div>
     <div class="sb-it" data-step="cfg"><div class="sb-num">8</div>⚙ Configuración</div>
     <div class="sb-div"></div>
     <div class="sb-sec">Resumen</div>
@@ -182,6 +183,14 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="pg" id="pg-physical">
+  <div class="ph">
+    <h1>🗄 Inventario físico · As-Built</h1>
+    <p>Documenta lo que existe antes de entrar en lógica de red: ubicación, rack, equipos, alimentación, puertos y cableado.</p>
+  </div>
+  <div id="inventoryWorkflowMount" class="nw-panel-stack"></div>
 </div>
 
 <div class="pg" id="pg-dev">
@@ -1012,6 +1021,8 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-custom-device-model-ui.js"></script>
 <script src="./js/netwizard-physical-inventory.js"></script>
 <script src="./js/netwizard-physical-inventory-ui.js"></script>
+<script src="./js/netwizard-inventory-gate.js"></script>
+<script src="./js/netwizard-inventory-workflow-ui.js"></script>
 <script src="./js/netwizard-resilience-topology.js"></script>
 <script src="./js/netwizard-resilience-ui.js"></script>
 <script src="./js/netwizard-wan-circuits.js"></script>
