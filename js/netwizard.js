@@ -189,7 +189,7 @@ function ensurePhysicalLocationModel(){
   if(!Array.isArray(S.physicalLocations))S.physicalLocations=[];
   const hadStructuredLocations=S.physicalLocations.some(l=>l&&cleanStr(l.name));
   const seen=new Set();
-  S.physicalLocations=(S.physicalLocations||[]).filter(Boolean).map(l=>({
+  S.physicalLocations=(S.physicalLocations||[]).filter(Boolean).map(l=>Object.assign({},l,{
     id:l.id||uid('pl'),
     name:cleanStr(l.name),
     type:cleanStr(l.type)||'other',
