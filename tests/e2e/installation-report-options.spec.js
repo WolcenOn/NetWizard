@@ -33,17 +33,20 @@ test('configurador de informe selecciona secciones y genera hojas de etiquetas',
     window.NetWizardState.replaceProject(p,{source:'e2e-install-report-options'});
   });
 
-  await expect.poll(()=>page.evaluate(()=>window.NetWizardInstallationReport?.version||null),{timeout:10000}).toBe('netwizard-installation-report-v7');
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardInstallationReport?.version||null),{timeout:10000}).toBe('netwizard-installation-report-v8');
   await expect(page.locator('#btnCompactReport')).toBeVisible();
   await page.locator('#btnCompactReport').click();
   const cfg=page.locator('#nwInstallReportConfigurator');
   await expect(cfg).toBeVisible();
   await expect(cfg.locator('input[data-report-section="connection-diagram"]')).toBeChecked();
-  await expect(cfg.locator('input[data-report-section="labels"]')).not.toBeChecked();
+  await expect(cfg.locator('input[data-report-section="labels"]')).toBeChecked();
+  await expect(cfg.locator('[data-report-section-card="labels"]')).toHaveAttribute('data-selected','1');
+  await expect(cfg.locator('#nwInstallReportSelectionSummary')).toContainText('Etiquetas incluidas');
 
   await cfg.getByRole('button',{name:'Solo conexiones'}).click();
   await expect(cfg.locator('input[data-report-section="connection-diagram"]')).toBeChecked();
   await expect(cfg.locator('input[data-report-section="readiness"]')).not.toBeChecked();
+  await expect(cfg.locator('[data-report-section-card="labels"]')).toHaveAttribute('data-selected','0');
 
   const popupPromise=page.waitForEvent('popup');
   await cfg.getByRole('button',{name:'🧰 Generar informe'}).click();
