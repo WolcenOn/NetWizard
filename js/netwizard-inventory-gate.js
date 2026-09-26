@@ -35,8 +35,13 @@ function mergeIssues(){
   }
   return out;
 }
-function locationIdForDevice(device){
-  return clean(device&&device.locationId)||clean(device&&device.physicalLocationId)||'';
+function locationIdForDevice(device,project){
+  const direct=clean(device&&device.locationId)||clean(device&&device.physicalLocationId);
+  if(direct)return direct;
+  const legacy=clean(device&&device.physicalLocation).toLowerCase();
+  if(!legacy)return'';
+  const match=arr(project&&project.physicalLocations).find(loc=>clean(loc&&loc.name).toLowerCase()===legacy);
+  return match&&match.id||'';
 }
 function rackIdForDevice(device){return clean(device&&(device.rackId||device.rack));}
 function duplicateFieldIssues(project,field,label,code){
@@ -79,7 +84,7 @@ function documentaryIssues(project){
   }
 
   for(const d of devices){
-    const locationId=locationIdForDevice(d),rackId=rackIdForDevice(d);
+    const locationId=locationIdForDevice(d,p),rackId=rackIdForDevice(d);
     if(locationId&&!locationIds.has(locationId))issues.push(issue('NW-INV-005','error',`${d.name||d.id}: ubicación inexistente (${locationId}).`,{deviceId:d.id,locationId}));
     if(rackId&&!rackIds.has(rackId))issues.push(issue('NW-INV-006','error',`${d.name||d.id}: rack inexistente (${rackId}).`,{deviceId:d.id,rackId}));
     if(!locationId&&!rackId)issues.push(issue('NW-INV-103','warning',`${d.name||d.id}: falta ubicación/rack observado.`,{deviceId:d.id}));
