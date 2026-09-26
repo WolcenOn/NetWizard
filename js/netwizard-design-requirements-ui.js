@@ -215,15 +215,18 @@ function renderSummary(project,plan){
     for(let i=0;i<targetPlan.switches.length;i++)ul.append(make('li',{},switchDescription(targetPlan.switches[i],i)));
     if(!targetPlan.switches.length)ul.append(make('li',{},'Sin switches de acceso necesarios.'));
     card.append(ul);
-    card.append(make('div',{className:'hint'},`Rack: ${r.rackCount} × ${r.rackUnits}U · ${r.patchPanels} patch panel(s) · ${r.organizerUnits} organizador(es) · reserva final ${r.freeRackUnits}U.`));
+    card.append(make('div',{className:'hint'},`Rack: ${r.rackCount} × ${r.rackUnits}U · ${r.patchPanels} patch panel(s) · ${r.organizerUnits} organizador(es) · ${r.reserveUnits}U reservadas · ${r.freeRackUnits-r.reserveUnits}U libres adicionales.`));
     if(targetPlan.contributors.length>1)card.append(make('div',{className:'hint'},`Incluye demanda de: ${targetPlan.contributors.map(id=>locationLabel(project,id)).join(', ')}.`));
   }
   host.append(card);
   const materialize=el('nwReqMaterialize');
-  if(materialize)materialize.disabled=plan.rackMode!=='own'||!targetPlan||!targetPlan.summary.targetPorts;
+  if(materialize)materialize.disabled=plan.rackMode!=='own'||!targetPlan||!targetPlan.summary.targetPorts||plan.rackPolicy?.layoutPattern==='manual';
 }
 function render(){
   const snap=getSnapshot();if(!snap)return;
+  const card=el('nwDesignGoldenPath');
+  if(card)card.style.display=(snap.workflow&&snap.workflow.mode==='inventory')?'none':'';
+  if(snap.workflow&&snap.workflow.mode==='inventory')return;
   const locs=locations(snap),empty=el('nwReqEmpty'),body=el('nwReqBody');
   if(empty)empty.style.display=locs.length?'none':'';
   if(body)body.style.display=locs.length?'':'none';
