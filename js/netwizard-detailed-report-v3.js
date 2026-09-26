@@ -419,13 +419,47 @@ function openConfigurator(project){
  const existing=root.document.getElementById('nwInstallReportConfigurator');if(existing)existing.remove();
  const prefs=loadReportPreferences(root)||{};
  const selected=new Set(arr(prefs.sections).length?prefs.sections:SECTION_DEFS.filter(x=>x.default).map(x=>x.id));
- const overlay=root.document.createElement('div');overlay.id='nwInstallReportConfigurator';overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.74);display:grid;place-items:center;padding:20px';
- const card=root.document.createElement('div');card.style.cssText='width:min(860px,96vw);max-height:92vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:18px';
+
+ const overlay=root.document.createElement('div');
+ overlay.id='nwInstallReportConfigurator';
+ overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.78);display:grid;place-items:center;padding:clamp(8px,2vw,20px)';
+
+ const card=root.document.createElement('div');
+ card.style.cssText='width:min(980px,98vw);max-height:94vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:clamp(12px,2vw,20px)';
+
  const title=root.document.createElement('h2');title.textContent='Configurar informe de instalación';title.style.margin='0 0 6px';
- const hint=root.document.createElement('p');hint.textContent='Selecciona las secciones que quieres incluir. Las etiquetas pueden generarse junto al informe o como documento independiente para papel adhesivo.';hint.style.cssText='margin:0 0 14px;color:#94a3b8;font-size:13px';
+ const hint=root.document.createElement('p');hint.textContent='Selecciona las secciones que quieres incluir. Las tarjetas azules están activas. Las etiquetas pueden incluirse en el informe o abrirse por separado para papel adhesivo.';hint.style.cssText='margin:0 0 12px;color:#94a3b8;font-size:13px';
  card.append(title,hint);
+
+ const selectionSummary=root.document.createElement('div');
+ selectionSummary.id='nwInstallReportSelectionSummary';
+ selectionSummary.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:9px 11px;border:1px solid #334155;border-radius:10px;background:#0f172a;color:#cbd5e1;font-size:12px';
+ card.appendChild(selectionSummary);
+
+ let labelRow=null,preset=null;
+ const syncSelectionUi=()=>{
+   card.querySelectorAll('[data-report-section-card]').forEach(lab=>{
+     const id=lab.dataset.reportSectionCard,on=selected.has(id);
+     lab.dataset.selected=on?'1':'0';
+     lab.style.background=on?'#172554':'#111827';
+     lab.style.borderColor=on?'#60a5fa':'#334155';
+     lab.style.boxShadow=on?'inset 0 0 0 1px #3b82f6':'none';
+     const cb=lab.querySelector('input[data-report-section]');if(cb)cb.checked=on;
+   });
+   selectionSummary.textContent='';
+   const strong=root.document.createElement('strong');strong.textContent=`${selected.size} de ${SECTION_DEFS.length} secciones seleccionadas`;
+   const info=root.document.createElement('span');info.textContent=selected.has('labels')?'🏷 Etiquetas incluidas en el informe':'Etiquetas no incluidas';
+   selectionSummary.append(strong,info);
+   if(labelRow)labelRow.style.opacity=selected.has('labels')?'1':'.55';
+   if(preset)preset.disabled=!selected.has('labels');
+ };
+
  const presetBar=root.document.createElement('div');presetBar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px';
- const presetButton=(label,ids)=>{const b=root.document.createElement('button');b.type='button';b.className='btn bs bsm';b.textContent=label;b.addEventListener('click',()=>{selected.clear();ids.forEach(id=>selected.add(id));card.querySelectorAll('input[data-report-section]').forEach(cb=>{cb.checked=selected.has(cb.dataset.reportSection);});});return b;};
+ const presetButton=(label,ids)=>{
+   const b=root.document.createElement('button');b.type='button';b.className='btn bs bsm';b.textContent=label;
+   b.addEventListener('click',()=>{selected.clear();ids.forEach(id=>selected.add(id));syncSelectionUi();});
+   return b;
+ };
  presetBar.append(
    presetButton('Todo',SECTION_DEFS.map(x=>x.id)),
    presetButton('Informe técnico',SECTION_DEFS.filter(x=>x.default).map(x=>x.id)),
@@ -433,32 +467,49 @@ function openConfigurator(project){
    presetButton('Solo etiquetas',['labels'])
  );
  card.appendChild(presetBar);
+
  const groups=new Map();
  for(const def of SECTION_DEFS){if(!groups.has(def.group))groups.set(def.group,[]);groups.get(def.group).push(def);}
  for(const [group,defs] of groups){
    const fs=root.document.createElement('fieldset');fs.style.cssText='border:1px solid #334155;border-radius:10px;padding:10px;margin:9px 0';
    const lg=root.document.createElement('legend');lg.textContent=group;lg.style.cssText='padding:0 6px;font-weight:800;color:#93c5fd';fs.appendChild(lg);
-   const grid=root.document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px';
+   const grid=root.document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px';
    for(const def of defs){
-     const lab=root.document.createElement('label');lab.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:7px;border-radius:7px;background:#111827';
-     const cb=root.document.createElement('input');cb.type='checkbox';cb.dataset.reportSection=def.id;cb.checked=selected.has(def.id);cb.addEventListener('change',()=>cb.checked?selected.add(def.id):selected.delete(def.id));
-     const span=root.document.createElement('span');span.textContent=def.title;lab.append(cb,span);grid.appendChild(lab);
+     const lab=root.document.createElement('label');
+     lab.dataset.reportSectionCard=def.id;
+     lab.style.cssText='display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid #334155;border-radius:9px;background:#111827;cursor:pointer;transition:background .12s,border-color .12s,box-shadow .12s';
+     const cb=root.document.createElement('input');cb.type='checkbox';cb.dataset.reportSection=def.id;cb.checked=selected.has(def.id);cb.style.cssText='margin-top:2px;accent-color:#3b82f6;flex:0 0 auto';
+     cb.addEventListener('change',()=>{cb.checked?selected.add(def.id):selected.delete(def.id);syncSelectionUi();});
+     const span=root.document.createElement('span');span.textContent=def.title;span.style.cssText='line-height:1.3';
+     lab.append(cb,span);grid.appendChild(lab);
    }
    fs.appendChild(grid);card.appendChild(fs);
  }
- const labelRow=root.document.createElement('div');labelRow.style.cssText='display:grid;grid-template-columns:1fr minmax(250px,340px);gap:12px;align-items:center;margin:12px 0;padding:10px;border:1px solid #334155;border-radius:10px';
- const labelText=root.document.createElement('div');const lb=root.document.createElement('b');lb.textContent='Formato de etiquetas';const ls=root.document.createElement('div');ls.textContent='Elige según el papel adhesivo. Después puedes ajustar la escala al 100 % en el diálogo de impresión.';ls.style.cssText='font-size:11px;color:#94a3b8;margin-top:3px';labelText.append(lb,ls);
- const preset=root.document.createElement('select');preset.style.cssText='width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #475569';
+
+ labelRow=root.document.createElement('div');
+ labelRow.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,340px);gap:12px;align-items:center;margin:12px 0;padding:10px;border:1px solid #334155;border-radius:10px;transition:opacity .12s';
+ const labelText=root.document.createElement('div');
+ const lb=root.document.createElement('b');lb.textContent='Formato de etiquetas';
+ const ls=root.document.createElement('div');ls.textContent='Elige según el papel adhesivo. Imprime al 100 % para respetar las dimensiones.';ls.style.cssText='font-size:11px;color:#94a3b8;margin-top:3px';
+ labelText.append(lb,ls);
+ preset=root.document.createElement('select');preset.style.cssText='width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #475569';
  for(const p of Object.values(LABEL_PRESETS)){const opt=root.document.createElement('option');opt.value=p.id;opt.textContent=p.label;if(p.id===(prefs.labelPreset||'a4-3x8'))opt.selected=true;preset.appendChild(opt);}
  labelRow.append(labelText,preset);card.appendChild(labelRow);
- const actions=root.document.createElement('div');actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px';
+
+ const actions=root.document.createElement('div');
+ actions.style.cssText='position:sticky;bottom:-1px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:14px -4px -4px;padding:16px 4px 4px;background:linear-gradient(180deg,rgba(11,18,32,0),#0b1220 32%)';
  const btn=(text,fn,primary)=>{const b=root.document.createElement('button');b.type='button';b.className='btn '+(primary?'bp':'bs')+' bsm';b.textContent=text;b.addEventListener('click',fn);return b;};
  actions.append(
    btn('Cancelar',()=>overlay.remove(),false),
    btn('🏷 Abrir solo etiquetas',()=>{saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:['labels'],labelsOnly:true,labelPreset:preset.value});},false),
    btn('🧰 Generar informe',()=>{if(!selected.size){root.alert&&root.alert('Selecciona al menos una sección.');return;}saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:[...selected],labelPreset:preset.value});},true)
  );
- card.appendChild(actions);overlay.appendChild(card);overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});root.document.body.appendChild(overlay);return overlay;
+ card.appendChild(actions);
+ overlay.appendChild(card);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+ root.document.body.appendChild(overlay);
+ syncSelectionUi();
+ return overlay;
 }
 function inject(){
  if(!root.document||root.document.getElementById('btnCompactReport'))return;
