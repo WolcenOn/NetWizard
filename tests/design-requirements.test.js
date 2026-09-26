@@ -81,6 +81,7 @@ assert.ok(reserved);
 assert.strictEqual(reserved.heightUnits,4);
 assert.strictEqual(reserved.startUnit,1);
 assert.strictEqual(Rack.validate(result.project).ok,true);
+assert.ok(!Rack.billOfMaterials(result.project).some(x=>x.kind==='reserved'),'Reserved rack units are capacity, not BOM material');
 
 const second=Planner.materializeLocationPlan(result.project,'hq',{idFactory:prefix=>prefix+'-again'});
 assert.strictEqual(second.ok,false);
@@ -107,5 +108,15 @@ const invalid=Schema.prepareImport({...project,designRequirements:{...project.de
 ]}});
 assert.strictEqual(invalid.ok,false);
 assert.ok(invalid.errors.some(x=>x.includes('servingLocationId inexistente')));
+
+const directInvalid=Schema.validateProject({...project,designRequirements:{...project.designRequirements,locationPlans:[
+  {...project.designRequirements.locationPlans[0],rackMode:'hybrid'}
+]}});
+assert.strictEqual(directInvalid.ok,false);
+assert.ok(directInvalid.errors.some(x=>x.includes('rackMode inválido')));
+
+const external=require('../schemas/netwizard-project.schema.json');
+assert.strictEqual(external.$defs.project.properties.designRequirements.$ref,'#/$defs/designRequirements');
+assert.deepStrictEqual(external.$defs.designLocationPlan.properties.rackMode.enum,['own','served','none']);
 
 console.log('✓ Golden Path por ubicación dimensiona capacidad y materializa infraestructura canónica');
