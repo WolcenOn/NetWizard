@@ -85,7 +85,7 @@ Mantenimiento:
     const def = defaultProject(defaults);
     const p = { ...def, ...asObject(project) };
     const arrayKeys = [
-      'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations',
+      'devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','hostPhysicalLocations','customDeviceModels',
       'racks','rackItems','pdus','powerConnections',
       'patchPanels','telecomOutlets','cableRuns','patchConnections','hostOutletConnections',
       ...ADVANCED_ARRAY_KEYS
@@ -180,6 +180,45 @@ Mantenimiento:
   }
 
 
+  function sanitizeCustomDeviceModel(raw, idx){
+    const x=sanitizeObjectStrings(raw, 1000);
+    x.id=cleanId(x.id,`custom_model_${idx+1}`);
+    x.manufacturer=cleanText(x.manufacturer||'',120);
+    x.model=cleanText(x.model||'',120);
+    x.sku=cleanText(x.sku||x.partNumber||'',120);
+    x.revision=cleanText(x.revision||'',80);
+    x.kind=normalizeDeviceKind(x.kind||x.type||'appliance');
+    x.type=x.kind;
+    x.notes=cleanText(x.notes||'',1000);
+    for(const key of ['rackUnits','widthMm','depthMm','weightKg','powerTypicalWatts','powerMaxWatts','poeBudgetWatts']){
+      if(x[key]==null||x[key]===''){delete x[key];continue;}
+      const n=Number(x[key]);
+      if(Number.isFinite(n)&&n>=0)x[key]=Math.round(n*100)/100;else delete x[key];
+    }
+    if(x.rackUnits!=null)x.rackUnits=Math.max(0.5,x.rackUnits);
+    const psu=asObject(x.powerSupplies);
+    x.powerSupplies={
+      count:Math.max(0,Math.min(16,cleanNumber(psu.count,0))),
+      redundant:psu.redundant===true||psu.redundant==='true'||psu.redundant===1||psu.redundant==='1',
+      voltage:cleanText(psu.voltage||'',40)
+    };
+    x.portGroups=asArray(x.portGroups).slice(0,128).map((g,gidx)=>{
+      const p=sanitizeObjectStrings(g,500);
+      p.id=cleanId(p.id,`group_${gidx+1}`);
+      p.name=cleanText(p.name||'',120);
+      p.namePattern=cleanText(p.namePattern||'port{n}',120);
+      p.count=Math.max(0,Math.min(2048,cleanNumber(p.count,0)));
+      p.startIndex=Math.max(0,cleanNumber(p.startIndex,1));
+      p.media=cleanText(p.media||'',40);
+      const speed=Number(p.speedMaxMbps);p.speedMaxMbps=Number.isFinite(speed)&&speed>=0?Math.round(speed):null;
+      p.supportedSpeedsMbps=asArray(p.supportedSpeedsMbps).map(Number).filter(v=>Number.isFinite(v)&&v>=0).map(v=>Math.round(v)).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+      p.poeCapable=p.poeCapable===true||p.poeCapable==='true'||p.poeCapable===1||p.poeCapable==='1';
+      return p;
+    });
+    x.capabilities=sanitizeLooseValue(asObject(x.capabilities),500);
+    return x;
+  }
+
   function sanitizeDhcpMap(dhcp){
     const out = {};
     for(const [key, raw] of Object.entries(asObject(dhcp))){
@@ -226,6 +265,7 @@ Mantenimiento:
       mode: WORKFLOW_MODES.includes(workflowMode) ? workflowMode : 'design'
     };
     p.dhcp = sanitizeDhcpMap(p.dhcp);
+    p.customDeviceModels = p.customDeviceModels.map(sanitizeCustomDeviceModel);
 
     p.devices = p.devices.map((d, idx) => {
       const x = sanitizeObjectStrings(d, 500);
@@ -237,13 +277,23 @@ Mantenimiento:
         ? DEVICE_MODEL.normalizeVendor(x.vendorOs || x.platform || x.os || 'generic_network')
         : cleanText(x.vendorOs || 'generic_network', 40);
       x.notes = cleanText(x.notes, 1000);
+      x.manufacturer = cleanText(x.manufacturer || '', 120);
+      x.model = cleanText(x.model || '', 120);
+      x.serialNumber = cleanText(x.serialNumber || '', 160);
+      x.assetTag = cleanText(x.assetTag || '', 120);
+      const modelSource = cleanText(x.modelSource || 'manual', 20).toLowerCase();
+      if(x.modelSource != null && !['manual','global','custom'].includes(modelSource)){
+        workflowWarnings.push(`Dispositivo ${x.name}: modelSource desconocido (${cleanText(x.modelSource,40)}); se usa manual.`);
+      }
+      x.modelSource = ['manual','global','custom'].includes(modelSource) ? modelSource : 'manual';
+      x.modelRef = cleanId(x.modelRef || '', '');
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
       x.poeBudgetW = Number.isFinite(poeBudget) && poeBudget >= 0 ? Math.round(poeBudget * 10) / 10 : null;
       x.poeBudgetWatts = x.poeBudgetW;
       x.rackId = cleanId(x.rackId || x.rack, '');
       x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
       x.physicalLocation = cleanText(x.physicalLocation || '', 160);
-      for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts']){
+      for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts','powerMaxWatts']){
         if(x[key] == null || x[key] === '') { delete x[key]; continue; }
         const n = Number(x[key]);
         if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
@@ -569,9 +619,11 @@ Mantenimiento:
     checkIds(p.vlans, 'vlans');
     checkIds(p.subnets, 'subnets');
     checkIds(p.hosts, 'hosts');
+    checkIds(p.customDeviceModels, 'customDeviceModels');
     for(const key of ADVANCED_ARRAY_KEYS) checkIds(p[key], key);
 
     const devIds = new Set(p.devices.map(x=>x.id));
+    const customModelIds = new Set(p.customDeviceModels.map(x=>x.id));
     const portIds = new Set(p.ports.map(x=>x.id));
     const vlanIds = new Set(p.vlans.map(x=>x.id));
     const vrfIds = new Set(p.vrfs.map(x=>x.id));
@@ -582,6 +634,10 @@ Mantenimiento:
     for(const device of p.devices){
       const kind=device.kind || device.type;
       if(kind && !DEVICE_KINDS.includes(kind)) warnings.push(`Dispositivo ${device.name || device.id}: kind no normalizado (${kind}).`);
+      const source=cleanText(device.modelSource||'manual',20).toLowerCase();
+      if(!['manual','global','custom'].includes(source)) errors.push(`Dispositivo ${device.name || device.id}: modelSource inválido.`);
+      if(source==='custom' && !device.modelRef) errors.push(`Dispositivo ${device.name || device.id}: modelSource custom requiere modelRef.`);
+      if(source==='custom' && device.modelRef && !customModelIds.has(device.modelRef)) errors.push(`Dispositivo ${device.name || device.id}: modelRef personalizado inexistente (${device.modelRef}).`);
     }
 
     for(const vlan of p.vlans){
@@ -707,7 +763,8 @@ Mantenimiento:
       deviceKinds:DEVICE_KINDS.slice(),
       advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
       advancedObjects:ADVANCED_OBJECT_KEYS.slice(),
-      workflowModes:WORKFLOW_MODES.slice()
+      workflowModes:WORKFLOW_MODES.slice(),
+      customDeviceModelVersion:'netwizard-custom-device-model-v1'
     },
     normalizeDeviceKind,
     cleanText,
