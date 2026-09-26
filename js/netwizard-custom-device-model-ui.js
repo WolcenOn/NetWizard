@@ -13,8 +13,7 @@ function mk(tag,attrs,text){const n=root.document.createElement(tag);for(const [
 function parseSpeeds(raw){return clean(raw).split(',').map(x=>Number(x.trim())).filter(Number.isFinite).filter((v,i,a)=>v>=0&&a.indexOf(v)===i).sort((a,b)=>a-b);}
 function parsePortGroups(text){
   const out=[];
-  const lines=String(text||'').split(/?
-/).map(x=>x.trim()).filter(Boolean);
+  const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   for(let i=0;i<lines.length;i++){
     const parts=lines[i].split('|').map(x=>x.trim());
     if(parts.length<2)continue;
