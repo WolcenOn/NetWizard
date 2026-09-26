@@ -69,18 +69,23 @@ function documentaryIssues(project){
 
   for(const loc of locations){
     const mode=clean(loc&&loc.inventoryRackMode).toLowerCase();
+    const ownRacks=racks.filter(r=>r&&r.locationId===loc.id);
     if(mode&&!['rack','wall-cabinet','none','unknown'].includes(mode)){
       issues.push(issue('NW-INV-003','warning',`${loc.name||loc.id}: estado de rack no reconocido (${mode}).`,{locationId:loc.id}));
     }
-    if(!mode){
-      const hasRack=racks.some(r=>r&&r.locationId===loc.id);
-      if(!hasRack)issues.push(issue('NW-INV-101','warning',`${loc.name||loc.id}: indica si existe rack/armario o si la ubicación no dispone de él.`,{locationId:loc.id}));
+    if(!mode||mode==='unknown'){
+      if(!ownRacks.length)issues.push(issue('NW-INV-101','warning',`${loc.name||loc.id}: indica si existe rack/armario o si la ubicación no dispone de él.`,{locationId:loc.id}));
+    }
+    if(['rack','wall-cabinet'].includes(mode)&&!ownRacks.length){
+      issues.push(issue('NW-INV-013','error',`${loc.name||loc.id}: se ha indicado que existe ${mode==='wall-cabinet'?'armario mural':'rack'}, pero todavía no está documentado.`,{locationId:loc.id}));
     }
   }
 
   for(const rack of racks){
     if(rack.locationId&&!locationIds.has(rack.locationId))issues.push(issue('NW-INV-004','error',`${rack.name||rack.id}: ubicación inexistente (${rack.locationId}).`,{rackId:rack.id,locationId:rack.locationId}));
     if(!rack.locationId)issues.push(issue('NW-INV-102','warning',`${rack.name||rack.id}: no tiene ubicación física asignada.`,{rackId:rack.id}));
+    const units=Number(rack.rackUnits);
+    if(!Number.isFinite(units)||units<=0)issues.push(issue('NW-INV-014','error',`${rack.name||rack.id}: falta una altura válida en U.`,{rackId:rack.id}));
   }
 
   for(const d of devices){
@@ -120,7 +125,10 @@ function progress(project){
   const p=project||{},locations=arr(p.physicalLocations),racks=arr(p.racks),devices=arr(p.devices),ports=arr(p.ports);
   const rackDeclared=locations.length>0&&locations.every(loc=>{
     const mode=clean(loc&&loc.inventoryRackMode).toLowerCase();
-    return ['rack','wall-cabinet','none'].includes(mode)||racks.some(r=>r&&r.locationId===loc.id);
+    const hasRack=racks.some(r=>r&&r.locationId===loc.id&&Number(r.rackUnits)>0);
+    if(mode==='none')return true;
+    if(['rack','wall-cabinet'].includes(mode))return hasRack;
+    return hasRack;
   });
   const rackDevices=devices.filter(d=>rackIdForDevice(d)).length;
   const powerDocumented=arr(p.pdus).length>0||arr(p.powerConnections).length>0;
