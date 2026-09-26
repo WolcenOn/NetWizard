@@ -19,6 +19,8 @@
     'NetWizardCapabilityRegistry',
     'NetWizardCapabilityUi',
     'NetWizardDeviceCapabilityForm',
+    'NetWizardDesignRequirements',
+    'NetWizardDesignRequirementsUi',
     'NetWizardPhysicalInventory',
     'NetWizardPhysicalInventoryUi',
     'NetWizardResilienceTopology',
