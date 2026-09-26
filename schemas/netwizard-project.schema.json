@@ -1589,6 +1589,16 @@
         "notes": {
           "type": "string",
           "maxLength": 1000
+        },
+        "inventoryRackMode": {
+          "type": "string",
+          "enum": [
+            "",
+            "rack",
+            "wall-cabinet",
+            "none",
+            "unknown"
+          ]
         }
       }
     },
