@@ -347,6 +347,9 @@
           "items": {
             "$ref": "#/$defs/customDeviceModel"
           }
+        },
+        "designRequirements": {
+          "$ref": "#/$defs/designRequirements"
         }
       }
     },
@@ -2148,6 +2151,167 @@
         "notes": {
           "type": "string",
           "maxLength": 1000
+        }
+      }
+    },
+    "designRequirements": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "netwizard-design-requirements-v1"
+        },
+        "capacityPolicy": {
+          "$ref": "#/$defs/designCapacityPolicy"
+        },
+        "rackPolicy": {
+          "$ref": "#/$defs/designRackPolicy"
+        },
+        "locationPlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/designLocationPlan"
+          }
+        }
+      }
+    },
+    "designCapacityPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "portGrowthPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "minFreePorts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rackGrowthPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "minFreeRackUnits": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "designRackPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "patchPanelPorts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 192
+        },
+        "organizerPerSwitch": {
+          "type": "boolean"
+        },
+        "layoutPattern": {
+          "type": "string",
+          "enum": [
+            "patch-manager-switch",
+            "patch-switch",
+            "manual"
+          ]
+        }
+      }
+    },
+    "designLocationPlan": {
+      "type": "object",
+      "required": [
+        "id",
+        "locationId",
+        "rackMode",
+        "capacityPolicy",
+        "rackPolicy",
+        "demands"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "locationId": {
+          "$ref": "#/$defs/id"
+        },
+        "rackMode": {
+          "type": "string",
+          "enum": [
+            "own",
+            "served",
+            "none"
+          ]
+        },
+        "servingLocationId": {
+          "$ref": "#/$defs/idNullable"
+        },
+        "capacityPolicy": {
+          "$ref": "#/$defs/designCapacityPolicy"
+        },
+        "rackPolicy": {
+          "$ref": "#/$defs/designRackPolicy"
+        },
+        "demands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/designDemand"
+          }
+        }
+      }
+    },
+    "designDemand": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "category",
+        "count",
+        "media",
+        "speedMinMbps",
+        "poeRequired",
+        "poeWattsEach"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "media": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "speedMinMbps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "poeRequired": {
+          "type": "boolean"
+        },
+        "poeWattsEach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
         }
       }
     }

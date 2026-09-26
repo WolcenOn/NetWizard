@@ -677,3 +677,67 @@ As-Built -> To-Be -> Change Set
 ```
 
 sin mezclar sus criterios de calidad.
+
+
+## Golden Path de Diseño orientado a ubicación y capacidad
+
+El modo Diseño debe poder empezar sin elegir fabricantes ni switches concretos.
+
+Flujo recomendado:
+
+```text
+Ubicaciones
+    |
+    +-- rack propio
+    +-- servida desde otra ubicación/rack
+    +-- sin infraestructura local
+    |
+    v
+Conexiones necesarias por ubicación
+    |
+    +-- cantidad
+    +-- cobre/fibra
+    +-- velocidad mínima
+    +-- PoE y potencia
+    |
+    v
+Margen de crecimiento
+    |
+    +-- porcentaje de puertos
+    +-- mínimo de puertos libres
+    +-- porcentaje de U
+    +-- mínimo de U reservadas
+    |
+    v
+Dimensionamiento físico
+    |
+    +-- capacidad de switching
+    +-- patch panels
+    +-- panel de fibra
+    +-- organizadores
+    +-- rack(s)
+    |
+    v
+Materialización explícita
+    |
+    v
+devices / ports / racks / rackItems / patchPanels
+```
+
+Los requisitos se guardan en `designRequirements` y **no sustituyen** las entidades canónicas.
+
+Una ubicación con `rackMode: served` aporta su demanda a la ubicación que la sirve. Esto permite modelar una planta, sala o zona sin rack propio y dimensionar el rack de distribución que realmente concentrará sus conexiones.
+
+La materialización debe ser explícita. La propuesta inicial utiliza switches genéricos y queda etiquetada como generada desde requisitos. Antes de producción el usuario debe seleccionar modelos reales del catálogo global o `customDeviceModels`.
+
+Las U de crecimiento se representan como elementos `reserved`: bloquean la colocación automática, pero no forman parte de la BOM física.
+
+Políticas iniciales:
+
+- margen de puertos en porcentaje y mínimo absoluto;
+- margen de rack en porcentaje y mínimo de U;
+- tamaño de patch panel;
+- patrón `patch panel + organizador + switch` o `patch panel + switch`;
+- modo manual sin auto-layout.
+
+El Golden Path de Diseño se oculta cuando `workflow.mode = inventory`.

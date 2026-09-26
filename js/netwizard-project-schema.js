@@ -93,6 +93,7 @@ Mantenimiento:
     for(const key of arrayKeys) p[key] = asArray(p[key]);
     for(const key of ADVANCED_OBJECT_KEYS) p[key] = asObject(p[key]);
     p.workflow = asObject(p.workflow);
+    p.designRequirements = asObject(p.designRequirements);
     p.observedState = p.observedState && typeof p.observedState === 'object' && !Array.isArray(p.observedState) ? p.observedState : null;
     p.vlanMatrix = asObject(p.vlanMatrix);
     p.dhcp = asObject(p.dhcp);
@@ -217,6 +218,66 @@ Mantenimiento:
     });
     x.capabilities=sanitizeLooseValue(asObject(x.capabilities),500);
     return x;
+  }
+
+  function sanitizeDesignCapacityPolicy(raw){
+    const x=asObject(raw);
+    const number=(value,fallback,min,max)=>{
+      const n=Number(value);const safe=Number.isFinite(n)?n:fallback;
+      return Math.max(min,Math.min(max,safe));
+    };
+    return {
+      portGrowthPercent:number(x.portGrowthPercent,20,0,200),
+      minFreePorts:Math.round(number(x.minFreePorts,8,0,10000)),
+      rackGrowthPercent:number(x.rackGrowthPercent,20,0,200),
+      minFreeRackUnits:Math.round(number(x.minFreeRackUnits,4,0,1000))
+    };
+  }
+
+  function sanitizeDesignRackPolicy(raw){
+    const x=asObject(raw);
+    const panelPorts=Math.max(1,Math.min(192,cleanNumber(x.patchPanelPorts,24)));
+    const pattern=cleanText(x.layoutPattern||'patch-manager-switch',40);
+    return {
+      patchPanelPorts:panelPorts,
+      organizerPerSwitch:!(x.organizerPerSwitch===false||x.organizerPerSwitch==='false'||x.organizerPerSwitch===0||x.organizerPerSwitch==='0'),
+      layoutPattern:['patch-manager-switch','patch-switch','manual'].includes(pattern)?pattern:'patch-manager-switch'
+    };
+  }
+
+  function sanitizeDesignRequirements(raw){
+    const source=asObject(raw);
+    return {
+      version:'netwizard-design-requirements-v1',
+      capacityPolicy:sanitizeDesignCapacityPolicy(source.capacityPolicy),
+      rackPolicy:sanitizeDesignRackPolicy(source.rackPolicy),
+      locationPlans:asArray(source.locationPlans).slice(0,1000).map((entry,idx)=>{
+        const x=asObject(entry);
+        const mode=cleanText(x.rackMode||'own',20).toLowerCase();
+        return {
+          id:cleanId(x.id,`location_plan_${idx+1}`),
+          locationId:cleanId(x.locationId,''),
+          rackMode:['own','served','none'].includes(mode)?mode:'own',
+          servingLocationId:cleanId(x.servingLocationId,''),
+          capacityPolicy:sanitizeDesignCapacityPolicy(x.capacityPolicy),
+          rackPolicy:sanitizeDesignRackPolicy(x.rackPolicy),
+          demands:asArray(x.demands).slice(0,1000).map((d,didx)=>{
+            const item=asObject(d);
+            return {
+              id:cleanId(item.id,`demand_${didx+1}`),
+              label:cleanText(item.label||`Necesidad ${didx+1}`,120),
+              category:cleanText(item.category||'other',40),
+              count:Math.max(0,Math.min(100000,cleanNumber(item.count,0))),
+              media:cleanText(item.media||'copper',40).toLowerCase(),
+              speedMinMbps:Math.max(0,Number.isFinite(Number(item.speedMinMbps))?Math.round(Number(item.speedMinMbps)):1000),
+              poeRequired:item.poeRequired===true||item.poeRequired==='true'||item.poeRequired===1||item.poeRequired==='1',
+              poeWattsEach:Math.max(0,Number.isFinite(Number(item.poeWattsEach))?Math.round(Number(item.poeWattsEach)*100)/100:0),
+              notes:cleanText(item.notes||'',500)
+            };
+          }).filter(d=>d.count>0)
+        };
+      }).filter(x=>x.locationId)
+    };
   }
 
   function sanitizeDhcpMap(dhcp){
@@ -556,6 +617,8 @@ Mantenimiento:
       return x;
     });
 
+    p.designRequirements = sanitizeDesignRequirements(p.designRequirements);
+
     p.iot.accessNodes = p.iot.accessNodes.map((d, idx) => {
       const x = sanitizeObjectStrings(d, 800);
       x.id = cleanId(x.id, `iot_access_${idx+1}`);
@@ -621,6 +684,34 @@ Mantenimiento:
     checkIds(p.hosts, 'hosts');
     checkIds(p.customDeviceModels, 'customDeviceModels');
     for(const key of ADVANCED_ARRAY_KEYS) checkIds(p[key], key);
+
+    const locationIds = new Set(p.physicalLocations.map(x=>x.id));
+    const requirementPlans = asArray(asObject(p.designRequirements).locationPlans);
+    const requirementLocations = new Set();
+    for(const plan of requirementPlans){
+      if(!['own','served','none'].includes(cleanText(plan.rackMode||'',20).toLowerCase())) errors.push(`designRequirements ${plan.locationId||plan.id}: rackMode inválido.`);
+      if(requirementLocations.has(plan.locationId)) errors.push(`designRequirements: ubicación duplicada ${plan.locationId}.`);
+      requirementLocations.add(plan.locationId);
+      if(plan.locationId && !locationIds.has(plan.locationId)) errors.push(`designRequirements: ubicación inexistente (${plan.locationId}).`);
+      if(plan.rackMode==='served'){
+        if(!plan.servingLocationId) errors.push(`designRequirements ${plan.locationId}: rackMode served requiere servingLocationId.`);
+        else if(plan.servingLocationId===plan.locationId) errors.push(`designRequirements ${plan.locationId}: una ubicación no puede servirse a sí misma.`);
+        else if(!locationIds.has(plan.servingLocationId)) errors.push(`designRequirements ${plan.locationId}: servingLocationId inexistente (${plan.servingLocationId}).`);
+      }
+      const demandIds=new Set();
+      for(const demand of asArray(plan.demands)){
+        if(demandIds.has(demand.id)) errors.push(`designRequirements ${plan.locationId}: demanda duplicada ${demand.id}.`);
+        demandIds.add(demand.id);
+      }
+    }
+    const reqMap=new Map(requirementPlans.map(x=>[x.locationId,x]));
+    for(const plan of requirementPlans){
+      const seen=new Set();let current=plan;
+      while(current&&current.rackMode==='served'&&current.servingLocationId){
+        if(seen.has(current.locationId)){errors.push(`designRequirements: ciclo de dependencia de rack detectado desde ${plan.locationId}.`);break;}
+        seen.add(current.locationId);current=reqMap.get(current.servingLocationId)||null;
+      }
+    }
 
     const devIds = new Set(p.devices.map(x=>x.id));
     const customModelIds = new Set(p.customDeviceModels.map(x=>x.id));
@@ -764,7 +855,8 @@ Mantenimiento:
       advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
       advancedObjects:ADVANCED_OBJECT_KEYS.slice(),
       workflowModes:WORKFLOW_MODES.slice(),
-      customDeviceModelVersion:'netwizard-custom-device-model-v1'
+      customDeviceModelVersion:'netwizard-custom-device-model-v1',
+      designRequirementsVersion:'netwizard-design-requirements-v1'
     },
     normalizeDeviceKind,
     cleanText,

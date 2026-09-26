@@ -19,6 +19,8 @@ const required = [
   'js/netwizard-v5-panel.js',
   'js/netwizard-v5-controls.js',
   'js/netwizard.js',
+  'js/netwizard-design-requirements.js',
+  'js/netwizard-design-requirements-ui.js',
   'js/netwizard-v5-bridge.js',
   'js/netwizard-config-pipeline.js',
   'js/netwizard-vendor-config-generators.js',
@@ -84,6 +86,9 @@ before('js/netwizard-v5-location-transactions.js', 'js/netwizard.js');
 before('js/netwizard-v5-commands.js', 'js/netwizard.js');
 before('js/netwizard-v5-panel.js', 'js/netwizard.js');
 before('js/netwizard-v5-controls.js', 'js/netwizard.js');
+before('js/netwizard.js', 'js/netwizard-design-requirements.js');
+before('js/netwizard-design-requirements.js', 'js/netwizard-design-requirements-ui.js');
+before('js/netwizard-design-requirements-ui.js', 'js/netwizard-v5-bridge.js');
 before('js/netwizard.js', 'js/netwizard-v5-bridge.js');
 before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-layout-manager.js');
 before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-connectivity-trace.js');
