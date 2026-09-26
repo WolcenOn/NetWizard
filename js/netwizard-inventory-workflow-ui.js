@@ -39,6 +39,31 @@ function select(options,value){
   }
   return s;
 }
+function ensureScript(globalName,src){
+  return new Promise(resolve=>{
+    if(root[globalName]){resolve(root[globalName]);return;}
+    let script=doc().querySelector(`script[data-inventory-runtime="${globalName}"]`);
+    if(script){
+      if(root[globalName])resolve(root[globalName]);
+      else script.addEventListener('load',()=>resolve(root[globalName]||null),{once:true});
+      return;
+    }
+    script=doc().createElement('script');script.src=src;script.async=false;script.defer=false;script.dataset.inventoryRuntime=globalName;
+    script.onload=()=>resolve(root[globalName]||null);
+    script.onerror=()=>{root.console&&root.console.error(`NetWizard: no se pudo cargar ${src}`);resolve(null);};
+    doc().head.appendChild(script);
+  });
+}
+async function ensureInventoryRuntime(){
+  await ensureScript('NetWizardStructuredCabling','./js/netwizard-structured-cabling.js');
+  await ensureScript('NetWizardRackModel','./js/netwizard-rack-model.js');
+  await ensureScript('NetWizardRackUi','./js/netwizard-rack-ui.js');
+  await ensureScript('NetWizardStructuredCablingUi','./js/netwizard-structured-cabling-ui.js');
+  try{root.NetWizardRackUi&&root.NetWizardRackUi.inject&&root.NetWizardRackUi.inject();}catch(e){root.console&&root.console.warn(e);}
+  try{root.NetWizardStructuredCablingUi&&root.NetWizardStructuredCablingUi.inject&&root.NetWizardStructuredCablingUi.inject();}catch(e){root.console&&root.console.warn(e);}
+  render();
+}
+
 function getSnapshot(){return state()?.getSnapshot?.()||null;}
 function modeOf(project){return clean(project&&project.workflow&&project.workflow.mode||'design').toLowerCase()==='inventory'?'inventory':'design';}
 
@@ -232,13 +257,14 @@ function render(){
 function install(){
   if(!doc()||!state())return false;
   ensureWorkflowCard();bindInventoryPage();render();
+  ensureInventoryRuntime();
   doc().addEventListener('nw:project:changed',render);
   return true;
 }
 
 const api={
   version:'netwizard-inventory-workflow-ui-v1',
-  modeOf,setMode,setLocationRackMode,locationRackMode,applyNavigation,render,install
+  modeOf,setMode,setLocationRackMode,locationRackMode,applyNavigation,ensureInventoryRuntime,render,install
 };
 root.NetWizardInventoryWorkflowUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
