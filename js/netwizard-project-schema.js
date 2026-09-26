@@ -689,6 +689,7 @@ Mantenimiento:
     const requirementPlans = asArray(asObject(p.designRequirements).locationPlans);
     const requirementLocations = new Set();
     for(const plan of requirementPlans){
+      if(!['own','served','none'].includes(cleanText(plan.rackMode||'',20).toLowerCase())) errors.push(`designRequirements ${plan.locationId||plan.id}: rackMode inválido.`);
       if(requirementLocations.has(plan.locationId)) errors.push(`designRequirements: ubicación duplicada ${plan.locationId}.`);
       requirementLocations.add(plan.locationId);
       if(plan.locationId && !locationIds.has(plan.locationId)) errors.push(`designRequirements: ubicación inexistente (${plan.locationId}).`);
