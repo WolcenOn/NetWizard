@@ -27,6 +27,10 @@ const required = [
   'js/netwizard-architecture-validator.js',
   'js/netwizard-routing-plan.js',
   'js/netwizard-capability-registry.js',
+  'js/netwizard-poe-model.js',
+  'js/netwizard-structured-cabling.js',
+  'js/netwizard-rack-model.js',
+  'js/netwizard-report-model.js',
   'js/netwizard-physical-inventory.js',
   'js/netwizard-resilience-topology.js',
   'js/netwizard-wan-circuits.js',
@@ -36,6 +40,8 @@ const required = [
   'js/netwizard-ipv6-vrf.js',
   'js/netwizard-failure-simulation.js',
   'js/netwizard-observed-drift.js',
+  'js/netwizard-detailed-report-v2.js',
+  'js/netwizard-detailed-report-v3.js',
   'js/netwizard-cisco-routing-generator.js',
   'js/netwizard-multivendor-routing-generator.js',
   'js/netwizard-firewall-edge-generator.js',
@@ -99,6 +105,11 @@ before('js/netwizard-vendor-config-generators.js', 'js/netwizard-cisco-routing-i
 before('js/netwizard-routing-plan.js', 'js/netwizard-cisco-routing-generator.js');
 before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-integration.js');
 before('js/netwizard-architecture-validator.js', 'js/netwizard-production-gate-architecture.js');
+before('js/netwizard-poe-model.js', 'js/netwizard-report-model.js');
+before('js/netwizard-structured-cabling.js', 'js/netwizard-rack-model.js');
+before('js/netwizard-rack-model.js', 'js/netwizard-report-model.js');
+before('js/netwizard-report-model.js', 'js/netwizard-detailed-report-v3.js');
+before('js/netwizard-detailed-report-v2.js', 'js/netwizard-detailed-report-v3.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-change-set.js');
 before('js/netwizard-change-set.js', 'js/netwizard-incremental-generators.js');
