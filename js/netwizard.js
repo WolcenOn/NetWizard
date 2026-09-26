@@ -44,7 +44,9 @@ const devIcon=d=>NWDevice?NWDevice.icon(d):(devKind(d)==='switch'?'🔀':devKind
 const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 
 // ── CONSTANTS ──
-const STEP_ORDER=['dash','wiz','loc','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
+const DESIGN_STEP_ORDER=['dash','wiz','loc','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
+const INVENTORY_STEP_ORDER=['dash','loc','physical','dev','ports','hosts','links','graphs'];
+const activeStepOrder=()=>S&&S.workflow&&S.workflow.mode==='inventory'?INVENTORY_STEP_ORDER:DESIGN_STEP_ORDER;
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
@@ -979,9 +981,9 @@ document.addEventListener('click',e=>{if($('sb').classList.contains('open')&&!$(
 document.querySelectorAll('.sb-it[data-step]').forEach(el=>el.onclick=()=>{navTo(el.dataset.step);$('sb').classList.remove('open');document.body.classList.remove('ov');});
 document.querySelectorAll('.bnit[data-step]').forEach(el=>el.onclick=()=>navTo(el.dataset.step));
 
-const stepIdx=s=>STEP_ORDER.indexOf(s);
-$('prevBtn').onclick=()=>{const i=stepIdx(S.step);if(i>0)navTo(STEP_ORDER[i-1]);};
-$('nextBtn').onclick=()=>{const i=stepIdx(S.step);if(i<STEP_ORDER.length-1)navTo(STEP_ORDER[i+1]);else alert((window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Exporta en la sección Config.'));};
+const stepIdx=s=>activeStepOrder().indexOf(s);
+$('prevBtn').onclick=()=>{const order=activeStepOrder(),i=order.indexOf(S.step);if(i>0)navTo(order[i-1]);};
+$('nextBtn').onclick=()=>{const order=activeStepOrder(),i=order.indexOf(S.step);if(i>=0&&i<order.length-1)navTo(order[i+1]);else alert(S.workflow&&S.workflow.mode==='inventory'?'Inventario recorrido. Revisa Inventory Gate y genera la documentación As-Built.':(window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Exporta en la sección Config.'));};
 
 // TABS
 document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
@@ -1001,9 +1003,9 @@ function renderNav(){
   const pg=$(`pg-${S.step}`);if(pg)pg.classList.add('on');
   const noFt=['dash','wiz'];
   $('navFt').style.display=noFt.includes(S.step)?'none':'flex';
-  const i=stepIdx(S.step);
+  const order=activeStepOrder(),i=order.indexOf(S.step);
   $('prevBtn').disabled=i<=0;
-  $('nextBtn').textContent=i>=STEP_ORDER.length-1?'Finalizar':'Siguiente →';
+  $('nextBtn').textContent=i>=order.length-1?'Finalizar':'Siguiente →';
   const setSide=(id,count,label)=>{const el=$(id); if(!el)return; clearNode(el); const b=document.createElement('b'); b.textContent=String(count); el.append(b,document.createTextNode(` ${label}`));};
   setSide('sbD',S.devices.length,'dispositivos');
   setSide('sbV',S.vlans.length,'VLANs');
