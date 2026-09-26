@@ -50,6 +50,13 @@ assert.strictEqual(report.progress.requiredComplete,report.progress.requiredTota
 assert.strictEqual(report.progress.percent,100);
 assert.ok(!report.issues.some(x=>/VLAN|DHCP|routing|firewall/i.test(x.message)));
 
+const declaredRackMissing=baseProject();
+declaredRackMissing.racks=[];
+Object.assign(declaredRackMissing.devices[0],{rackId:null,rack:null,rackUnit:null,rackUnits:null});
+const missingRackReport=Gate.run(declaredRackMissing);
+assert.strictEqual(missingRackReport.ok,false);
+assert.ok(missingRackReport.issues.some(x=>x.code==='NW-INV-013'&&x.blocking));
+
 const noRack=baseProject();
 noRack.physicalLocations[0].inventoryRackMode='none';
 noRack.racks=[];
