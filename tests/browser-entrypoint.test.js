@@ -28,6 +28,14 @@ const required = [
   'js/netwizard-routing-plan.js',
   'js/netwizard-capability-registry.js',
   'js/netwizard-physical-inventory.js',
+  'js/netwizard-rack-model.js',
+  'js/netwizard-structured-cabling.js',
+  'js/netwizard-inventory-gate.js',
+  'js/netwizard-rack-ui.js',
+  'js/netwizard-structured-cabling-ui.js',
+  'js/netwizard-inventory-golden-path-ui.js',
+  'js/netwizard-report-model.js',
+  'js/netwizard-detailed-report-v3.js',
   'js/netwizard-resilience-topology.js',
   'js/netwizard-wan-circuits.js',
   'js/netwizard-traffic-capacity.js',
@@ -108,6 +116,13 @@ before('js/netwizard-incremental-generators.js', 'js/netwizard-deployment-runboo
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-deployment-runbook.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-deployment-bundle.js', 'js/netwizard-runtime.js');
+before('js/netwizard-rack-model.js', 'js/netwizard-rack-ui.js');
+before('js/netwizard-structured-cabling.js', 'js/netwizard-structured-cabling-ui.js');
+before('js/netwizard-physical-inventory.js', 'js/netwizard-inventory-gate.js');
+before('js/netwizard-rack-model.js', 'js/netwizard-inventory-gate.js');
+before('js/netwizard-structured-cabling.js', 'js/netwizard-inventory-gate.js');
+before('js/netwizard-inventory-gate.js', 'js/netwizard-inventory-golden-path-ui.js');
+before('js/netwizard-report-model.js', 'js/netwizard-detailed-report-v3.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-runtime.js');
 
 const architectureSource = fs.readFileSync(path.join(root, 'js/netwizard-production-gate-architecture.js'), 'utf8');
