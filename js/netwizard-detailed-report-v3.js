@@ -255,7 +255,7 @@ const SECTION_DEFS=[
  {id:'rack-connections',title:'Conexiones físicas por rack',group:'Conexiones',default:true},
  {id:'findings',title:'Validación e incidencias',group:'Operación',default:true},
  {id:'acceptance',title:'Aceptación y cierre de instalación',group:'Operación',default:true},
- {id:'labels',title:'Hojas de etiquetas imprimibles',group:'Etiquetado',default:false}
+ {id:'labels',title:'Hojas de etiquetas imprimibles',group:'Etiquetado',default:true}
 ];
 const LABEL_PRESETS={
  'a4-3x8':{id:'a4-3x8',label:'A4 · 3 × 8 etiquetas',columns:3,rows:8,heightMm:31,gapMm:3},
@@ -339,10 +339,22 @@ function installationLabelSheets(model,options){
  return`<div class="label-intro"><b>${esc(items.length)} etiquetas</b><span>Plantilla ${esc(preset.label)}. Los cables generan una etiqueta para cada extremo.</span></div>`+pages.map((page,index)=>`<article class="label-sheet-page" style="--label-cols:${preset.columns};--label-rows:${preset.rows};--label-height:${preset.heightMm}mm;--label-gap:${preset.gapMm}mm"><div class="label-sheet-head"><b>Etiquetas de instalación · hoja ${index+1}/${pages.length}</b><span>${esc(preset.label)}</span></div><div class="label-grid">${page.map(label=>`<div class="install-label label-${esc(label.kind)}"><span class="label-kind">${esc(labelName[label.kind]||label.kind)}</span><strong>${esc(label.code)}</strong><b>${esc(label.title)}</b><small>${esc(label.detail||'')}</small>${label.side?`<em>Extremo ${esc(label.side)}</em>`:''}</div>`).join('')}</div></article>`).join('');
 }
 function saveReportPreferences(rootRef,sections,preset){
- try{rootRef.localStorage&&rootRef.localStorage.setItem('netwizard_install_report_options_v1',JSON.stringify({sections:[...sections],labelPreset:preset}));}catch{}
+ try{rootRef.localStorage&&rootRef.localStorage.setItem('netwizard_install_report_options_v2',JSON.stringify({version:2,sections:[...sections],labelPreset:preset}));}catch{}
 }
 function loadReportPreferences(rootRef){
- try{const raw=rootRef.localStorage&&rootRef.localStorage.getItem('netwizard_install_report_options_v1');if(raw){const parsed=JSON.parse(raw);if(parsed&&Array.isArray(parsed.sections))return parsed;}}catch{}
+ try{
+  const current=rootRef.localStorage&&rootRef.localStorage.getItem('netwizard_install_report_options_v2');
+  if(current){const parsed=JSON.parse(current);if(parsed&&Array.isArray(parsed.sections))return parsed;}
+  const legacy=rootRef.localStorage&&rootRef.localStorage.getItem('netwizard_install_report_options_v1');
+  if(legacy){
+   const parsed=JSON.parse(legacy);
+   if(parsed&&Array.isArray(parsed.sections)){
+    const sections=parsed.sections.slice();
+    if(!sections.includes('labels'))sections.push('labels');
+    return{version:2,sections,labelPreset:parsed.labelPreset||'a4-3x8'};
+   }
+  }
+ }catch{}
  return null;
 }
 function build(project,options){
@@ -455,7 +467,7 @@ function inject(){
  b.onclick=()=>{try{openConfigurator(currentProject());}catch(e){root.alert&&root.alert(e.message);}};
  target.parentNode.insertBefore(b,target);
 }
-const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets};
+const api={version:'netwizard-installation-report-v8',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets};
 root.NetWizardInstallationReport=api;
 root.NetWizardCompactReport=api;
 if(!root.NetWizardDetailedReport)root.NetWizardDetailedReport=api;
