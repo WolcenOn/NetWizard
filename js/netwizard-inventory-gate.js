@@ -3,9 +3,12 @@
 'use strict';
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
-const physical=root.NetWizardPhysicalInventory||(typeof require==='function'?require('./netwizard-physical-inventory.js'):null);
-const rack=root.NetWizardRackModel||(typeof require==='function'?require('./netwizard-rack-model.js'):null);
-const cabling=root.NetWizardStructuredCabling||(typeof require==='function'?require('./netwizard-structured-cabling.js'):null);
+const fallbackPhysical=typeof require==='function'?require('./netwizard-physical-inventory.js'):null;
+const fallbackRack=typeof require==='function'?require('./netwizard-rack-model.js'):null;
+const fallbackCabling=typeof require==='function'?require('./netwizard-structured-cabling.js'):null;
+const physical=()=>root.NetWizardPhysicalInventory||fallbackPhysical;
+const rack=()=>root.NetWizardRackModel||fallbackRack;
+const cabling=()=>root.NetWizardStructuredCabling||fallbackCabling;
 function issue(code,severity,blocking,message,extra){return Object.assign({code,severity,blocking:!!blocking,category:'inventory',message},extra||{});}
 function validate(project){
  const p=project||{},issues=[];
@@ -24,9 +27,10 @@ function validate(project){
  for(const pp of arr(p.patchPanels)){
    if(!pp.rackId)issues.push(issue('NW-INV-030','warning',false,`${pp.name||pp.id}: patch panel sin rack asociado.`,{patchPanelId:pp.id}));
  }
- if(physical&&physical.validateProject)issues.push(...arr(physical.validateProject(p).issues));
- if(rack&&rack.validate)issues.push(...arr(rack.validate(p).issues));
- if(cabling&&cabling.validate)issues.push(...arr(cabling.validate(p).issues));
+ const phy=physical(),rk=rack(),cab=cabling();
+ if(phy&&phy.validateProject)issues.push(...arr(phy.validateProject(p).issues));
+ if(rk&&rk.validate)issues.push(...arr(rk.validate(p).issues));
+ if(cab&&cab.validate)issues.push(...arr(cab.validate(p).issues));
  const seen=new Set(),dedup=[];
  for(const i of issues){const k=[i.code,i.deviceId,i.portId,i.rackId,i.pduId,i.patchPanelId,i.message].join('|');if(seen.has(k))continue;seen.add(k);dedup.push(i);}
  const blocking=dedup.filter(i=>i.blocking||i.severity==='error').length;
