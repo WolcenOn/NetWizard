@@ -6,9 +6,10 @@
 
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
-const PHYSICAL=root.NetWizardPhysicalInventory||(typeof require==='function'?require('./netwizard-physical-inventory.js'):null);
-const RACK=root.NetWizardRackModel||(typeof require==='function'?require('./netwizard-rack-model.js'):null);
-const CABLING=root.NetWizardStructuredCabling||(typeof require==='function'?require('./netwizard-structured-cabling.js'):null);
+function tryRequire(path){try{return typeof require==='function'?require(path):null;}catch{return null;}}
+function physicalApi(){return root.NetWizardPhysicalInventory||tryRequire('./netwizard-physical-inventory.js');}
+function rackApi(){return root.NetWizardRackModel||tryRequire('./netwizard-rack-model.js');}
+function cablingApi(){return root.NetWizardStructuredCabling||tryRequire('./netwizard-structured-cabling.js');}
 
 function issue(code,severity,message,extra){
   return Object.assign({
@@ -134,9 +135,10 @@ function progress(project){
 }
 function run(project){
   const p=project||{};
-  const physical=PHYSICAL&&typeof PHYSICAL.validateProject==='function'?PHYSICAL.validateProject(p):{issues:[]};
-  const rack=RACK&&typeof RACK.validate==='function'?RACK.validate(p):{issues:[]};
-  const cabling=CABLING&&typeof CABLING.validate==='function'?CABLING.validate(p):{issues:[]};
+  const physicalModule=physicalApi(),rackModule=rackApi(),cablingModule=cablingApi();
+  const physical=physicalModule&&typeof physicalModule.validateProject==='function'?physicalModule.validateProject(p):{issues:[]};
+  const rack=rackModule&&typeof rackModule.validate==='function'?rackModule.validate(p):{issues:[]};
+  const cabling=cablingModule&&typeof cablingModule.validate==='function'?cablingModule.validate(p):{issues:[]};
   const issues=mergeIssues(documentaryIssues(p),physical.issues,rack.issues,cabling.issues);
   const blocking=issues.filter(i=>i&&(i.blocking||i.severity==='error'));
   const warnings=issues.filter(i=>i&&i.severity==='warning');
