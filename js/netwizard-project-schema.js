@@ -282,6 +282,9 @@ Mantenimiento:
       x.serialNumber = cleanText(x.serialNumber || '', 160);
       x.assetTag = cleanText(x.assetTag || '', 120);
       const modelSource = cleanText(x.modelSource || 'manual', 20).toLowerCase();
+      if(x.modelSource != null && !['manual','global','custom'].includes(modelSource)){
+        workflowWarnings.push(`Dispositivo ${x.name}: modelSource desconocido (${cleanText(x.modelSource,40)}); se usa manual.`);
+      }
       x.modelSource = ['manual','global','custom'].includes(modelSource) ? modelSource : 'manual';
       x.modelRef = cleanId(x.modelRef || '', '');
       const poeBudget = Number(x.poeBudgetW != null ? x.poeBudgetW : x.poeBudgetWatts);
@@ -290,7 +293,7 @@ Mantenimiento:
       x.rackId = cleanId(x.rackId || x.rack, '');
       x.locationId = cleanId(x.locationId || x.physicalLocationId, '');
       x.physicalLocation = cleanText(x.physicalLocation || '', 160);
-      for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts']){
+      for(const key of ['rackUnit','rackUnits','weightKg','powerDrawWatts','powerMaxWatts']){
         if(x[key] == null || x[key] === '') { delete x[key]; continue; }
         const n = Number(x[key]);
         if(Number.isFinite(n) && n >= 0) x[key] = Math.round(n * 100) / 100;
