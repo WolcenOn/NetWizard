@@ -255,7 +255,7 @@ const SECTION_DEFS=[
  {id:'rack-connections',title:'Conexiones físicas por rack',group:'Conexiones',default:true},
  {id:'findings',title:'Validación e incidencias',group:'Operación',default:true},
  {id:'acceptance',title:'Aceptación y cierre de instalación',group:'Operación',default:true},
- {id:'labels',title:'Hojas de etiquetas imprimibles',group:'Etiquetado',default:false}
+ {id:'labels',title:'Hojas de etiquetas imprimibles',group:'Etiquetado',default:true}
 ];
 const LABEL_PRESETS={
  'a4-3x8':{id:'a4-3x8',label:'A4 · 3 × 8 etiquetas',columns:3,rows:8,heightMm:31,gapMm:3},
@@ -339,7 +339,7 @@ function installationLabelSheets(model,options){
  return`<div class="label-intro"><b>${esc(items.length)} etiquetas</b><span>Plantilla ${esc(preset.label)}. Los cables generan una etiqueta para cada extremo.</span></div>`+pages.map((page,index)=>`<article class="label-sheet-page" style="--label-cols:${preset.columns};--label-rows:${preset.rows};--label-height:${preset.heightMm}mm;--label-gap:${preset.gapMm}mm"><div class="label-sheet-head"><b>Etiquetas de instalación · hoja ${index+1}/${pages.length}</b><span>${esc(preset.label)}</span></div><div class="label-grid">${page.map(label=>`<div class="install-label label-${esc(label.kind)}"><span class="label-kind">${esc(labelName[label.kind]||label.kind)}</span><strong>${esc(label.code)}</strong><b>${esc(label.title)}</b><small>${esc(label.detail||'')}</small>${label.side?`<em>Extremo ${esc(label.side)}</em>`:''}</div>`).join('')}</div></article>`).join('');
 }
 function saveReportPreferences(rootRef,sections,preset){
- try{rootRef.localStorage&&rootRef.localStorage.setItem('netwizard_install_report_options_v1',JSON.stringify({sections:[...sections],labelPreset:preset}));}catch{}
+ try{rootRef.localStorage&&rootRef.localStorage.setItem('netwizard_install_report_options_v1',JSON.stringify({selectionVersion:2,sections:[...sections],labelPreset:preset}));}catch{}
 }
 function loadReportPreferences(rootRef){
  try{const raw=rootRef.localStorage&&rootRef.localStorage.getItem('netwizard_install_report_options_v1');if(raw){const parsed=JSON.parse(raw);if(parsed&&Array.isArray(parsed.sections))return parsed;}}catch{}
@@ -406,14 +406,16 @@ function openConfigurator(project){
  if(!root.document)return openReport(project,{});
  const existing=root.document.getElementById('nwInstallReportConfigurator');if(existing)existing.remove();
  const prefs=loadReportPreferences(root)||{};
- const selected=new Set(arr(prefs.sections).length?prefs.sections:SECTION_DEFS.filter(x=>x.default).map(x=>x.id));
+ const savedSections=arr(prefs.sections);const migratedSections=savedSections.length&&!prefs.selectionVersion?[...new Set([...savedSections,'labels'])]:savedSections;const selected=new Set(migratedSections.length?migratedSections:SECTION_DEFS.filter(x=>x.default).map(x=>x.id));
  const overlay=root.document.createElement('div');overlay.id='nwInstallReportConfigurator';overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.74);display:grid;place-items:center;padding:20px';
- const card=root.document.createElement('div');card.style.cssText='width:min(860px,96vw);max-height:92vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:18px';
+ const card=root.document.createElement('div');card.style.cssText='width:min(920px,96vw);max-height:92vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:18px';
  const title=root.document.createElement('h2');title.textContent='Configurar informe de instalación';title.style.margin='0 0 6px';
- const hint=root.document.createElement('p');hint.textContent='Selecciona las secciones que quieres incluir. Las etiquetas pueden generarse junto al informe o como documento independiente para papel adhesivo.';hint.style.cssText='margin:0 0 14px;color:#94a3b8;font-size:13px';
- card.append(title,hint);
+ const hint=root.document.createElement('p');hint.textContent='Selecciona las secciones que quieres incluir. Las tarjetas resaltadas se incluirán. Las etiquetas forman parte del informe técnico y también pueden abrirse por separado.';hint.style.cssText='margin:0 0 10px;color:#94a3b8;font-size:13px';
+ const selectionSummary=root.document.createElement('div');selectionSummary.id='nwInstallReportSelectionSummary';selectionSummary.style.cssText='margin:0 0 14px;padding:9px 11px;border:1px solid #334155;border-radius:10px;background:#111827;color:#cbd5e1;font-size:12px';
+ card.append(title,hint,selectionSummary);
  const presetBar=root.document.createElement('div');presetBar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px';
- const presetButton=(label,ids)=>{const b=root.document.createElement('button');b.type='button';b.className='btn bs bsm';b.textContent=label;b.addEventListener('click',()=>{selected.clear();ids.forEach(id=>selected.add(id));card.querySelectorAll('input[data-report-section]').forEach(cb=>{cb.checked=selected.has(cb.dataset.reportSection);});});return b;};
+ const refreshSelection=()=>{card.querySelectorAll('label[data-report-option]').forEach(lab=>{const cb=lab.querySelector('input[data-report-section]');const on=!!(cb&&cb.checked);lab.style.background=on?'#172554':'#111827';lab.style.borderColor=on?'#3b82f6':'#334155';lab.style.boxShadow=on?'inset 0 0 0 1px #3b82f6':'none';lab.style.opacity=on?'1':'.78';});selectionSummary.textContent=`${selected.size} sección(es) seleccionadas · Etiquetas: ${selected.has('labels')?'incluidas':'no incluidas'}`;};
+ const presetButton=(label,ids)=>{const b=root.document.createElement('button');b.type='button';b.className='btn bs bsm';b.textContent=label;b.addEventListener('click',()=>{selected.clear();ids.forEach(id=>selected.add(id));card.querySelectorAll('input[data-report-section]').forEach(cb=>{cb.checked=selected.has(cb.dataset.reportSection);});refreshSelection();});return b;};
  presetBar.append(
    presetButton('Todo',SECTION_DEFS.map(x=>x.id)),
    presetButton('Informe técnico',SECTION_DEFS.filter(x=>x.default).map(x=>x.id)),
@@ -428,8 +430,8 @@ function openConfigurator(project){
    const lg=root.document.createElement('legend');lg.textContent=group;lg.style.cssText='padding:0 6px;font-weight:800;color:#93c5fd';fs.appendChild(lg);
    const grid=root.document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px';
    for(const def of defs){
-     const lab=root.document.createElement('label');lab.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:7px;border-radius:7px;background:#111827';
-     const cb=root.document.createElement('input');cb.type='checkbox';cb.dataset.reportSection=def.id;cb.checked=selected.has(def.id);cb.addEventListener('change',()=>cb.checked?selected.add(def.id):selected.delete(def.id));
+     const lab=root.document.createElement('label');lab.dataset.reportOption=def.id;lab.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:9px;border:1px solid #334155;border-radius:9px;background:#111827;cursor:pointer;transition:.12s ease';
+     const cb=root.document.createElement('input');cb.type='checkbox';cb.dataset.reportSection=def.id;cb.checked=selected.has(def.id);cb.style.marginTop='2px';cb.addEventListener('change',()=>{cb.checked?selected.add(def.id):selected.delete(def.id);refreshSelection();});
      const span=root.document.createElement('span');span.textContent=def.title;lab.append(cb,span);grid.appendChild(lab);
    }
    fs.appendChild(grid);card.appendChild(fs);
@@ -438,13 +440,13 @@ function openConfigurator(project){
  const labelText=root.document.createElement('div');const lb=root.document.createElement('b');lb.textContent='Formato de etiquetas';const ls=root.document.createElement('div');ls.textContent='Elige según el papel adhesivo. Después puedes ajustar la escala al 100 % en el diálogo de impresión.';ls.style.cssText='font-size:11px;color:#94a3b8;margin-top:3px';labelText.append(lb,ls);
  const preset=root.document.createElement('select');preset.style.cssText='width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #475569';
  for(const p of Object.values(LABEL_PRESETS)){const opt=root.document.createElement('option');opt.value=p.id;opt.textContent=p.label;if(p.id===(prefs.labelPreset||'a4-3x8'))opt.selected=true;preset.appendChild(opt);}
- labelRow.append(labelText,preset);card.appendChild(labelRow);
- const actions=root.document.createElement('div');actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px';
+ labelRow.append(labelText,preset);card.appendChild(labelRow);refreshSelection();
+ const actions=root.document.createElement('div');actions.style.cssText='position:sticky;bottom:-18px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:14px -18px -18px;padding:12px 18px;background:#0b1220;border-top:1px solid #334155';
  const btn=(text,fn,primary)=>{const b=root.document.createElement('button');b.type='button';b.className='btn '+(primary?'bp':'bs')+' bsm';b.textContent=text;b.addEventListener('click',fn);return b;};
  actions.append(
    btn('Cancelar',()=>overlay.remove(),false),
    btn('🏷 Abrir solo etiquetas',()=>{saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:['labels'],labelsOnly:true,labelPreset:preset.value});},false),
-   btn('🧰 Generar informe',()=>{if(!selected.size){root.alert&&root.alert('Selecciona al menos una sección.');return;}saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:[...selected],labelPreset:preset.value});},true)
+   btn('🧰 Generar informe',()=>{if(!selected.size){root.alert&&root.alert('Selecciona al menos una sección.');return;}saveReportPreferences(root,selected,preset.value);overlay.remove();openReport(project,{sections:[...selected],includeLabels:selected.has('labels'),labelPreset:preset.value});},true)
  );
  card.appendChild(actions);overlay.appendChild(card);overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});root.document.body.appendChild(overlay);return overlay;
 }
