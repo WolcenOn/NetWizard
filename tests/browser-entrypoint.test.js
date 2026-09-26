@@ -116,6 +116,7 @@ before('js/netwizard-incremental-generators.js', 'js/netwizard-deployment-runboo
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-runbook.js');
 before('js/netwizard-deployment-runbook.js', 'js/netwizard-deployment-bundle.js');
 before('js/netwizard-deployment-bundle.js', 'js/netwizard-runtime.js');
+before('js/netwizard-structured-cabling.js', 'js/netwizard-rack-model.js');
 before('js/netwizard-rack-model.js', 'js/netwizard-rack-ui.js');
 before('js/netwizard-structured-cabling.js', 'js/netwizard-structured-cabling-ui.js');
 before('js/netwizard-physical-inventory.js', 'js/netwizard-inventory-gate.js');
