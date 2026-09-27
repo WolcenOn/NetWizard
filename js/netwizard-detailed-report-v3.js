@@ -231,6 +231,27 @@ function workSequenceReport(){
  ];
  return`<div class="work-sequence">${steps.map(([n,t,d])=>`<div class="work-step"><b>${esc(n)}</b><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></div>`).join('')}</div>`;
 }
+function interventionReport(project){
+ const pkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ if(!pkg||!pkg.ok)return'<p class="empty">Este proyecto no contiene un plan de intervención derivado de As-Built.</p>';
+ const checklist=table(['Hecho','#','Área','Acción','Detalle'],arr(pkg.checklist).map(a=>['☐',a.order,a.category||'—',a.title||a.type,a.details||'—']),'No hay acciones físicas pendientes.');
+ const compare=table(['#','Área','Cambio','Detalle'],arr(pkg.beforeAfter).map(r=>[r.order,r.category||'—',r.title||r.type,r.details||'—']),'No hay diferencias físicas.');
+ const bomBlock=(title,items,sign)=>`<h3>${esc(title)}</h3>${table(['Δ','Tipo','Cantidad','Material'],arr(items).map(x=>[sign,x.kind||'Material',x.quantity||1,x.description||'—']),'Sin elementos.')}`;
+ return`<div class="readiness-grid">
+   <div class="readiness-card"><span>Acciones</span><b>${esc(pkg.counts.actions)}</b><small>intervenciones físicas</small></div>
+   <div class="readiness-card"><span>Añadir</span><b>${esc(pkg.counts.addMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Retirar</span><b>${esc(pkg.counts.removeMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Reutilizar</span><b>${esc(pkg.counts.reuseMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Revisar</span><b>${esc(pkg.counts.reviewMaterials)}</b><small>decisiones manuales</small></div>
+  </div>
+  <h3>Checklist de trabajo</h3>${checklist}
+  <h3>Comparativa As-Built → To-Be</h3>${compare}
+  ${bomBlock('BOM diferencial · material a añadir',pkg.bom.additions,'+')}
+  ${bomBlock('BOM diferencial · material a retirar',pkg.bom.removals,'−')}
+  ${bomBlock('Material reutilizado',pkg.bom.reuse,'=')}
+  ${bomBlock('Revisión manual',pkg.bom.review,'?')}
+  <div class="co co-ac"><b>Cierre:</b> actualizar el As-Built después de ejecutar y verificar la intervención real.</div>`;
+}
 function acceptanceReport(project,model){
  const racks=arr(model.rackSummaries);
  if(!racks.length)return'<p class="empty">No hay racks para hoja de aceptación.</p>';
@@ -457,7 +478,7 @@ function inject(){
  b.onclick=()=>{try{openConfigurator(currentProject());}catch(e){root.alert&&root.alert(e.message);}};
  target.parentNode.insertBefore(b,target);
 }
-const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets};
+const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets,interventionReport};
 root.NetWizardInstallationReport=api;
 root.NetWizardCompactReport=api;
 if(!root.NetWizardDetailedReport)root.NetWizardDetailedReport=api;
