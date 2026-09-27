@@ -182,6 +182,27 @@ Mantenimiento:
   }
 
 
+  function sanitizeInterventionBaseline(raw){
+    const source=asObject(raw);
+    const sanitizeList=(value,prefix)=>asArray(value).slice(0,5000).map((entry,idx)=>{
+      const x=sanitizeObjectStrings(entry,500);
+      x.id=cleanId(x.id,`${prefix}_${idx+1}`);
+      x.name=cleanText(x.name||'',160);
+      return x;
+    });
+    return {
+      version:'netwizard-physical-intervention-baseline-v1',
+      capturedAt:cleanText(source.capturedAt||'',80),
+      racks:sanitizeList(source.racks,'baseline_rack'),
+      devices:sanitizeList(source.devices,'baseline_device'),
+      pdus:sanitizeList(source.pdus,'baseline_pdu'),
+      powerConnections:sanitizeList(source.powerConnections,'baseline_power'),
+      cableRuns:sanitizeList(source.cableRuns,'baseline_cable'),
+      patchConnections:sanitizeList(source.patchConnections,'baseline_patch'),
+      hostOutletConnections:sanitizeList(source.hostOutletConnections,'baseline_hostpatch')
+    };
+  }
+
   function sanitizeCustomDeviceModel(raw, idx){
     const x=sanitizeObjectStrings(raw, 1000);
     x.id=cleanId(x.id,`custom_model_${idx+1}`);
@@ -336,8 +357,15 @@ Mantenimiento:
         createdAt:cleanText(derivedFromSource.createdAt || '', 80)
       };
       p.workflow.designPhase = 'to-be';
+      const baselineSource=asObject(p.workflow.interventionBaseline);
+      if(Object.keys(baselineSource).length){
+        p.workflow.interventionBaseline=sanitizeInterventionBaseline(baselineSource);
+      }else{
+        delete p.workflow.interventionBaseline;
+      }
     }else{
       delete p.workflow.derivedFrom;
+      delete p.workflow.interventionBaseline;
       if(p.workflow.designPhase != null) p.workflow.designPhase = cleanText(p.workflow.designPhase, 40);
     }
     p.dhcp = sanitizeDhcpMap(p.dhcp);
@@ -746,6 +774,15 @@ Mantenimiento:
       }
     }
 
+    const workflowContract=asObject(p.workflow);
+    const interventionBaseline=asObject(workflowContract.interventionBaseline);
+    if(Object.keys(interventionBaseline).length && interventionBaseline.version!=='netwizard-physical-intervention-baseline-v1'){
+      errors.push('workflow.interventionBaseline.version no soportada.');
+    }
+    if(Object.keys(interventionBaseline).length && asObject(workflowContract.derivedFrom).type!=='inventory'){
+      errors.push('workflow.interventionBaseline solo es válido en diseños derivados de inventario.');
+    }
+
     const devIds = new Set(p.devices.map(x=>x.id));
     const customModelIds = new Set(p.customDeviceModels.map(x=>x.id));
     const portIds = new Set(p.ports.map(x=>x.id));
@@ -896,7 +933,8 @@ Mantenimiento:
       workflowModes:WORKFLOW_MODES.slice(),
       designDispositions:DESIGN_DISPOSITIONS.slice(),
       customDeviceModelVersion:'netwizard-custom-device-model-v1',
-      designRequirementsVersion:'netwizard-design-requirements-v1'
+      designRequirementsVersion:'netwizard-design-requirements-v1',
+      physicalInterventionBaselineVersion:'netwizard-physical-intervention-baseline-v1'
     },
     normalizeDeviceKind,
     cleanText,
