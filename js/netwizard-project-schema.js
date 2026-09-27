@@ -347,6 +347,22 @@ Mantenimiento:
       ...sanitizeObjectStrings(workflowSource, 240),
       mode: WORKFLOW_MODES.includes(workflowMode) ? workflowMode : 'design'
     };
+    const updatedFromSource = asObject(asObject(p.workflow).updatedFrom);
+    if(cleanText(updatedFromSource.type, 60).toLowerCase()==='intervention-closeout'){
+      p.workflow.updatedFrom = {
+        type:'intervention-closeout',
+        sourceInventorySnapshotId:cleanId(updatedFromSource.sourceInventorySnapshotId || '', ''),
+        sourceProjectName:cleanText(updatedFromSource.sourceProjectName || '', 160),
+        sourceSchemaVersion:cleanText(updatedFromSource.sourceSchemaVersion || '', 40),
+        designSnapshotId:cleanId(updatedFromSource.designSnapshotId || '', ''),
+        designProjectName:cleanText(updatedFromSource.designProjectName || '', 160),
+        baselineCapturedAt:cleanText(updatedFromSource.baselineCapturedAt || '', 80),
+        closedAt:cleanText(updatedFromSource.closedAt || '', 80),
+        interventionActionCount:Number.isFinite(Number(updatedFromSource.interventionActionCount)) ? Math.max(0,Math.round(Number(updatedFromSource.interventionActionCount))) : 0
+      };
+    }else{
+      delete p.workflow.updatedFrom;
+    }
     const derivedFromSource = asObject(asObject(p.workflow).derivedFrom);
     if(cleanText(derivedFromSource.type, 40).toLowerCase()==='inventory'){
       p.workflow.derivedFrom = {
@@ -775,6 +791,11 @@ Mantenimiento:
     }
 
     const workflowContract=asObject(p.workflow);
+    const closeoutContract=asObject(workflowContract.updatedFrom);
+    if(Object.keys(closeoutContract).length && closeoutContract.type!=='intervention-closeout'){
+      errors.push('workflow.updatedFrom.type no soportado.');
+    }
+
     const interventionBaseline=asObject(workflowContract.interventionBaseline);
     if(Object.keys(interventionBaseline).length && interventionBaseline.version!=='netwizard-physical-intervention-baseline-v1'){
       errors.push('workflow.interventionBaseline.version no soportada.');
@@ -934,7 +955,8 @@ Mantenimiento:
       designDispositions:DESIGN_DISPOSITIONS.slice(),
       customDeviceModelVersion:'netwizard-custom-device-model-v1',
       designRequirementsVersion:'netwizard-design-requirements-v1',
-      physicalInterventionBaselineVersion:'netwizard-physical-intervention-baseline-v1'
+      physicalInterventionBaselineVersion:'netwizard-physical-intervention-baseline-v1',
+      interventionCloseoutVersion:'netwizard-intervention-closeout-v1'
     },
     normalizeDeviceKind,
     cleanText,
