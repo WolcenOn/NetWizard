@@ -370,6 +370,9 @@
                   "maxLength": 80
                 }
               }
+            },
+            "interventionBaseline": {
+              "$ref": "#/$defs/physicalInterventionBaseline"
             }
           }
         },
@@ -2362,6 +2365,89 @@
         "notes": {
           "type": "string",
           "maxLength": 500
+        }
+      }
+    },
+    "physicalInterventionBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "capturedAt",
+        "racks",
+        "devices",
+        "pdus",
+        "powerConnections",
+        "cableRuns",
+        "patchConnections",
+        "hostOutletConnections"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "netwizard-physical-intervention-baseline-v1"
+        },
+        "capturedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "racks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "pdus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "powerConnections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "cableRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "patchConnections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        },
+        "hostOutletConnections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/physicalBaselineRecord"
+          }
+        }
+      }
+    },
+    "physicalBaselineRecord": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 160
         }
       }
     }

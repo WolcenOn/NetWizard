@@ -98,6 +98,9 @@ function renderInventoryAction(project){
 
 function renderDerivedDesign(project){
   const B=bridge(),summary=B?B.summarize(project):{counts:{},devices:{}},changeSet=B?B.buildPhysicalChangeSet(project):{actionable:[]};
+  const physicalPlan=root.NetWizardPhysicalInterventionPlan&&root.NetWizardPhysicalInterventionPlan.build
+    ? root.NetWizardPhysicalInterventionPlan.build(project)
+    : null;
   const card=make('div','card nw-card-wide');
   const h=make('div','card-h');
   h.append(make('div','card-t','🔁 Diseño derivado del As-Built'),make('span','b bac',summaryText(summary)));card.append(h);
@@ -125,8 +128,9 @@ function renderDerivedDesign(project){
   table.append(tbody);wrap.append(table);card.append(wrap);
 
   const actionable=arr(changeSet.actionable);
-  const note=make('div',actionable.length?'co co-yw':'co co-gn',
-    actionable.length?`Plan físico: ${actionable.length} equipo(s) requieren intervención.`:'Plan físico: todos los equipos inventariados se mantienen.'
+  const physicalCount=physicalPlan&&physicalPlan.ok?Number(physicalPlan.counts&&physicalPlan.counts.total||0):actionable.length;
+  const note=make('div',physicalCount?'co co-yw':'co co-gn',
+    physicalCount?`Plan físico: ${physicalCount} acción(es) de intervención detectadas. Revísalas en Inventario físico.`:'Plan físico: no hay diferencias físicas detectadas frente al As-Built.'
   );card.append(note);
   const actions=make('div','brow');
   const back=make('button','btn bs','↩ Volver al As-Built');back.type='button';back.onclick=restoreAsBuilt;actions.append(back);
