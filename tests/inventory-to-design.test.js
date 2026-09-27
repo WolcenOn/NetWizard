@@ -73,6 +73,7 @@ assert.strictEqual(badDisposition.ok,false);
 assert.ok(badDisposition.errors.some(x=>x.includes('designDisposition inválido')));
 
 const external=JSON.parse(fs.readFileSync(path.join(__dirname,'..','schemas','netwizard-project.schema.json'),'utf8'));
+assert.deepStrictEqual(Schema.model.designDispositions,['keep','retire','replace','add']);
 assert.deepStrictEqual(external.$defs.device.properties.designDisposition.enum,['keep','retire','replace','add']);
 assert.strictEqual(external.$defs.project.properties.workflow.properties.derivedFrom.properties.type.const,'inventory');
 
