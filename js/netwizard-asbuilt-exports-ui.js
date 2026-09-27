@@ -1,0 +1,35 @@
+/* NetWizard As-Built Export Pack UI v1 */
+(function initNetWizardAsBuiltExportsUi(root){
+'use strict';
+const doc=()=>root.document||null;
+const state=()=>root.NetWizardState||null;
+const exp=()=>root.NetWizardAsBuiltExports||null;
+const docs=()=>root.NetWizardDocumentationUtils||null;
+function el(tag,cls,text){const n=doc().createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
+function snapshot(){return state()?.getSnapshot?.()||{};}
+function safeBase(p){const raw=String(p&&p.projName||'netwizard').normalize('NFD').replace(/[\u0300-\u036f]/g,'');return raw.replace(/[^A-Za-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'netwizard';}
+function download(name,text,mime){const D=docs();if(D&&D.downloadText)return D.downloadText(name,text,mime);return false;}
+function render(){
+  const E=exp(),p=snapshot(),box=el('div','card nw-card-wide'),h=el('div','card-h');
+  h.append(el('div','card-t','📦 Export Pack · Inventario / As-Built'));box.append(h);
+  box.append(el('p','hint','Exportaciones operativas por dominio físico. Reutiliza el inventario canónico y no crea copias persistentes.'));
+  if(!E)return box;
+  const pack=E.buildCsvPack(p),stats=el('div','stats');
+  for(const [name,count] of Object.entries(pack.manifest.sheets)){const s=el('div');s.append(el('b','',count),el('span','',name));stats.append(s);}box.append(stats);
+  const row=el('div','brow'),base=safeBase(p);
+  const defs=[['devices','Equipos'],['ports','Puertos'],['cables','Cableado'],['power','Alimentación'],['racks','Racks'],['bom','BOM']];
+  for(const [key,label] of defs){const b=el('button','btn bs',`⬇ ${label} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
+  const all=el('button','btn bp','⬇ Índice Markdown');all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
+  box.append(row);
+  if(pack.tables.differentialBom.length)box.append(el('div','co co-ac',`BOM diferencial disponible: ${pack.tables.differentialBom.length} filas.`));
+  return box;
+}
+function inject(){
+  const d=doc();if(!d)return;const host=d.getElementById('pg-physical');if(!host)return;
+  let mount=d.getElementById('asBuiltExportPackMount');
+  if(!mount){mount=d.createElement('div');mount.id='asBuiltExportPackMount';host.append(mount);}
+  mount.textContent='';mount.append(render());
+}
+root.NetWizardAsBuiltExportsUi={version:'netwizard-asbuilt-export-pack-ui-v1',render,inject};
+if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));else setTimeout(inject,0);root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
+})(typeof window!=='undefined'?window:globalThis);
