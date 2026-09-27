@@ -73,7 +73,8 @@ assert.strictEqual(finalProject.workflow.updatedFrom.closedAt,'2026-09-27T10:00:
 assert.ok(!('derivedFrom' in finalProject.workflow));
 assert.ok(!('interventionBaseline' in finalProject.workflow));
 assert.ok(!('designPhase' in finalProject.workflow));
-assert.ok(!('designRequirements' in finalProject));
+assert.ok(finalProject.designRequirements);
+assert.deepStrictEqual(finalProject.designRequirements.locationPlans,[],'El As-Built no debe conservar demandas To-Be activas');
 
 assert.strictEqual(finalProject.devices.some(d=>d.id==='sw-old'),false);
 assert.strictEqual(finalProject.devices.some(d=>d.id==='sw-new'),true);
