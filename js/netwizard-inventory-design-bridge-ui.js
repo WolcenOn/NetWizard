@@ -116,6 +116,7 @@ function renderDerivedDesign(project){
     tr.append(make('td','',[d.rackId||d.rack,d.rackUnit!=null?`U${d.rackUnit}`:null].filter(Boolean).join(' · ')||'—'));
     const td=make('td'),sel=make('select');
     for(const value of ['keep','retire','replace','add']){
+      if(hasOrigin&&value==='add')continue;
       if(!hasOrigin&&value!=='add')continue;
       const opt=make('option','',dispositionLabel(value));opt.value=value;if(value===current)opt.selected=true;sel.append(opt);
     }
