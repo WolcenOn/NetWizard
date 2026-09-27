@@ -28,6 +28,7 @@ Mantenimiento:
   ];
   const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy','deployment'];
   const WORKFLOW_MODES = Object.freeze(['inventory','design']);
+  const DESIGN_DISPOSITIONS = Object.freeze(['keep','retire','replace','add']);
 
   function clone(value){
     return JSON.parse(JSON.stringify(value == null ? null : value));
@@ -359,7 +360,7 @@ Mantenimiento:
       x.originRef = cleanId(x.originRef || '', '');
       const derivedFromInventory = asObject(asObject(p.workflow).derivedFrom).type === 'inventory';
       const disposition = cleanText(x.designDisposition || '', 20).toLowerCase();
-      if(x.designDisposition != null && !['keep','retire','replace','add'].includes(disposition)){
+      if(x.designDisposition != null && !DESIGN_DISPOSITIONS.includes(disposition)){
         workflowWarnings.push(`Dispositivo ${x.name}: designDisposition desconocido (${cleanText(x.designDisposition,40)}).`);
       }
       if(derivedFromInventory || x.designDisposition != null){
@@ -760,7 +761,7 @@ Mantenimiento:
       if(!['manual','global','custom'].includes(source)) errors.push(`Dispositivo ${device.name || device.id}: modelSource inválido.`);
       if(source==='custom' && !device.modelRef) errors.push(`Dispositivo ${device.name || device.id}: modelSource custom requiere modelRef.`);
       if(source==='custom' && device.modelRef && !customModelIds.has(device.modelRef)) errors.push(`Dispositivo ${device.name || device.id}: modelRef personalizado inexistente (${device.modelRef}).`);
-      if(device.designDisposition != null && !['keep','retire','replace','add'].includes(cleanText(device.designDisposition,20).toLowerCase())) errors.push(`Dispositivo ${device.name || device.id}: designDisposition inválido.`);
+      if(device.designDisposition != null && !DESIGN_DISPOSITIONS.includes(cleanText(device.designDisposition,20).toLowerCase())) errors.push(`Dispositivo ${device.name || device.id}: designDisposition inválido.`);
       if(device.designDisposition==='add' && device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: marcado como add pero conserva originRef.`);
       if(device.designDisposition!=='add' && asObject(asObject(p.workflow).derivedFrom).type==='inventory' && !device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: no tiene originRef dentro de un diseño derivado de inventario.`);
       if(device.replacementDeviceRef && !devIds.has(device.replacementDeviceRef)) errors.push(`Dispositivo ${device.name || device.id}: replacementDeviceRef inexistente (${device.replacementDeviceRef}).`);
@@ -890,6 +891,7 @@ Mantenimiento:
       advancedArrays:ADVANCED_ARRAY_KEYS.slice(),
       advancedObjects:ADVANCED_OBJECT_KEYS.slice(),
       workflowModes:WORKFLOW_MODES.slice(),
+      designDispositions:DESIGN_DISPOSITIONS.slice(),
       customDeviceModelVersion:'netwizard-custom-device-model-v1',
       designRequirementsVersion:'netwizard-design-requirements-v1'
     },
