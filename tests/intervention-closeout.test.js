@@ -134,4 +134,17 @@ const derivedAgain=Bridge.createDesignFromInventory(finalProject,{snapshotId:'sn
 assert.strictEqual(derivedAgain.ok,true);
 assert.strictEqual(derivedAgain.project.workflow.updatedFrom.type,'intervention-closeout','La procedencia del cierre anterior debe viajar al siguiente To-Be');
 
+assert.strictEqual(
+  Closeout.defaultName(derivedAgain.project),
+  'Sede Murcia · As-Built actualizado',
+  'Los ciclos repetidos no deben acumular sufijos generados'
+);
+assert.strictEqual(
+  Closeout.defaultName({
+    projName:'Fallback · Diseño To-Be',
+    workflow:{mode:'design',derivedFrom:{type:'inventory',sourceProjectName:''}}
+  }),
+  'Fallback · As-Built actualizado'
+);
+
 console.log('✓ Cierre de intervención produce As-Built limpio, trazable y portable');
