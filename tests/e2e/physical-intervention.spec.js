@@ -65,4 +65,20 @@ test('plan físico detecta movimiento, reconexión eléctrica y recableado en To
   expect(result.actions.some(x=>x.type==='move-device')).toBe(true);
   expect(result.actions.some(x=>x.type==='reconnect-power')).toBe(true);
   expect(result.actions.some(x=>x.type==='replace-or-reroute-cable')).toBe(true);
+
+  await expect(plan.locator('button',{hasText:'Abrir paquete de campo'})).toBeVisible();
+  await expect(plan.locator('button',{hasText:'Checklist Markdown'})).toBeVisible();
+
+  const downloadPromise=page.waitForEvent('download');
+  await plan.locator('button',{hasText:'Checklist Markdown'}).click();
+  const download=await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/intervencion\.md$/);
+
+  const popupPromise=page.waitForEvent('popup');
+  await plan.locator('button',{hasText:'Abrir paquete de campo'}).click();
+  const popup=await popupPromise;
+  await popup.waitForLoadState('domcontentloaded');
+  await expect(popup.locator('body')).toContainText('Plan de intervención / As-Built → To-Be');
+  await expect(popup.locator('body')).toContainText('BOM diferencial · material a añadir');
+  await expect(popup.locator('body')).toContainText('Mover SW-01');
 });
