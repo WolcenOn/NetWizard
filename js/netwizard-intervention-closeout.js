@@ -142,7 +142,7 @@ function buildUpdatedAsBuilt(project,options){
   }
 
   next.observedState=cleanObservedState(source.observedState,removedDeviceIds);
-  delete next.designRequirements;
+  next.designRequirements=Object.assign({},obj(source.designRequirements),{locationPlans:[]});
 
   const previousWorkflow=obj(source.workflow),derived=obj(previousWorkflow.derivedFrom);
   const plan=planner()&&planner().build?planner().build(source):null;
