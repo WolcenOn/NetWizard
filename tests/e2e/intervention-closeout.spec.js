@@ -139,3 +139,100 @@ test('la UI permite seleccionar el equipo sustituto para un replace', async ({pa
   await expect(closeout).not.toContainText('replacementDeviceRef');
   await expect(closeout.locator('button',{hasText:'Cerrar intervención'})).toBeEnabled();
 });
+
+
+test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y trazable', async ({page})=>{
+  await resetStorage(page);
+  page.on('dialog', dialog => dialog.accept());
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    Object.assign(p,{
+      projName:'E2E ciclo repetido · As-Built',
+      workflow:{mode:'inventory'},
+      physicalLocations:[{id:'loc1',name:'CPD',type:'room'}],
+      racks:[{id:'rack1',name:'RACK-01',locationId:'loc1',rackUnits:24}],
+      rackItems:[{id:'ri1',rackId:'rack1',type:'device',deviceId:'sw1',label:'SW-01',startUnit:18,heightUnits:1,face:'front'}],
+      devices:[{id:'sw1',name:'SW-01',type:'switch',kind:'switch',manufacturer:'ACME',model:'X48',modelSource:'manual',rackId:'rack1',rackUnit:18,rackUnits:1}],
+      ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',media:'copper',speedMaxMbps:1000}],
+      pdus:[],powerConnections:[],patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],
+      hosts:[],links:[],vlans:[],subnets:[],fwRules:[],dhcp:{}
+    });
+    window.NetWizardState.replaceProject(p,{source:'e2e-repeated-cycle-source'});
+    window.navTo('physical');
+  });
+
+  const historyBefore=await page.evaluate(()=>window.NetWizardHistory.listSnapshots().length);
+
+  await page.locator('#inventoryToDesignMount button',{hasText:'Crear Diseño To-Be'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('design');
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices[0].rackUnit=19;
+    p.rackItems[0].startUnit=19;
+    window.NetWizardState.replaceProject(p,{source:'e2e-cycle-1-change'});
+    window.navTo('physical');
+  });
+  await page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('inventory');
+
+  const first=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    return{name:p.projName,updatedFrom:p.workflow.updatedFrom,rackUnit:p.devices[0].rackUnit};
+  });
+  expect(first.name).toBe('E2E ciclo repetido · As-Built actualizado');
+  expect(first.updatedFrom.sourceInventorySnapshotId).toMatch(/^snap_/);
+  expect(first.updatedFrom.designSnapshotId).toMatch(/^snap_/);
+  expect(first.rackUnit).toBe(19);
+
+  await page.locator('#inventoryToDesignMount button',{hasText:'Crear Diseño To-Be'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('design');
+
+  const secondDesign=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    return{
+      previousCloseout:p.workflow.updatedFrom,
+      derivedFrom:p.workflow.derivedFrom,
+      originRef:p.devices[0].originRef,
+      disposition:p.devices[0].designDisposition
+    };
+  });
+  expect(secondDesign.previousCloseout.designSnapshotId).toBe(first.updatedFrom.designSnapshotId);
+  expect(secondDesign.derivedFrom.sourceProjectName).toBe(first.name);
+  expect(secondDesign.originRef).toBe('sw1');
+  expect(secondDesign.disposition).toBe('keep');
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices[0].rackUnit=20;
+    p.rackItems[0].startUnit=20;
+    window.NetWizardState.replaceProject(p,{source:'e2e-cycle-2-change'});
+    window.navTo('physical');
+  });
+  await page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('inventory');
+
+  const final=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    return{
+      name:p.projName,
+      workflow:p.workflow,
+      device:p.devices[0],
+      rackItem:p.rackItems[0],
+      history:window.NetWizardHistory.listSnapshots().length
+    };
+  });
+  expect(final.name).toBe('E2E ciclo repetido · As-Built actualizado');
+  expect((final.name.match(/As-Built actualizado/g)||[]).length).toBe(1);
+  expect(final.workflow.updatedFrom.sourceProjectName).toBe(first.name);
+  expect(final.workflow.updatedFrom.sourceInventorySnapshotId).toMatch(/^snap_/);
+  expect(final.workflow.updatedFrom.designSnapshotId).toMatch(/^snap_/);
+  expect(final.workflow.derivedFrom).toBeUndefined();
+  expect(final.workflow.interventionBaseline).toBeUndefined();
+  expect(final.device.rackUnit).toBe(20);
+  expect(final.rackItem.startUnit).toBe(20);
+  expect(final.device.originRef).toBeUndefined();
+  expect(final.device.designDisposition).toBeUndefined();
+  expect(final.device.replacementDeviceRef).toBeUndefined();
+  expect(final.history).toBeGreaterThanOrEqual(historyBefore+4);
+});

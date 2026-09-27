@@ -95,8 +95,10 @@ function setDeviceDisposition(project,deviceId,disposition,options){
   if(!hasOrigin&&status!=='add')return{ok:false,code:'invalid_disposition_transition',message:'Un equipo nuevo solo puede marcarse como Añadir.',project:next};
   device.designDisposition=status;
   if(status==='replace'){
-    device.replacementNote=clean(opts.replacementNote||device.replacementNote);
-    device.replacementDeviceRef=clean(opts.replacementDeviceRef||device.replacementDeviceRef);
+    const hasNote=Object.prototype.hasOwnProperty.call(opts,'replacementNote');
+    const hasRef=Object.prototype.hasOwnProperty.call(opts,'replacementDeviceRef');
+    device.replacementNote=clean(hasNote?opts.replacementNote:device.replacementNote);
+    device.replacementDeviceRef=clean(hasRef?opts.replacementDeviceRef:device.replacementDeviceRef);
   }else{
     delete device.replacementNote;
     delete device.replacementDeviceRef;
