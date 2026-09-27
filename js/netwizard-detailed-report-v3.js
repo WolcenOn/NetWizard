@@ -231,6 +231,27 @@ function workSequenceReport(){
  ];
  return`<div class="work-sequence">${steps.map(([n,t,d])=>`<div class="work-step"><b>${esc(n)}</b><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></div>`).join('')}</div>`;
 }
+function interventionReport(project){
+ const pkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ if(!pkg||!pkg.ok)return'<p class="empty">Este proyecto no contiene un plan de intervención derivado de As-Built.</p>';
+ const checklist=table(['Hecho','#','Área','Acción','Detalle'],arr(pkg.checklist).map(a=>['☐',a.order,a.category||'—',a.title||a.type,a.details||'—']),'No hay acciones físicas pendientes.');
+ const compare=table(['#','Área','Cambio','Detalle'],arr(pkg.beforeAfter).map(r=>[r.order,r.category||'—',r.title||r.type,r.details||'—']),'No hay diferencias físicas.');
+ const bomBlock=(title,items,sign)=>`<h3>${esc(title)}</h3>${table(['Δ','Tipo','Cantidad','Material'],arr(items).map(x=>[sign,x.kind||'Material',x.quantity||1,x.description||'—']),'Sin elementos.')}`;
+ return`<div class="readiness-grid">
+   <div class="readiness-card"><span>Acciones</span><b>${esc(pkg.counts.actions)}</b><small>intervenciones físicas</small></div>
+   <div class="readiness-card"><span>Añadir</span><b>${esc(pkg.counts.addMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Retirar</span><b>${esc(pkg.counts.removeMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Reutilizar</span><b>${esc(pkg.counts.reuseMaterials)}</b><small>líneas de material</small></div>
+   <div class="readiness-card"><span>Revisar</span><b>${esc(pkg.counts.reviewMaterials)}</b><small>decisiones manuales</small></div>
+  </div>
+  <h3>Checklist de trabajo</h3>${checklist}
+  <h3>Comparativa As-Built → To-Be</h3>${compare}
+  ${bomBlock('BOM diferencial · material a añadir',pkg.bom.additions,'+')}
+  ${bomBlock('BOM diferencial · material a retirar',pkg.bom.removals,'−')}
+  ${bomBlock('Material reutilizado',pkg.bom.reuse,'=')}
+  ${bomBlock('Revisión manual',pkg.bom.review,'?')}
+  <div class="co co-ac"><b>Cierre:</b> actualizar el As-Built después de ejecutar y verificar la intervención real.</div>`;
+}
 function acceptanceReport(project,model){
  const racks=arr(model.rackSummaries);
  if(!racks.length)return'<p class="empty">No hay racks para hoja de aceptación.</p>';
@@ -250,6 +271,7 @@ const SECTION_DEFS=[
  {id:'power-map',title:'Mapa de alimentación PDU / PSU',group:'Conexiones',default:true},
  {id:'structured-cabling',title:'Cadena completa de cableado estructurado',group:'Conexiones',default:true},
  {id:'checklist',title:'Checklist de instalación',group:'Operación',default:true},
+ {id:'intervention',title:'Plan de intervención / As-Built → To-Be',group:'Operación',default:false},
  {id:'direct-connectivity',title:'Conectividad directa de datos',group:'Conexiones',default:true},
  {id:'inventory',title:'Inventario y materiales',group:'Inventario',default:true},
  {id:'rack-connections',title:'Conexiones físicas por rack',group:'Conexiones',default:true},
@@ -367,6 +389,10 @@ function build(project,options){
  const cablePaths=table(['Ruta','Switch','Patch panel','Toma','Host','Cable','Longitud','Estado'],cablePathRows,'No hay cableado estructurado documentado.');
  const issueRows=findings.map(i=>[i.code||'—',i.severity||'info',i.category||'general',i.blocking?'Sí':'No',i.message||'']);
  const sectionSet=selectedSections(options);
+ const interventionPackage=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ const explicitSections=arr(options&&options.sections).filter(Boolean);
+ if(!explicitSections.length&&interventionPackage&&interventionPackage.ok)sectionSet.add('intervention');
+ if((!interventionPackage||!interventionPackage.ok)&&!explicitSections.includes('intervention'))sectionSet.delete('intervention');
  const coverHtml=`<section class="cover"><div class="cover-kicker">NETWIZARD 3.50.0</div><h1>Manual técnico de instalación</h1><h2>${esc(model.project.name)}</h2><div class="cover-status"><b>${esc(s.state)}</b><span>Riesgo ${esc(s.risk)}</span></div><div class="cover-meta"><span>Esquema ${esc(model.project.schemaVersion||'—')}</span><span>${esc(model.summary.racks)} rack(s)</span><span>${esc(model.summary.devices)} equipo(s)</span><span>${esc(model.summary.ports)} puerto(s)</span></div><p>Documento operativo para montaje, alimentación, cableado, etiquetado, certificación y aceptación.</p></section>`;
  const builders={
   readiness:()=>readiness+workSequenceReport(),
@@ -380,6 +406,7 @@ function build(project,options){
   'power-map':()=>powerMap(project,model),
   'structured-cabling':()=>structuredChainsReport(model),
   checklist:()=>installationChecklistReport(project,model),
+  intervention:()=>interventionReport(project),
   'direct-connectivity':()=>connectivity,
   inventory:()=>inventory+'<h3>Material pasivo</h3>'+materials,
   'rack-connections':()=>rackConnections,
@@ -407,6 +434,8 @@ function openConfigurator(project){
  const existing=root.document.getElementById('nwInstallReportConfigurator');if(existing)existing.remove();
  const prefs=loadReportPreferences(root)||{};
  const savedSections=arr(prefs.sections);const migratedSections=savedSections.length&&!prefs.selectionVersion?[...new Set([...savedSections,'labels'])]:savedSections;const selected=new Set(migratedSections.length?migratedSections:SECTION_DEFS.filter(x=>x.default).map(x=>x.id));
+ const fieldPkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ if(!savedSections.length&&fieldPkg&&fieldPkg.ok)selected.add('intervention');
  const overlay=root.document.createElement('div');overlay.id='nwInstallReportConfigurator';overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.74);display:grid;place-items:center;padding:20px';
  const card=root.document.createElement('div');card.style.cssText='width:min(920px,96vw);max-height:92vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:18px';
  const title=root.document.createElement('h2');title.textContent='Configurar informe de instalación';title.style.margin='0 0 6px';
@@ -457,7 +486,7 @@ function inject(){
  b.onclick=()=>{try{openConfigurator(currentProject());}catch(e){root.alert&&root.alert(e.message);}};
  target.parentNode.insertBefore(b,target);
 }
-const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets};
+const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets,interventionReport};
 root.NetWizardInstallationReport=api;
 root.NetWizardCompactReport=api;
 if(!root.NetWizardDetailedReport)root.NetWizardDetailedReport=api;

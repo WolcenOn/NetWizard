@@ -33,6 +33,20 @@ function typeLabel(value){
     'add-host-patch':'Conectar host','remove-host-patch':'Desconectar host','repatch-host':'Reconectar host'
   }[value]||value;
 }
+function safeFileName(value){return String(value||'netwizard').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,100)||'netwizard';}
+function downloadMarkdown(project){
+  const pkg=root.NetWizardFieldInterventionPackage;
+  if(!pkg||typeof pkg.buildMarkdown!=='function')return root.alert&&root.alert('El paquete de intervención no está disponible.');
+  const content=pkg.buildMarkdown(project),blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=doc().createElement('a');
+  a.href=url;a.download=safeFileName(project&&project.projName)+'-intervencion.md';a.click();
+  root.setTimeout(()=>URL.revokeObjectURL(url),0);
+}
+function openFieldReport(project){
+  const report=root.NetWizardInstallationReport;
+  if(!report||typeof report.openReport!=='function')return root.alert&&root.alert('El informe de instalación no está disponible.');
+  report.openReport(project,{sections:['cover','intervention','rack-elevations','power-map','structured-cabling','labels','acceptance'],includeLabels:true});
+}
 function render(project){
   const P=planner(),plan=P&&P.buildChecklist?P.buildChecklist(project):null;
   const card=make('div','card nw-card-wide');
@@ -75,6 +89,10 @@ function render(project){
 
   const note=make('div','co co-ac','Orden orientativo: desconexiones/retiradas → movimientos/instalación → cableado/patching → reconexión eléctrica. La secuencia debe revisarse antes de ejecutar trabajos en campo.');
   card.append(note);
+  const actions=make('div','brow');
+  const reportBtn=make('button','btn bp','📋 Abrir paquete de campo');reportBtn.type='button';reportBtn.onclick=()=>openFieldReport(project);
+  const mdBtn=make('button','btn bs','⬇ Checklist Markdown');mdBtn.type='button';mdBtn.onclick=()=>downloadMarkdown(project);
+  actions.append(reportBtn,mdBtn);card.append(actions);
   return card;
 }
 function inject(){
@@ -92,7 +110,7 @@ function inject(){
   const project=snapshot();
   if(isApplicable(project))mount.append(render(project));
 }
-const api={version:'netwizard-physical-intervention-ui-v1',isApplicable,render,inject};
+const api={version:'netwizard-physical-intervention-ui-v1',isApplicable,render,inject,downloadMarkdown,openFieldReport};
 root.NetWizardPhysicalInterventionUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
