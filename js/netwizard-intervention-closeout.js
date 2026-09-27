@@ -21,9 +21,9 @@ function isDerivedDesign(project){
 }
 function stripAsBuiltSuffix(value){
   return clean(value)
-    .replace(/s*·s*Diseño To-Bes*$/i,'')
-    .replace(/s*·s*As-Built actualizados*$/i,'')
-    .replace(/s*·s*As-Builts*$/i,'')
+    .replace(/\s*·\s*Diseño To-Be\s*$/i,'')
+    .replace(/\s*·\s*As-Built actualizado\s*$/i,'')
+    .replace(/\s*·\s*As-Built\s*$/i,'')
     .trim();
 }
 function defaultName(project){
