@@ -286,7 +286,8 @@ test('modo ejecución de campo conserva progreso local sin mutar el To-Be', asyn
     input.checked=true;
     input.dispatchEvent(new Event('change',{bubbles:true}));
   });
-  await expect(page.locator('#fieldExecutionMount')).toContainText('0 acción(es) pendientes');
+  await expect(page.locator('#fieldExecutionMount')).toContainText('Checklist de campo completado');
+  await expect(page.locator('#fieldExecutionMount')).toContainText('No quedan acciones pendientes.');
 
   const afterMark=await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
