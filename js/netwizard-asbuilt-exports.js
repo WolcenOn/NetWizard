@@ -10,6 +10,7 @@ const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
 const docs=()=>root.NetWizardDocumentationUtils||(typeof require==='function'?require('./netwizard-documentation-utils.js'):null);
 const racks=()=>root.NetWizardRackModel||(typeof require==='function'?require('./netwizard-rack-model.js'):null);
 const fieldPkg=()=>root.NetWizardFieldInterventionPackage||(typeof require==='function'?require('./netwizard-field-intervention-package.js'):null);
+const xlsx=()=>root.NetWizardXlsxWriter||(typeof require==='function'?require('./netwizard-xlsx-writer.js'):null);
 
 function locationPath(project,locationId){
   const locations=new Map(arr(project&&project.physicalLocations).filter(Boolean).map(x=>[x.id,x]));
@@ -149,6 +150,12 @@ function buildCsvPack(project){
   files['manifest.json']=JSON.stringify(m,null,2);
   return{version:m.version,manifest:m,tables,files};
 }
+function buildXlsx(project){
+  const X=xlsx();if(!X||typeof X.buildWorkbook!=='function')throw new Error('NetWizardXlsxWriter no está disponible.');
+  const tables=buildTables(project);
+  const labels={devices:'Equipos',ports:'Puertos',cables:'Cableado',pdus:'PDU',power:'Alimentacion',racks:'Racks',bom:'BOM',differentialBom:'BOM diferencial'};
+  return X.buildWorkbook(Object.entries(tables).map(([key,rows])=>({name:labels[key]||key,rows})));
+}
 function markdown(project){
   const pack=buildCsvPack(project),lines=[`# As-Built Export Pack — ${pack.manifest.projectName}`,'',
     `- Workflow: ${pack.manifest.workflowMode}`,`- Generado: ${pack.manifest.generatedAt}`,'','## Contenido',''];
@@ -156,7 +163,7 @@ function markdown(project){
   if(pack.tables.differentialBom.length){lines.push('','## BOM diferencial','',...pack.tables.differentialBom.map(x=>`- ${x.action}: ${x.quantity} × ${x.kind} — ${x.description}`));}
   return lines.join('\n')+'\n';
 }
-const api={version:'netwizard-asbuilt-export-pack-v1',locationPath,deviceRows,portRows,cableRows,pduRows,powerRows,rackRows,bomRows,differentialBomRows,buildTables,buildCsvPack,manifest,markdown,toCsv};
+const api={version:'netwizard-asbuilt-export-pack-v2',locationPath,deviceRows,portRows,cableRows,pduRows,powerRows,rackRows,bomRows,differentialBomRows,buildTables,buildCsvPack,buildXlsx,manifest,markdown,toCsv};
 root.NetWizardAsBuiltExports=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

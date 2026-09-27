@@ -9,6 +9,11 @@ function el(tag,cls,text){const n=doc().createElement(tag);if(cls)n.className=cl
 function snapshot(){return state()?.getSnapshot?.()||{};}
 function safeBase(p){const raw=String(p&&p.projName||'netwizard').normalize('NFD').replace(/[\u0300-\u036f]/g,'');return raw.replace(/[^A-Za-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'netwizard';}
 function download(name,text,mime){const D=docs();if(D&&D.downloadText)return D.downloadText(name,text,mime);return false;}
+function downloadBytes(name,bytes,mime){
+  const d=doc();if(!d||!bytes)return false;
+  const blob=new Blob([bytes],{type:mime||'application/octet-stream'}),url=URL.createObjectURL(blob),a=d.createElement('a');
+  a.href=url;a.download=name;d.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);return true;
+}
 function render(){
   const E=exp(),p=snapshot(),box=el('div','card nw-card-wide'),h=el('div','card-h');
   h.append(el('div','card-t','📦 Export Pack · Inventario / As-Built'));box.append(h);
@@ -19,7 +24,8 @@ function render(){
   const row=el('div','brow'),base=safeBase(p);
   const defs=[['devices','Equipos'],['ports','Puertos'],['cables','Cableado'],['power','Alimentación'],['racks','Racks'],['bom','BOM']];
   for(const [key,label] of defs){const b=el('button','btn bs',`⬇ ${label} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
-  const all=el('button','btn bp','⬇ Índice Markdown');all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
+  const xlsx=el('button','btn bp','⬇ Excel XLSX');xlsx.type='button';xlsx.onclick=()=>downloadBytes(`${base}_asbuilt.xlsx`,E.buildXlsx(p),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');row.append(xlsx);
+  const all=el('button','btn bs','⬇ Índice Markdown');all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
   box.append(row);
   if(pack.tables.differentialBom.length)box.append(el('div','co co-ac',`BOM diferencial disponible: ${pack.tables.differentialBom.length} filas.`));
   return box;

@@ -5,6 +5,7 @@ global.NetWizardDocumentationUtils=require('../js/netwizard-documentation-utils.
 global.NetWizardRackModel=require('../js/netwizard-rack-model.js');
 global.NetWizardPhysicalInterventionPlan=require('../js/netwizard-physical-intervention-plan.js');
 global.NetWizardFieldInterventionPackage=require('../js/netwizard-field-intervention-package.js');
+global.NetWizardXlsxWriter=require('../js/netwizard-xlsx-writer.js');
 const Exports=require('../js/netwizard-asbuilt-exports.js');
 
 const project={
@@ -66,6 +67,18 @@ assert.ok(pack.files['ports.csv'].includes('Gi1/0/1'));
 assert.ok(pack.files['cables.csv'].includes('C-001'));
 assert.ok(pack.files['power.csv'].includes('PDU-A'));
 assert.ok(pack.files['manifest.json'].includes('netwizard-asbuilt-export-pack-v1'));
+
+const xlsx=Exports.buildXlsx(project);
+assert.ok(xlsx instanceof Uint8Array);
+assert.strictEqual(xlsx[0],0x50);
+assert.strictEqual(xlsx[1],0x4b);
+const xlsxRaw=Buffer.from(xlsx).toString('latin1');
+assert.ok(xlsxRaw.includes('Equipos'));
+assert.ok(xlsxRaw.includes('Puertos'));
+assert.ok(xlsxRaw.includes('Cableado'));
+assert.ok(xlsxRaw.includes('Alimentacion'));
+assert.ok(xlsxRaw.includes('SW-01'));
+assert.ok(xlsxRaw.includes('PDU-A'));
 
 const md=Exports.markdown(project);
 assert.ok(md.includes('# As-Built Export Pack — Sede export'));
