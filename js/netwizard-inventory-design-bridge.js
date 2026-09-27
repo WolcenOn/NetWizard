@@ -8,6 +8,11 @@ const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const clean=v=>String(v==null?'':v).trim();
 const clone=v=>JSON.parse(JSON.stringify(v==null?null:v));
 const nowIso=()=>new Date().toISOString();
+function interventionPlanner(){
+  if(root.NetWizardPhysicalInterventionPlan)return root.NetWizardPhysicalInterventionPlan;
+  if(typeof require==='function'){try{return require('./netwizard-physical-intervention-plan.js');}catch(_e){}}
+  return null;
+}
 
 function normalizeDisposition(value,fallback){
   const v=clean(value).toLowerCase();
@@ -38,6 +43,7 @@ function createDesignFromInventory(project,options){
   const createdAt=clean(opts.createdAt)||nowIso();
   const sourceProjectName=clean(source.projName)||'Inventario';
   next.projName=clean(opts.name)||`${sourceProjectName} · Diseño To-Be`;
+  const planner=interventionPlanner();
   next.workflow=Object.assign({},obj(source.workflow),{
     mode:'design',
     designPhase:'to-be',
@@ -46,7 +52,8 @@ function createDesignFromInventory(project,options){
       sourceProjectName,
       sourceSchemaVersion:source._schemaVersion||source.schemaVersion||'',
       createdAt
-    })
+    }),
+    interventionBaseline:planner&&planner.captureBaseline?planner.captureBaseline(source,{capturedAt:createdAt}):null
   });
   next.step='loc';
   next.selected=null;
