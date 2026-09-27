@@ -28,6 +28,8 @@
     'NetWizardRackUi',
     'NetWizardStructuredCablingUi',
     'NetWizardInventoryGoldenPathUi',
+    'NetWizardInventoryDesignBridge',
+    'NetWizardInventoryDesignBridgeUi',
     'NetWizardReportModel',
     'NetWizardInstallationReport',
     'NetWizardPhysicalInventoryUi',
