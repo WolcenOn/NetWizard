@@ -72,7 +72,8 @@ function stripDeviceDesignFields(device){
   return out;
 }
 function cleanObservedState(observedState,removedDeviceIds){
-  const out=clone(observedState||{});
+  if(!observedState||typeof observedState!=='object'||Array.isArray(observedState))return observedState==null?null:clone(observedState);
+  const out=clone(observedState);
   const raw=out&&out.deviceConfigs;
   if(Array.isArray(raw)){
     out.deviceConfigs=raw.filter(entry=>!removedDeviceIds.has(clean(entry&&entry.deviceId)));
