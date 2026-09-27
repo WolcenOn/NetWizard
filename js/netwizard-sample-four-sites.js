@@ -12,7 +12,7 @@ function ip(s,offset){return `10.64.${s.oct3}.${s.base+offset}`;}
 function cidr(s,offset,prefix){return `${ip(s,offset)}/${prefix}`;}
 function emptyProject(){return{
  _schemaVersion:'3.50.0',step:'dash',projName:'Empresa 4 sedes - golden production VLSM',
- devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},
+ devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},wanCircuits:[],
  security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'999',dai:'yes',ipsg:'yes',qV:'999'},roas:{},
  vtp:{domain:'CORP-GLOBAL',password:'',version:'3',pruning:'yes',roles:{}},topo:{pos:{}},
  physicalLocations:[],hostPhysicalLocations:[],uiSort:{},racks:[],rackItems:[],patchPanels:[],
@@ -67,6 +67,22 @@ function addSite(p,s){
   {id:`${s.id}_link_fw_core`,name:`${s.code} FW-CORE`,aPortId:fwLan,bPortId:coreFw,medium:'fiber',cableType:'DAC',lengthM:3,speed:'10G',capacityMbps:10000,physicalPath:`${rack} interior`},
   {id:`${s.id}_link_core_access`,name:`${s.code} CORE-ACCESS`,aPortId:coreAcc,bPortId:accUp,medium:'fiber',cableType:'DAC',lengthM:3,speed:'10G',capacityMbps:10000,physicalPath:`${rack} interior`}
  );
+ p.wanCircuits.push({
+  id:`${s.id}_wan_primary`,
+  name:`Internet principal ${s.code}`,
+  siteRef:siteLoc,
+  deviceId:fw,
+  portId:fwWan,
+  provider:`ISP-${s.code}`,
+  role:'primary',
+  bandwidthDownMbps:1000,
+  bandwidthUpMbps:500,
+  latencyTargetMs:30,
+  lossTargetPercent:1,
+  slaAvailability:99.9,
+  demarcLocation:`${s.name} · CPD`,
+  physicalPath:'Demarcación operador → WAN firewall'
+ });
  const endpoints=[];for(let i=1;i<=4;i++)endpoints.push(['pc',i,'users',false,0]);for(let i=1;i<=2;i++)endpoints.push(['ap',i,'wifi',true,18]);for(let i=1;i<=2;i++)endpoints.push(['phone',i,'voice',true,7]);
  let portNo=1;const structured=[];
  for(const [type,n,vlan,poe,watts] of endpoints){
