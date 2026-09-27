@@ -389,6 +389,10 @@ function build(project,options){
  const cablePaths=table(['Ruta','Switch','Patch panel','Toma','Host','Cable','Longitud','Estado'],cablePathRows,'No hay cableado estructurado documentado.');
  const issueRows=findings.map(i=>[i.code||'—',i.severity||'info',i.category||'general',i.blocking?'Sí':'No',i.message||'']);
  const sectionSet=selectedSections(options);
+ const interventionPackage=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ const explicitSections=arr(options&&options.sections).filter(Boolean);
+ if(!explicitSections.length&&interventionPackage&&interventionPackage.ok)sectionSet.add('intervention');
+ if((!interventionPackage||!interventionPackage.ok)&&!explicitSections.includes('intervention'))sectionSet.delete('intervention');
  const coverHtml=`<section class="cover"><div class="cover-kicker">NETWIZARD 3.50.0</div><h1>Manual técnico de instalación</h1><h2>${esc(model.project.name)}</h2><div class="cover-status"><b>${esc(s.state)}</b><span>Riesgo ${esc(s.risk)}</span></div><div class="cover-meta"><span>Esquema ${esc(model.project.schemaVersion||'—')}</span><span>${esc(model.summary.racks)} rack(s)</span><span>${esc(model.summary.devices)} equipo(s)</span><span>${esc(model.summary.ports)} puerto(s)</span></div><p>Documento operativo para montaje, alimentación, cableado, etiquetado, certificación y aceptación.</p></section>`;
  const builders={
   readiness:()=>readiness+workSequenceReport(),
@@ -402,6 +406,7 @@ function build(project,options){
   'power-map':()=>powerMap(project,model),
   'structured-cabling':()=>structuredChainsReport(model),
   checklist:()=>installationChecklistReport(project,model),
+  intervention:()=>interventionReport(project),
   'direct-connectivity':()=>connectivity,
   inventory:()=>inventory+'<h3>Material pasivo</h3>'+materials,
   'rack-connections':()=>rackConnections,
@@ -429,6 +434,8 @@ function openConfigurator(project){
  const existing=root.document.getElementById('nwInstallReportConfigurator');if(existing)existing.remove();
  const prefs=loadReportPreferences(root)||{};
  const savedSections=arr(prefs.sections);const migratedSections=savedSections.length&&!prefs.selectionVersion?[...new Set([...savedSections,'labels'])]:savedSections;const selected=new Set(migratedSections.length?migratedSections:SECTION_DEFS.filter(x=>x.default).map(x=>x.id));
+ const fieldPkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+ if(!savedSections.length&&fieldPkg&&fieldPkg.ok)selected.add('intervention');
  const overlay=root.document.createElement('div');overlay.id='nwInstallReportConfigurator';overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(2,6,23,.74);display:grid;place-items:center;padding:20px';
  const card=root.document.createElement('div');card.style.cssText='width:min(920px,96vw);max-height:92vh;overflow:auto;background:#0b1220;color:#e2e8f0;border:1px solid #334155;border-radius:18px;box-shadow:0 28px 80px #0008;padding:18px';
  const title=root.document.createElement('h2');title.textContent='Configurar informe de instalación';title.style.margin='0 0 6px';
