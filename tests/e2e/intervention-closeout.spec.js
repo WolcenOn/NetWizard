@@ -235,4 +235,11 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
   expect(final.device.designDisposition).toBeUndefined();
   expect(final.device.replacementDeviceRef).toBeUndefined();
   expect(final.history).toBeGreaterThanOrEqual(historyBefore+4);
+
+  const journal=page.locator('#interventionHistoryMount');
+  await expect(journal).toBeVisible();
+  await expect(journal).toContainText('Historial de intervenciones');
+  await expect(journal.locator('tbody tr')).toHaveCount(2);
+  await expect(journal).toContainText('Estado actual');
+  await expect(journal).toContainText(first.name);
 });
