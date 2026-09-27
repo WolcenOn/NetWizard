@@ -741,3 +741,63 @@ Políticas iniciales:
 - modo manual sin auto-layout.
 
 El Golden Path de Diseño se oculta cuando `workflow.mode = inventory`.
+
+
+## I5 — Derivar Diseño To-Be desde Inventario As-Built
+
+El paso Inventario → Diseño es explícito y reversible.
+
+```text
+Inventario As-Built
+      |
+      | crear snapshot protegido
+      v
+Diseño To-Be derivado
+      |
+      +-- mantener
+      +-- retirar
+      +-- reemplazar
+      +-- añadir
+      |
+      v
+Change Set físico
+```
+
+Reglas:
+
+- el objeto origen nunca se modifica durante la derivación;
+- antes de cambiar el proyecto activo, la UI crea un snapshot mediante `NetWizardHistory`;
+- el diseño conserva `workflow.derivedFrom` con referencia al snapshot y al nombre/schema del As-Built;
+- las entidades físicas copiadas conservan `originRef`;
+- los equipos existentes empiezan con `designDisposition: keep`;
+- los equipos nuevos usan `designDisposition: add`;
+- el usuario puede marcar equipos existentes como `retire` o `replace`;
+- `observedState` permanece como evidencia del estado capturado;
+- desde el diseño derivado puede restaurarse el As-Built original mediante el snapshot.
+
+Contrato inicial:
+
+```json
+{
+  "workflow": {
+    "mode": "design",
+    "designPhase": "to-be",
+    "derivedFrom": {
+      "type": "inventory",
+      "snapshotId": "snap_...",
+      "sourceProjectName": "Sede Alicante · As-Built",
+      "sourceSchemaVersion": "3.50.0",
+      "createdAt": "..."
+    }
+  },
+  "devices": [
+    {
+      "id": "sw1",
+      "originRef": "sw1",
+      "designDisposition": "keep"
+    }
+  ]
+}
+```
+
+`NetWizardInventoryDesignBridge.buildPhysicalChangeSet()` produce una vista diferencial basada en estas decisiones. En I5 se limita a equipos; racks, cableado, potencia y otros activos podrán incorporarse al mismo contrato sin crear colecciones paralelas.
