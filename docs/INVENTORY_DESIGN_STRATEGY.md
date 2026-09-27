@@ -862,3 +862,51 @@ se convierte en acciones ordenables:
 La secuencia generada es orientativa y debe revisarse antes de ejecutar trabajos en campo.
 
 No se añade un tercer `workflow.mode`: mantenimiento sigue siendo una relación entre As-Built y To-Be.
+
+
+## I7 — Paquete de intervención de campo
+
+El plan físico de I6 se transforma en documentación operativa derivada, no persistida:
+
+```text
+As-Built baseline
+      |
+      v
+To-Be actual
+      |
+      v
+Physical Intervention Plan
+      |
+      +-- checklist de trabajo
+      +-- comparativa before/after
+      +-- BOM diferencial
+      +-- reutilización
+      +-- revisión manual
+      |
+      v
+Informe de instalación / Markdown de campo
+```
+
+Reglas:
+
+- el paquete se recalcula siempre desde el proyecto actual;
+- no se guarda una copia estática que pueda quedar obsoleta;
+- una sustitución no duplica el nuevo equipo en la BOM;
+- material nuevo, retirado, reutilizado y pendiente de decisión se presentan por separado;
+- cambios de tipo/longitud de cable se consideran sustitución de material;
+- un simple cambio de ruta sin cambio de material queda como revisión/reencaminado;
+- el informe de instalación incorpora automáticamente la sección de intervención solo en diseños derivados de As-Built;
+- proyectos de diseño normales no muestran esa sección por defecto.
+
+Salidas iniciales:
+
+1. **Paquete visual de campo** dentro del informe de instalación.
+2. **Checklist Markdown** descargable.
+3. **BOM diferencial**:
+   - material a añadir;
+   - material a retirar;
+   - material reutilizado;
+   - decisiones que requieren revisión manual.
+4. **Cierre de intervención** con actualización obligatoria del As-Built real.
+
+El paquete no sustituye el runbook de deployment lógico. Complementa la ejecución física.
