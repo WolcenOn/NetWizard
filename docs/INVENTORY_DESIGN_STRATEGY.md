@@ -910,3 +910,84 @@ Salidas iniciales:
 4. **Cierre de intervención** con actualización obligatoria del As-Built real.
 
 El paquete no sustituye el runbook de deployment lógico. Complementa la ejecución física.
+
+
+## I8 — Cierre de intervención y As-Built actualizado
+
+El ciclo de mantenimiento se cierra explícitamente:
+
+```text
+As-Built original
+      |
+      v
+Diseño To-Be
+      |
+      v
+Intervención física
+      |
+      v
+Confirmación de estado real
+      |
+      v
+As-Built actualizado
+```
+
+El cierre **no convierte automáticamente datos deseados en observaciones**. El usuario debe confirmar que el To-Be refleja lo realmente ejecutado en campo.
+
+Antes de cerrar:
+
+1. todos los `replace` deben indicar un `replacementDeviceRef` válido;
+2. el reemplazo debe ser un equipo nuevo (`add`);
+3. no puede reutilizarse el mismo equipo como reemplazo de varios activos;
+4. el As-Built candidato debe pasar Project Schema;
+5. el As-Built candidato no puede tener bloqueos del Inventory Gate.
+
+Al confirmar:
+
+- se crea un snapshot restaurable del Diseño To-Be;
+- los equipos `retire` y `replace` salen del inventario final;
+- se eliminan sus puertos y referencias físicas inequívocamente dependientes:
+  - links;
+  - rackItems;
+  - powerConnections;
+  - patchConnections;
+  - configuración observada asociada al equipo retirado;
+- los equipos nuevos/reutilizados permanecen;
+- se eliminan `originRef`, `designDisposition`, `replacementDeviceRef` y otros metadatos temporales de diseño;
+- se vacían los `designRequirements.locationPlans` del To-Be; las políticas de margen/rack pueden conservarse como preferencias para una futura iteración;
+- el workflow vuelve a `inventory`;
+- se eliminan `derivedFrom`, `designPhase` e `interventionBaseline`.
+
+La procedencia portable queda en:
+
+```json
+{
+  "workflow": {
+    "mode": "inventory",
+    "updatedFrom": {
+      "type": "intervention-closeout",
+      "sourceInventorySnapshotId": "snap_...",
+      "sourceProjectName": "Sede · As-Built",
+      "designSnapshotId": "snap_...",
+      "designProjectName": "Sede · Diseño To-Be",
+      "baselineCapturedAt": "...",
+      "closedAt": "...",
+      "interventionActionCount": 7
+    }
+  }
+}
+```
+
+El nuevo As-Built puede volver a utilizarse como origen de otra iteración:
+
+```text
+As-Built actualizado
+      |
+      v
+nuevo To-Be
+      |
+      v
+nueva intervención
+```
+
+La procedencia del cierre anterior se conserva cuando se deriva el siguiente To-Be.

@@ -82,6 +82,12 @@ function renderInventoryAction(project){
   const card=make('div','card');
   const h=make('div','card-h');h.append(make('div','card-t','🔁 Del As-Built al To-Be'));card.append(h);
   card.append(make('p','hint','Crea un diseño nuevo usando el inventario como base física. NetWizard guarda antes un snapshot restaurable del As-Built.'));
+  const closeout=obj(obj(project).workflow).updatedFrom;
+  if(obj(closeout).type==='intervention-closeout'){
+    const when=clean(closeout.closedAt)||'fecha no documentada';
+    const src=clean(closeout.designProjectName)||clean(closeout.sourceProjectName)||'Diseño To-Be';
+    card.append(make('div','co co-gn',`As-Built actualizado desde intervención cerrada (${when}). Origen de cierre: ${src}.`));
+  }
   const B=bridge(),G=gate(),report=G&&G.validate?G.validate(project):null;
   if(report&&report.counts&&report.counts.blocking){
     const warn=make('div','co co-rd',`Hay ${report.counts.blocking} bloqueo(s) físicos. Resuélvelos antes de derivar el diseño.`);card.append(warn);
