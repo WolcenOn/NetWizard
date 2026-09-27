@@ -29,6 +29,7 @@
     'NetWizardStructuredCablingUi',
     'NetWizardInventoryGoldenPathUi',
     'NetWizardPhysicalInterventionPlan',
+    'NetWizardFieldInterventionPackage',
     'NetWizardInventoryDesignBridge',
     'NetWizardInventoryDesignBridgeUi',
     'NetWizardPhysicalInterventionUi',
