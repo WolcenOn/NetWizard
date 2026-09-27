@@ -150,4 +150,40 @@ test('Architecture validator no marca SPOF cuando existe camino alternativo', ()
   assert.strictEqual(ArchitectureValidator.validate(project).issues.some(i => i.code === 'NW-HA-001'), false);
 });
 
+
+test('Architecture validator acepta un borde de Internet por sede distinta', () => {
+  const project = {
+    physicalLocations:[
+      {id:'site-a',name:'Sede A',type:'site'},
+      {id:'cpd-a',name:'CPD A',type:'room',parentId:'site-a'},
+      {id:'site-b',name:'Sede B',type:'site'},
+      {id:'cpd-b',name:'CPD B',type:'room',parentId:'site-b'}
+    ],
+    devices:[
+      {id:'fw1',name:'FW-A',type:'firewall',internetEdge:'yes',locationId:'cpd-a'},
+      {id:'fw2',name:'FW-B',type:'firewall',internetEdge:'yes',locationId:'cpd-b'}
+    ],
+    ports:[],links:[]
+  };
+  assert.strictEqual(ArchitectureValidator.validate(project).issues.some(i=>i.code==='NW-ARCH-002'),false);
+});
+
+test('Architecture validator sigue avisando con varios bordes en la misma sede', () => {
+  const project = {
+    physicalLocations:[
+      {id:'site-a',name:'Sede A',type:'site'},
+      {id:'cpd-a',name:'CPD A',type:'room',parentId:'site-a'}
+    ],
+    devices:[
+      {id:'fw1',name:'FW-A-1',type:'firewall',internetEdge:'yes',locationId:'cpd-a'},
+      {id:'fw2',name:'FW-A-2',type:'firewall',internetEdge:'yes',locationId:'cpd-a'}
+    ],
+    ports:[],links:[]
+  };
+  const issue=ArchitectureValidator.validate(project).issues.find(i=>i.code==='NW-ARCH-002');
+  assert.ok(issue);
+  assert.ok(issue.message.includes('misma sede'));
+  assert.deepStrictEqual(new Set(issue.affectedObjects),new Set(['fw1','fw2']));
+});
+
 console.log('\nTests architecture validator completados.');

@@ -31,6 +31,10 @@ Mantenimiento:
   function portLabel(p){ return clean(p && p.name) || clean(p && p.id) || 'puerto'; }
   function vendorOf(d){ return clean(d && d.vendorOs) || 'cisco_ios'; }
   function isL3Device(d){ return /router|firewall|l3|gateway/i.test(clean(d && d.type)) || vendorOf(d) === 'cisco_asa' || vendorOf(d) === 'fortinet' || vendorOf(d) === 'pfsense'; }
+  function requiresInterfaceInventory(d){
+    const kind=clean(d && (d.kind || d.type)).toLowerCase();
+    return ['switch','router','firewall','l3switch','switch_l3','wlan_controller'].includes(kind) || isL3Device(d);
+  }
   function hasUsefulIp(value){ return /^\d{1,3}(\.\d{1,3}){3}$/.test(clean(value)); }
   function hasCidr(value){ return /^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(clean(value)); }
   function isLayer2OnlyVlan(vlan){
@@ -50,7 +54,7 @@ Mantenimiento:
     if(!clean(device.name)) issues.push(issue({code:'NW-VENDOR-002', severity:'warning', message:`${deviceLabel(device)} no tiene nombre legible; la exportación usará un fallback.`}));
     if(!clean(device.vendorOs)) issues.push(issue({code:'NW-VENDOR-003', severity:'warning', message:`${deviceLabel(device)} no tiene vendor/OS definido; se asumirá Cisco IOS.`}));
     const ports = portsByDevice(project, device.id);
-    if(!ports.length) issues.push(issue({code:'NW-VENDOR-004', severity:'warning', message:`${deviceLabel(device)} no tiene puertos definidos; la configuración exportada será incompleta.`}));
+    if(!ports.length && requiresInterfaceInventory(device)) issues.push(issue({code:'NW-VENDOR-004', severity:'warning', message:`${deviceLabel(device)} no tiene puertos definidos; la configuración exportada será incompleta.`}));
     for(const p of ports){
       if(!clean(p.name)) issues.push(issue({code:'NW-VENDOR-005', severity:'error', blocking:true, message:`${deviceLabel(device)} tiene un puerto sin nombre de interfaz válido.`}));
       if((p.mode === 'routed' || p.l3Ip || p.routedIp) && !(hasUsefulIp(p.l3Ip || p.routedIp) && (p.l3Cidr || p.routedCidr))){
