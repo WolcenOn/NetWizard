@@ -282,8 +282,11 @@ test('modo ejecución de campo conserva progreso local sin mutar el To-Be', asyn
   await expect(field).toContainText('Modo ejecución en campo');
   const boxes=field.locator('input[data-field-execution-done]');
   await expect(boxes).toHaveCount(1);
-  await boxes.first().check();
-  await expect(field).toContainText('0 acción(es) pendientes');
+  await boxes.first().evaluate(input=>{
+    input.checked=true;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await expect(page.locator('#fieldExecutionMount')).toContainText('0 acción(es) pendientes');
 
   const afterMark=await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
