@@ -71,9 +71,9 @@ function summaryText(summary){
   const c=summary.counts||{};
   return `${c.keep||0} mantener · ${c.retire||0} retirar · ${c.replace||0} reemplazar · ${c.add||0} añadir`;
 }
-function updateDisposition(deviceId,value){
+function updateDisposition(deviceId,value,options){
   const S=state(),B=bridge(),current=snapshot();if(!S||!B)return;
-  const result=B.setDeviceDisposition(current,deviceId,value);
+  const result=B.setDeviceDisposition(current,deviceId,value,options);
   if(!result.ok)return root.alert&&root.alert(result.message||'No se pudo actualizar el equipo.');
   S.replaceProject(result.project,{source:'inventory-design-disposition'});
 }
@@ -115,8 +115,9 @@ function renderDerivedDesign(project){
 
   const wrap=make('div','tw'),table=make('table');
   const thead=make('thead'),trh=make('tr');
-  ['Equipo','Fabricante / modelo','Rack / U','Decisión'].forEach(x=>trh.append(make('th','',x)));thead.append(trh);table.append(thead);
+  ['Equipo','Fabricante / modelo','Rack / U','Decisión','Equipo sustituto'].forEach(x=>trh.append(make('th','',x)));thead.append(trh);table.append(thead);
   const tbody=make('tbody');
+  const replacementCandidates=arr(project.devices).filter(candidate=>!clean(candidate&&candidate.originRef)&&clean(candidate&&candidate.id));
   for(const d of arr(project.devices)){
     const hasOrigin=!!clean(d.originRef),current=clean(d.designDisposition)||(hasOrigin?'keep':'add');
     const tr=make('tr');
@@ -129,7 +130,27 @@ function renderDerivedDesign(project){
       if(!hasOrigin&&value!=='add')continue;
       const opt=make('option','',dispositionLabel(value));opt.value=value;if(value===current)opt.selected=true;sel.append(opt);
     }
-    sel.dataset.designDisposition=d.id;sel.onchange=()=>updateDisposition(d.id,sel.value);td.append(sel);tr.append(td);tbody.append(tr);
+    sel.dataset.designDisposition=d.id;sel.onchange=()=>updateDisposition(d.id,sel.value);td.append(sel);tr.append(td);
+
+    const replacementTd=make('td');
+    if(hasOrigin){
+      const replacement=make('select');
+      const empty=make('option','',current==='replace'?'Selecciona equipo…':'—');
+      empty.value='';replacement.append(empty);
+      for(const candidate of replacementCandidates){
+        const opt=make('option','',candidate.name||candidate.id);
+        opt.value=candidate.id;
+        if(clean(d.replacementDeviceRef)===clean(candidate.id))opt.selected=true;
+        replacement.append(opt);
+      }
+      replacement.dataset.replacementFor=d.id;
+      replacement.disabled=current!=='replace';
+      replacement.onchange=()=>updateDisposition(d.id,'replace',{replacementDeviceRef:replacement.value});
+      replacementTd.append(replacement);
+    }else{
+      replacementTd.textContent='—';
+    }
+    tr.append(replacementTd);tbody.append(tr);
   }
   table.append(tbody);wrap.append(table);card.append(wrap);
 
