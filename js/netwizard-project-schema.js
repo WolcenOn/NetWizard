@@ -358,13 +358,14 @@ Mantenimiento:
       x.serialNumber = cleanText(x.serialNumber || '', 160);
       x.assetTag = cleanText(x.assetTag || '', 120);
       x.originRef = cleanId(x.originRef || '', '');
+      if(!x.originRef) delete x.originRef;
       const derivedFromInventory = asObject(asObject(p.workflow).derivedFrom).type === 'inventory';
       const disposition = cleanText(x.designDisposition || '', 20).toLowerCase();
       if(x.designDisposition != null && !DESIGN_DISPOSITIONS.includes(disposition)){
         workflowWarnings.push(`Dispositivo ${x.name}: designDisposition desconocido (${cleanText(x.designDisposition,40)}).`);
       }
       if(derivedFromInventory || x.designDisposition != null){
-        x.designDisposition = ['keep','retire','replace','add'].includes(disposition) ? disposition : (x.originRef ? 'keep' : 'add');
+        x.designDisposition = DESIGN_DISPOSITIONS.includes(disposition) ? disposition : (x.originRef ? 'keep' : 'add');
       }else{
         delete x.designDisposition;
       }
@@ -762,8 +763,10 @@ Mantenimiento:
       if(source==='custom' && !device.modelRef) errors.push(`Dispositivo ${device.name || device.id}: modelSource custom requiere modelRef.`);
       if(source==='custom' && device.modelRef && !customModelIds.has(device.modelRef)) errors.push(`Dispositivo ${device.name || device.id}: modelRef personalizado inexistente (${device.modelRef}).`);
       if(device.designDisposition != null && !DESIGN_DISPOSITIONS.includes(cleanText(device.designDisposition,20).toLowerCase())) errors.push(`Dispositivo ${device.name || device.id}: designDisposition inválido.`);
-      if(device.designDisposition==='add' && device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: marcado como add pero conserva originRef.`);
-      if(device.designDisposition!=='add' && asObject(asObject(p.workflow).derivedFrom).type==='inventory' && !device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: no tiene originRef dentro de un diseño derivado de inventario.`);
+      if(asObject(asObject(p.workflow).derivedFrom).type==='inventory'){
+        if(device.designDisposition==='add' && device.originRef) errors.push(`Dispositivo ${device.name || device.id}: add no puede conservar originRef en un diseño derivado.`);
+        if(device.designDisposition!=='add' && !device.originRef) errors.push(`Dispositivo ${device.name || device.id}: ${device.designDisposition || 'keep'} requiere originRef en un diseño derivado.`);
+      }
       if(device.replacementDeviceRef && !devIds.has(device.replacementDeviceRef)) errors.push(`Dispositivo ${device.name || device.id}: replacementDeviceRef inexistente (${device.replacementDeviceRef}).`);
     }
 
