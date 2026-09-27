@@ -47,7 +47,15 @@ assert.strictEqual(changed.ok,true);
 assert.strictEqual(changed.project.devices[0].designDisposition,'replace');
 assert.strictEqual(changed.project.devices[0].replacementNote,'Sustituir por modelo PoE multigig');
 
+const illegalExisting=Bridge.setDeviceDisposition(changed.project,'sw1','add');
+assert.strictEqual(illegalExisting.ok,false);
+assert.strictEqual(illegalExisting.code,'invalid_disposition_transition');
+
 changed.project.devices.push({id:'sw2',name:'SW-02',type:'switch',kind:'switch',modelSource:'manual',designDisposition:'add'});
+const illegalNew=Bridge.setDeviceDisposition(changed.project,'sw2','keep');
+assert.strictEqual(illegalNew.ok,false);
+assert.strictEqual(illegalNew.code,'invalid_disposition_transition');
+
 const summary=Bridge.summarize(changed.project);
 assert.deepStrictEqual(summary.counts,{keep:0,retire:0,replace:1,add:1,total:2});
 
@@ -71,6 +79,13 @@ const badDisposition=Schema.validateProject({
 });
 assert.strictEqual(badDisposition.ok,false);
 assert.ok(badDisposition.errors.some(x=>x.includes('designDisposition inválido')));
+
+const brokenProvenance=Schema.validateProject({
+  ...prepared.project,
+  devices:[{...prepared.project.devices[0],originRef:'',designDisposition:'keep'}]
+});
+assert.strictEqual(brokenProvenance.ok,false);
+assert.ok(brokenProvenance.errors.some(x=>x.includes('requiere originRef')));
 
 const external=JSON.parse(fs.readFileSync(path.join(__dirname,'..','schemas','netwizard-project.schema.json'),'utf8'));
 assert.deepStrictEqual(Schema.model.designDispositions,['keep','retire','replace','add']);
