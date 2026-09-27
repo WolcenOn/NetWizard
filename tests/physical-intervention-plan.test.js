@@ -22,7 +22,7 @@ const source={
   cableRuns:[{id:'c1',label:'C-001',patchPanelId:'pp1',patchPort:1,outletId:'to1',outletPort:1,cableType:'Cat6A',lengthM:35,route:'Canal A'}],
   patchConnections:[{id:'pc1',patchPanelId:'pp1',patchPort:1,switchPortId:'p1',patchCordLengthM:1}],
   hostOutletConnections:[],
-  vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},customDeviceModels:[],
+  vlans:[],subnets:[],hosts:[{id:'h1',name:'PC-01',type:'pc'}],links:[],fwRules:[],dhcp:{},customDeviceModels:[],
   iot:{accessNodes:[],devices:[],map:{show:{}}}
 };
 
@@ -70,6 +70,11 @@ assert.strictEqual(prepared.project.workflow.interventionBaseline.version,'netwi
 assert.strictEqual(prepared.project.workflow.interventionBaseline.devices[0].id,'sw1');
 const exported=Schema.prepareExport(prepared.project);
 assert.strictEqual(exported.project.workflow.interventionBaseline.powerConnections[0].id,'pw1');
+
+const fs=require('fs'),path=require('path');
+const external=JSON.parse(fs.readFileSync(path.join(__dirname,'..','schemas','netwizard-project.schema.json'),'utf8'));
+assert.strictEqual(external.$defs.physicalInterventionBaseline.properties.version.const,'netwizard-physical-intervention-baseline-v1');
+assert.strictEqual(external.$defs.project.properties.workflow.properties.interventionBaseline.$ref,'#/$defs/physicalInterventionBaseline');
 
 const invalid=Schema.validateProject({
   ...prepared.project,
