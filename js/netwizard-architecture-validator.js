@@ -118,22 +118,46 @@
     return issues;
   }
 
+  function internetEdgeSite(project,device){
+    const locations=new Map(arr(project&&project.physicalLocations).filter(Boolean).map(location=>[clean(location.id),location]));
+    let id=clean(device&&device.locationId),last=id,guard=0;
+    while(id&&locations.has(id)&&guard++<32){
+      const location=locations.get(id),parent=clean(location&&location.parentId);
+      last=id;
+      if(!parent||!locations.has(parent))break;
+      id=parent;
+    }
+    return last||'__global__';
+  }
+
   function validateInternetEdges(project){
     const edges = arr(project && project.devices).filter(device => clean(device.internetEdge).toLowerCase() === 'yes' || device.internetEdge === true);
     if(edges.length <= 1) return [];
-    const names = edges.map(device => clean(device.name) || clean(device.id) || 'dispositivo sin nombre');
-    return [makeIssue({
-      code:'NW-ARCH-002', severity:'warning', blocking:false, category:'architecture',
-      title:'Varios bordes de Internet declarados',
-      message:`Hay ${edges.length} dispositivos marcados como borde de Internet: ${names.join(', ')}.`,
-      why:'Más de un borde puede ser válido con alta disponibilidad o multihoming, pero requiere declarar roles, prioridades y routing de salida explícitos.',
-      impact:'Sin una arquitectura de redundancia definida, pueden generarse rutas por defecto, NAT o políticas contradictorias.',
-      affectedObjects:edges.map(device => clean(device.id)).filter(Boolean),
-      suggestions:[
-        {label:'Mantener un único borde', steps:['Selecciona el firewall o router que conecta realmente con el ISP.', 'Desmarca internetEdge en los equipos internos.', 'Configura en los routers internos una ruta por defecto hacia el borde.']},
-        {label:'Documentar redundancia o multihoming', steps:['Define el protocolo de redundancia o routing utilizado.', 'Asigna prioridades, tracking y rutas por defecto coherentes.', 'Verifica NAT y políticas en todos los bordes.']}
-      ]
-    })];
+    const groups=new Map();
+    for(const edge of edges){
+      const site=internetEdgeSite(project,edge);
+      if(!groups.has(site))groups.set(site,[]);
+      groups.get(site).push(edge);
+    }
+    const issues=[];
+    for(const [site,siteEdges] of groups){
+      if(siteEdges.length<=1)continue;
+      const names = siteEdges.map(device => clean(device.name) || clean(device.id) || 'dispositivo sin nombre');
+      issues.push(makeIssue({
+        code:'NW-ARCH-002', severity:'warning', blocking:false, category:'architecture',
+        title:'Varios bordes de Internet declarados',
+        message:`Hay ${siteEdges.length} dispositivos marcados como borde de Internet en la misma sede: ${names.join(', ')}.`,
+        why:'Más de un borde dentro de una misma sede puede ser válido con alta disponibilidad o multihoming, pero requiere declarar roles, prioridades y routing de salida explícitos.',
+        impact:'Sin una arquitectura de redundancia definida, pueden generarse rutas por defecto, NAT o políticas contradictorias.',
+        affectedObjects:siteEdges.map(device => clean(device.id)).filter(Boolean),
+        siteRef:site==='__global__'?'':site,
+        suggestions:[
+          {label:'Mantener un único borde por sede', steps:['Selecciona el firewall o router que conecta realmente con el ISP.', 'Desmarca internetEdge en los equipos internos.', 'Configura en los routers internos una ruta por defecto hacia el borde.']},
+          {label:'Documentar redundancia o multihoming', steps:['Define el protocolo de redundancia o routing utilizado.', 'Asigna prioridades, tracking y rutas por defecto coherentes.', 'Verifica NAT y políticas en todos los bordes.']}
+        ]
+      }));
+    }
+    return issues;
   }
 
   function declaredRoutingStrategy(project){
