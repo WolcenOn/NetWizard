@@ -42,10 +42,11 @@ function diffMaterials(project){
 
   const baseDevices=baselineMap(base.devices),curDevices=arr(p.devices);
   const currentOrigins=new Set(curDevices.map(d=>clean(d.originRef)).filter(Boolean));
+  const replacementRefs=new Set(curDevices.map(d=>clean(d.replacementDeviceRef)).filter(Boolean));
   for(const d of curDevices){
     const origin=clean(d.originRef),disp=clean(d.designDisposition)||(origin?'keep':'add');
     if(!origin||disp==='add'){
-      additions.push(material('Equipo',deviceDescription(d),1,'add',{deviceId:d.id}));
+      if(!replacementRefs.has(clean(d.id))) additions.push(material('Equipo',deviceDescription(d),1,'add',{deviceId:d.id}));
       continue;
     }
     const before=baseDevices.get(origin);
