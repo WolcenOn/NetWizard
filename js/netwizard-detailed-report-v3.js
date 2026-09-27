@@ -271,6 +271,7 @@ const SECTION_DEFS=[
  {id:'power-map',title:'Mapa de alimentación PDU / PSU',group:'Conexiones',default:true},
  {id:'structured-cabling',title:'Cadena completa de cableado estructurado',group:'Conexiones',default:true},
  {id:'checklist',title:'Checklist de instalación',group:'Operación',default:true},
+ {id:'intervention',title:'Plan de intervención / As-Built → To-Be',group:'Operación',default:false},
  {id:'direct-connectivity',title:'Conectividad directa de datos',group:'Conexiones',default:true},
  {id:'inventory',title:'Inventario y materiales',group:'Inventario',default:true},
  {id:'rack-connections',title:'Conexiones físicas por rack',group:'Conexiones',default:true},
