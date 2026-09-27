@@ -32,9 +32,11 @@ const required = [
   'js/netwizard-inventory-golden-path-ui.js',
   'js/netwizard-physical-intervention-plan.js',
   'js/netwizard-field-intervention-package.js',
+  'js/netwizard-intervention-closeout.js',
   'js/netwizard-inventory-design-bridge.js',
   'js/netwizard-inventory-design-bridge-ui.js',
   'js/netwizard-physical-intervention-ui.js',
+  'js/netwizard-intervention-closeout-ui.js',
   'js/netwizard-resilience-topology.js',
   'js/netwizard-wan-circuits.js',
   'js/netwizard-traffic-capacity.js',
@@ -119,11 +121,14 @@ before('js/netwizard-physical-inventory.js', 'js/netwizard-inventory-gate.js');
 before('js/netwizard-inventory-gate.js', 'js/netwizard-inventory-golden-path-ui.js');
 before('js/netwizard-inventory-golden-path-ui.js', 'js/netwizard-physical-intervention-plan.js');
 before('js/netwizard-physical-intervention-plan.js', 'js/netwizard-field-intervention-package.js');
+before('js/netwizard-field-intervention-package.js', 'js/netwizard-intervention-closeout.js');
+before('js/netwizard-intervention-closeout.js', 'js/netwizard-inventory-design-bridge.js');
 before('js/netwizard-field-intervention-package.js', 'js/netwizard-inventory-design-bridge.js');
 before('js/netwizard-physical-intervention-plan.js', 'js/netwizard-inventory-design-bridge.js');
 before('js/netwizard-inventory-golden-path-ui.js', 'js/netwizard-inventory-design-bridge.js');
 before('js/netwizard-inventory-design-bridge.js', 'js/netwizard-inventory-design-bridge-ui.js');
 before('js/netwizard-inventory-design-bridge-ui.js', 'js/netwizard-physical-intervention-ui.js');
+before('js/netwizard-physical-intervention-ui.js', 'js/netwizard-intervention-closeout-ui.js');
 before('js/netwizard-production-gate-architecture.js', 'js/netwizard-runtime.js');
 
 const architectureSource = fs.readFileSync(path.join(root, 'js/netwizard-production-gate-architecture.js'), 'utf8');
