@@ -83,9 +83,10 @@ function setDeviceDisposition(project,deviceId,disposition,options){
   const next=clone(project||{}),id=clean(deviceId),status=normalizeDisposition(disposition,'keep'),opts=obj(options);
   const device=arr(next.devices).find(d=>d&&d.id===id);
   if(!device)return{ok:false,code:'device_not_found',message:'No se encuentra el equipo.',project:next};
+  const hasOrigin=!!clean(device.originRef);
+  if(hasOrigin&&status==='add')return{ok:false,code:'invalid_disposition_transition',message:'Un equipo procedente del As-Built no puede marcarse como Añadir.',project:next};
+  if(!hasOrigin&&status!=='add')return{ok:false,code:'invalid_disposition_transition',message:'Un equipo nuevo solo puede marcarse como Añadir.',project:next};
   device.designDisposition=status;
-  if(!device.originRef&&status!=='add')device.originRef=device.id;
-  if(status==='add')delete device.originRef;
   if(status==='replace'){
     device.replacementNote=clean(opts.replacementNote||device.replacementNote);
     device.replacementDeviceRef=clean(opts.replacementDeviceRef||device.replacementDeviceRef);
@@ -98,7 +99,7 @@ function setDeviceDisposition(project,deviceId,disposition,options){
 function normalizeDeviceForSummary(device){
   const hasOrigin=!!clean(device&&device.originRef);
   return Object.assign({},device,{
-    designDisposition:normalizeDisposition(device&&device.designDisposition,hasOrigin?'keep':'add')
+    designDisposition:hasOrigin?normalizeDisposition(device&&device.designDisposition,'keep'):'add'
   });
 }
 function summarize(project){
