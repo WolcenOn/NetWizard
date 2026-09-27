@@ -2,6 +2,9 @@
 
 const assert=require('assert');
 const modelApi=require('../js/netwizard-report-model.js');
+global.NetWizardPhysicalInterventionPlan=require('../js/netwizard-physical-intervention-plan.js');
+global.NetWizardFieldInterventionPackage=require('../js/netwizard-field-intervention-package.js');
+const Bridge=require('../js/netwizard-inventory-design-bridge.js');
 const report=require('../js/netwizard-detailed-report-v3.js');
 
 const project={
@@ -87,6 +90,23 @@ const custom=report.selectedSections({sections:['cover','labels']});
 assert.deepStrictEqual([...custom],['cover','labels']);
 assert.ok(report.SECTION_DEFS.some(x=>x.id==='connection-diagram'&&x.default===true));
 assert.ok(report.SECTION_DEFS.some(x=>x.id==='labels'&&x.default===true));
+assert.ok(report.SECTION_DEFS.some(x=>x.id==='intervention'&&x.default===false));
+
+const sourceInventory={...project,workflow:{mode:'inventory'}};
+const derived=Bridge.createDesignFromInventory(sourceInventory,{snapshotId:'snap-report',createdAt:'2026-09-27T09:30:00Z'});
+assert.strictEqual(derived.ok,true);
+derived.project.devices[0].rackUnit=22;
+derived.project.powerConnections[0].outlet=3;
+const interventionHtml=report.build(derived.project,{gateReport:gate});
+assert.ok(interventionHtml.includes('Plan de intervención / As-Built → To-Be'));
+assert.ok(interventionHtml.includes('Checklist de trabajo'));
+assert.ok(interventionHtml.includes('BOM diferencial · material a añadir'));
+assert.ok(interventionHtml.includes('Mover SW-CORE'));
+assert.ok(interventionHtml.includes('Reconectar alimentación'));
+
+const normalHtml=report.build(project,{gateReport:gate});
+assert.ok(!normalHtml.includes('Plan de intervención / As-Built → To-Be'));
+
 assert.ok(report.LABEL_PRESETS['a4-3x8']);
 assert.ok(report.LABEL_PRESETS['a4-2x7']);
 assert.ok(report.LABEL_PRESETS['cable-3x12']);
