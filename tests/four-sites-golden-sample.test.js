@@ -9,6 +9,9 @@ const Gate=require(path.join(root,'js','netwizard-production-gate.js'));
 const Cabling=require(path.join(root,'js','netwizard-structured-cabling.js'));
 const Rack=require(path.join(root,'js','netwizard-rack-model.js'));
 const Poe=require(path.join(root,'js','netwizard-poe-model.js'));
+const Wan=require(path.join(root,'js','netwizard-wan-circuits.js'));
+const Vendor=require(path.join(root,'js','netwizard-vendor-hardening.js'));
+const Architecture=require(path.join(root,'js','netwizard-architecture-validator.js'));
 const Sample=require(path.join(root,'js','netwizard-sample-four-sites.js'));
 
 global.NetWizardProductionGate=Gate;
@@ -46,6 +49,7 @@ assert.strictEqual(p.patchPanels.length,4);
 assert.strictEqual(p.telecomOutlets.length,32);
 assert.strictEqual(p.cableRuns.length,32);
 assert.strictEqual(p.pdus.length,8);
+assert.strictEqual(p.wanCircuits.length,4,'Cada sede debe declarar su entrada WAN/Internet');
 
 assert.strictEqual(p.visual.locs.length,8,'Debe haber exactamente CPD + oficina para cada una de las cuatro sedes');
 assert.ok(!p.visual.locs.some(x=>['Core / Perímetro','Acceso / Usuarios','Servicios'].includes(x.name)),'El ejemplo no debe caer en ubicaciones visuales genéricas');
@@ -64,6 +68,10 @@ for(const site of ['s1','s2','s3','s4']){
   assert.strictEqual(p.hosts.filter(x=>x.id.startsWith(site+'_')).length,10,site+' debe tener 10 hosts');
   assert.strictEqual(p.cableRuns.filter(x=>x.id.startsWith(site+'_')).length,8,site+' debe tener 8 rutas estructuradas');
   assert.strictEqual(p.powerConnections.filter(x=>x.id.startsWith(site+'_')).length,7,site+' debe tener 7 conexiones de alimentación');
+  const circuit=p.wanCircuits.find(x=>x.id===site+'_wan_primary');
+  assert.ok(circuit,site+' debe tener circuito WAN principal');
+  assert.strictEqual(circuit.deviceId,site+'_fw');
+  assert.strictEqual(circuit.portId,site+'_fw_wan');
 
   const access=p.devices.find(x=>x.id===site+'_access');
   const poe=Poe.collect({devices:p.devices,ports:p.ports,hosts:p.hosts});
@@ -99,6 +107,16 @@ assert.ok(cabling.paths.every(x=>x.complete));
 
 const rackAudit=Rack.validate(p);
 assert.strictEqual(rackAudit.ok,true,rackAudit.issues.map(x=>x.code+': '+x.message).join('\n'));
+
+const wan=Wan.validateProject(p);
+assert.strictEqual(wan.ok,true,wan.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(wan.counts.blocking,0);
+
+const vendor=Vendor.validateAllExports(p,{productionMode:true});
+assert.strictEqual(vendor.issues.some(x=>x.code==='NW-VENDOR-004'),false,'Los servidores físicos no deben exigir puertos de configuración vendor');
+
+const architecture=Architecture.validate(p);
+assert.strictEqual(architecture.issues.some(x=>x.code==='NW-ARCH-002'),false,'Un borde independiente por sede no es multihoming dentro de una misma sede');
 
 const gate=Gate.runProductionGate(p,{productionMode:true,strict:true});
 assert.strictEqual(gate.canExport,true,gate.issues.map(x=>`[${x.severity}] [${x.code}] ${x.message}`).join('\n'));
