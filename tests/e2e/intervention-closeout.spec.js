@@ -247,6 +247,7 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
 
 test('modo ejecución de campo conserva progreso local sin mutar el To-Be', async ({page})=>{
   await resetStorage(page);
+  page.on('dialog', dialog => dialog.accept());
 
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
