@@ -243,3 +243,55 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
   await expect(journal).toContainText('Estado actual');
   await expect(journal).toContainText(first.name);
 });
+
+
+test('modo ejecución de campo conserva progreso local sin mutar el To-Be', async ({page})=>{
+  await resetStorage(page);
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    Object.assign(p,{
+      projName:'E2E ejecución campo',
+      workflow:{mode:'inventory'},
+      physicalLocations:[{id:'loc1',name:'CPD',type:'room'}],
+      racks:[{id:'rack1',name:'RACK-01',locationId:'loc1',rackUnits:24}],
+      rackItems:[{id:'ri1',rackId:'rack1',type:'device',deviceId:'sw1',label:'SW-01',startUnit:18,heightUnits:1,face:'front'}],
+      devices:[{id:'sw1',name:'SW-01',type:'switch',kind:'switch',manufacturer:'ACME',model:'X48',modelSource:'manual',rackId:'rack1',rackUnit:18,rackUnits:1}],
+      ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',media:'copper',speedMaxMbps:1000}],
+      pdus:[],powerConnections:[],patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],
+      hosts:[],links:[],vlans:[],subnets:[],fwRules:[],dhcp:{}
+    });
+    window.NetWizardState.replaceProject(p,{source:'e2e-field-source'});
+    window.navTo('physical');
+  });
+
+  await page.locator('#inventoryToDesignMount button',{hasText:'Crear Diseño To-Be'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('design');
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices[0].rackUnit=20;
+    p.rackItems[0].startUnit=20;
+    window.NetWizardState.replaceProject(p,{source:'e2e-field-change'});
+    window.navTo('physical');
+  });
+
+  const field=page.locator('#fieldExecutionMount');
+  await expect(field).toBeVisible();
+  await expect(field).toContainText('Modo ejecución en campo');
+  const boxes=field.locator('input[data-field-execution-done]');
+  await expect(boxes).toHaveCount(1);
+  await boxes.first().check();
+  await expect(field).toContainText('0 acción(es) pendientes');
+
+  const afterMark=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    return {mode:p.workflow.mode,rackUnit:p.devices[0].rackUnit,startUnit:p.rackItems[0].startUnit};
+  });
+  expect(afterMark).toEqual({mode:'design',rackUnit:20,startUnit:20});
+
+  await page.evaluate(()=>window.navTo('dev'));
+  await page.evaluate(()=>window.navTo('physical'));
+  await expect(page.locator('#fieldExecutionMount')).toContainText('100%');
+  await expect(page.locator('#interventionCloseoutMount')).toContainText('Campo');
+});
