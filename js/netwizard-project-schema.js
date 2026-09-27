@@ -325,6 +325,20 @@ Mantenimiento:
       ...sanitizeObjectStrings(workflowSource, 240),
       mode: WORKFLOW_MODES.includes(workflowMode) ? workflowMode : 'design'
     };
+    const derivedFromSource = asObject(asObject(p.workflow).derivedFrom);
+    if(cleanText(derivedFromSource.type, 40).toLowerCase()==='inventory'){
+      p.workflow.derivedFrom = {
+        type:'inventory',
+        snapshotId:cleanId(derivedFromSource.snapshotId || '', ''),
+        sourceProjectName:cleanText(derivedFromSource.sourceProjectName || '', 160),
+        sourceSchemaVersion:cleanText(derivedFromSource.sourceSchemaVersion || '', 40),
+        createdAt:cleanText(derivedFromSource.createdAt || '', 80)
+      };
+      p.workflow.designPhase = 'to-be';
+    }else{
+      delete p.workflow.derivedFrom;
+      if(p.workflow.designPhase != null) p.workflow.designPhase = cleanText(p.workflow.designPhase, 40);
+    }
     p.dhcp = sanitizeDhcpMap(p.dhcp);
     p.customDeviceModels = p.customDeviceModels.map(sanitizeCustomDeviceModel);
 
@@ -342,6 +356,23 @@ Mantenimiento:
       x.model = cleanText(x.model || '', 120);
       x.serialNumber = cleanText(x.serialNumber || '', 160);
       x.assetTag = cleanText(x.assetTag || '', 120);
+      x.originRef = cleanId(x.originRef || '', '');
+      const derivedFromInventory = asObject(asObject(p.workflow).derivedFrom).type === 'inventory';
+      const disposition = cleanText(x.designDisposition || '', 20).toLowerCase();
+      if(x.designDisposition != null && !['keep','retire','replace','add'].includes(disposition)){
+        workflowWarnings.push(`Dispositivo ${x.name}: designDisposition desconocido (${cleanText(x.designDisposition,40)}).`);
+      }
+      if(derivedFromInventory || x.designDisposition != null){
+        x.designDisposition = ['keep','retire','replace','add'].includes(disposition) ? disposition : (x.originRef ? 'keep' : 'add');
+      }else{
+        delete x.designDisposition;
+      }
+      x.replacementDeviceRef = cleanId(x.replacementDeviceRef || '', '');
+      x.replacementNote = cleanText(x.replacementNote || '', 500);
+      if(x.designDisposition !== 'replace'){
+        delete x.replacementDeviceRef;
+        delete x.replacementNote;
+      }
       const modelSource = cleanText(x.modelSource || 'manual', 20).toLowerCase();
       if(x.modelSource != null && !['manual','global','custom'].includes(modelSource)){
         workflowWarnings.push(`Dispositivo ${x.name}: modelSource desconocido (${cleanText(x.modelSource,40)}); se usa manual.`);
@@ -729,6 +760,10 @@ Mantenimiento:
       if(!['manual','global','custom'].includes(source)) errors.push(`Dispositivo ${device.name || device.id}: modelSource inválido.`);
       if(source==='custom' && !device.modelRef) errors.push(`Dispositivo ${device.name || device.id}: modelSource custom requiere modelRef.`);
       if(source==='custom' && device.modelRef && !customModelIds.has(device.modelRef)) errors.push(`Dispositivo ${device.name || device.id}: modelRef personalizado inexistente (${device.modelRef}).`);
+      if(device.designDisposition != null && !['keep','retire','replace','add'].includes(cleanText(device.designDisposition,20).toLowerCase())) errors.push(`Dispositivo ${device.name || device.id}: designDisposition inválido.`);
+      if(device.designDisposition==='add' && device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: marcado como add pero conserva originRef.`);
+      if(device.designDisposition!=='add' && asObject(asObject(p.workflow).derivedFrom).type==='inventory' && !device.originRef) warnings.push(`Dispositivo ${device.name || device.id}: no tiene originRef dentro de un diseño derivado de inventario.`);
+      if(device.replacementDeviceRef && !devIds.has(device.replacementDeviceRef)) errors.push(`Dispositivo ${device.name || device.id}: replacementDeviceRef inexistente (${device.replacementDeviceRef}).`);
     }
 
     for(const vlan of p.vlans){
