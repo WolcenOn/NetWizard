@@ -339,6 +339,37 @@
                 "inventory",
                 "design"
               ]
+            },
+            "designPhase": {
+              "type": "string",
+              "enum": [
+                "to-be"
+              ]
+            },
+            "derivedFrom": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "inventory"
+                },
+                "snapshotId": {
+                  "type": "string"
+                },
+                "sourceProjectName": {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                "sourceSchemaVersion": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "createdAt": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              }
             }
           }
         },
@@ -472,6 +503,25 @@
             "null"
           ],
           "minimum": 0
+        },
+        "originRef": {
+          "type": "string"
+        },
+        "designDisposition": {
+          "type": "string",
+          "enum": [
+            "keep",
+            "retire",
+            "replace",
+            "add"
+          ]
+        },
+        "replacementDeviceRef": {
+          "type": "string"
+        },
+        "replacementNote": {
+          "type": "string",
+          "maxLength": 500
         }
       }
     },
