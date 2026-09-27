@@ -801,3 +801,64 @@ Contrato inicial:
 ```
 
 `NetWizardInventoryDesignBridge.buildPhysicalChangeSet()` produce una vista diferencial basada en estas decisiones. En I5 se limita a equipos; racks, cableado, potencia y otros activos podrán incorporarse al mismo contrato sin crear colecciones paralelas.
+
+
+## I6 — Plan de intervención física automático
+
+Los diseños derivados de un As-Built guardan una línea base física mínima y portable:
+
+```text
+As-Built
+  |
+  +-- racks
+  +-- equipos / rack-U
+  +-- PDU
+  +-- conexiones de alimentación
+  +-- cable runs
+  +-- patching
+  |
+  v
+workflow.interventionBaseline
+  |
+  v
+edición normal del To-Be
+  |
+  v
+Physical Intervention Plan
+```
+
+La línea base no es un segundo inventario completo. Solo conserva las firmas necesarias para detectar diferencias físicas, incluso cuando un elemento se elimina del To-Be.
+
+El plan detecta automáticamente:
+
+- instalar, retirar, reemplazar o mover equipos;
+- cambios de rack/U;
+- instalar, retirar o modificar racks;
+- instalar, retirar o modificar PDU;
+- conectar, desconectar o reconectar alimentación;
+- instalar, retirar, sustituir o reencaminar cableado permanente;
+- añadir, retirar o cambiar patching de rack;
+- añadir, retirar o cambiar conexiones toma ↔ host.
+
+Ejemplo:
+
+```text
+SW-01: RACK-01 U18 -> RACK-01 U20
+PDU-A: toma 1 -> toma 5
+C-001: Cat6A / Canal A -> Cat6A F/UTP / Canal B
+```
+
+se convierte en acciones ordenables:
+
+```text
+1. desconectar alimentación
+2. retirar/reparchear cableado
+3. mover equipo
+4. instalar/sustituir cableado
+5. reconectar patching
+6. reconectar alimentación
+```
+
+La secuencia generada es orientativa y debe revisarse antes de ejecutar trabajos en campo.
+
+No se añade un tercer `workflow.mode`: mantenimiento sigue siendo una relación entre As-Built y To-Be.
