@@ -954,7 +954,7 @@ Al confirmar:
   - configuración observada asociada al equipo retirado;
 - los equipos nuevos/reutilizados permanecen;
 - se eliminan `originRef`, `designDisposition`, `replacementDeviceRef` y otros metadatos temporales de diseño;
-- `designRequirements` deja de ser parte del inventario final;
+- se vacían los `designRequirements.locationPlans` del To-Be; las políticas de margen/rack pueden conservarse como preferencias para una futura iteración;
 - el workflow vuelve a `inventory`;
 - se eliminan `derivedFrom`, `designPhase` e `interventionBaseline`.
 
