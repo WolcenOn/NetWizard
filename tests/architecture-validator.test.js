@@ -182,7 +182,8 @@ test('Architecture validator sigue avisando con varios bordes en la misma sede',
   };
   const issue=ArchitectureValidator.validate(project).issues.find(i=>i.code==='NW-ARCH-002');
   assert.ok(issue);
-  assert.strictEqual(issue.siteRef,'site-a');
+  assert.ok(issue.message.includes('misma sede'));
+  assert.deepStrictEqual(new Set(issue.affectedObjects),new Set(['fw1','fw2']));
 });
 
 console.log('\nTests architecture validator completados.');
