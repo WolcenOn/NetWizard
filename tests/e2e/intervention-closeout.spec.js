@@ -78,3 +78,64 @@ test('cierre de intervención convierte To-Be en As-Built trazable y guarda snap
 
   await expect(page.locator('#inventoryToDesignMount')).toContainText('As-Built actualizado desde intervención cerrada');
 });
+
+
+test('la UI permite seleccionar el equipo sustituto para un replace', async ({page})=>{
+  await resetStorage(page);
+  page.on('dialog', dialog => dialog.accept());
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    Object.assign(p,{
+      projName:'E2E selector reemplazo',
+      workflow:{mode:'inventory'},
+      physicalLocations:[{id:'loc1',name:'CPD',type:'room'}],
+      racks:[{id:'rack1',name:'RACK-01',locationId:'loc1',rackUnits:24}],
+      rackItems:[{id:'ri1',rackId:'rack1',type:'device',deviceId:'sw-old',label:'SW-OLD',startUnit:18,heightUnits:1,face:'front'}],
+      devices:[{id:'sw-old',name:'SW-OLD',type:'switch',kind:'switch',manufacturer:'ACME',model:'X24',modelSource:'manual',rackId:'rack1',rackUnit:18,rackUnits:1}],
+      ports:[{id:'p-old',deviceId:'sw-old',name:'Gi1/0/1',media:'copper',speedMaxMbps:1000}],
+      pdus:[],powerConnections:[],patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],
+      hosts:[],links:[],vlans:[],subnets:[],fwRules:[],dhcp:{}
+    });
+    window.NetWizardState.replaceProject(p,{source:'e2e-replacement-source'});
+    window.navTo('physical');
+  });
+
+  await page.locator('#inventoryToDesignMount button',{hasText:'Crear Diseño To-Be'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('design');
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices.push({
+      id:'sw-new',name:'SW-NEW',type:'switch',kind:'switch',manufacturer:'ACME',model:'X48',
+      modelSource:'manual',designDisposition:'add',rackId:'rack1',rackUnit:20,rackUnits:1
+    });
+    p.ports.push({id:'p-new',deviceId:'sw-new',name:'Gi1/0/1',media:'copper',speedMaxMbps:1000});
+    p.rackItems.push({id:'ri-new',rackId:'rack1',type:'device',deviceId:'sw-new',label:'SW-NEW',startUnit:20,heightUnits:1,face:'front'});
+    window.NetWizardState.replaceProject(p,{source:'e2e-replacement-device'});
+    window.navTo('dev');
+  });
+
+  const disposition=page.locator('select[data-design-disposition="sw-old"]');
+  await expect(disposition).toBeVisible();
+  await disposition.selectOption('replace');
+
+  const replacement=page.locator('select[data-replacement-for="sw-old"]');
+  await expect(replacement).toBeEnabled();
+  await expect(replacement.locator('option[value="sw-new"]')).toHaveText('SW-NEW');
+  await replacement.selectOption('sw-new');
+
+  const state=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    const old=p.devices.find(d=>d.id==='sw-old');
+    return{disposition:old.designDisposition,replacementDeviceRef:old.replacementDeviceRef};
+  });
+  expect(state.disposition).toBe('replace');
+  expect(state.replacementDeviceRef).toBe('sw-new');
+
+  await page.evaluate(()=>window.navTo('physical'));
+  const closeout=page.locator('#interventionCloseoutMount');
+  await expect(closeout).toBeVisible();
+  await expect(closeout).not.toContainText('replacementDeviceRef');
+  await expect(closeout.locator('button',{hasText:'Cerrar intervención'})).toBeEnabled();
+});
