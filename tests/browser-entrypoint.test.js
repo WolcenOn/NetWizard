@@ -1,153 +1,71 @@
 'use strict';
 
-const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
+const assert=require('assert');
+const fs=require('fs');
+const path=require('path');
+const Manifest=require('../js/netwizard-browser-modules.js');
 
-const root = path.join(__dirname, '..');
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const scripts = Array.from(html.matchAll(/<script\s+[^>]*src=["']\.\/(js\/[^"']+)["'][^>]*><\/script>/g), match => match[1]);
-const required = [
-  'js/netwizard-device-model.js',
-  'js/netwizard-v5-core.js',
-  'js/netwizard-v5-renderer.js',
-  'js/netwizard-v5-interaction.js',
-  'js/netwizard-v5-scene.js',
-  'js/netwizard-v5-drag-controller.js',
-  'js/netwizard-v5-location-transactions.js',
-  'js/netwizard-v5-commands.js',
-  'js/netwizard-v5-panel.js',
-  'js/netwizard-v5-controls.js',
-  'js/netwizard.js',
-  'js/netwizard-design-requirements.js',
-  'js/netwizard-design-requirements-ui.js',
-  'js/netwizard-v5-bridge.js',
-  'js/netwizard-config-pipeline.js',
-  'js/netwizard-vendor-config-generators.js',
-  'js/netwizard-architecture-validator.js',
-  'js/netwizard-routing-plan.js',
-  'js/netwizard-capability-registry.js',
-  'js/netwizard-physical-inventory.js',
-  'js/netwizard-inventory-gate.js',
-  'js/netwizard-inventory-golden-path-ui.js',
-  'js/netwizard-physical-intervention-plan.js',
-  'js/netwizard-field-intervention-package.js',
-  'js/netwizard-intervention-closeout.js',
-  'js/netwizard-inventory-design-bridge.js',
-  'js/netwizard-inventory-design-bridge-ui.js',
-  'js/netwizard-physical-intervention-ui.js',
-  'js/netwizard-field-execution-ui.js',
-  'js/netwizard-intervention-closeout-ui.js',
-  'js/netwizard-intervention-history.js',
-  'js/netwizard-intervention-history-ui.js',
-  'js/netwizard-xlsx-writer.js',
-  'js/netwizard-asbuilt-exports.js',
-  'js/netwizard-asbuilt-exports-ui.js',
-  'js/netwizard-resilience-topology.js',
-  'js/netwizard-wan-circuits.js',
-  'js/netwizard-traffic-capacity.js',
-  'js/netwizard-internal-services.js',
-  'js/netwizard-wifi-planning.js',
-  'js/netwizard-ipv6-vrf.js',
-  'js/netwizard-failure-simulation.js',
-  'js/netwizard-observed-drift.js',
-  'js/netwizard-cisco-routing-generator.js',
-  'js/netwizard-multivendor-routing-generator.js',
-  'js/netwizard-firewall-edge-generator.js',
-  'js/netwizard-switching-generator.js',
-  'js/netwizard-access-security-generator.js',
-  'js/netwizard-management-generator.js',
-  'js/netwizard-ha-services-generator.js',
-  'js/netwizard-cisco-routing-integration.js',
-  'js/netwizard-multivendor-routing-integration.js',
-  'js/netwizard-firewall-edge-integration.js',
-  'js/netwizard-switching-integration.js',
-  'js/netwizard-access-security-integration.js',
-  'js/netwizard-management-integration.js',
-  'js/netwizard-ha-services-integration.js',
-  'js/netwizard-production-gate-architecture.js',
-  'js/netwizard-change-set.js',
-  'js/netwizard-incremental-generators.js',
-  'js/netwizard-observed-config-ui.js',
-  'js/netwizard-deployment-runbook.js',
-  'js/netwizard-deployment-bundle.js',
-  'js/netwizard-runtime.js'
-];
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const scripts=Array.from(
+  html.matchAll(/<script\s+[^>]*src=["']\.\/(js\/[^"']+)["'][^>]*><\/script>/g),
+  match=>match[1]
+);
+const expected=Manifest.paths();
 
-for(const script of required){
-  assert.ok(scripts.includes(script), `index.html no carga ${script}`);
-  assert.ok(fs.existsSync(path.join(root, script)), `No existe ${script}`);
+assert.deepStrictEqual(scripts,expected,'index.html debe seguir exactamente el orden del manifiesto de módulos');
+
+const validation=Manifest.validate(Manifest.list(),{
+  exists:modulePath=>fs.existsSync(path.join(root,modulePath))
+});
+assert.strictEqual(validation.ok,true,validation.errors.join('\n'));
+
+const production=Manifest.paths({production:true});
+assert.ok(production.length<expected.length,'El perfil de producción debe excluir módulos privados');
+for(const p of production)assert.ok(expected.includes(p),`Producción referencia un módulo fuera del grafo source: ${p}`);
+
+const duplicates=scripts.filter((script,index)=>scripts.indexOf(script)!==index);
+assert.deepStrictEqual(duplicates,[],'El entrypoint no debe contener scripts duplicados');
+
+const badMissingFile=Manifest.validate([{path:'js/not-real.js'}],{exists:()=>false});
+assert.ok(badMissingFile.errors.some(x=>x.includes('module file missing')));
+
+const badMissingDependency=Manifest.validate([{path:'a.js',dependsOn:['missing.js']}]);
+assert.ok(badMissingDependency.errors.some(x=>x.includes('depends on missing module')));
+
+const badCycle=Manifest.validate([
+  {path:'a.js',dependsOn:['b.js']},
+  {path:'b.js',dependsOn:['a.js']}
+]);
+assert.ok(badCycle.errors.some(x=>x.includes('dependency cycle')));
+
+const badDuplicate=Manifest.validate([{path:'a.js'},{path:'a.js'}]);
+assert.ok(badDuplicate.errors.some(x=>x.includes('duplicate module')));
+
+const badOrder=Manifest.validate([
+  {path:'b.js',dependsOn:['a.js']},
+  {path:'a.js'}
+]);
+assert.ok(badOrder.errors.some(x=>x.includes('invalid order')));
+
+for(const required of [
+  'js/netwizard-structured-cabling.js',
+  'js/netwizard-rack-model.js',
+  'js/netwizard-rack-ui.js',
+  'js/netwizard-structured-cabling-ui.js',
+  'js/netwizard-rack-production-integration.js',
+  'js/netwizard-report-model.js',
+  'js/netwizard-detailed-report-v3.js'
+]){
+  assert.ok(scripts.includes(required),`El entrypoint browser debe cargar ${required}`);
 }
 
-const duplicates = scripts.filter((script, index) => scripts.indexOf(script) !== index);
-assert.deepStrictEqual(duplicates, [], `Scripts duplicados en index.html: ${duplicates.join(', ')}`);
+const architectureSource=fs.readFileSync(path.join(root,'js/netwizard-production-gate-architecture.js'),'utf8');
+assert.ok(
+  architectureSource.includes("['NetWizardArchitectureValidator','./js/netwizard-architecture-validator.js'"),
+  'El fallback dinámico debe incluir ArchitectureValidator'
+);
+const connectivitySource=fs.readFileSync(path.join(root,'js/netwizard-connectivity-checker.js'),'utf8');
+assert.ok(!connectivitySource.includes("createElement('script')"),'Connectivity Checker no debe alterar el grafo de scripts del entrypoint');
 
-function before(first, second){
-  assert.ok(scripts.indexOf(first) < scripts.indexOf(second), `${first} debe cargarse antes que ${second}`);
-}
-
-before('js/netwizard-device-model.js', 'js/netwizard-project-schema.js');
-before('js/netwizard-project-schema.js', 'js/netwizard-v5-core.js');
-before('js/netwizard-v5-core.js', 'js/netwizard-v5-renderer.js');
-before('js/netwizard-v5-core.js', 'js/netwizard-v5-interaction.js');
-before('js/netwizard-v5-renderer.js', 'js/netwizard.js');
-before('js/netwizard-v5-interaction.js', 'js/netwizard-v5-scene.js');
-before('js/netwizard-v5-interaction.js', 'js/netwizard-v5-drag-controller.js');
-before('js/netwizard-v5-renderer.js', 'js/netwizard-v5-scene.js');
-before('js/netwizard-v5-scene.js', 'js/netwizard.js');
-before('js/netwizard-v5-drag-controller.js', 'js/netwizard.js');
-before('js/netwizard-v5-location-transactions.js', 'js/netwizard-v5-commands.js');
-before('js/netwizard-v5-location-transactions.js', 'js/netwizard.js');
-before('js/netwizard-v5-commands.js', 'js/netwizard.js');
-before('js/netwizard-v5-panel.js', 'js/netwizard.js');
-before('js/netwizard-v5-controls.js', 'js/netwizard.js');
-before('js/netwizard.js', 'js/netwizard-design-requirements.js');
-before('js/netwizard-design-requirements.js', 'js/netwizard-design-requirements-ui.js');
-before('js/netwizard-design-requirements-ui.js', 'js/netwizard-v5-bridge.js');
-before('js/netwizard.js', 'js/netwizard-v5-bridge.js');
-before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-layout-manager.js');
-before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-connectivity-trace.js');
-before('js/netwizard.js', 'js/netwizard-vendor-config-generators.js');
-before('js/netwizard.js', 'js/netwizard-config-pipeline.js');
-before('js/netwizard-config-pipeline.js', 'js/netwizard-vendor-config-generators.js');
-before('js/netwizard-custom-device-models.js', 'js/netwizard-global-device-catalog.js');
-before('js/netwizard-global-device-catalog.js', 'js/netwizard-custom-device-model-ui.js');
-before('js/netwizard-vendor-config-generators.js', 'js/netwizard-cisco-routing-integration.js');
-before('js/netwizard-routing-plan.js', 'js/netwizard-cisco-routing-generator.js');
-before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-integration.js');
-before('js/netwizard-architecture-validator.js', 'js/netwizard-production-gate-architecture.js');
-before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-bundle.js');
-before('js/netwizard-production-gate-architecture.js', 'js/netwizard-change-set.js');
-before('js/netwizard-change-set.js', 'js/netwizard-incremental-generators.js');
-before('js/netwizard-incremental-generators.js', 'js/netwizard-observed-config-ui.js');
-before('js/netwizard-observed-config-ui.js', 'js/netwizard-deployment-runbook.js');
-before('js/netwizard-incremental-generators.js', 'js/netwizard-deployment-runbook.js');
-before('js/netwizard-production-gate-architecture.js', 'js/netwizard-deployment-runbook.js');
-before('js/netwizard-deployment-runbook.js', 'js/netwizard-deployment-bundle.js');
-before('js/netwizard-deployment-bundle.js', 'js/netwizard-runtime.js');
-before('js/netwizard-physical-inventory.js', 'js/netwizard-inventory-gate.js');
-before('js/netwizard-inventory-gate.js', 'js/netwizard-inventory-golden-path-ui.js');
-before('js/netwizard-inventory-golden-path-ui.js', 'js/netwizard-physical-intervention-plan.js');
-before('js/netwizard-physical-intervention-plan.js', 'js/netwizard-field-intervention-package.js');
-before('js/netwizard-field-intervention-package.js', 'js/netwizard-intervention-closeout.js');
-before('js/netwizard-intervention-closeout.js', 'js/netwizard-inventory-design-bridge.js');
-before('js/netwizard-field-intervention-package.js', 'js/netwizard-inventory-design-bridge.js');
-before('js/netwizard-physical-intervention-plan.js', 'js/netwizard-inventory-design-bridge.js');
-before('js/netwizard-inventory-golden-path-ui.js', 'js/netwizard-inventory-design-bridge.js');
-before('js/netwizard-inventory-design-bridge.js', 'js/netwizard-inventory-design-bridge-ui.js');
-before('js/netwizard-inventory-design-bridge-ui.js', 'js/netwizard-physical-intervention-ui.js');
-before('js/netwizard-physical-intervention-ui.js', 'js/netwizard-field-execution-ui.js');
-before('js/netwizard-field-execution-ui.js', 'js/netwizard-intervention-closeout-ui.js');
-before('js/netwizard-intervention-closeout-ui.js', 'js/netwizard-intervention-history.js');
-before('js/netwizard-intervention-history.js', 'js/netwizard-intervention-history-ui.js');
-before('js/netwizard-intervention-history-ui.js', 'js/netwizard-xlsx-writer.js');
-before('js/netwizard-xlsx-writer.js', 'js/netwizard-asbuilt-exports.js');
-before('js/netwizard-asbuilt-exports.js', 'js/netwizard-asbuilt-exports-ui.js');
-before('js/netwizard-production-gate-architecture.js', 'js/netwizard-runtime.js');
-
-const architectureSource = fs.readFileSync(path.join(root, 'js/netwizard-production-gate-architecture.js'), 'utf8');
-assert.ok(architectureSource.includes("['NetWizardArchitectureValidator','./js/netwizard-architecture-validator.js'"), 'El fallback dinámico debe incluir ArchitectureValidator');
-const connectivitySource = fs.readFileSync(path.join(root, 'js/netwizard-connectivity-checker.js'), 'utf8');
-assert.ok(!connectivitySource.includes("createElement('script')"), 'Connectivity Checker no debe alterar el grafo de scripts del entrypoint');
-
-console.log('✓ El entrypoint del navegador carga una sola vez el runtime funcional en orden determinista');
+console.log('✓ Entrypoint, dependencias y perfiles browser siguen un único manifiesto declarativo');
