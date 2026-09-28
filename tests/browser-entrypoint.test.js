@@ -24,6 +24,16 @@ const production=Manifest.paths({production:true});
 assert.ok(production.length<expected.length,'El perfil de producción debe excluir módulos privados');
 for(const p of production)assert.ok(expected.includes(p),`Producción referencia un módulo fuera del grafo source: ${p}`);
 
+const productionEntries=Manifest.list().filter(item=>item.production!==false);
+const productionValidation=Manifest.validate(productionEntries,{
+  exists:modulePath=>fs.existsSync(path.join(root,modulePath))
+});
+assert.strictEqual(
+  productionValidation.ok,
+  true,
+  'El grafo de producción no puede depender de módulos privados: '+productionValidation.errors.join('\n')
+);
+
 const duplicates=scripts.filter((script,index)=>scripts.indexOf(script)!==index);
 assert.deepStrictEqual(duplicates,[],'El entrypoint no debe contener scripts duplicados');
 
