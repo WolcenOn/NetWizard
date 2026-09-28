@@ -306,7 +306,7 @@ func TestPrivateDeploymentPlanUsesStoredRevisionAndAudits(t *testing.T) {
 		t.Fatalf("private deployment capability missing: %d %s", capRec.Code, capRec.Body.String())
 	}
 
-	body := `{"expectedVersion":1,"desiredConfigs":{"r1":"set system host-name EDGE"},"configPaths":{"r1":"configs/r1.set"}}`
+	body := `{"expectedVersion":1}`
 	req := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/deployment-plan", body, rawSession, true)
 	rec := httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
@@ -370,7 +370,7 @@ func TestPrivateDeploymentPlanRejectsViewerAndStaleVersion(t *testing.T) {
 	store.mu.Lock()
 	store.roles[roleKey(ws.ID, "usr-remote")] = auth.RoleViewer
 	store.mu.Unlock()
-	body := `{"expectedVersion":1,"desiredConfigs":{"r1":"set system host-name EDGE"},"configPaths":{}}`
+	body := `{"expectedVersion":1}`
 	req := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/deployment-plan", body, rawSession, true)
 	rec := httptest.NewRecorder()
 	server.Handler().ServeHTTP(rec, req)
