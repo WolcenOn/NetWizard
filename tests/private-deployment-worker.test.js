@@ -31,7 +31,7 @@ const deploymentPlan=Runbook.buildDeploymentPlan(project,{generatedAt,changeSet,
 
 const actual=Worker.handle({project,generatedAt});
 
-assert.strictEqual(actual.contractVersion,'netwizard-private-deployment-plan-v1');
+assert.strictEqual(actual.contractVersion,'netwizard-private-deployment-plan-v2');
 assert.strictEqual(actual.privateConfigContract,'netwizard-private-vendor-config-v1');
 assert.strictEqual(actual.configSources.r1,'private');
 assert.strictEqual(actual.ok,true);
