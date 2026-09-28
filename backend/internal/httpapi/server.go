@@ -77,6 +77,14 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
 		s.mux.Handle("POST /api/auth/logout", s.auth.Sessions.Require(s.requireCSRF(http.HandlerFunc(s.handleAuthLogout))))
 		s.mux.Handle("GET /api/auth/me", s.auth.Sessions.Require(http.HandlerFunc(s.handleAuthMe)))
+		if s.catalog != nil {
+			require := s.auth.Sessions.Require
+			s.mux.Handle("GET /api/device-models/global", require(http.HandlerFunc(s.handleListGlobalDeviceModels)))
+			s.mux.Handle("GET /api/device-models/global/{modelID}", require(http.HandlerFunc(s.handleGetGlobalDeviceModel)))
+			if s.writeLimit != nil {
+				s.mux.Handle("PUT /api/device-models/global/{modelID}", require(s.requireMutation(s.requireGlobalAdmin(http.HandlerFunc(s.handleUpsertGlobalDeviceModel)))))
+			}
+		}
 		if s.remoteWritesReady() {
 			s.remoteRoutes()
 		}
