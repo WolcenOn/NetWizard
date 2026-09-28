@@ -48,4 +48,13 @@ assert.throws(
   /unknown device/
 );
 
-console.log('✓ Private deployment worker mantiene paridad con change set, incremental y runbook');
+const blockedProject=JSON.parse(JSON.stringify(project));
+delete blockedProject.observedState;
+const blocked=Worker.handle({project:blockedProject,desiredConfigs,configPaths,generatedAt});
+assert.strictEqual(blocked.ok,false);
+assert.ok(blocked.changeSet);
+assert.strictEqual(blocked.incrementalPlan,null);
+assert.strictEqual(blocked.deploymentPlan,null);
+assert.strictEqual(blocked.runbookMarkdown,'');
+
+console.log('✓ Private deployment worker mantiene paridad y corta la cadena ante bloqueos');
