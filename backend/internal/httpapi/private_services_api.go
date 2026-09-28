@@ -222,13 +222,13 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 	var body struct {
 		ExpectedVersion int64             `json:"expectedVersion"`
 		DesiredConfigs  map[string]string `json:"desiredConfigs"`
-		ConfigPaths     map[string]string `json:"configPaths"`
+		ConfigPaths     map[string]string `json:"configPaths,omitempty"`
 	}
 	if err := decodeJSON(w, r, &body, maxPrivateDeploymentRequestBytes); err != nil {
 		writeDecodeError(w, err)
 		return
 	}
-	if body.ExpectedVersion < 1 || body.DesiredConfigs == nil {
+	if body.ExpectedVersion < 1 {
 		http.Error(w, "invalid private deployment request", http.StatusBadRequest)
 		return
 	}
@@ -244,13 +244,6 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	for id, value := range body.ConfigPaths {
-		if strings.TrimSpace(id) == "" || len(id) > 256 || len(strings.TrimSpace(value)) > 300 {
-			http.Error(w, "invalid private deployment request", http.StatusBadRequest)
-			return
-		}
-	}
-
 	project, revision, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
 		s.writeProjectError(w, "load project for private deployment plan", err)
@@ -266,7 +259,7 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 
 	generatedAt := time.Now().UTC()
 	result, err := s.privateServices.GenerateDeploymentPlan(
-		r.Context(), revision.Snapshot, body.DesiredConfigs, body.ConfigPaths, generatedAt,
+		r.Context(), revision.Snapshot, body.DesiredConfigs, generatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, privateservices.ErrPrivateDeploymentInvalid) {
@@ -288,7 +281,7 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 			"projectVersion": project.CurrentVersion,
 			"ok": result.OK,
 			"artifactCount": len(result.Artifacts),
-			"desiredConfigCount": len(body.DesiredConfigs),
+			"legacyDesiredConfigCount": len(body.DesiredConfigs),
 		}); err != nil {
 		s.internalError(w, "audit private deployment plan", err)
 		return
