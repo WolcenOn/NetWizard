@@ -536,9 +536,9 @@ function clone(v){return JSON.parse(JSON.stringify(v));}
 function list(){return modules.map(clone);}
 function paths(options){const production=!!(options&&options.production);return modules.filter(m=>!production||m.production!==false).map(m=>m.path);}
 function requiredGlobals(){return modules.filter(m=>m.requiredGlobal).map(m=>({path:m.path,global:m.requiredGlobal}));}
-function validate(input){
-  const list=Array.isArray(input)?input:modules,errors=[],seen=new Set(),byPath=new Map();
-  for(const item of list){const path=String(item&&item.path||'').trim();if(!path){errors.push('module path required');continue;}if(seen.has(path))errors.push('duplicate module: '+path);seen.add(path);byPath.set(path,item);}
+function validate(input,options){
+  const list=Array.isArray(input)?input:modules,opts=options||{},errors=[],seen=new Set(),byPath=new Map();
+  for(const item of list){const path=String(item&&item.path||'').trim();if(!path){errors.push('module path required');continue;}if(seen.has(path))errors.push('duplicate module: '+path);if(typeof opts.exists==='function'&&!opts.exists(path))errors.push('module file missing: '+path);seen.add(path);byPath.set(path,item);}
   for(const item of list){const path=String(item&&item.path||'').trim();for(const dep of Array.isArray(item&&item.dependsOn)?item.dependsOn:[])if(!byPath.has(dep))errors.push(path+' depends on missing module '+dep);}
   const visiting=new Set(),visited=new Set();
   function visit(path,stack){if(visiting.has(path)){errors.push('dependency cycle: '+stack.concat(path).join(' -> '));return;}if(visited.has(path)||!byPath.has(path))return;visiting.add(path);const item=byPath.get(path);for(const dep of Array.isArray(item.dependsOn)?item.dependsOn:[])visit(dep,stack.concat(path));visiting.delete(path);visited.add(path);}
