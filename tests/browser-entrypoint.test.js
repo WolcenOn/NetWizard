@@ -48,6 +48,10 @@ const badOrder=Manifest.validate([
 ]);
 assert.ok(badOrder.errors.some(x=>x.includes('invalid order')));
 
+assert.ok(!scripts.includes('js/netwizard-poe-utils.js'),'El loader PoE legacy no debe formar parte del entrypoint canónico');
+assert.ok(scripts.includes('js/netwizard-poe-model.js'),'El entrypoint debe cargar el modelo PoE canónico');
+assert.ok(scripts.includes('js/netwizard-poe-utils-v2.js'),'El entrypoint debe cargar PoE v2 directamente');
+
 for(const required of [
   'js/netwizard-structured-cabling.js',
   'js/netwizard-rack-model.js',
