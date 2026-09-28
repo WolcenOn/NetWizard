@@ -9,6 +9,8 @@ const MultiRouting=require('../js/netwizard-multivendor-routing-generator.js');
 const Access=require('../js/netwizard-access-security-generator.js');
 const Management=require('../js/netwizard-management-generator.js');
 const Ha=require('../js/netwizard-ha-services-generator.js');
+const Policy=require('../js/netwizard-policy-utils.js');
+const Network=require('../js/netwizard-network-utils.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const PRIVATE_VENDORS=new Set([
@@ -30,6 +32,36 @@ function safeName(v,fallback){
   return ascii.replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^[.-]+|[.-]+$/g,'').slice(0,100)||fallback||'device';
 }
 function isSwitch(device){return !!device&&/switch/i.test(clean(device.kind||device.type));}
+function formatWild(cidr){
+  const parsed=Network.parseCidr(cidr);
+  if(!parsed)return clean(cidr,120);
+  return Network.ip4s(parsed.net)+' '+Network.ip4s((~parsed.mask)>>>0);
+}
+function splitPorts(value){return String(value||'any').split(',').map(x=>x.trim()).filter(Boolean);}
+function firewallAcl(project){
+  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
+  rules=Policy.enrichPolicyRules(project,rules);
+  if(!rules.length)return'';
+  const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
+  for(const rule of rules){
+    const action=rule.action==='deny'?'deny':'permit';
+    const proto=rule.proto==='any'?'ip':(rule.proto==='tcp_udp'?null:rule.proto);
+    const src=rule.src==='any'?'any':String(rule.src||'').includes('/')?formatWild(rule.src):'host '+rule.src;
+    const dst=rule.dst==='any'?'any':String(rule.dst||'').includes('/')?formatWild(rule.dst):'host '+rule.dst;
+    const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
+    for(const portValue of ports){
+      const port=portValue?' eq '+portValue:'';
+      const label=clean(rule.name,80);
+      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':'')+' ! '+label);
+      else{
+        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
+        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+      }
+    }
+  }
+  lines.push(' deny ip any any log ! Implicit deny');
+  return lines.join('\n');
+}
 function extension(vendor){return EXTENSIONS[clean(vendor,80)]||'txt';}
 function configPath(device,index){
   const vendor=clean(device&&device.vendorOs,80)||'generic';
@@ -54,8 +86,8 @@ function create(project){
   const enhanced=Vendor.createEnhancedGenConfig({
     originalGenConfig:fallback,
     getProject:()=>p,
-    getFwAcl:()=> '',
-    netUtils:require('../js/netwizard-network-utils.js')
+    getFwAcl:()=>firewallAcl(p),
+    netUtils:Network
   });
   pipeline.registerRenderer({
     id:'vendor.base',priority:100,
@@ -137,5 +169,5 @@ function generateAll(project,legacyDesiredConfigs){
 
 module.exports={
   CONTRACT_VERSION,PRIVATE_VENDORS,LEGACY_CLIENT_FALLBACK_VENDORS,
-  create,generateAll,configPath,extension
+  create,generateAll,configPath,extension,firewallAcl
 };
