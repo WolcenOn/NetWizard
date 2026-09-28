@@ -8,7 +8,8 @@
   function emitAuthChanged(state){
     try{
       if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function'){
-        root.dispatchEvent(new root.CustomEvent('nw:auth:changed',{detail:state}));
+        const detail={authenticated:!!(state&&state.authenticated),capabilities:(state&&state.capabilities)||{}};
+        root.dispatchEvent(new root.CustomEvent('nw:auth:changed',{detail}));
       }
     }catch(_e){}
   }
