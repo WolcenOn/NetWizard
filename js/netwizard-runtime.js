@@ -55,15 +55,11 @@
     'NetWizardObservedDrift',
     'NetWizardObservedDriftUi',
     'NetWizardDetailedReport',
-    'NetWizardCiscoRoutingGenerator',
-    'NetWizardMultivendorRoutingGenerator',
     'NetWizardFirewallEdgeGenerator',
     'NetWizardSwitchingGenerator',
     'NetWizardAccessSecurityGenerator',
     'NetWizardManagementGenerator',
     'NetWizardHaServicesGenerator',
-    'NetWizardCiscoRoutingIntegration',
-    'NetWizardMultivendorRoutingIntegration',
     'NetWizardFirewallEdgeIntegration',
     'NetWizardSwitchingIntegration',
     'NetWizardAccessSecurityIntegration',
@@ -88,7 +84,7 @@
     const pipeline = root.NetWizardConfigPipeline;
     const registry = pipeline && typeof pipeline.inspect === 'function' ? pipeline.inspect() : {renderers:[],stages:[]};
     const requiredRenderers = ['edge.firewall','device.switching','vendor.base'];
-    const requiredStages = ['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services'];
+    const requiredStages = ['security.access','management.baseline','ha.services'];
     const registeredRenderers = registry.renderers.map(item => item.id);
     const registeredStages = registry.stages.map(item => item.id);
     const missingRegistryEntries = requiredRenderers.filter(id => !registeredRenderers.includes(id))
@@ -96,8 +92,6 @@
     const generatorReady = !!(pipeline && root.genConfig === pipeline.generate && root.genConfig.__netwizardConfigPipeline);
     const architectureReady = !!(root.NetWizardProductionGate && root.NetWizardProductionGate.__architectureExtensionInstalled);
     const pipelineFlags = [
-      '__netwizardCiscoRoutingInstalled',
-      '__netwizardMultivendorRoutingInstalled',
       '__netwizardFirewallEdgeInstalled',
       '__netwizardSwitchingInstalled',
       '__netwizardAccessSecurityInstalled',
