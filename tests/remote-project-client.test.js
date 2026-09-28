@@ -1,0 +1,91 @@
+'use strict';
+
+const assert=require('assert');
+const {createClient}=require('../js/netwizard-remote-project-client.js');
+
+function response(status,body,etag){
+  return {
+    ok:status>=200&&status<300,
+    status,
+    headers:{get(name){return String(name).toLowerCase()==='etag'?(etag||''):'';}},
+    async json(){return body;}
+  };
+}
+
+const remoteSnapshot={
+  _schemaVersion:'3.50.0',
+  projName:'Cloud project',
+  devices:[{id:'r1',name:'RTR-01',type:'router',vendorOs:'cisco_ios'}],
+  ports:[],vlans:[],subnets:[],hosts:[],links:[]
+};
+let stateSnapshot=JSON.parse(JSON.stringify(remoteSnapshot));
+const replaced=[];
+const stateApi={
+  getSnapshot(){return JSON.parse(JSON.stringify(stateSnapshot));},
+  replaceProject(project,options){stateSnapshot=JSON.parse(JSON.stringify(project));replaced.push({project,options});}
+};
+const authApi={
+  state(){return{
+    authenticated:true,
+    capabilities:{remoteProjectWrites:true,privateRouting:true},
+    user:{csrfToken:'csrf-123'}
+  };}
+};
+const calls=[];
+let step=0;
+const fetchFn=async(url,init)=>{
+  calls.push({url,init:init||{}});
+  step++;
+  if(step===1)return response(200,{
+    project:{id:'prj_test',workspaceId:'ws1',name:'Cloud project',schemaVersion:'3.50.0',currentVersion:4},
+    revision:{projectId:'prj_test',version:4,schemaVersion:'3.50.0',snapshot:remoteSnapshot}
+  },'"prj_test:4"');
+  if(step===2){
+    const body=JSON.parse(init.body);
+    assert.strictEqual(body.expectedVersion,4);
+    assert.strictEqual(init.headers['X-NetWizard-CSRF'],'csrf-123');
+    assert.strictEqual(init.headers['If-Match'],'"prj_test:4"');
+    return response(200,{
+      project:{id:'prj_test',workspaceId:'ws1',name:'Cloud project',schemaVersion:'3.50.0',currentVersion:5},
+      revision:{projectId:'prj_test',version:5,schemaVersion:'3.50.0',snapshot:body.snapshot}
+    },'"prj_test:5"');
+  }
+  if(step===3){
+    const body=JSON.parse(init.body);
+    assert.deepStrictEqual(body,{expectedVersion:5,deviceId:'r1'});
+    assert.strictEqual(init.headers['X-NetWizard-CSRF'],'csrf-123');
+    return response(200,{
+      contractVersion:'netwizard-private-routing-v1',
+      planVersion:'netwizard-routing-plan-v1',
+      generatorVersion:'private-test',
+      deviceId:'r1',
+      vendor:'cisco_ios',
+      output:'router ospf 10\n network 10.0.0.0 0.0.0.255 area 0\n',
+      warnings:[]
+    });
+  }
+  throw new Error('unexpected fetch '+url);
+};
+
+(async()=>{
+  const client=createClient({fetchFn,stateApi,authApi,location:{search:''}});
+  const opened=await client.open('prj_test');
+  assert.strictEqual(opened.context.currentVersion,4);
+  assert.strictEqual(opened.context.etag,'"prj_test:4"');
+  assert.strictEqual(replaced.length,1);
+  assert.strictEqual(replaced[0].options.source,'remote-project-open');
+
+  stateSnapshot.devices[0].name='RTR-EDITED';
+  const result=await client.syncAndGenerateRouting('r1');
+  assert.match(result.output,/router ospf 10/);
+  assert.strictEqual(client.context().currentVersion,5);
+  assert.strictEqual(calls[1].url,'/api/projects/prj_test');
+  assert.strictEqual(calls[2].url,'/api/projects/prj_test/private/routing');
+
+  const portable=stateApi.getSnapshot();
+  assert.strictEqual(portable.projectId,undefined);
+  assert.strictEqual(portable.currentVersion,undefined);
+  assert.strictEqual(portable.devices[0].name,'RTR-EDITED');
+
+  console.log('✓ Contexto SaaS sincroniza y ejecuta routing privado sin contaminar el snapshot portable');
+})().catch(err=>{console.error(err);process.exitCode=1;});

@@ -28,6 +28,8 @@ const modules=[
   {"path":"js/netwizard-v5-controls.js"},
   {"path":"js/netwizard-wizard-presets.js"},
   {"path":"js/netwizard.js","requiredGlobal":"NetWizardState"},
+  {"path":"js/netwizard-remote-project-client.js","dependsOn":["js/netwizard-auth-client.js","js/netwizard.js"],"requiredGlobal":"NetWizardRemoteProjectClient"},
+  {"path":"js/netwizard-private-routing-ui.js","dependsOn":["js/netwizard-remote-project-client.js","js/netwizard.js"],"requiredGlobal":"NetWizardPrivateRoutingUi"},
   {"path":"js/netwizard-design-requirements.js","requiredGlobal":"NetWizardDesignRequirements"},
   {"path":"js/netwizard-design-requirements-ui.js","dependsOn":["js/netwizard-design-requirements.js","js/netwizard.js"],"requiredGlobal":"NetWizardDesignRequirementsUi"},
   {"path":"js/netwizard-v5-bridge.js","dependsOn":["js/netwizard.js","js/netwizard-v5-core.js","js/netwizard-v5-renderer.js","js/netwizard-v5-interaction.js","js/netwizard-v5-scene.js","js/netwizard-v5-commands.js"]},

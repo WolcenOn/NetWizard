@@ -213,15 +213,17 @@ Criterio de salida:
 
 El routing avanzado ya dispone de worker privado y contrato.
 
-Siguiente fase:
+Implementación cloud:
 
-- conectar UI cloud a `POST /api/projects/{projectID}/private/routing`;
-- usar la revisión remota y `expectedVersion`;
-- definir UX de error/offline;
-- retirar de producción los generadores de routing públicos;
-- añadir CI que falle si esos módulos reaparecen en `/app/public`.
+- la UI puede abrir un proyecto SaaS mediante `projectId` explícito o el parámetro `?projectId=...`;
+- el contexto remoto `{projectId,currentVersion,etag}` vive solo en memoria y no se serializa en el snapshot portable;
+- antes de generar routing privado, la UI sincroniza el snapshot actual con `PUT /api/projects/{projectID}` usando `expectedVersion`, CSRF e `If-Match`;
+- tras una sincronización válida invoca `POST /api/projects/{projectID}/private/routing` sobre esa misma revisión;
+- conflictos 409/412 bloquean la generación y obligan a recargar el proyecto remoto;
+- el modo local/source mantiene su generación inspeccionable como compatibilidad deliberada;
+- el artefacto Docker de producción no publica los generadores completos de routing.
 
-Este será el primer ejemplo completo de una capacidad que pasa de estado 1 a estado 3.
+Routing es el primer caso que alcanza flujo cloud autoritativo con frontera privada en el artefacto Docker de producción.
 
 ### Estado de routing en producción
 
@@ -234,7 +236,7 @@ El artefacto Docker de producción no publica ya los módulos completos de routi
 
 El worker privado se construye antes de retirar esos módulos y queda exclusivamente en `/app/private/routing-worker.cjs`, fuera de `NETWIZARD_STATIC_DIR`. El entrypoint fuente conserva temporalmente los módulos para desarrollo y modo local/offline.
 
-La UI cloud todavía necesita una capa explícita de contexto remoto (project id + currentVersion) antes de poder sustituir toda generación interactiva por llamadas al endpoint privado. Esa metadata no debe inventarse dentro del snapshot portable.
+La UI cloud dispone de una capa explícita de contexto remoto en memoria. `projectId`, `currentVersion` y `ETag` proceden de la API SaaS y nunca se inventan ni se guardan dentro del snapshot portable. El routing privado se ofrece como una acción asíncrona separada del pipeline local síncrono para no romper exportaciones/offline.
 
 ### D. Seleccionar el siguiente bloque privado
 
