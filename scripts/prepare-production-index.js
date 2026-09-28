@@ -2,14 +2,11 @@
 'use strict';
 
 const fs=require('fs');
+const Manifest=require('../js/netwizard-browser-modules.js');
 
-const PRIVATE_ROUTING_BROWSER_MODULES=[
-  'js/netwizard-routing-plan.js',
-  'js/netwizard-cisco-routing-generator.js',
-  'js/netwizard-multivendor-routing-generator.js',
-  'js/netwizard-cisco-routing-integration.js',
-  'js/netwizard-multivendor-routing-integration.js'
-];
+const sourcePaths=Manifest.paths();
+const productionPaths=new Set(Manifest.paths({production:true}));
+const PRIVATE_ROUTING_BROWSER_MODULES=sourcePaths.filter(path=>!productionPaths.has(path));
 
 function stripPrivateRoutingScripts(html){
   let out=String(html||'');
