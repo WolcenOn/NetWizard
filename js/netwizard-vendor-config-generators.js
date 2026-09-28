@@ -78,7 +78,7 @@
       return byRole ? byRole.name : 'GigabitEthernet0/0';
     }
     function originalOrEmpty(devId,format){ return originalGenConfig ? originalGenConfig(devId,format) : ''; }
-    function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^# Vendor\/OS todavía no implementado/i.test(out||''); }
+    function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^[!#]\s*Vendor\/OS todavía no implementado/i.test(out||''); }
 
     function genCiscoRouterAuto(d){
       const p=project();
