@@ -149,8 +149,11 @@ function render(){
     setStatus('Sincronizando revisión y ejecutando Private Engine…','info');
     try{
       const result=await remote.syncAndGenerateRouting(deviceId);
-      output.value=result.output||'';
-      copy.disabled=!output.value;
+      render();
+      const liveOutput=root.document.getElementById('nwPrivateRoutingOutput');
+      const liveCopy=root.document.getElementById('nwPrivateRoutingCopy');
+      if(liveOutput)liveOutput.value=result.output||'';
+      if(liveCopy)liveCopy.disabled=!(result.output||'');
       const warnings=Array.isArray(result.warnings)&&result.warnings.length?' · '+result.warnings.length+' aviso(s)':'';
       const latest=remote.context();
       setStatus('Routing privado generado · '+result.vendor+' · versión remota '+(latest&&latest.currentVersion||'?')+warnings+'.','ok');
@@ -159,7 +162,9 @@ function render(){
       const suffix=conflict?' Recarga el proyecto cloud antes de reintentar.':'';
       setStatus('No se pudo generar routing privado: '+(err&&err.message||'error desconocido')+'.'+suffix,'error');
     }finally{
-      generate.disabled=!(remote&&remote.canUsePrivateRouting&&remote.canUsePrivateRouting()&&select.value);
+      const liveGenerate=root.document.getElementById('nwPrivateRoutingGenerate');
+      const liveSelect=root.document.getElementById('nwPrivateRoutingDevice');
+      if(liveGenerate)liveGenerate.disabled=!(remote&&remote.canUsePrivateRouting&&remote.canUsePrivateRouting()&&liveSelect&&liveSelect.value);
     }
   };
 
