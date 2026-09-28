@@ -43,7 +43,7 @@ Si `DATABASE_URL` está definida y PostgreSQL no responde o una migración falla
 
 ```bash
 NETWIZARD_ADDR=:8080
-NETWIZARD_BACKEND_VERSION=netwizard-backend-v0.2
+NETWIZARD_BACKEND_VERSION=netwizard-backend-v0.3
 NETWIZARD_ALLOWED_ORIGINS=http://localhost:4173,http://localhost:8080
 DATABASE_URL=postgres://user:password@localhost:5432/netwizard
 NETWIZARD_OIDC_ISSUER_URL=https://issuer.example
@@ -57,9 +57,10 @@ NETWIZARD_AUTH_HTTP_TIMEOUT=10s
 NETWIZARD_MAX_PROJECT_BYTES=10485760
 NETWIZARD_PRIVATE_SERVICE_KEY=minimum-32-byte-random-secret
 NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs
+NETWIZARD_ADMIN_SUBJECTS=auth0|admin-subject,auth0|second-admin
 ```
 
-`DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
+`DATABASE_URL` es opcional mientras se use únicamente el modo local, pero es obligatorio cuando se configura OIDC porque los estados de login y las sesiones se almacenan server-side. `NETWIZARD_ADMIN_SUBJECTS` es una lista separada por comas de subjects OIDC autorizados para operaciones globales administrativas como la promoción al catálogo de dispositivos. `NETWIZARD_OIDC_CLIENT_SECRET` es opcional para clientes públicos que usan PKCE. Una configuración OIDC parcial hace fallar el arranque. Fuera de localhost el redirect debe usar HTTPS; un redirect HTTPS exige cookie `Secure`. `NETWIZARD_ALLOWED_ORIGINS` debe definirse explícitamente cuando frontend y backend usen orígenes distintos; en producción no debe usarse `*`.
 
 ## Login OIDC en producción
 
