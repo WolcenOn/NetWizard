@@ -20,8 +20,7 @@ var (
 
 type DeploymentPlanRequest struct {
 	Project        json.RawMessage   `json:"project"`
-	DesiredConfigs map[string]string `json:"desiredConfigs"`
-	ConfigPaths    map[string]string `json:"configPaths"`
+	DesiredConfigs map[string]string `json:"desiredConfigs,omitempty"`
 	GeneratedAt    time.Time         `json:"generatedAt"`
 }
 
@@ -46,6 +45,8 @@ type DeploymentPlanResult struct {
 	PostChangeChecklistMarkdown string               `json:"postChangeChecklistMarkdown"`
 	Artifacts                   []DeploymentArtifact `json:"artifacts"`
 	Issues                      json.RawMessage      `json:"issues"`
+	ConfigSources               map[string]string    `json:"configSources,omitempty"`
+	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
 }
 
 type DeploymentRunner interface {
@@ -59,7 +60,7 @@ type NodeDeploymentRunner struct {
 }
 
 func (r NodeDeploymentRunner) Run(ctx context.Context, request DeploymentPlanRequest) (DeploymentPlanResult, error) {
-	if len(request.Project) == 0 || !json.Valid(request.Project) || request.DesiredConfigs == nil {
+	if len(request.Project) == 0 || !json.Valid(request.Project) {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentInvalid
 	}
 	node := strings.TrimSpace(r.NodeBinary)
@@ -125,11 +126,11 @@ func (s *Service) DeploymentConfigured() bool {
 	return s != nil && s.deployment != nil
 }
 
-func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMessage, desiredConfigs, configPaths map[string]string, generatedAt time.Time) (DeploymentPlanResult, error) {
+func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMessage, legacyDesiredConfigs map[string]string, generatedAt time.Time) (DeploymentPlanResult, error) {
 	if s == nil || s.deployment == nil {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentUnavailable
 	}
 	return s.deployment.Run(ctx, DeploymentPlanRequest{
-		Project: project, DesiredConfigs: desiredConfigs, ConfigPaths: configPaths, GeneratedAt: generatedAt,
+		Project: project, DesiredConfigs: legacyDesiredConfigs, GeneratedAt: generatedAt,
 	})
 }
