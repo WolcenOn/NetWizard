@@ -299,6 +299,13 @@ func TestPrivateDeploymentPlanUsesStoredRevisionAndAudits(t *testing.T) {
 	}
 	server = rebuildPrivateTestServer(t, server, store, privateService)
 
+	capReq := httptest.NewRequest(http.MethodGet, "/api/capabilities", nil)
+	capRec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(capRec, capReq)
+	if capRec.Code != http.StatusOK || !strings.Contains(capRec.Body.String(), `"privateDeploymentPlan":true`) {
+		t.Fatalf("private deployment capability missing: %d %s", capRec.Code, capRec.Body.String())
+	}
+
 	body := `{"expectedVersion":1,"desiredConfigs":{"r1":"set system host-name EDGE"},"configPaths":{"r1":"configs/r1.set"}}`
 	req := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/deployment-plan", body, rawSession, true)
 	rec := httptest.NewRecorder()
