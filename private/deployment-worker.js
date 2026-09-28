@@ -11,11 +11,13 @@ const MAX_DEVICES=1000;
 function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
 function arr(value){return Array.isArray(value)?value:[];}
 function clean(value,max){return String(value==null?'':value).trim().slice(0,max||240);}
-function byteLength(value){return Buffer.byteLength(String(value==null?'':value),'utf8');}
 
 function validateInput(request){
   const req=obj(request),project=obj(req.project);
   const devices=arr(project.devices);
+  if(Object.prototype.hasOwnProperty.call(req,'desiredConfigs')||Object.prototype.hasOwnProperty.call(req,'configPaths')){
+    throw new Error('client config inputs are no longer accepted');
+  }
   if(!Object.keys(project).length)throw new Error('project required');
   if(devices.length>MAX_DEVICES)throw new Error('too many devices');
   return {project};
