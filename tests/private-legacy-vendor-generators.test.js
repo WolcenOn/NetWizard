@@ -22,7 +22,7 @@ assert.match(asa,/hostname EDGE-ASA/);
 assert.match(asa,/interface GigabitEthernet0\/0\.10/);
 assert.match(asa,/ip address 10\.10\.10\.1 255\.255\.255\.0/);
 assert.match(asa,/object network NW_/);
-assert.match(asa,/access-list OUTSIDE_IN extended permit tcp any host 10\.10\.10\.20 eq 443/);
+assert.match(asa,/access-list OUTSIDE_IN extended permit tcp any object NW_HOST_10_10_10_20 eq 443/);
 
 const windows=Legacy.render(project,'win1','windows');
 assert.match(windows,/Windows Server \/ Windows 10\+/);
