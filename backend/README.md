@@ -148,7 +148,7 @@ La primera vertical privada expone:
 - `POST /api/projects/{projectID}/private/routing` cuando el worker privado está disponible;
 - `POST /api/projects/{projectID}/private/deployment-plan` cuando el planner privado está disponible.
 
-Requiere sesión, CSRF, rol `editor` o `owner`, `expectedVersion`, SHA-256 del artefacto y tamaño. La respuesta queda ligada al checksum de la revisión remota y firmada con HMAC-SHA256.
+Todos los endpoints privados requieren sesión, CSRF y rol `editor` o `owner`, y las operaciones ligadas a proyecto usan `expectedVersion`. La attestation recibe además SHA-256/tamaño del artefacto y devuelve una firma HMAC-SHA256 ligada al checksum de la revisión remota. Routing recibe `deviceId`. Deployment planning recibe únicamente configuraciones objetivo y rutas de artefacto; el snapshot se carga siempre desde PostgreSQL.
 
 La capacidad solo se activa si `NETWIZARD_PRIVATE_SERVICE_KEY` contiene al menos 32 bytes y la autenticación OIDC está configurada. El uso queda auditado en PostgreSQL.
 
