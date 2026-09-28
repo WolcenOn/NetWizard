@@ -78,12 +78,17 @@
       return byRole ? byRole.name : 'GigabitEthernet0/0';
     }
     function originalOrEmpty(devId,format){ return originalGenConfig ? originalGenConfig(devId,format) : ''; }
-    function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^# Vendor\/OS todavía no implementado/i.test(out||''); }
+    function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^[!#]\s*Vendor\/OS todavía no implementado/i.test(out||''); }
 
     function genCiscoRouterAuto(d){
       const p=project();
       const lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
-      const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`,'! Aviso: gateway RoaS inferido automáticamente porque este router no estaba seleccionado en RoaS.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.','configure terminal',`hostname ${cliToken(d.name,'router')}`];
+      const explicitRoaS=!!(p.roas&&p.roas.gwId===d.id);
+      const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
+      if(!explicitRoaS){
+        L.push('! Aviso: gateway RoaS inferido automáticamente porque este router no estaba seleccionado en RoaS.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
+      }
+      L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
       const ports=portsByDev(p,d.id).sort((a,b)=>clean(a.name).localeCompare(clean(b.name),'es',{numeric:true}));
       if(ports.length){
         L.push('!','! Interfaces físicas');
@@ -218,7 +223,12 @@
       const p=project(); const d=devById(p,devId);
       if(!d) return originalOrEmpty(devId,format);
       const vo=format||d.vendorOs||'cisco_ios';
-      if(vo==='cisco_ios' && isRouterLike(d) && !(p.roas&&p.roas.gwId===d.id)) return genCiscoRouterAuto(d);
+      if(vo==='cisco_ios' && isRouterLike(d)){
+        if(!(p.roas&&p.roas.gwId===d.id)) return genCiscoRouterAuto(d);
+        const legacy=originalOrEmpty(devId,format);
+        if(!isUnsupported(legacy)) return legacy;
+        return genCiscoRouterAuto(d);
+      }
       if(vo==='mikrotik_routeros') return genMikrotik(d);
       if(vo==='huawei_vrp') return genHuawei(d);
       if(vo==='fortinet') return genFortinet(d);

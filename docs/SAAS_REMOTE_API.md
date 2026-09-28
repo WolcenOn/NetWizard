@@ -85,17 +85,11 @@ Requiere sesión, CSRF y rol `editor` o superior. El body contiene:
 
 ```json
 {
-  "expectedVersion": 7,
-  "desiredConfigs": {
-    "router-1": "set system host-name EDGE-1\n..."
-  },
-  "configPaths": {
-    "router-1": "configs/01-router-1.set"
-  }
+  "expectedVersion": 7
 }
 ```
 
-El navegador **no envía el snapshot**. El backend carga la revisión autorizada correspondiente a `expectedVersion` y ejecuta el worker privado sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
+El navegador **no envía el snapshot** ni las rutas de configuración. El backend carga la revisión autorizada correspondiente a `expectedVersion`, genera las configuraciones objetivo para los vendors ya migrados dentro del Private Engine y ejecuta el planner sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
 
 - change set público;
 - plan incremental público;
@@ -106,7 +100,7 @@ El navegador **no envía el snapshot**. El backend carga la revisión autorizada
 
 Si change set o incremental quedan bloqueados, las etapas posteriores no se ejecutan y `ok=false`.
 
-Esta es una fase transitoria: `desiredConfigs` todavía procede de los generadores de fabricante del cliente. Cuando vendor generation migre al Private Engine, el servidor podrá derivar también esas configuraciones objetivo desde la revisión remota.
+Compatibilidad transitoria: el body todavía puede incluir `desiredConfigs`, pero el servidor los ignora para vendors ya migrados. Solo `cisco_asa`, `windows` y `linux` pueden usar temporalmente ese mapa como fallback legacy; `configPaths` enviados por cliente no son autoritativos.
 
 ## Response semantics
 

@@ -3,6 +3,7 @@
 const ChangeSet=require('../js/netwizard-change-set.js');
 const Incremental=require('../js/netwizard-incremental-generators.js');
 const Runbook=require('../js/netwizard-deployment-runbook.js');
+const VendorConfig=require('./vendor-config-engine.js');
 
 const CONTRACT_VERSION='netwizard-private-deployment-plan-v1';
 const MAX_DEVICES=1000;
@@ -15,24 +16,20 @@ function clean(value,max){return String(value==null?'':value).trim().slice(0,max
 function byteLength(value){return Buffer.byteLength(String(value==null?'':value),'utf8');}
 
 function validateInput(request){
-  const req=obj(request),project=obj(req.project),desired=obj(req.desiredConfigs),paths=obj(req.configPaths);
+  const req=obj(request),project=obj(req.project),legacyDesired=obj(req.desiredConfigs);
   const devices=arr(project.devices);
   if(!Object.keys(project).length)throw new Error('project required');
   if(devices.length>MAX_DEVICES)throw new Error('too many devices');
   const ids=new Set(devices.map(d=>clean(d&&d.id,256)).filter(Boolean));
   let total=0;
-  for(const [id,value] of Object.entries(desired)){
+  for(const [id,value] of Object.entries(legacyDesired)){
     if(!ids.has(clean(id,256)))throw new Error('desired config references unknown device: '+id);
     const size=byteLength(value);
     if(size>MAX_CONFIG_BYTES)throw new Error('desired config too large: '+id);
     total+=size;
   }
   if(total>MAX_TOTAL_CONFIG_BYTES)throw new Error('desired configs payload too large');
-  for(const [id,value] of Object.entries(paths)){
-    if(!ids.has(clean(id,256)))throw new Error('config path references unknown device: '+id);
-    if(clean(value,300)!==String(value==null?'':value).trim())throw new Error('config path too long: '+id);
-  }
-  return {project,desiredConfigs:desired,configPaths:paths};
+  return {project,legacyDesiredConfigs:legacyDesired};
 }
 
 function resultBase(input,generatedAt){
@@ -50,7 +47,9 @@ function resultBase(input,generatedAt){
     incrementalSummaryMarkdown:'',
     postChangeChecklistMarkdown:'',
     artifacts:[],
-    issues:[]
+    issues:[],
+    configSources:{},
+    privateConfigContract:VendorConfig.CONTRACT_VERSION
   };
 }
 
@@ -60,10 +59,18 @@ function handle(request){
   const generatedAt=clean(req.generatedAt,80)||new Date().toISOString();
   const result=resultBase(input,generatedAt);
 
+  const generated=VendorConfig.generateAll(input.project,input.legacyDesiredConfigs);
+  result.configSources=generated.sources;
+  result.artifacts.push(...arr(generated.artifacts));
+  result.issues.push(...arr(generated.issues));
+  if(!generated.ok)return result;
+
+  const desiredConfigs=generated.configs;
+  const configPaths=generated.configPaths;
   const changeSet=ChangeSet.buildChangeSet(input.project,{
     generatedAt,
-    desiredConfigs:input.desiredConfigs,
-    configPaths:input.configPaths
+    desiredConfigs,
+    configPaths
   });
   result.changeSet=ChangeSet.publicChangeSet(changeSet);
   result.changeSummaryMarkdown=ChangeSet.buildSummaryMarkdown(changeSet);
@@ -76,8 +83,8 @@ function handle(request){
   const incrementalPlan=Incremental.buildPlan(input.project,{
     generatedAt,
     changeSet,
-    desiredConfigs:input.desiredConfigs,
-    configPaths:input.configPaths
+    desiredConfigs,
+    configPaths
   });
   result.incrementalPlan=Incremental.publicPlan(incrementalPlan);
   result.incrementalSummaryMarkdown=Incremental.buildSummaryMarkdown(incrementalPlan);
@@ -91,7 +98,7 @@ function handle(request){
     generatedAt,
     changeSet,
     incrementalPlan,
-    configPaths:input.configPaths
+    configPaths
   });
   result.deploymentPlan=deploymentPlan;
   result.issues.push(...arr(deploymentPlan.issues));

@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Private Vendor Generation: el deployment privado deriva configuraciones objetivo y rutas en servidor para los vendors modularizados; los overrides cliente se ignoran salvo fallback temporal de Cisco ASA, Windows y Linux.
+
 - Private Deployment Plan: worker server-side para change set, incremental y runbook sobre la revisión remota autoritativa; contrato `netwizard-private-deployment-plan-v1` y endpoint autenticado con control de versión.
 
 - Centralizado el grafo del navegador en un manifiesto declarativo compartido por runtime, tests y frontera de producción.
