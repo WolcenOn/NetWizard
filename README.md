@@ -1,10 +1,16 @@
-# NetWizard v3.50.0 RC · generadores y modelo consolidados
+# NetWizard 3.50.0 · consolidación técnica
 
-> v3.50 incorpora un registro determinista de generadores y formaliza el modelo avanzado del proyecto sin perder compatibilidad de importación con 3.28–3.48.
+> La versión de aplicación y la versión del formato de proyecto son contratos distintos. Actualmente ambas son `3.50.0`, pero una futura versión de la aplicación no implica por sí sola cambiar el schema.
 
-NetWizard `3.50.0` es la **línea candidata de consolidación funcional** para uso local/controlado. Mantiene el hardening XSS, migra automáticamente los proyectos anteriores y genera exportaciones con schema `3.50.0`.
+NetWizard mantiene compatibilidad de importación con proyectos anteriores soportados, modo local/offline y un backend SaaS opcional. El formato canónico de proyecto continúa en schema `3.50.0`.
 
 La versión canónica se declara en `VERSION`. La línea 3.48 continúa documentada como baseline histórica en `docs/STABLE_BASELINE_3_48.md`.
+
+### Versionado
+
+- **Aplicación:** `VERSION` y `package.json` declaran la versión del producto.
+- **Formato de proyecto:** `_schemaVersion/schemaVersion` y `projects.SupportedSchemaVersion` declaran el contrato portable de proyectos.
+- Ambos valores son hoy `3.50.0`, pero evolucionan de forma independiente. No se cambia el schema por un simple cambio de versión de aplicación.
 
 ## Qué incluye esta rama
 
@@ -32,7 +38,7 @@ La versión canónica se declara en `VERSION`. La línea 3.48 continúa document
 - Export pfSense como script PHP de aprovisionamiento revisable por sede, además de CLI/configuración para vendors soportados.
 - Vista V5 con agrupación física por ubicación/rack/toma y cableado base por debajo de etiquetas, elevando solo la ruta seleccionada. Su estado, geometría, aliases e inferencia física ya disponen de un core puro y un bridge estable para extensiones.
 - Diagnóstico de conectividad reutilizable desde V5: reconstruye la ruta física documentada y simula ICMP, DNS, HTTPS, MQTT y RTSP contra VLANs, gateways, matriz inter-VLAN y firewall; la traza puede superponerse sobre V5 para resaltar los saltos recorridos y localizar bloqueos de acceso, ruta física, gateway, política o firewall.
-- Backend Go para serving/API base en despliegues como Railway, con contratos internos iniciales de colaboración en tiempo real; el modo local del frontend sigue siendo plenamente funcional.
+- Backend Go con PostgreSQL, OIDC, sesiones opacas, workspaces, autorización, revisiones, colaboración, auditoría, rate limiting, catálogo global y servicios privados opcionales; el modo local/offline del frontend sigue siendo funcional sin estos servicios.
 
 ## Uso rápido
 
@@ -66,7 +72,9 @@ Esta versión queda como **candidata de producción local/controlada** cuando pa
 5. Puerta de producción sin errores bloqueantes en el proyecto real
 6. Revisión manual de las exportaciones vendor utilizadas
 
-Existe un backend Go mínimo para serving, API base y fundamentos internos de colaboración, pero NetWizard sigue siendo principalmente client-first. Todavía no es una plataforma SaaS multiusuario: no hay autenticación, autorización por proyecto, persistencia remota de proyectos, auditoría centralizada ni backups de base de datos.
+NetWizard sigue siendo client-first para interacción y edición local, pero el backend ya implementa OIDC, sesiones server-side, workspaces, roles, persistencia remota, revisiones, colaboración, auditoría y rate limits cuando PostgreSQL y autenticación están configurados. El fan-out WebSocket sigue siendo por proceso; múltiples réplicas requieren sticky routing hasta incorporar pub/sub compartido. El modo local/offline no requiere backend.
+
+El Private Engine expone servicios autenticados ligados a revisiones remotas. En la imagen Docker de producción el routing avanzado se ejecuta en el worker privado y sus generadores completos no se publican en `/app/public`; el árbol fuente/Pages conserva temporalmente esos módulos para desarrollo y modo local.
 
 ## Empaquetado
 
