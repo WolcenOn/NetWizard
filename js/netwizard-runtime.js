@@ -121,7 +121,7 @@
   root.NetWizardRuntime=api;
   if(typeof module!=='undefined'&&module.exports) module.exports=api;
   if(root.document){
-    if(root.document.readyState==='loading') root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(verifyAndReport,0));
-    else root.setTimeout(verifyAndReport,0);
+    if(root.document.readyState==='complete') root.setTimeout(verifyAndReport,0);
+    else if(root.addEventListener) root.addEventListener('load',()=>root.setTimeout(verifyAndReport,0),{once:true});
   }
 })(typeof window!=='undefined'?window:globalThis);
