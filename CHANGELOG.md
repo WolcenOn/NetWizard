@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Cloud Private Deployment UI: el cliente SaaS sincroniza la revisión y consume `netwizard-private-deployment-plan-v2`; runbook, rollback y artefactos server-side se inspeccionan/descargan sin persistirse en el snapshot.
+
 - Private Legacy Vendors: Cisco ASA, Windows y Linux se generan ya dentro del Private Engine; el endpoint de deployment queda revision-only y rechaza `desiredConfigs`/`configPaths` del cliente.
 
 - Private Vendor Generation: el deployment privado deriva configuraciones objetivo y rutas en servidor para los vendors modularizados; los overrides cliente se ignoran salvo fallback temporal de Cisco ASA, Windows y Linux.

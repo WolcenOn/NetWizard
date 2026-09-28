@@ -27,7 +27,7 @@ const stateApi={
 const authApi={
   state(){return{
     authenticated:true,
-    capabilities:{remoteProjectWrites:true,privateRouting:true},
+    capabilities:{remoteProjectWrites:true,privateRouting:true,privateDeploymentPlan:true},
     user:{csrfToken:'csrf-123'}
   };}
 };
@@ -64,6 +64,26 @@ const fetchFn=async(url,init)=>{
       warnings:[]
     });
   }
+  if(step===4){
+    const body=JSON.parse(init.body);
+    assert.deepStrictEqual(body,{expectedVersion:5});
+    assert.strictEqual(init.headers['X-NetWizard-CSRF'],'csrf-123');
+    return response(200,{
+      contractVersion:'netwizard-private-deployment-plan-v2',
+      generatedAt:'2026-09-28T18:00:00Z',
+      ok:true,
+      projectName:'Cloud project',
+      runbookMarkdown:'# Runbook\n',
+      rollbackMarkdown:'# Rollback\n',
+      changeSummaryMarkdown:'# Changes\n',
+      incrementalSummaryMarkdown:'# Incremental\n',
+      postChangeChecklistMarkdown:'# Checklist\n',
+      artifacts:[{path:'configs/01-RTR-EDITED-r1-cisco_ios.cfg',content:'hostname RTR-EDITED\n',mime:'text/plain;charset=utf-8'}],
+      issues:[],
+      configSources:{r1:'private'},
+      privateConfigContract:'netwizard-private-vendor-config-v1'
+    });
+  }
   throw new Error('unexpected fetch '+url);
 };
 
@@ -82,10 +102,16 @@ const fetchFn=async(url,init)=>{
   assert.strictEqual(calls[1].url,'/api/projects/prj_test');
   assert.strictEqual(calls[2].url,'/api/projects/prj_test/private/routing');
 
+  const deployment=await client.syncAndGenerateDeploymentPlan();
+  assert.strictEqual(deployment.contractVersion,'netwizard-private-deployment-plan-v2');
+  assert.strictEqual(deployment.ok,true);
+  assert.match(deployment.artifacts[0].content,/RTR-EDITED/);
+  assert.strictEqual(calls[3].url,'/api/projects/prj_test/private/deployment-plan');
+
   const portable=stateApi.getSnapshot();
   assert.strictEqual(portable.projectId,undefined);
   assert.strictEqual(portable.currentVersion,undefined);
   assert.strictEqual(portable.devices[0].name,'RTR-EDITED');
 
-  console.log('✓ Contexto SaaS sincroniza y ejecuta routing privado sin contaminar el snapshot portable');
+  console.log('✓ Contexto SaaS sincroniza routing y deployment privado sin contaminar el snapshot portable');
 })().catch(err=>{console.error(err);process.exitCode=1;});

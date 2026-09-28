@@ -102,6 +102,8 @@ Si change set o incremental quedan bloqueados, las etapas posteriores no se ejec
 
 El contrato es revision-only: cualquier campo legacy como `desiredConfigs` o `configPaths` se rechaza como JSON desconocido. Cisco ASA, Windows y Linux se generan también dentro del worker privado.
 
+La UI cloud consume este contrato mediante `NetWizardRemoteProject.syncAndGenerateDeploymentPlan()`: primero sincroniza el snapshot editable con el control optimista habitual y después invoca el endpoint usando únicamente la versión resultante. Runbook, rollback, checklist, resúmenes y artefactos se mantienen como salidas derivadas en memoria; no se insertan en `NetWizardState`. La tarjeta de deployment permite inspeccionar, copiar o descargar cada salida devuelta por el servidor.
+
 ## Response semantics
 
 - `401` — missing or invalid session;

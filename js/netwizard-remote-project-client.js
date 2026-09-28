@@ -111,6 +111,10 @@ function createClient(options){
     const current=authState(),caps=current.capabilities||{};
     return !!(context&&current.authenticated&&current.user&&current.user.csrfToken&&caps.privateRouting);
   }
+  function canUsePrivateDeploymentPlan(){
+    const current=authState(),caps=current.capabilities||{};
+    return !!(context&&current.authenticated&&current.user&&current.user.csrfToken&&caps.privateDeploymentPlan);
+  }
   async function saveCurrent(options){
     if(!context)throw createError('remote project context required',0,null);
     const s=state();
@@ -150,6 +154,30 @@ function createClient(options){
     await saveCurrent();
     return generatePrivateRouting(deviceId);
   }
+  async function generatePrivateDeploymentPlan(){
+    if(!context)throw createError('remote project context required',0,null);
+    if(!canUsePrivateDeploymentPlan())throw createError('private deployment plan unavailable for current session',403,null);
+    const result=await requestJSON('/api/projects/'+encodeURIComponent(context.projectId)+'/private/deployment-plan',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-NetWizard-CSRF':csrf()},
+      body:JSON.stringify({expectedVersion:context.currentVersion})
+    });
+    const body=result.body||{};
+    if(
+      body.contractVersion!=='netwizard-private-deployment-plan-v2'||
+      typeof body.generatedAt!=='string'||
+      typeof body.ok!=='boolean'||
+      !Array.isArray(body.artifacts)||
+      !Array.isArray(body.issues)
+    ){
+      throw createError('private deployment plan contract mismatch',0,body);
+    }
+    return clone(body);
+  }
+  async function syncAndGenerateDeploymentPlan(){
+    await saveCurrent();
+    return generatePrivateDeploymentPlan();
+  }
   async function autoOpenFromLocation(){
     if(!locationObj)return false;
     let id='';
@@ -169,7 +197,7 @@ function createClient(options){
   }
 
   return {
-    version:'netwizard-remote-project-v1',
+    version:'netwizard-remote-project-v2',
     context:contextSnapshot,
     clear,
     open,
@@ -177,6 +205,9 @@ function createClient(options){
     canUsePrivateRouting,
     generatePrivateRouting,
     syncAndGenerateRouting,
+    canUsePrivateDeploymentPlan,
+    generatePrivateDeploymentPlan,
+    syncAndGenerateDeploymentPlan,
     autoOpenFromLocation
   };
 }
@@ -194,7 +225,7 @@ function mount(){
   return singleton;
 }
 
-const api={version:'netwizard-remote-project-client-v1',createClient,mount};
+const api={version:'netwizard-remote-project-client-v2',createClient,mount};
 root.NetWizardRemoteProject=singleton;
 root.NetWizardRemoteProjectClient=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
