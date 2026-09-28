@@ -223,6 +223,19 @@ Siguiente fase:
 
 Este será el primer ejemplo completo de una capacidad que pasa de estado 1 a estado 3.
 
+### Estado de routing en producción
+
+El artefacto Docker de producción no publica ya los módulos completos de routing avanzado:
+
+- `netwizard-routing-plan.js`;
+- `netwizard-cisco-routing-generator.js`;
+- `netwizard-multivendor-routing-generator.js`;
+- sus dos integraciones de pipeline.
+
+El worker privado se construye antes de retirar esos módulos y queda exclusivamente en `/app/private/routing-worker.cjs`, fuera de `NETWIZARD_STATIC_DIR`. El entrypoint fuente conserva temporalmente los módulos para desarrollo y modo local/offline.
+
+La UI cloud todavía necesita una capa explícita de contexto remoto (project id + currentVersion) antes de poder sustituir toda generación interactiva por llamadas al endpoint privado. Esa metadata no debe inventarse dentro del snapshot portable.
+
 ### D. Seleccionar el siguiente bloque privado
 
 Orden recomendado de estudio:
