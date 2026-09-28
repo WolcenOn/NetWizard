@@ -148,6 +148,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"collaboration":       s.collaborationReady(),
 		"privateServices":     s.privateServicesReady(),
 		"privateRouting":      s.privateRoutingReady(),
+		"privateDeploymentPlan": s.privateDeploymentReady(),
 		"globalDeviceCatalog": s.catalog != nil,
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
