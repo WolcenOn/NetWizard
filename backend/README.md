@@ -57,6 +57,7 @@ NETWIZARD_AUTH_HTTP_TIMEOUT=10s
 NETWIZARD_MAX_PROJECT_BYTES=10485760
 NETWIZARD_PRIVATE_SERVICE_KEY=minimum-32-byte-random-secret
 NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs
+NETWIZARD_PRIVATE_DEPLOYMENT_WORKER=/app/private/deployment-worker.cjs
 NETWIZARD_ADMIN_SUBJECTS=auth0|admin-subject,auth0|second-admin
 ```
 
@@ -144,13 +145,16 @@ La presencia y el fan-out WebSocket siguen siendo por proceso. Para múltiples i
 La primera vertical privada expone:
 
 - `POST /api/projects/{projectID}/private/deployment-attestations`;
-- `POST /api/projects/{projectID}/private/routing` cuando el worker privado está disponible.
+- `POST /api/projects/{projectID}/private/routing` cuando el worker privado está disponible;
+- `POST /api/projects/{projectID}/private/deployment-plan` cuando el planner privado está disponible.
 
 Requiere sesión, CSRF, rol `editor` o `owner`, `expectedVersion`, SHA-256 del artefacto y tamaño. La respuesta queda ligada al checksum de la revisión remota y firmada con HMAC-SHA256.
 
 La capacidad solo se activa si `NETWIZARD_PRIVATE_SERVICE_KEY` contiene al menos 32 bytes y la autenticación OIDC está configurada. El uso queda auditado en PostgreSQL.
 
 El routing privado ejecuta los generadores existentes dentro de un worker Node empaquetado fuera de `NETWIZARD_STATIC_DIR`. El endpoint recibe solo `expectedVersion` y `deviceId`; el backend carga el snapshot remoto almacenado y devuelve el bloque de routing. La imagen Docker define automáticamente `NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs`; normalmente no hace falta crear esa variable manualmente en Railway.
+
+El planner privado de deployment ejecuta change set, generación incremental y runbook sobre la revisión remota almacenada. En esta fase de transición todavía recibe `desiredConfigs` y `configPaths` producidos por el cliente; nunca acepta un snapshot arbitrario del navegador. La imagen Docker empaqueta el worker como `/app/private/deployment-worker.cjs` y publica la capability `privateDeploymentPlan`. La dependencia de configuraciones objetivo cliente se retirará al migrar vendor generation al Private Engine.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 
