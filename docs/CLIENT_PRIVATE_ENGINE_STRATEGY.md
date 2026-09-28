@@ -248,7 +248,9 @@ El segundo bloque privado empieza por la parte pura del deployment, no por el em
 
 El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v1` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
 
-Estado actual: **transición / estado 1**. El cliente todavía aporta `desiredConfigs` y `configPaths`, porque vendor generation aún vive en navegador. El worker no acepta el snapshot desde el cliente. Cuando vendor generation migre, el servidor podrá derivar también las configuraciones objetivo y esta dependencia desaparecerá.
+Estado actual: **transición avanzada**. El Private Engine genera ya las configuraciones objetivo de `cisco_ios`, `juniper_junos`, `huawei_vrp`, `mikrotik_routeros`, `fortinet`, `pfsense`, `aruba_aoss`, UniFi, Omada y Galgus usando el mismo pipeline modular de renderers/stages. Para esos vendors, cualquier `desiredConfigs` recibido del cliente se ignora.
+
+Quedan como fallback legacy cliente únicamente `cisco_asa`, `windows` y `linux`. `configPaths` se derivan siempre en servidor. El worker no acepta el snapshot desde el cliente.
 
 El ZIP local continúa siendo el ensamblador compatible/offline mientras se completa esa transición.
 
@@ -256,8 +258,8 @@ El ZIP local continúa siendo el ensamblador compatible/offline mientras se comp
 
 Orden recomendado:
 
-1. vendor configuration generators;
-2. firewall/switching/security/management/HA generation;
+1. extraer los tres generadores legacy restantes y eliminar `desiredConfigs` del contrato;
+2. conectar la UI cloud al deployment plan privado;
 3. validación avanzada y production gate;
 4. simulación/resiliencia.
 
