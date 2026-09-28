@@ -72,7 +72,7 @@ test('proyecto cloud sincroniza una revisión y genera routing en Private Engine
   });
 
   await card.locator('#nwPrivateRoutingGenerate').click();
-  await expect(card.locator('#nwPrivateRoutingOutput')).toContainText('router ospf 10');
+  await expect(card.locator('#nwPrivateRoutingOutput')).toHaveValue(/router ospf 10/);
   await expect(card.locator('#nwPrivateRoutingStatus')).toContainText('versión remota 3');
 
   expect(putBody.snapshot.devices[0].name).toBe('RTR-CLOUD-EDITED');
