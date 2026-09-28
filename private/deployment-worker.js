@@ -35,48 +35,73 @@ function validateInput(request){
   return {project,desiredConfigs:desired,configPaths:paths};
 }
 
+function resultBase(input,generatedAt){
+  return {
+    contractVersion:CONTRACT_VERSION,
+    generatedAt,
+    ok:false,
+    projectName:clean(input.project.projName,160),
+    changeSet:null,
+    incrementalPlan:null,
+    deploymentPlan:null,
+    runbookMarkdown:'',
+    rollbackMarkdown:'',
+    changeSummaryMarkdown:'',
+    incrementalSummaryMarkdown:'',
+    postChangeChecklistMarkdown:'',
+    artifacts:[],
+    issues:[]
+  };
+}
+
 function handle(request){
   const req=obj(request);
   const input=validateInput(req);
   const generatedAt=clean(req.generatedAt,80)||new Date().toISOString();
+  const result=resultBase(input,generatedAt);
+
   const changeSet=ChangeSet.buildChangeSet(input.project,{
     generatedAt,
     desiredConfigs:input.desiredConfigs,
     configPaths:input.configPaths
   });
+  result.changeSet=ChangeSet.publicChangeSet(changeSet);
+  result.changeSummaryMarkdown=ChangeSet.buildSummaryMarkdown(changeSet);
+  result.artifacts.push(...arr(changeSet.artifacts).map(file=>({
+    path:file.path,content:file.content,mime:'text/x-diff;charset=utf-8'
+  })));
+  result.issues.push(...arr(changeSet.issues));
+  if(!changeSet.ok)return result;
+
   const incrementalPlan=Incremental.buildPlan(input.project,{
     generatedAt,
     changeSet,
     desiredConfigs:input.desiredConfigs,
     configPaths:input.configPaths
   });
+  result.incrementalPlan=Incremental.publicPlan(incrementalPlan);
+  result.incrementalSummaryMarkdown=Incremental.buildSummaryMarkdown(incrementalPlan);
+  result.artifacts.push(...arr(incrementalPlan.artifacts).map(file=>({
+    path:file.path,content:file.content,mime:file.mime||'text/plain;charset=utf-8'
+  })));
+  result.issues.push(...arr(incrementalPlan.issues));
+  if(!incrementalPlan.ok)return result;
+
   const deploymentPlan=Runbook.buildDeploymentPlan(input.project,{
     generatedAt,
     changeSet,
     incrementalPlan,
     configPaths:input.configPaths
   });
-  const ok=!!(changeSet.ok&&incrementalPlan.ok&&deploymentPlan.ok);
-  const artifacts=[
-    ...arr(changeSet.artifacts).map(file=>({path:file.path,content:file.content,mime:'text/x-diff;charset=utf-8'})),
-    ...arr(incrementalPlan.artifacts).map(file=>({path:file.path,content:file.content,mime:file.mime||'text/plain;charset=utf-8'}))
-  ];
-  return {
-    contractVersion:CONTRACT_VERSION,
-    generatedAt,
-    ok,
-    projectName:clean(input.project.projName,160),
-    changeSet:ChangeSet.publicChangeSet(changeSet),
-    incrementalPlan:Incremental.publicPlan(incrementalPlan),
-    deploymentPlan,
-    runbookMarkdown:Runbook.buildMarkdown(deploymentPlan),
-    rollbackMarkdown:Runbook.buildRollbackMarkdown(deploymentPlan),
-    changeSummaryMarkdown:ChangeSet.buildSummaryMarkdown(changeSet),
-    incrementalSummaryMarkdown:Incremental.buildSummaryMarkdown(incrementalPlan),
-    postChangeChecklistMarkdown:ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan),
-    artifacts,
-    issues:[...arr(changeSet.issues),...arr(incrementalPlan.issues),...arr(deploymentPlan.issues)]
-  };
+  result.deploymentPlan=deploymentPlan;
+  result.issues.push(...arr(deploymentPlan.issues));
+  if(!deploymentPlan.ok)return result;
+
+  result.ok=true;
+  result.runbookMarkdown=Runbook.buildMarkdown(deploymentPlan);
+  result.rollbackMarkdown=Runbook.buildRollbackMarkdown(deploymentPlan);
+  result.postChangeChecklistMarkdown=ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan);
+  return result;
 }
 
 function main(){
