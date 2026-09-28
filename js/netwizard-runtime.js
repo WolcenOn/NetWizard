@@ -70,8 +70,9 @@
 
     const pipeline=root.NetWizardConfigPipeline;
     const registry=pipeline&&typeof pipeline.inspect==='function'?pipeline.inspect():{renderers:[],stages:[]};
-    const requiredRenderers=['edge.firewall','device.switching','vendor.base'];
-    const requiredStages=['security.access','management.baseline','ha.services'];
+    const sourceProfile=expected.profile==='source';
+    const requiredRenderers=sourceProfile?['edge.firewall','device.switching','vendor.base']:[];
+    const requiredStages=sourceProfile?['security.access','management.baseline','ha.services']:[];
     const registeredRenderers=registry.renderers.map(item=>item.id);
     const registeredStages=registry.stages.map(item=>item.id);
     const missingRegistryEntries=requiredRenderers.filter(id=>!registeredRenderers.includes(id))
@@ -83,13 +84,13 @@
       root.NetWizardStructuredCablingUi&&root.NetWizardRackProductionIntegration&&
       root.NetWizardProductionGate&&root.NetWizardProductionGate.__rackExtensionInstalled
     );
-    const pipelineFlags=[
+    const pipelineFlags=sourceProfile?[
       '__netwizardFirewallEdgeInstalled',
       '__netwizardSwitchingInstalled',
       '__netwizardAccessSecurityInstalled',
       '__netwizardManagementInstalled',
       '__netwizardHaServicesInstalled'
-    ];
+    ]:[];
     const missingPipelineStages=pipelineFlags.filter(name=>!root[name]);
 
     return {
