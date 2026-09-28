@@ -79,6 +79,35 @@ Body:
 
 La respuesta cumple `netwizard-private-routing-v1` y devuelve el bloque de routing generado, vendor, versión del generador y avisos. El resultado se muestra como artefacto derivado; no se persiste dentro del proyecto.
 
+### `POST /api/projects/{projectID}/private/deployment-plan`
+
+Requiere sesión, CSRF y rol `editor` o superior. El body contiene:
+
+```json
+{
+  "expectedVersion": 7,
+  "desiredConfigs": {
+    "router-1": "set system host-name EDGE-1\n..."
+  },
+  "configPaths": {
+    "router-1": "configs/01-router-1.set"
+  }
+}
+```
+
+El navegador **no envía el snapshot**. El backend carga la revisión autorizada correspondiente a `expectedVersion` y ejecuta el worker privado sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
+
+- change set público;
+- plan incremental público;
+- deployment plan;
+- runbook y checklist de rollback;
+- resúmenes;
+- artefactos diff/candidatos incrementales.
+
+Si change set o incremental quedan bloqueados, las etapas posteriores no se ejecutan y `ok=false`.
+
+Esta es una fase transitoria: `desiredConfigs` todavía procede de los generadores de fabricante del cliente. Cuando vendor generation migre al Private Engine, el servidor podrá derivar también esas configuraciones objetivo desde la revisión remota.
+
 ## Response semantics
 
 - `401` — missing or invalid session;
