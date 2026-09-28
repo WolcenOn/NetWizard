@@ -246,7 +246,7 @@ El segundo bloque privado empieza por la parte pura del deployment, no por el em
 - `incremental-generators`;
 - `deployment-runbook`.
 
-El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v1` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
+El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v2` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
 
 Estado actual: **generación objetivo autoritativa en servidor**. El Private Engine genera las configuraciones objetivo de `cisco_ios`, `cisco_asa`, `juniper_junos`, `huawei_vrp`, `mikrotik_routeros`, `fortinet`, `pfsense`, `aruba_aoss`, UniFi, Omada, Galgus, Windows y Linux. `configPaths` se derivan siempre en servidor.
 
