@@ -32,6 +32,6 @@ test('runtime final expone racks, cableado e informe desde el entrypoint publica
   expect(globals.rackGate).toBe(true);
 
   await page.evaluate(()=>window.navTo('physical'));
-  await expect(page.locator('#rackUiMount')).toBeAttached();
+  await expect(page.locator('#rackPlannerMount')).toBeAttached();
   await expect(page.locator('#structuredCablingMount')).toBeAttached();
 });
