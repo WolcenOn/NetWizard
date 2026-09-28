@@ -43,6 +43,7 @@ func main() {
 		deps.Access = store
 		deps.Limits = store
 		deps.Operations = store
+		deps.Catalog = store
 		deps.Realtime = realtime.NewHub()
 		logger.Info("postgres project/workspace store ready")
 	}
