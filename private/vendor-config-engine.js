@@ -127,12 +127,12 @@ function create(project){
   });
   pipeline.registerStage({
     id:'management.baseline',order:300,
-    supports(ctx){return PRIVATE_VENDORS.has(ctx.vendor);},
+    supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
     apply(config,ctx){return Management.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
   });
   pipeline.registerStage({
     id:'ha.services',order:400,
-    supports(ctx){return PRIVATE_VENDORS.has(ctx.vendor);},
+    supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
     apply(config,ctx){return Ha.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
   });
   return pipeline;
