@@ -1,7 +1,6 @@
 /* NetWizard browser module manifest v1 */
 (function initNetWizardBrowserModules(root){
 'use strict';
-
 const modules=[
   {
     "path": "js/netwizard-browser-modules.js",
@@ -52,22 +51,19 @@ const modules=[
     "path": "js/netwizard-policy-utils.js"
   },
   {
-    "path": "js/netwizard-v5-core.js",
-    "requiredGlobal": "NetWizardV5Core"
+    "path": "js/netwizard-v5-core.js"
   },
   {
     "path": "js/netwizard-v5-renderer.js",
     "dependsOn": [
       "js/netwizard-v5-core.js"
-    ],
-    "requiredGlobal": "NetWizardV5Renderer"
+    ]
   },
   {
     "path": "js/netwizard-v5-interaction.js",
     "dependsOn": [
       "js/netwizard-v5-core.js"
-    ],
-    "requiredGlobal": "NetWizardV5Interaction"
+    ]
   },
   {
     "path": "js/netwizard-v5-scene.js",
@@ -75,34 +71,28 @@ const modules=[
       "js/netwizard-v5-core.js",
       "js/netwizard-v5-renderer.js",
       "js/netwizard-v5-interaction.js"
-    ],
-    "requiredGlobal": "NetWizardV5Scene"
+    ]
   },
   {
     "path": "js/netwizard-v5-drag-controller.js",
     "dependsOn": [
       "js/netwizard-v5-interaction.js"
-    ],
-    "requiredGlobal": "NetWizardV5DragController"
+    ]
   },
   {
-    "path": "js/netwizard-v5-location-transactions.js",
-    "requiredGlobal": "NetWizardV5LocationTransactions"
+    "path": "js/netwizard-v5-location-transactions.js"
   },
   {
     "path": "js/netwizard-v5-commands.js",
     "dependsOn": [
       "js/netwizard-v5-location-transactions.js"
-    ],
-    "requiredGlobal": "NetWizardV5Commands"
+    ]
   },
   {
-    "path": "js/netwizard-v5-panel.js",
-    "requiredGlobal": "NetWizardV5Panel"
+    "path": "js/netwizard-v5-panel.js"
   },
   {
-    "path": "js/netwizard-v5-controls.js",
-    "requiredGlobal": "NetWizardV5Controls"
+    "path": "js/netwizard-v5-controls.js"
   },
   {
     "path": "js/netwizard-wizard-presets.js"
@@ -132,8 +122,7 @@ const modules=[
       "js/netwizard-v5-interaction.js",
       "js/netwizard-v5-scene.js",
       "js/netwizard-v5-commands.js"
-    ],
-    "requiredGlobal": "NetWizardV5"
+    ]
   },
   {
     "path": "js/netwizard-sample-four-sites.js"
@@ -184,13 +173,17 @@ const modules=[
     "path": "js/netwizard-poe-utils.js"
   },
   {
+    "path": "js/netwizard-poe-model.js"
+  },
+  {
     "path": "js/netwizard-broadcast-utils.js"
   },
   {
     "path": "js/netwizard-l2-utils.js"
   },
   {
-    "path": "js/netwizard-vlsm-physical-planner.js"
+    "path": "js/netwizard-vlsm-physical-planner.js",
+    "requiredGlobal": "NetWizardPlanner"
   },
   {
     "path": "js/netwizard-vlan-intent.js"
@@ -290,6 +283,15 @@ const modules=[
       "js/netwizard-structured-cabling-ui.js"
     ],
     "requiredGlobal": "NetWizardRackProductionIntegration"
+  },
+  {
+    "path": "js/netwizard-report-model.js",
+    "dependsOn": [
+      "js/netwizard-poe-model.js",
+      "js/netwizard-rack-model.js",
+      "js/netwizard-structured-cabling.js"
+    ],
+    "requiredGlobal": "NetWizardReportModel"
   },
   {
     "path": "js/netwizard-inventory-gate.js",
@@ -423,6 +425,13 @@ const modules=[
     "requiredGlobal": "NetWizardDetailedReport"
   },
   {
+    "path": "js/netwizard-detailed-report-v3.js",
+    "dependsOn": [
+      "js/netwizard-report-model.js"
+    ],
+    "requiredGlobal": "NetWizardInstallationReport"
+  },
+  {
     "path": "js/netwizard-cisco-routing-generator.js",
     "production": false
   },
@@ -520,50 +529,23 @@ const modules=[
       "js/netwizard-browser-modules.js",
       "js/netwizard-production-gate-architecture.js",
       "js/netwizard-rack-production-integration.js"
-    ],
-    "requiredGlobal": "NetWizardRuntime"
+    ]
   }
 ];
-
 function clone(v){return JSON.parse(JSON.stringify(v));}
 function list(){return modules.map(clone);}
-function paths(options){
-  const production=!!(options&&options.production);
-  return modules.filter(m=>!production||m.production!==false).map(m=>m.path);
-}
-function requiredGlobals(){
-  return modules.filter(m=>m.requiredGlobal).map(m=>({path:m.path,global:m.requiredGlobal}));
-}
+function paths(options){const production=!!(options&&options.production);return modules.filter(m=>!production||m.production!==false).map(m=>m.path);}
+function requiredGlobals(){return modules.filter(m=>m.requiredGlobal).map(m=>({path:m.path,global:m.requiredGlobal}));}
 function validate(input){
-  const list=Array.isArray(input)?input:modules;
-  const errors=[],seen=new Set(),byPath=new Map();
-  for(const item of list){
-    const path=String(item&&item.path||'').trim();
-    if(!path){errors.push('module path required');continue;}
-    if(seen.has(path))errors.push('duplicate module: '+path);
-    seen.add(path);byPath.set(path,item);
-  }
-  for(const item of list){
-    const path=String(item&&item.path||'').trim();
-    for(const dep of Array.isArray(item&&item.dependsOn)?item.dependsOn:[]){
-      if(!byPath.has(dep))errors.push(path+' depends on missing module '+dep);
-    }
-  }
+  const list=Array.isArray(input)?input:modules,errors=[],seen=new Set(),byPath=new Map();
+  for(const item of list){const path=String(item&&item.path||'').trim();if(!path){errors.push('module path required');continue;}if(seen.has(path))errors.push('duplicate module: '+path);seen.add(path);byPath.set(path,item);}
+  for(const item of list){const path=String(item&&item.path||'').trim();for(const dep of Array.isArray(item&&item.dependsOn)?item.dependsOn:[])if(!byPath.has(dep))errors.push(path+' depends on missing module '+dep);}
   const visiting=new Set(),visited=new Set();
-  function visit(path,stack){
-    if(visiting.has(path)){errors.push('dependency cycle: '+stack.concat(path).join(' -> '));return;}
-    if(visited.has(path)||!byPath.has(path))return;
-    visiting.add(path);
-    const item=byPath.get(path);
-    for(const dep of Array.isArray(item.dependsOn)?item.dependsOn:[])visit(dep,stack.concat(path));
-    visiting.delete(path);visited.add(path);
-  }
+  function visit(path,stack){if(visiting.has(path)){errors.push('dependency cycle: '+stack.concat(path).join(' -> '));return;}if(visited.has(path)||!byPath.has(path))return;visiting.add(path);const item=byPath.get(path);for(const dep of Array.isArray(item.dependsOn)?item.dependsOn:[])visit(dep,stack.concat(path));visiting.delete(path);visited.add(path);}
   for(const path of byPath.keys())visit(path,[]);
   const order=new Map(list.map((item,index)=>[item.path,index]));
-  for(const item of list)for(const dep of Array.isArray(item.dependsOn)?item.dependsOn:[]){
-    if(order.has(dep)&&order.get(dep)>order.get(item.path))errors.push('invalid order: '+dep+' must load before '+item.path);
-  }
-  return {ok:errors.length===0,errors};
+  for(const item of list)for(const dep of Array.isArray(item&&item.dependsOn)?item.dependsOn:[])if(order.has(dep)&&order.get(dep)>order.get(item.path))errors.push('invalid order: '+dep+' must load before '+item.path);
+  return{ok:errors.length===0,errors};
 }
 const api={version:'netwizard-browser-modules-v1',list,paths,requiredGlobals,validate};
 root.NetWizardBrowserModules=api;
