@@ -5,7 +5,7 @@ const Incremental=require('../js/netwizard-incremental-generators.js');
 const Runbook=require('../js/netwizard-deployment-runbook.js');
 const VendorConfig=require('./vendor-config-engine.js');
 
-const CONTRACT_VERSION='netwizard-private-deployment-plan-v1';
+const CONTRACT_VERSION='netwizard-private-deployment-plan-v2';
 const MAX_DEVICES=1000;
 
 function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
