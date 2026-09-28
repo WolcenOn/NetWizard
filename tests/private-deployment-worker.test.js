@@ -21,7 +21,7 @@ const project={
   deployment:{changeMode:'full',requireExecutableIncremental:false,observationMinutes:15}
 };
 
-const generated=Vendor.generateAll(project,{r1:'CLIENT OVERRIDE MUST BE IGNORED'});
+const generated=Vendor.generateAll(project);
 assert.strictEqual(generated.ok,true);
 const desiredConfigs=generated.configs;
 const configPaths=generated.configPaths;
@@ -29,7 +29,7 @@ const changeSet=ChangeSet.buildChangeSet(project,{generatedAt,desiredConfigs,con
 const incrementalPlan=Incremental.buildPlan(project,{generatedAt,changeSet,desiredConfigs,configPaths});
 const deploymentPlan=Runbook.buildDeploymentPlan(project,{generatedAt,changeSet,incrementalPlan,configPaths});
 
-const actual=Worker.handle({project,desiredConfigs:{r1:'CLIENT OVERRIDE MUST BE IGNORED'},generatedAt});
+const actual=Worker.handle({project,generatedAt});
 
 assert.strictEqual(actual.contractVersion,'netwizard-private-deployment-plan-v1');
 assert.strictEqual(actual.privateConfigContract,'netwizard-private-vendor-config-v1');
@@ -45,16 +45,27 @@ assert.strictEqual(actual.incrementalSummaryMarkdown,Incremental.buildSummaryMar
 assert.strictEqual(actual.postChangeChecklistMarkdown,ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan));
 const configArtifact=actual.artifacts.find(x=>x.path===configPaths.r1);
 assert.ok(configArtifact);
-assert.doesNotMatch(configArtifact.content,/CLIENT OVERRIDE MUST BE IGNORED/);
 assert.match(configArtifact.content,/Juniper Junos/);
 
 assert.throws(
-  ()=>Worker.handle({project,desiredConfigs:{missing:'set x'},generatedAt}),
-  /unknown device/
+  ()=>Worker.handle({project,desiredConfigs:{r1:'client override'},generatedAt}),
+  /client config inputs are no longer accepted/
+);
+assert.throws(
+  ()=>Worker.handle({project,configPaths:{r1:'configs/client.set'},generatedAt}),
+  /client config inputs are no longer accepted/
 );
 
+const windowsProject=JSON.parse(JSON.stringify(project));
+windowsProject.devices[0]={id:'r1',name:'WIN-UTIL',type:'server',kind:'server',vendorOs:'windows'};
+windowsProject.hosts=[{id:'h1',name:'APP-01',type:'server',vlanRef:'v10',ipMode:'static',staticIp:'10.10.10.20'}];
+const windows=Worker.handle({project:windowsProject,generatedAt});
+assert.strictEqual(windows.configSources.r1,'private');
+assert.ok(windows.changeSet);
+assert.ok(windows.artifacts.some(x=>/\.ps1$/.test(x.path)&&/New-NetIPAddress/.test(x.content)));
+
 const unsupported=JSON.parse(JSON.stringify(project));
-unsupported.devices[0].vendorOs='windows';
+unsupported.devices[0].vendorOs='future_os';
 const blocked=Worker.handle({project:unsupported,generatedAt});
 assert.strictEqual(blocked.ok,false);
 assert.strictEqual(blocked.changeSet,null);
@@ -62,8 +73,4 @@ assert.strictEqual(blocked.incrementalPlan,null);
 assert.strictEqual(blocked.deploymentPlan,null);
 assert.ok(blocked.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-003'&&x.blocking));
 
-const legacy=Worker.handle({project:unsupported,desiredConfigs:{r1:'Write-Host "legacy"\n'},generatedAt});
-assert.strictEqual(legacy.configSources.r1,'legacy-client-fallback');
-assert.ok(legacy.changeSet);
-
-console.log('✓ Private deployment deriva configs en servidor y limita fallback a vendors legacy');
+console.log('✓ Private deployment deriva todas las configs en servidor y rechaza inputs cliente');
