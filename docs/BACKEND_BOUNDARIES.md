@@ -12,8 +12,8 @@ NetWizard sigue siendo **client-first**:
 - el servidor Go sirve frontend y API base;
 - el backend expone actualmente `GET /api/health` y `GET /api/version`;
 - `backend/internal/realtime` contiene contratos y lógica en memoria para salas, presencia, operaciones y snapshots;
-- realtime todavía **no está expuesto como WebSocket ni conectado a persistencia**;
-- PostgreSQL puede conectarse mediante `DATABASE_URL` y `projects.Store` ya persiste proyectos/revisiones con control optimista; todavía no hay autenticación activa, autorización expuesta por API ni CRUD remoto público.
+- realtime expone WebSocket autenticado, presencia y replay durable; el fan-out sigue siendo por proceso y requiere sticky routing con varias réplicas;
+- PostgreSQL persiste proyectos/revisiones, operation log, sesiones y límites; OIDC, autorización y CRUD remoto están implementados cuando la configuración SaaS está completa.
 
 ## Responsabilidad del frontend
 

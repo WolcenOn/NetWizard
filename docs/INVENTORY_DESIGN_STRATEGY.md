@@ -520,7 +520,7 @@ El editor de modelo debe permitir:
 
 No se modificará el catálogo global desde un proyecto normal.
 
-En el futuro podrá existir una acción administrativa separada para promover un modelo local validado al catálogo global del producto.
+Existe una acción administrativa separada para promover una copia validada de un modelo local al catálogo global. La autorización se aplica en backend mediante la allowlist de subjects administradores; la promoción no modifica el modelo local ni las instancias existentes.
 
 ---
 

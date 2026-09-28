@@ -15,19 +15,7 @@ RUN mkdir -p /out/public/js /out/private \
     && cp -R css i18n samples schemas /out/public/ \
     && npx --yes esbuild@0.25.10 js/*.js --outdir=/out/public/js --minify --target=es2020 \
     && npx --yes esbuild@0.25.10 private/routing-worker.js --bundle --platform=node --target=node24 --format=cjs --minify --outfile=/out/private/routing-worker.cjs \
-    && node scripts/prepare-production-index.js /out/public/index.html \
-    && rm -f \
-       /out/public/js/netwizard-routing-plan.js \
-       /out/public/js/netwizard-cisco-routing-generator.js \
-       /out/public/js/netwizard-multivendor-routing-generator.js \
-       /out/public/js/netwizard-cisco-routing-integration.js \
-       /out/public/js/netwizard-multivendor-routing-integration.js \
-    && ! grep -q 'netwizard-routing-plan.js\|netwizard-cisco-routing-generator.js\|netwizard-multivendor-routing-generator.js\|netwizard-cisco-routing-integration.js\|netwizard-multivendor-routing-integration.js' /out/public/index.html \
-    && test ! -e /out/public/js/netwizard-routing-plan.js \
-    && test ! -e /out/public/js/netwizard-cisco-routing-generator.js \
-    && test ! -e /out/public/js/netwizard-multivendor-routing-generator.js \
-    && test ! -e /out/public/js/netwizard-cisco-routing-integration.js \
-    && test ! -e /out/public/js/netwizard-multivendor-routing-integration.js \
+    && node scripts/prepare-production-index.js /out/public/index.html /out/public \
     && ! find /out/public -type f \( -name '*.map' -o -name '*.ts' \) | grep -q . \
     && test ! -e /out/public/private \
     && test -s /out/private/routing-worker.cjs

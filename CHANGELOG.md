@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased · Consolidación técnica
+
+- Centralizado el grafo del navegador en un manifiesto declarativo compartido por runtime, tests y frontera de producción.
+- Corregida la integración explícita de racks, cableado estructurado e informe de instalación en el entrypoint browser.
+- `npm test` descubre automáticamente los tests unitarios de `tests/` en orden determinista, manteniendo Playwright separado.
+- El health check del runtime informa módulos ausentes, duplicados, orden inválido, dependencias y estado de integraciones críticas.
+- Documentación alineada con OIDC, PostgreSQL, colaboración, catálogo global y Private Engine actuales.
+- Se mantiene la versión de aplicación `3.50.0` y el schema de proyecto `3.50.0` como contratos independientes.
+
 ## 3.50.0 · Modelo físico, cableado estructurado y multisede
 
 - Añadido modelo de racks, elementos de rack, PDU y conexiones eléctricas con validación de colisiones, capacidad, peso, refrigeración y alimentación redundante.

@@ -23,6 +23,7 @@ const excludes = [
   'dist/*',
   'playwright-report/*',
   'test-results/*',
+  'private/*',
   '.git/*',
   '.DS_Store'
 ];

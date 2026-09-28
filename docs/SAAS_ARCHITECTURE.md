@@ -25,7 +25,7 @@ La intención no es mover la mayor cantidad posible de código al servidor. La i
 - Auth0 sea un proveedor OIDC reemplazable, no la base de datos de negocio;
 - el mismo origen frontend/API se mantenga mientras simplifique seguridad y despliegue.
 
-El primer caso de referencia será routing avanzado: actualmente está en estado de transición con worker privado y paridad; tras activar OIDC, la UI cloud pasará a usar el endpoint privado y se retirará el código completo de routing del artefacto público.
+El primer caso de referencia es routing avanzado: existe worker privado con paridad y endpoint autenticado. La imagen Docker de producción ya retira del frontend público el plan/generadores/integraciones de routing; el árbol fuente y Pages los conservan para desarrollo y modo local mientras la UI cloud obtiene un contexto remoto explícito.
 
 ## Protección del código
 
@@ -199,7 +199,7 @@ La segunda vertical E6 prepara la migración de routing avanzado al servidor sin
 - auditoría `private.routing.generate`;
 - el código del worker no se sirve por HTTP.
 
-Durante esta etapa de transición los generadores siguen presentes en el bundle público para conservar funcionalidad local mientras OIDC aún no está desplegado. La retirada del bundle público se hará después de conectar la UI productiva al endpoint autenticado.
+En el árbol fuente y en Pages los generadores siguen disponibles para desarrollo/modo local. En la imagen Docker de producción ya se excluyen del frontend y el worker privado queda fuera de `NETWIZARD_STATIC_DIR`. La UI cloud todavía necesita obtener `projectId/currentVersion` desde el cliente SaaS antes de consumir el endpoint de routing como flujo interactivo autoritativo.
 
 La imagen de producción también deja de copiar el JavaScript fuente directamente: una etapa Node minifica los módulos con esbuild y la imagen final sirve únicamente el resultado procesado, sin source maps. Esto reduce exposición accidental, pero no se considera una frontera de secreto: la lógica verdaderamente privada sigue perteneciendo al backend.
 
