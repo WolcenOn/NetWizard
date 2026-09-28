@@ -45,5 +45,7 @@ assert.ok(
   'Docker debe empaquetar deployment planning solo en el área privada'
 );
 assert.ok(docker.includes('test ! -e /out/public/private'),'El directorio private nunca debe publicarse como asset');
+assert.ok(!html.includes('./private/vendor-config-engine.js'),'El motor vendor privado no debe formar parte del entrypoint browser');
+assert.ok(docker.includes('private/deployment-worker.js --bundle'),'Vendor generation debe viajar solo dentro del bundle privado de deployment');
 
 console.log('✓ El frontend de producción deriva exclusiones privadas del manifiesto browser y conserva workers fuera de public');
