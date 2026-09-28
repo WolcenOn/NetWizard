@@ -59,6 +59,26 @@ Requires at least `editor`. The body contains `expectedVersion` and `snapshot`. 
 
 Requires `owner`. Deletion is logical: the project disappears from active reads while revisions and audit history remain stored.
 
+### Contexto browser y routing privado
+
+El cliente cloud mantiene la metadata remota fuera del snapshot portable:
+
+- `projectId`;
+- `currentVersion`;
+- `ETag`.
+
+Un proyecto puede abrirse explícitamente desde la UI o con `?projectId=<id>`. Antes de llamar al Private Engine, el cliente sincroniza el snapshot actual con `PUT /api/projects/{projectID}`; solo si esa escritura conserva el control optimista se usa la versión resultante en:
+
+`POST /api/projects/{projectID}/private/routing`
+
+Body:
+
+```json
+{ "expectedVersion": 7, "deviceId": "router-1" }
+```
+
+La respuesta cumple `netwizard-private-routing-v1` y devuelve el bloque de routing generado, vendor, versión del generador y avisos. El resultado se muestra como artefacto derivado; no se persiste dentro del proyecto.
+
 ## Response semantics
 
 - `401` — missing or invalid session;
