@@ -238,15 +238,28 @@ El worker privado se construye antes de retirar esos módulos y queda exclusivam
 
 La UI cloud dispone de una capa explícita de contexto remoto en memoria. `projectId`, `currentVersion` y `ETag` proceden de la API SaaS y nunca se inventan ni se guardan dentro del snapshot portable. El routing privado se ofrece como una acción asíncrona separada del pipeline local síncrono para no romper exportaciones/offline.
 
-### D. Seleccionar el siguiente bloque privado
+### D. Deployment planning privado
 
-Orden recomendado de estudio:
+El segundo bloque privado empieza por la parte pura del deployment, no por el empaquetador ZIP completo:
 
-1. deployment bundle / runbook / incremental generation;
-2. vendor configuration generators;
-3. firewall/switching/security/management/HA generation;
-4. validación avanzada y production gate;
-5. simulación/resiliencia.
+- `change-set`;
+- `incremental-generators`;
+- `deployment-runbook`.
+
+El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v1` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
+
+Estado actual: **transición / estado 1**. El cliente todavía aporta `desiredConfigs` y `configPaths`, porque vendor generation aún vive en navegador. El worker no acepta el snapshot desde el cliente. Cuando vendor generation migre, el servidor podrá derivar también las configuraciones objetivo y esta dependencia desaparecerá.
+
+El ZIP local continúa siendo el ensamblador compatible/offline mientras se completa esa transición.
+
+### E. Siguiente bloque privado
+
+Orden recomendado:
+
+1. vendor configuration generators;
+2. firewall/switching/security/management/HA generation;
+3. validación avanzada y production gate;
+4. simulación/resiliencia.
 
 La selección se hará por relación entre valor intelectual, facilidad de aislamiento y dependencia del modo offline.
 

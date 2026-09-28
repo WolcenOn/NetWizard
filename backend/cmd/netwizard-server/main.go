@@ -64,6 +64,13 @@ func main() {
 			})
 			logger.Info("private routing worker configured", "path", cfg.PrivateRoutingWorker)
 		}
+		if strings.TrimSpace(cfg.PrivateDeploymentWorker) != "" {
+			service.SetDeploymentRunner(privateservices.NodeDeploymentRunner{
+				ScriptPath: cfg.PrivateDeploymentWorker,
+				Timeout: 10 * time.Second,
+			})
+			logger.Info("private deployment worker configured", "path", cfg.PrivateDeploymentWorker)
+		}
 		deps.PrivateServices = service
 		logger.Info("private services configured")
 	}

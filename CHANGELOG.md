@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Private Deployment Plan: worker server-side para change set, incremental y runbook sobre la revisión remota autoritativa; contrato `netwizard-private-deployment-plan-v1` y endpoint autenticado con control de versión.
+
 - Centralizado el grafo del navegador en un manifiesto declarativo compartido por runtime, tests y frontera de producción.
 - Corregida la integración explícita de racks, cableado estructurado e informe de instalación en el entrypoint browser.
 - `npm test` descubre automáticamente los tests unitarios de `tests/` en orden determinista, manteniendo Playwright separado.

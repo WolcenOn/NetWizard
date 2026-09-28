@@ -38,5 +38,12 @@ assert.ok(
 for(const asset of privateModules){
   assert.ok(!docker.includes(path.basename(asset)),'Docker no debe duplicar manualmente la lista privada: '+asset);
 }
+assert.ok(
+  docker.includes('private/deployment-worker.js --bundle') &&
+  docker.includes('/out/private/deployment-worker.cjs') &&
+  docker.includes('NETWIZARD_PRIVATE_DEPLOYMENT_WORKER=/app/private/deployment-worker.cjs'),
+  'Docker debe empaquetar deployment planning solo en el área privada'
+);
+assert.ok(docker.includes('test ! -e /out/public/private'),'El directorio private nunca debe publicarse como asset');
 
-console.log('✓ El frontend de producción deriva exclusiones privadas del manifiesto browser');
+console.log('✓ El frontend de producción deriva exclusiones privadas del manifiesto browser y conserva workers fuera de public');

@@ -16,8 +16,9 @@ const ContractVersion = "netwizard-private-deployment-attestation-v1"
 var ErrInvalidInput = errors.New("invalid private service input")
 
 type Service struct {
-	key     []byte
-	routing RoutingRunner
+	key        []byte
+	routing    RoutingRunner
+	deployment DeploymentRunner
 }
 
 type AttestationInput struct {
