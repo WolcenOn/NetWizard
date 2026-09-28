@@ -89,7 +89,7 @@ Requiere sesión, CSRF y rol `editor` o superior. El body contiene:
 }
 ```
 
-El navegador **no envía el snapshot** ni las rutas de configuración. El backend carga la revisión autorizada correspondiente a `expectedVersion`, genera las configuraciones objetivo para los vendors ya migrados dentro del Private Engine y ejecuta el planner sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
+El navegador **no envía el snapshot, configuraciones objetivo ni rutas de configuración**. El backend carga la revisión autorizada correspondiente a `expectedVersion`, genera todas las configuraciones objetivo dentro del Private Engine y ejecuta el planner sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
 
 - change set público;
 - plan incremental público;
@@ -100,7 +100,7 @@ El navegador **no envía el snapshot** ni las rutas de configuración. El backen
 
 Si change set o incremental quedan bloqueados, las etapas posteriores no se ejecutan y `ok=false`.
 
-Compatibilidad transitoria: el body todavía puede incluir `desiredConfigs`, pero el servidor los ignora para vendors ya migrados. Solo `cisco_asa`, `windows` y `linux` pueden usar temporalmente ese mapa como fallback legacy; `configPaths` enviados por cliente no son autoritativos.
+El contrato es revision-only: cualquier campo legacy como `desiredConfigs` o `configPaths` se rechaza como JSON desconocido. Cisco ASA, Windows y Linux se generan también dentro del worker privado.
 
 ## Response semantics
 
