@@ -18,6 +18,7 @@ function createClient(options){
   const authApi=opts.authApi||null;
   const locationObj=opts.location||root.location||null;
   let context=null;
+  let lastSnapshotJSON='';
   let autoOpened='';
 
   function state(){
@@ -52,6 +53,7 @@ function createClient(options){
   function clear(){
     const previous=contextSnapshot();
     context=null;
+    lastSnapshotJSON='';
     emit('nw:remote-project:changed',{context:null,previous});
   }
   function setContext(project,revision,response,snapshot){
@@ -67,9 +69,9 @@ function createClient(options){
       name:clean(project.name),
       schemaVersion:clean(project.schemaVersion||revision.schemaVersion),
       currentVersion,
-      etag,
-      lastSnapshotJSON:JSON.stringify(snapshot||revision.snapshot||{})
+      etag
     };
+    lastSnapshotJSON=JSON.stringify(snapshot||revision.snapshot||{});
     emit('nw:remote-project:changed',{context:contextSnapshot()});
     return contextSnapshot();
   }
@@ -115,7 +117,7 @@ function createClient(options){
     if(!s||typeof s.getSnapshot!=='function')throw createError('NetWizardState unavailable',0,null);
     const snapshot=clone(s.getSnapshot());
     const serialized=JSON.stringify(snapshot||{});
-    if(!(options&&options.force)&&serialized===context.lastSnapshotJSON){
+    if(!(options&&options.force)&&serialized===lastSnapshotJSON){
       return {saved:false,context:contextSnapshot(),snapshot};
     }
     const headers={'Content-Type':'application/json','X-NetWizard-CSRF':csrf()};
