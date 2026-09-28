@@ -52,6 +52,7 @@
     if(!M){
       return {
         ok:false,version:'3.50.0',profile:'unknown',
+        missing:['NetWizardBrowserModules'],
         missingGlobals:['NetWizardBrowserModules'],
         missingModules:[],duplicateScripts:duplicates,invalidOrder:[],
         manifestErrors:['NetWizardBrowserModules no está disponible.'],
@@ -96,6 +97,7 @@
         !missingPipelineStages.length&&!missingRegistryEntries.length&&generatorReady&&architectureReady&&rackIntegrationReady,
       version:'3.50.0',
       profile:expected.profile,
+      missing:missingGlobals.slice(),
       missingGlobals,
       missingModules,
       duplicateScripts:duplicates,
