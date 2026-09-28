@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Production Browser Boundary: el Docker SaaS deja de publicar renderers/stages especializados de vendor, switching, firewall, access-security, management y HA ya cubiertos por Private Engine; source/Pages conserva el pipeline completo y CI valida el grafo productivo.
+
 - Cloud Private Deployment UI: el cliente SaaS sincroniza la revisión y consume `netwizard-private-deployment-plan-v2`; runbook, rollback y artefactos server-side se inspeccionan/descargan sin persistirse en el snapshot.
 
 - Private Legacy Vendors: Cisco ASA, Windows y Linux se generan ya dentro del Private Engine; el endpoint de deployment queda revision-only y rechaza `desiredConfigs`/`configPaths` del cliente.
