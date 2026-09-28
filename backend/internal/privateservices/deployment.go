@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v1"
+const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v2"
 
 var (
 	ErrPrivateDeploymentUnavailable = errors.New("private deployment planning unavailable")
@@ -19,8 +19,8 @@ var (
 )
 
 type DeploymentPlanRequest struct {
-	Project        json.RawMessage   `json:"project"`
-	GeneratedAt    time.Time         `json:"generatedAt"`
+	Project     json.RawMessage `json:"project"`
+	GeneratedAt time.Time       `json:"generatedAt"`
 }
 
 type DeploymentArtifact struct {
