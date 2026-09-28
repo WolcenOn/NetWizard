@@ -8,10 +8,11 @@ const Boundary=require('../scripts/prepare-production-index.js');
 
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const production=Boundary.stripPrivateRoutingScripts(html);
+const production=Boundary.stripPrivateBrowserScripts(html);
 const privateModules=Manifest.paths().filter(p=>!Manifest.paths({production:true}).includes(p));
 
-assert.deepStrictEqual(Boundary.PRIVATE_ROUTING_BROWSER_MODULES,privateModules);
+assert.deepStrictEqual(Boundary.PRIVATE_BROWSER_MODULES,privateModules);
+assert.deepStrictEqual(Boundary.PRIVATE_ROUTING_BROWSER_MODULES,privateModules,'compatibility alias must match generalized boundary');
 assert.ok(privateModules.length>0,'Debe existir al menos un módulo privado excluido de producción');
 
 for(const asset of privateModules){
@@ -22,12 +23,28 @@ for(const asset of privateModules){
 for(const required of [
   './js/netwizard-browser-modules.js',
   './js/netwizard-config-pipeline.js',
-  './js/netwizard-firewall-edge-generator.js',
   './js/netwizard-runtime.js',
   './js/netwizard-rack-model.js',
-  './js/netwizard-structured-cabling.js'
+  './js/netwizard-structured-cabling.js',
+  './js/netwizard-private-deployment-ui.js'
 ]){
   assert.ok(production.includes(required),'production entrypoint must preserve '+required);
+}
+
+for(const excluded of [
+  './js/netwizard-vendor-config-generators.js',
+  './js/netwizard-firewall-edge-generator.js',
+  './js/netwizard-switching-generator.js',
+  './js/netwizard-access-security-generator.js',
+  './js/netwizard-management-generator.js',
+  './js/netwizard-ha-services-generator.js',
+  './js/netwizard-firewall-edge-integration.js',
+  './js/netwizard-switching-integration.js',
+  './js/netwizard-access-security-integration.js',
+  './js/netwizard-management-integration.js',
+  './js/netwizard-ha-services-integration.js'
+]){
+  assert.ok(!production.includes(excluded),'production entrypoint must omit specialized generator '+excluded);
 }
 
 const docker=fs.readFileSync(path.join(root,'Dockerfile'),'utf8');
@@ -49,4 +66,4 @@ assert.ok(!html.includes('./private/vendor-config-engine.js'),'El motor vendor p
 assert.ok(!html.includes('./private/legacy-vendor-generators.js'),'Cisco ASA/Windows/Linux privados no deben formar parte del entrypoint browser');
 assert.ok(docker.includes('private/deployment-worker.js --bundle'),'Vendor generation debe viajar solo dentro del bundle privado de deployment');
 
-console.log('✓ El frontend de producción deriva exclusiones privadas del manifiesto browser y conserva workers fuera de public');
+console.log('✓ El frontend de producción excluye generadores especializados y conserva workers fuera de public');
