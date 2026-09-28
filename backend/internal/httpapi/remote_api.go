@@ -30,12 +30,6 @@ func (s *Server) remoteWritesReady() bool {
 func (s *Server) remoteRoutes() {
 	require := s.auth.Sessions.Require
 
-	if s.catalog != nil {
-		s.mux.Handle("GET /api/device-models/global", require(http.HandlerFunc(s.handleListGlobalDeviceModels)))
-		s.mux.Handle("GET /api/device-models/global/{modelID}", require(http.HandlerFunc(s.handleGetGlobalDeviceModel)))
-		s.mux.Handle("PUT /api/device-models/global/{modelID}", require(s.requireMutation(s.requireGlobalAdmin(http.HandlerFunc(s.handleUpsertGlobalDeviceModel)))))
-	}
-
 	s.mux.Handle("GET /api/workspaces", require(http.HandlerFunc(s.handleListWorkspaces)))
 	s.mux.Handle("POST /api/workspaces", require(s.requireMutation(http.HandlerFunc(s.handleCreateWorkspace))))
 
