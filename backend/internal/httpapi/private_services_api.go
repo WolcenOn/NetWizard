@@ -12,7 +12,12 @@ import (
 	"github.com/WolcenOn/NetWizard/backend/internal/privateservices"
 )
 
-const maxPrivateArtifactBytes = 128 * 1024 * 1024
+const (
+	maxPrivateArtifactBytes = 128 * 1024 * 1024
+	maxPrivateDeploymentRequestBytes = 72 * 1024 * 1024
+	maxPrivateDeploymentConfigBytes = 16 * 1024 * 1024
+	maxPrivateDeploymentConfigsBytes = 64 * 1024 * 1024
+)
 
 type privateAuditStore interface {
 	RecordProjectAudit(ctx context.Context, workspaceID, projectID, actor, action string, metadata map[string]any) error
@@ -30,6 +35,10 @@ func (s *Server) privateRoutingReady() bool {
 	return s.privateServicesReady() && s.privateServices.RoutingConfigured()
 }
 
+func (s *Server) privateDeploymentReady() bool {
+	return s.privateServicesReady() && s.privateServices.DeploymentConfigured()
+}
+
 func (s *Server) privateServiceRoutes() {
 	require := s.auth.Sessions.Require
 	s.mux.Handle("POST /api/projects/{projectID}/private/deployment-attestations",
@@ -37,6 +46,10 @@ func (s *Server) privateServiceRoutes() {
 	if s.privateRoutingReady() {
 		s.mux.Handle("POST /api/projects/{projectID}/private/routing",
 			require(s.requireMutation(http.HandlerFunc(s.handlePrivateRouting))))
+	}
+	if s.privateDeploymentReady() {
+		s.mux.Handle("POST /api/projects/{projectID}/private/deployment-plan",
+			require(s.requireMutation(http.HandlerFunc(s.handlePrivateDeploymentPlan))))
 	}
 }
 
@@ -186,6 +199,98 @@ func (s *Server) handlePrivateRouting(w http.ResponseWriter, r *http.Request) {
 			"generatorVersion": result.GeneratorVersion,
 		}); err != nil {
 		s.internalError(w, "audit private routing", err)
+		return
+	}
+
+	noStore(w)
+	writeJSON(w, http.StatusOK, result)
+}
+
+
+func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Request) {
+	principal, ok := auth.PrincipalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	projectID := strings.TrimSpace(r.PathValue("projectID"))
+	if err := s.authorizer.RequireProjectRole(r.Context(), principal, projectID, auth.RoleEditor); err != nil {
+		writeAuthzError(w, err)
+		return
+	}
+
+	var body struct {
+		ExpectedVersion int64             `json:"expectedVersion"`
+		DesiredConfigs  map[string]string `json:"desiredConfigs"`
+		ConfigPaths     map[string]string `json:"configPaths"`
+	}
+	if err := decodeJSON(w, r, &body, maxPrivateDeploymentRequestBytes); err != nil {
+		writeDecodeError(w, err)
+		return
+	}
+	if body.ExpectedVersion < 1 || body.DesiredConfigs == nil {
+		http.Error(w, "invalid private deployment request", http.StatusBadRequest)
+		return
+	}
+	var configBytes int64
+	for id, value := range body.DesiredConfigs {
+		if strings.TrimSpace(id) == "" || len(id) > 256 || int64(len(value)) > maxPrivateDeploymentConfigBytes {
+			http.Error(w, "invalid private deployment request", http.StatusBadRequest)
+			return
+		}
+		configBytes += int64(len(value))
+		if configBytes > maxPrivateDeploymentConfigsBytes {
+			http.Error(w, "private deployment configs too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+	}
+	for id, value := range body.ConfigPaths {
+		if strings.TrimSpace(id) == "" || len(id) > 256 || len(strings.TrimSpace(value)) > 300 {
+			http.Error(w, "invalid private deployment request", http.StatusBadRequest)
+			return
+		}
+	}
+
+	project, revision, err := s.projects.GetProject(r.Context(), projectID)
+	if err != nil {
+		s.writeProjectError(w, "load project for private deployment plan", err)
+		return
+	}
+	if project.CurrentVersion != body.ExpectedVersion {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": "project_version_conflict",
+			"currentVersion": project.CurrentVersion,
+		})
+		return
+	}
+
+	generatedAt := time.Now().UTC()
+	result, err := s.privateServices.GenerateDeploymentPlan(
+		r.Context(), revision.Snapshot, body.DesiredConfigs, body.ConfigPaths, generatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, privateservices.ErrPrivateDeploymentInvalid) {
+			http.Error(w, "private deployment request rejected", http.StatusBadRequest)
+			return
+		}
+		s.internalError(w, "generate private deployment plan", err)
+		return
+	}
+
+	audit, ok := s.projects.(privateAuditStore)
+	if !ok {
+		s.internalError(w, "audit private deployment plan", privateservices.ErrPrivateDeploymentUnavailable)
+		return
+	}
+	if err := audit.RecordProjectAudit(r.Context(), project.WorkspaceID, project.ID, principal.Subject,
+		"private.deployment_plan.generate", map[string]any{
+			"contractVersion": result.ContractVersion,
+			"projectVersion": project.CurrentVersion,
+			"ok": result.OK,
+			"artifactCount": len(result.Artifacts),
+			"desiredConfigCount": len(body.DesiredConfigs),
+		}); err != nil {
+		s.internalError(w, "audit private deployment plan", err)
 		return
 	}
 
