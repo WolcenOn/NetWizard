@@ -5,6 +5,14 @@
 (function initNetWizardAuthClient(root){
   'use strict';
 
+  function emitAuthChanged(state){
+    try{
+      if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function'){
+        root.dispatchEvent(new root.CustomEvent('nw:auth:changed',{detail:state}));
+      }
+    }catch(_e){}
+  }
+
   function createClient(options){
     const opts=options||{};
     const fetchFn=opts.fetchFn || (root.fetch ? root.fetch.bind(root) : null);
@@ -30,7 +38,9 @@
         if(current.response.ok) me=current.body||null;
         else if(current.response.status!==401) throw new Error('session status unavailable');
       }
-      return state();
+      const current=state();
+      emitAuthChanged(current);
+      return current;
     }
 
     function state(){
@@ -60,6 +70,7 @@
       });
       if(!result.response.ok) throw new Error('logout failed');
       me=null;
+      emitAuthChanged(state());
       return true;
     }
 
