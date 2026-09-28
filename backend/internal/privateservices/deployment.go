@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v1"
+const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v2"
 
 var (
 	ErrPrivateDeploymentUnavailable = errors.New("private deployment planning unavailable")
@@ -19,9 +19,8 @@ var (
 )
 
 type DeploymentPlanRequest struct {
-	Project        json.RawMessage   `json:"project"`
-	DesiredConfigs map[string]string `json:"desiredConfigs,omitempty"`
-	GeneratedAt    time.Time         `json:"generatedAt"`
+	Project     json.RawMessage `json:"project"`
+	GeneratedAt time.Time       `json:"generatedAt"`
 }
 
 type DeploymentArtifact struct {
@@ -126,11 +125,11 @@ func (s *Service) DeploymentConfigured() bool {
 	return s != nil && s.deployment != nil
 }
 
-func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMessage, legacyDesiredConfigs map[string]string, generatedAt time.Time) (DeploymentPlanResult, error) {
+func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMessage, generatedAt time.Time) (DeploymentPlanResult, error) {
 	if s == nil || s.deployment == nil {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentUnavailable
 	}
 	return s.deployment.Run(ctx, DeploymentPlanRequest{
-		Project: project, DesiredConfigs: legacyDesiredConfigs, GeneratedAt: generatedAt,
+		Project: project, GeneratedAt: generatedAt,
 	})
 }

@@ -148,13 +148,13 @@ La primera vertical privada expone:
 - `POST /api/projects/{projectID}/private/routing` cuando el worker privado está disponible;
 - `POST /api/projects/{projectID}/private/deployment-plan` cuando el planner privado está disponible.
 
-Todos los endpoints privados requieren sesión, CSRF y rol `editor` o `owner`, y las operaciones ligadas a proyecto usan `expectedVersion`. La attestation recibe además SHA-256/tamaño del artefacto y devuelve una firma HMAC-SHA256 ligada al checksum de la revisión remota. Routing recibe `deviceId`. Deployment planning recibe únicamente configuraciones objetivo y rutas de artefacto; el snapshot se carga siempre desde PostgreSQL.
+Todos los endpoints privados requieren sesión, CSRF y rol `editor` o `owner`, y las operaciones ligadas a proyecto usan `expectedVersion`. La attestation recibe además SHA-256/tamaño del artefacto y devuelve una firma HMAC-SHA256 ligada al checksum de la revisión remota. Routing recibe `deviceId`. Deployment planning recibe únicamente `expectedVersion`: snapshot, configuraciones objetivo y rutas de artefacto se derivan en servidor desde PostgreSQL.
 
 La capacidad solo se activa si `NETWIZARD_PRIVATE_SERVICE_KEY` contiene al menos 32 bytes y la autenticación OIDC está configurada. El uso queda auditado en PostgreSQL.
 
 El routing privado ejecuta los generadores existentes dentro de un worker Node empaquetado fuera de `NETWIZARD_STATIC_DIR`. El endpoint recibe solo `expectedVersion` y `deviceId`; el backend carga el snapshot remoto almacenado y devuelve el bloque de routing. La imagen Docker define automáticamente `NETWIZARD_PRIVATE_ROUTING_WORKER=/app/private/routing-worker.cjs`; normalmente no hace falta crear esa variable manualmente en Railway.
 
-El planner privado de deployment ejecuta generación vendor, change set, generación incremental y runbook sobre la revisión remota almacenada. Para Cisco IOS, Junos, Huawei VRP, RouterOS, FortiOS, pfSense, Aruba, UniFi, Omada y Galgus la configuración objetivo se deriva dentro del Private Engine y cualquier override cliente se ignora. Solo Cisco ASA, Windows y Linux conservan temporalmente `desiredConfigs` como fallback legacy. Las rutas de configuración se derivan siempre en servidor y el worker nunca acepta un snapshot arbitrario del navegador. La imagen Docker empaqueta todo dentro de `/app/private/deployment-worker.cjs` y publica la capability `privateDeploymentPlan`.
+El planner privado de deployment ejecuta generación vendor, change set, generación incremental y runbook sobre la revisión remota almacenada. Cisco IOS, Cisco ASA, Junos, Huawei VRP, RouterOS, FortiOS, pfSense, Aruba, UniFi, Omada, Galgus, Windows y Linux se generan dentro del Private Engine. El endpoint ya no acepta `desiredConfigs` ni `configPaths`; las rutas y configuraciones objetivo se derivan siempre en servidor y el worker nunca acepta un snapshot arbitrario del navegador. La imagen Docker empaqueta todo dentro de `/app/private/deployment-worker.cjs` y publica la capability `privateDeploymentPlan`.
 
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 

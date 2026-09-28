@@ -9,7 +9,9 @@ const project={
   devices:[
     {id:'r1',name:'EDGE-1',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'yes',wanIf:'GigabitEthernet0/0'},
     {id:'sw1',name:'ACCESS-1',type:'switch',kind:'switch',vendorOs:'cisco_ios'},
-    {id:'win1',name:'UTIL-1',type:'server',kind:'server',vendorOs:'windows'}
+    {id:'asa1',name:'ASA-EDGE',type:'firewall',kind:'firewall',vendorOs:'cisco_asa'},
+    {id:'win1',name:'UTIL-WIN',type:'server',kind:'server',vendorOs:'windows'},
+    {id:'lin1',name:'UTIL-LNX',type:'server',kind:'server',vendorOs:'linux'}
   ],
   ports:[
     {id:'r1-wan',deviceId:'r1',name:'GigabitEthernet0/0',mode:'routed',role:'wan'},
@@ -19,7 +21,8 @@ const project={
   ],
   vlans:[{id:'v10',vlanId:10,name:'Users'}],
   subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1'}],
-  hosts:[],links:[],
+  hosts:[{id:'srv1',name:'APP-01',type:'server',vlanRef:'v10',staticIp:'10.10.10.20',ipMode:'static'}],
+  links:[],
   dhcp:{'10':{enabled:true,dns:'1.1.1.1'}},
   roas:{gwId:'r1',lanIf:'GigabitEthernet0/1',wanCidr:'192.0.2.2/30',wanNh:'192.0.2.1'},
   routing:{strategy:'static'},
@@ -27,37 +30,42 @@ const project={
   management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
 };
 
-const legacy={
-  r1:'CLIENT MUST NOT OVERRIDE PRIVATE CISCO',
-  sw1:'CLIENT MUST NOT OVERRIDE PRIVATE SWITCH',
-  win1:'powershell.exe -File netwizard.ps1\n'
-};
-const result=Engine.generateAll(project,legacy);
+const result=Engine.generateAll(project);
 
 assert.strictEqual(result.contractVersion,'netwizard-private-vendor-config-v1');
 assert.strictEqual(result.ok,true);
-assert.strictEqual(result.sources.r1,'private');
-assert.strictEqual(result.sources.sw1,'private');
-assert.strictEqual(result.sources.win1,'legacy-client-fallback');
-assert.doesNotMatch(result.configs.r1,/CLIENT MUST NOT OVERRIDE/);
-assert.doesNotMatch(result.configs.sw1,/CLIENT MUST NOT OVERRIDE/);
+for(const id of ['r1','sw1','asa1','win1','lin1'])assert.strictEqual(result.sources[id],'private');
+
 assert.match(result.configs.r1,/FW Policy ACL/);
 assert.match(result.configs.r1,/DNS outbound/);
 assert.match(result.configs.sw1,/NetWizard switching profesional/);
+assert.match(result.configs.asa1,/Cisco ASA/);
+assert.match(result.configs.asa1,/access-list OUTSIDE_IN/);
+assert.match(result.configs.win1,/Windows Server \/ Windows 10\+/);
+assert.match(result.configs.win1,/New-NetIPAddress/);
+assert.match(result.configs.lin1,/Linux \(Ubuntu\/Debian\/RHEL\)/);
+assert.match(result.configs.lin1,/iptables -P INPUT DROP/);
+
 assert.match(result.configPaths.r1,/^configs\/01-EDGE-1-r1-cisco_ios\.cfg$/);
+assert.match(result.configPaths.asa1,/\.cfg$/);
 assert.match(result.configPaths.win1,/\.ps1$/);
+assert.match(result.configPaths.lin1,/\.sh$/);
+
 assert.deepStrictEqual(
   result.pipeline.renderers.map(x=>x.id),
-  ['edge.firewall','device.switching','vendor.base']
+  ['edge.firewall','legacy.private','device.switching','vendor.base']
 );
 assert.deepStrictEqual(
   result.pipeline.stages.map(x=>x.id),
   ['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services']
 );
-assert.ok(result.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-001'&&x.deviceId==='win1'&&!x.blocking));
+assert.deepStrictEqual(result.issues,[]);
 
-const noLegacy=Engine.generateAll(project,{});
-assert.strictEqual(noLegacy.ok,false);
-assert.ok(noLegacy.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-003'&&x.deviceId==='win1'&&x.blocking));
+const unsupported=JSON.parse(JSON.stringify(project));
+unsupported.devices=[{id:'x1',name:'Unknown',type:'router',vendorOs:'future_os'}];
+unsupported.ports=[];
+const blocked=Engine.generateAll(unsupported);
+assert.strictEqual(blocked.ok,false);
+assert.ok(blocked.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-003'&&x.deviceId==='x1'&&x.blocking));
 
-console.log('✓ Private vendor engine genera vendors migrados en servidor e ignora overrides cliente');
+console.log('✓ Private vendor engine genera todos los vendors soportados sin fallback cliente');

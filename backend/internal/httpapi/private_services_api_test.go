@@ -324,6 +324,14 @@ func TestPrivateDeploymentPlanUsesStoredRevisionAndAudits(t *testing.T) {
 		t.Fatalf("worker must receive stored revision, got %s", string(runner.project))
 	}
 
+	legacyReq := authenticatedRequest(http.MethodPost, "/api/projects/"+project.ID+"/private/deployment-plan",
+		`{"expectedVersion":1,"desiredConfigs":{"r1":"client override"}}`, rawSession, true)
+	legacyRec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(legacyRec, legacyReq)
+	if legacyRec.Code != http.StatusBadRequest {
+		t.Fatalf("deprecated desiredConfigs expected 400, got %d: %s", legacyRec.Code, legacyRec.Body.String())
+	}
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	found := false

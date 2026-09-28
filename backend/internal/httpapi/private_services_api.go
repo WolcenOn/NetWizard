@@ -14,9 +14,7 @@ import (
 
 const (
 	maxPrivateArtifactBytes = 128 * 1024 * 1024
-	maxPrivateDeploymentRequestBytes = 72 * 1024 * 1024
-	maxPrivateDeploymentConfigBytes = 16 * 1024 * 1024
-	maxPrivateDeploymentConfigsBytes = 64 * 1024 * 1024
+	maxPrivateDeploymentRequestBytes = 8 * 1024
 )
 
 type privateAuditStore interface {
@@ -220,9 +218,7 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 	}
 
 	var body struct {
-		ExpectedVersion int64             `json:"expectedVersion"`
-		DesiredConfigs  map[string]string `json:"desiredConfigs"`
-		ConfigPaths     map[string]string `json:"configPaths,omitempty"`
+		ExpectedVersion int64 `json:"expectedVersion"`
 	}
 	if err := decodeJSON(w, r, &body, maxPrivateDeploymentRequestBytes); err != nil {
 		writeDecodeError(w, err)
@@ -231,18 +227,6 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 	if body.ExpectedVersion < 1 {
 		http.Error(w, "invalid private deployment request", http.StatusBadRequest)
 		return
-	}
-	var configBytes int64
-	for id, value := range body.DesiredConfigs {
-		if strings.TrimSpace(id) == "" || len(id) > 256 || int64(len(value)) > maxPrivateDeploymentConfigBytes {
-			http.Error(w, "invalid private deployment request", http.StatusBadRequest)
-			return
-		}
-		configBytes += int64(len(value))
-		if configBytes > maxPrivateDeploymentConfigsBytes {
-			http.Error(w, "private deployment configs too large", http.StatusRequestEntityTooLarge)
-			return
-		}
 	}
 	project, revision, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
@@ -259,7 +243,7 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 
 	generatedAt := time.Now().UTC()
 	result, err := s.privateServices.GenerateDeploymentPlan(
-		r.Context(), revision.Snapshot, body.DesiredConfigs, generatedAt,
+		r.Context(), revision.Snapshot, generatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, privateservices.ErrPrivateDeploymentInvalid) {
@@ -281,7 +265,6 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 			"projectVersion": project.CurrentVersion,
 			"ok": result.OK,
 			"artifactCount": len(result.Artifacts),
-			"legacyDesiredConfigCount": len(body.DesiredConfigs),
 		}); err != nil {
 		s.internalError(w, "audit private deployment plan", err)
 		return

@@ -9,15 +9,16 @@ const MultiRouting=require('../js/netwizard-multivendor-routing-generator.js');
 const Access=require('../js/netwizard-access-security-generator.js');
 const Management=require('../js/netwizard-management-generator.js');
 const Ha=require('../js/netwizard-ha-services-generator.js');
+const Legacy=require('./legacy-vendor-generators.js');
 const Policy=require('../js/netwizard-policy-utils.js');
 const Network=require('../js/netwizard-network-utils.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
-const PRIVATE_VENDORS=new Set([
+const MODULAR_VENDORS=new Set([
   'cisco_ios','juniper_junos','huawei_vrp','mikrotik_routeros','fortinet','pfsense',
   'aruba_aoss','ubiquiti_unifi','tplink_omada','galgus_cloud'
 ]);
-const LEGACY_CLIENT_FALLBACK_VENDORS=new Set(['cisco_asa','windows','linux']);
+const PRIVATE_VENDORS=new Set([...MODULAR_VENDORS,'cisco_asa','windows','linux']);
 const EXTENSIONS={
   cisco_ios:'cfg',cisco_asa:'cfg',juniper_junos:'set',huawei_vrp:'cfg',
   mikrotik_routeros:'rsc',fortinet:'conf',aruba_aoss:'cfg',pfsense:'php',
@@ -67,14 +68,6 @@ function configPath(device,index){
   const vendor=clean(device&&device.vendorOs,80)||'generic';
   return 'configs/'+String(index+1).padStart(2,'0')+'-'+safeName(device&&device.name,'device')+'-'+safeName(device&&device.id,'id')+'-'+safeName(vendor,'vendor')+'.'+extension(vendor);
 }
-function unsupportedIssue(device){
-  const vendor=clean(device&&device.vendorOs,80)||'generic_network';
-  return {
-    code:'NW-PRIVATE-CONFIG-001',severity:'warning',blocking:false,category:'private-vendor-generation',
-    deviceId:clean(device&&device.id,256),vendor,
-    message:(device&&device.name||device&&device.id||'device')+': vendor '+vendor+' todavía depende del generador legacy cliente.'
-  };
-}
 function create(project){
   const p=obj(project);
   const fallback=(deviceId,format)=>{
@@ -91,8 +84,13 @@ function create(project){
   });
   pipeline.registerRenderer({
     id:'vendor.base',priority:100,
-    supports(ctx){return PRIVATE_VENDORS.has(ctx.vendor);},
+    supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
     render(ctx){return enhanced(ctx.deviceId,ctx.vendor||ctx.format);}
+  });
+  pipeline.registerRenderer({
+    id:'legacy.private',priority:275,
+    supports(ctx){return ['cisco_asa','windows','linux'].includes(ctx.vendor);},
+    render(ctx){return Legacy.render(ctx.project,ctx.deviceId,ctx.vendor);}
   });
   pipeline.registerRenderer({
     id:'device.switching',priority:250,
@@ -121,18 +119,18 @@ function create(project){
   });
   pipeline.registerStage({
     id:'management.baseline',order:300,
-    supports(ctx){return PRIVATE_VENDORS.has(ctx.vendor);},
+    supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
     apply(config,ctx){return Management.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
   });
   pipeline.registerStage({
     id:'ha.services',order:400,
-    supports(ctx){return PRIVATE_VENDORS.has(ctx.vendor);},
+    supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
     apply(config,ctx){return Ha.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
   });
   return pipeline;
 }
-function generateAll(project,legacyDesiredConfigs){
-  const p=obj(project),pipeline=create(p),fallbacks=obj(legacyDesiredConfigs);
+function generateAll(project){
+  const p=obj(project),pipeline=create(p);
   const configs={},paths={},artifacts=[],issues=[],sources={};
   for(const [index,device] of arr(p.devices).entries()){
     const id=clean(device&&device.id,256),vendor=clean(device&&device.vendorOs,80);
@@ -150,14 +148,7 @@ function generateAll(project,legacyDesiredConfigs){
       artifacts.push({path,content:output.endsWith('\n')?output:output+'\n',mime:'text/plain;charset=utf-8'});
       continue;
     }
-    if(LEGACY_CLIENT_FALLBACK_VENDORS.has(vendor)&&typeof fallbacks[id]==='string'&&fallbacks[id].trim()){
-      configs[id]=fallbacks[id];
-      sources[id]='legacy-client-fallback';
-      artifacts.push({path,content:fallbacks[id].endsWith('\n')?fallbacks[id]:fallbacks[id]+'\n',mime:'text/plain;charset=utf-8'});
-      issues.push(unsupportedIssue(device));
-      continue;
-    }
-    issues.push({code:'NW-PRIVATE-CONFIG-003',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': vendor '+(vendor||'sin asignar')+' no tiene generación privada ni fallback compatible.'});
+    issues.push({code:'NW-PRIVATE-CONFIG-003',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': vendor '+(vendor||'sin asignar')+' no tiene generación privada.'});
   }
   return {
     contractVersion:CONTRACT_VERSION,
@@ -168,6 +159,6 @@ function generateAll(project,legacyDesiredConfigs){
 }
 
 module.exports={
-  CONTRACT_VERSION,PRIVATE_VENDORS,LEGACY_CLIENT_FALLBACK_VENDORS,
+  CONTRACT_VERSION,MODULAR_VENDORS,PRIVATE_VENDORS,
   create,generateAll,configPath,extension,firewallAcl
 };

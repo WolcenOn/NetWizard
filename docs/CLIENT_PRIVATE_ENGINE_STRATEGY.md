@@ -246,20 +246,20 @@ El segundo bloque privado empieza por la parte pura del deployment, no por el em
 - `incremental-generators`;
 - `deployment-runbook`.
 
-El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v1` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
+El backend carga la revisión autoritativa desde PostgreSQL y ejecuta esos tres módulos en `deployment-worker.cjs`, fuera del directorio público. El contrato `netwizard-private-deployment-plan-v2` devuelve plan, runbook, rollback, resúmenes y artefactos incrementales.
 
-Estado actual: **transición avanzada**. El Private Engine genera ya las configuraciones objetivo de `cisco_ios`, `juniper_junos`, `huawei_vrp`, `mikrotik_routeros`, `fortinet`, `pfsense`, `aruba_aoss`, UniFi, Omada y Galgus usando el mismo pipeline modular de renderers/stages. Para esos vendors, cualquier `desiredConfigs` recibido del cliente se ignora.
+Estado actual: **generación objetivo autoritativa en servidor**. El Private Engine genera las configuraciones objetivo de `cisco_ios`, `cisco_asa`, `juniper_junos`, `huawei_vrp`, `mikrotik_routeros`, `fortinet`, `pfsense`, `aruba_aoss`, UniFi, Omada, Galgus, Windows y Linux. `configPaths` se derivan siempre en servidor.
 
-Quedan como fallback legacy cliente únicamente `cisco_asa`, `windows` y `linux`. `configPaths` se derivan siempre en servidor. El worker no acepta el snapshot desde el cliente.
+El endpoint de deployment ya no acepta `desiredConfigs` ni `configPaths`; recibe solo `expectedVersion`. El worker tampoco acepta esos campos si se invoca directamente. El snapshot sigue cargándose exclusivamente desde PostgreSQL.
 
-El ZIP local continúa siendo el ensamblador compatible/offline mientras se completa esa transición.
+El ZIP local continúa como ensamblador compatible/offline; esta compatibilidad no rebaja la autoridad del flujo cloud.
 
 ### E. Siguiente bloque privado
 
 Orden recomendado:
 
-1. extraer los tres generadores legacy restantes y eliminar `desiredConfigs` del contrato;
-2. conectar la UI cloud al deployment plan privado;
+1. conectar la UI cloud al deployment plan privado y consumir sus artefactos;
+2. retirar del artefacto Docker cualquier generador browser que ya no sea necesario para UX local;
 3. validación avanzada y production gate;
 4. simulación/resiliencia.
 

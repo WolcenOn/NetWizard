@@ -5,31 +5,22 @@ const Incremental=require('../js/netwizard-incremental-generators.js');
 const Runbook=require('../js/netwizard-deployment-runbook.js');
 const VendorConfig=require('./vendor-config-engine.js');
 
-const CONTRACT_VERSION='netwizard-private-deployment-plan-v1';
+const CONTRACT_VERSION='netwizard-private-deployment-plan-v2';
 const MAX_DEVICES=1000;
-const MAX_CONFIG_BYTES=16*1024*1024;
-const MAX_TOTAL_CONFIG_BYTES=64*1024*1024;
 
 function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
 function arr(value){return Array.isArray(value)?value:[];}
 function clean(value,max){return String(value==null?'':value).trim().slice(0,max||240);}
-function byteLength(value){return Buffer.byteLength(String(value==null?'':value),'utf8');}
 
 function validateInput(request){
-  const req=obj(request),project=obj(req.project),legacyDesired=obj(req.desiredConfigs);
+  const req=obj(request),project=obj(req.project);
   const devices=arr(project.devices);
+  if(Object.prototype.hasOwnProperty.call(req,'desiredConfigs')||Object.prototype.hasOwnProperty.call(req,'configPaths')){
+    throw new Error('client config inputs are no longer accepted');
+  }
   if(!Object.keys(project).length)throw new Error('project required');
   if(devices.length>MAX_DEVICES)throw new Error('too many devices');
-  const ids=new Set(devices.map(d=>clean(d&&d.id,256)).filter(Boolean));
-  let total=0;
-  for(const [id,value] of Object.entries(legacyDesired)){
-    if(!ids.has(clean(id,256)))throw new Error('desired config references unknown device: '+id);
-    const size=byteLength(value);
-    if(size>MAX_CONFIG_BYTES)throw new Error('desired config too large: '+id);
-    total+=size;
-  }
-  if(total>MAX_TOTAL_CONFIG_BYTES)throw new Error('desired configs payload too large');
-  return {project,legacyDesiredConfigs:legacyDesired};
+  return {project};
 }
 
 function resultBase(input,generatedAt){
@@ -59,7 +50,7 @@ function handle(request){
   const generatedAt=clean(req.generatedAt,80)||new Date().toISOString();
   const result=resultBase(input,generatedAt);
 
-  const generated=VendorConfig.generateAll(input.project,input.legacyDesiredConfigs);
+  const generated=VendorConfig.generateAll(input.project);
   result.configSources=generated.sources;
   result.artifacts.push(...arr(generated.artifacts));
   result.issues.push(...arr(generated.issues));
