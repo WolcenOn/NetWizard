@@ -172,7 +172,8 @@ function render(){
 function install(){
   if(!root.document)return false;
   const rerender=()=>{try{render();}catch(err){if(root.console)root.console.error('NetWizard private routing UI',err);}};
-  for(const name of ['nw:auth:changed','nw:remote-project:changed','nw:project:changed'])root.addEventListener&&root.addEventListener(name,rerender);
+  for(const name of ['nw:auth:changed','nw:remote-project:changed'])root.addEventListener&&root.addEventListener(name,rerender);
+  root.document.addEventListener&&root.document.addEventListener('nw:project:changed',rerender);
   if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',rerender,{once:true});else rerender();
   return true;
 }
