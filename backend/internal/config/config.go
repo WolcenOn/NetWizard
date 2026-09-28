@@ -27,6 +27,7 @@ type Config struct {
 	MaxProjectBytes int64
 	PrivateServiceKey string
 	PrivateRoutingWorker string
+	AdminSubjects []string
 }
 
 func (c Config) DatabaseConfigured() bool {
@@ -120,6 +121,13 @@ func FromEnv() Config {
 	oidcRedirectURL := strings.TrimSpace(os.Getenv("NETWIZARD_OIDC_REDIRECT_URL"))
 	privateServiceKey := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_SERVICE_KEY"))
 	privateRoutingWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_ROUTING_WORKER"))
+	adminSubjectsRaw := strings.TrimSpace(os.Getenv("NETWIZARD_ADMIN_SUBJECTS"))
+	var adminSubjects []string
+	if adminSubjectsRaw != "" {
+		for _, part := range strings.Split(adminSubjectsRaw, ",") {
+			if item := strings.TrimSpace(part); item != "" { adminSubjects = append(adminSubjects, item) }
+		}
+	}
 
 	sessionCookieName := strings.TrimSpace(os.Getenv("NETWIZARD_SESSION_COOKIE_NAME"))
 	if sessionCookieName == "" {
@@ -164,5 +172,6 @@ func FromEnv() Config {
 		CookieSecure: cookieSecure, AuthHTTPTimeout: authHTTPTimeout,
 		MaxProjectBytes: maxProjectBytes, PrivateServiceKey: privateServiceKey,
 		PrivateRoutingWorker: privateRoutingWorker,
+		AdminSubjects: adminSubjects,
 	}
 }

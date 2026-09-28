@@ -110,6 +110,8 @@ before('js/netwizard-v5-bridge.js', 'js/netwizard-v5-connectivity-trace.js');
 before('js/netwizard.js', 'js/netwizard-vendor-config-generators.js');
 before('js/netwizard.js', 'js/netwizard-config-pipeline.js');
 before('js/netwizard-config-pipeline.js', 'js/netwizard-vendor-config-generators.js');
+before('js/netwizard-custom-device-models.js', 'js/netwizard-global-device-catalog.js');
+before('js/netwizard-global-device-catalog.js', 'js/netwizard-custom-device-model-ui.js');
 before('js/netwizard-vendor-config-generators.js', 'js/netwizard-cisco-routing-integration.js');
 before('js/netwizard-routing-plan.js', 'js/netwizard-cisco-routing-generator.js');
 before('js/netwizard-cisco-routing-generator.js', 'js/netwizard-cisco-routing-integration.js');

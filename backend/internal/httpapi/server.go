@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/WolcenOn/NetWizard/backend/internal/auth"
+	"github.com/WolcenOn/NetWizard/backend/internal/catalog"
 	"github.com/WolcenOn/NetWizard/backend/internal/config"
 	"github.com/WolcenOn/NetWizard/backend/internal/limits"
 	"github.com/WolcenOn/NetWizard/backend/internal/projects"
@@ -25,6 +26,7 @@ type Dependencies struct {
 	Operations realtime.OperationStore
 	Realtime   *realtime.Hub
 	PrivateServices *privateservices.Service
+	Catalog catalog.Store
 }
 
 type Server struct {
@@ -39,6 +41,7 @@ type Server struct {
 	operations realtime.OperationStore
 	realtime   *realtime.Hub
 	privateServices *privateservices.Service
+	catalog catalog.Store
 }
 
 func NewServer(cfg config.Config, logger *slog.Logger) *Server {
@@ -55,7 +58,7 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 		authorizer: auth.Authorizer{Store: deps.Access},
 		auth: deps.Auth, writeLimit: deps.Limits,
 		operations: deps.Operations, realtime: deps.Realtime,
-		privateServices: deps.PrivateServices,
+		privateServices: deps.PrivateServices, catalog: deps.Catalog,
 	}
 	s.routes()
 	return s
@@ -74,6 +77,14 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
 		s.mux.Handle("POST /api/auth/logout", s.auth.Sessions.Require(s.requireCSRF(http.HandlerFunc(s.handleAuthLogout))))
 		s.mux.Handle("GET /api/auth/me", s.auth.Sessions.Require(http.HandlerFunc(s.handleAuthMe)))
+		if s.catalog != nil {
+			require := s.auth.Sessions.Require
+			s.mux.Handle("GET /api/device-models/global", require(http.HandlerFunc(s.handleListGlobalDeviceModels)))
+			s.mux.Handle("GET /api/device-models/global/{modelID}", require(http.HandlerFunc(s.handleGetGlobalDeviceModel)))
+			if s.writeLimit != nil {
+				s.mux.Handle("PUT /api/device-models/global/{modelID}", require(s.requireMutation(s.requireGlobalAdmin(http.HandlerFunc(s.handleUpsertGlobalDeviceModel)))))
+			}
+		}
 		if s.remoteWritesReady() {
 			s.remoteRoutes()
 		}
@@ -137,6 +148,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"collaboration":       s.collaborationReady(),
 		"privateServices":     s.privateServicesReady(),
 		"privateRouting":      s.privateRoutingReady(),
+		"globalDeviceCatalog": s.catalog != nil,
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})
 }
@@ -206,6 +218,7 @@ func (s *Server) handleAuthMe(w http.ResponseWriter, r *http.Request) {
 		"email": principal.Email,
 		"displayName": principal.DisplayName,
 		"csrfToken": principal.CSRFToken,
+		"isAdmin": s.isGlobalAdmin(principal),
 	})
 }
 

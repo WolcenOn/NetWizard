@@ -111,6 +111,24 @@ function saveModel(){
   S.replaceProject(snap,{source:'custom-device-model-ui'});
   refreshSelect(model.id);showEditor(false);
 }
+async function promoteSelectedModel(){
+  const id=clean(el('nwCustomModelSelect')?.value),snap=state()?.getSnapshot?.()||{};
+  const model=models()?.get(snap,id),catalog=root.NetWizardGlobalDeviceCatalog;
+  if(!model)return root.alert('Selecciona un modelo local.');
+  if(!catalog||typeof catalog.promote!=='function')return root.alert('El catálogo global no está disponible.');
+  if(!catalog.canPromote())return root.alert('La promoción al catálogo global requiere una sesión de administrador.');
+  try{
+    const result=await catalog.promote(model);
+    root.alert(`Modelo promovido al catálogo global: ${result.manufacturer||model.manufacturer} ${result.model||model.model}`);
+  }catch(err){
+    root.alert('No se pudo promover el modelo: '+(err&&err.message||'error desconocido'));
+  }
+}
+function refreshPromotionVisibility(){
+  const b=el('nwCustomPromote');if(!b)return;
+  const catalog=root.NetWizardGlobalDeviceCatalog;
+  b.style.display=catalog&&catalog.canPromote&&catalog.canPromote()?'':'none';
+}
 function deleteModel(){
   const S=state(),id=clean(el('nwCustomModelSelect')?.value);if(!S||!id)return;
   const snap=S.getSnapshot();
@@ -216,7 +234,8 @@ function ensureUi(){
     mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomNew'},'➕ Nuevo'),
     mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomEdit'},'✏️ Editar'),
     mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomDelete'},'🗑 Borrar'),
-    mk('button',{type:'button',className:'btn bp bsm',id:'nwCustomApply'},'Aplicar al equipo')
+    mk('button',{type:'button',className:'btn bp bsm',id:'nwCustomApply'},'Aplicar al equipo'),
+    mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomPromote'},'☁ Promover a catálogo global')
   );
   right.append(actions);row.append(left,right);
   const hint=mk('div',{id:'nwCustomModelHint',className:'hint'},'Los modelos locales viajan con el proyecto y no modifican el catálogo global.');
@@ -262,9 +281,11 @@ function ensureUi(){
   el('nwCustomEdit').onclick=()=>{const m=models()?.get(state()?.getSnapshot?.(),el('nwCustomModelSelect').value);if(!m)return root.alert('Selecciona un modelo local.');setEditor(m);showEditor(true);};
   el('nwCustomDelete').onclick=deleteModel;
   el('nwCustomApply').onclick=applySelectedToForm;
+  el('nwCustomPromote').onclick=promoteSelectedModel;
   el('nwCustomSave').onclick=saveModel;
   el('nwCustomCancel').onclick=()=>showEditor(false);
   el('nwCustomModelSelect').onchange=()=>{const id=el('nwCustomModelSelect').value;el('nwDeviceModelSource').value=id?'custom':'manual';el('nwDeviceModelRef').value=id||'';};
+  refreshPromotionVisibility();root.setTimeout(refreshPromotionVisibility,500);
   return true;
 }
 function install(attempt){
@@ -277,7 +298,7 @@ function install(attempt){
   return true;
 }
 
-const api={version:'netwizard-custom-device-model-ui-v1',parsePortGroups,serializePortGroups,modelFromEditor,install};
+const api={version:'netwizard-custom-device-model-ui-v2',parsePortGroups,serializePortGroups,modelFromEditor,promoteSelectedModel,refreshPromotionVisibility,install};
 root.NetWizardCustomDeviceModelUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>install(0));else install(0);}
