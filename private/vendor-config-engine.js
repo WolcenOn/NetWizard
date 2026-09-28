@@ -68,14 +68,6 @@ function configPath(device,index){
   const vendor=clean(device&&device.vendorOs,80)||'generic';
   return 'configs/'+String(index+1).padStart(2,'0')+'-'+safeName(device&&device.name,'device')+'-'+safeName(device&&device.id,'id')+'-'+safeName(vendor,'vendor')+'.'+extension(vendor);
 }
-function unsupportedIssue(device){
-  const vendor=clean(device&&device.vendorOs,80)||'generic_network';
-  return {
-    code:'NW-PRIVATE-CONFIG-001',severity:'warning',blocking:false,category:'private-vendor-generation',
-    deviceId:clean(device&&device.id,256),vendor,
-    message:(device&&device.name||device&&device.id||'device')+': vendor '+vendor+' todavía depende del generador legacy cliente.'
-  };
-}
 function create(project){
   const p=obj(project);
   const fallback=(deviceId,format)=>{
