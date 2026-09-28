@@ -98,6 +98,8 @@ function render(project){
 
   const gateReport=preview.gate||{counts:{}},schemaErrors=arr(preview.schema&&preview.schema.errors);
   const blocking=Number(gateReport.counts&&gateReport.counts.blocking||0),warnings=Number(gateReport.counts&&gateReport.counts.warnings||0);
+  const fieldExecution=root.NetWizardFieldExecution&&typeof root.NetWizardFieldExecution.build==='function'?root.NetWizardFieldExecution.build(project):null;
+  const fieldCounts=fieldExecution&&fieldExecution.ok?fieldExecution.counts:null;
   head.append(make('span','b '+(preview.ok?'bac':'brd'),preview.ok?'Listo':'Revisar'));
 
   const stats=make('div','stats');
@@ -105,6 +107,7 @@ function render(project){
     [preview.built.summary.interventionActionCount||0,'Acciones'],
     [preview.built.summary.removedDevices||0,'Equipos que salen'],
     [preview.built.summary.removedPorts||0,'Puertos que salen'],
+    [fieldCounts?`${fieldCounts.done}/${fieldCounts.total}`:'—','Campo'],
     [blocking,'Bloqueos'],
     [warnings,'Avisos']
   ]){
@@ -114,6 +117,8 @@ function render(project){
 
   if(blocking||schemaErrors.length){
     card.append(make('div','co co-rd',`No se puede cerrar todavía: ${blocking} bloqueo(s) físicos y ${schemaErrors.length} error(es) de contrato.`));
+  }else if(fieldCounts&&fieldCounts.pending){
+    card.append(make('div','co co-ac',`Progreso de campo: ${fieldCounts.done}/${fieldCounts.total}. Quedan ${fieldCounts.pending} acción(es) sin marcar. Esto no bloquea el cierre: confirma que el To-Be refleja lo realmente ejecutado.`));
   }else if(warnings){
     card.append(make('div','co co-yw',`El cierre es posible, pero quedan ${warnings} aviso(s) documentales. Revisa que sean aceptables.`));
   }else{

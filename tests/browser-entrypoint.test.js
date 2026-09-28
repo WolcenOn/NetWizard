@@ -36,6 +36,7 @@ const required = [
   'js/netwizard-inventory-design-bridge.js',
   'js/netwizard-inventory-design-bridge-ui.js',
   'js/netwizard-physical-intervention-ui.js',
+  'js/netwizard-field-execution-ui.js',
   'js/netwizard-intervention-closeout-ui.js',
   'js/netwizard-intervention-history.js',
   'js/netwizard-intervention-history-ui.js',
@@ -133,7 +134,8 @@ before('js/netwizard-physical-intervention-plan.js', 'js/netwizard-inventory-des
 before('js/netwizard-inventory-golden-path-ui.js', 'js/netwizard-inventory-design-bridge.js');
 before('js/netwizard-inventory-design-bridge.js', 'js/netwizard-inventory-design-bridge-ui.js');
 before('js/netwizard-inventory-design-bridge-ui.js', 'js/netwizard-physical-intervention-ui.js');
-before('js/netwizard-physical-intervention-ui.js', 'js/netwizard-intervention-closeout-ui.js');
+before('js/netwizard-physical-intervention-ui.js', 'js/netwizard-field-execution-ui.js');
+before('js/netwizard-field-execution-ui.js', 'js/netwizard-intervention-closeout-ui.js');
 before('js/netwizard-intervention-closeout-ui.js', 'js/netwizard-intervention-history.js');
 before('js/netwizard-intervention-history.js', 'js/netwizard-intervention-history-ui.js');
 before('js/netwizard-intervention-history-ui.js', 'js/netwizard-xlsx-writer.js');
