@@ -39,6 +39,9 @@ jobs:
       - name: Release checks
         run: npm run release:check
 
+      - name: Build Pages artifact
+        run: npm run build:pages
+
   backend:
     name: Go backend tests
     runs-on: ubuntu-24.04
