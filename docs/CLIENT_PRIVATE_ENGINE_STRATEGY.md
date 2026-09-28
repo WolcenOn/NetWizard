@@ -254,14 +254,19 @@ El endpoint de deployment ya no acepta `desiredConfigs` ni `configPaths`; recibe
 
 El ZIP local continúa como ensamblador compatible/offline; esta compatibilidad no rebaja la autoridad del flujo cloud.
 
-### E. Siguiente bloque privado
+### E. Consumo cloud del deployment privado
+
+La UI cloud sincroniza primero la revisión editable con `PUT /api/projects/{projectID}` y, sobre la versión resultante, invoca `POST /api/projects/{projectID}/private/deployment-plan` con el contrato revision-only v2.
+
+Las salidas del Private Engine —runbook, rollback, checklist, resúmenes y artefactos de configuración/incrementales— permanecen derivadas y fuera del snapshot. La UI permite inspeccionarlas, copiarlas o descargarlas sin reintroducir generación sensible en el navegador.
+
+### F. Siguiente bloque privado
 
 Orden recomendado:
 
-1. conectar la UI cloud al deployment plan privado y consumir sus artefactos;
-2. retirar del artefacto Docker cualquier generador browser que ya no sea necesario para UX local;
-3. validación avanzada y production gate;
-4. simulación/resiliencia.
+1. revisar qué generadores browser pueden retirarse del artefacto Docker sin degradar UX local/offline;
+2. validación avanzada y production gate;
+3. simulación/resiliencia.
 
 La selección se hará por relación entre valor intelectual, facilidad de aislamiento y dependencia del modo offline.
 
