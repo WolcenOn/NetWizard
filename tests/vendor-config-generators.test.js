@@ -76,4 +76,23 @@ test('UniFi genera plan neutral de controlador, no CLI falsa', () => {
   assert.ok(cfg.includes('VLANs a transportar: 10'));
 });
 
+test('Cisco IOS con RoaS explícito usa fallback modular cuando el generador legacy no está disponible', () => {
+  const p = JSON.parse(JSON.stringify(project));
+  p.devices[0].vendorOs = 'cisco_ios';
+  p.devices[0].type = 'router';
+  p.devices[0].kind = 'router';
+  p.roas = {gwId:'r1',lanIf:'GigabitEthernet0/1',wanCidr:'192.0.2.2/30',wanNh:'192.0.2.1'};
+  const enhanced = Vendor.createEnhancedGenConfig({
+    originalGenConfig(){ return '! Vendor/OS todavía no implementado en Private Engine: cisco_ios\n'; },
+    getProject(){ return p; },
+    getFwAcl(){ return ''; },
+    netUtils: require('../js/netwizard-network-utils.js')
+  });
+  const cfg = enhanced('r1','cisco_ios');
+  assert.match(cfg,/Cisco IOS Router\/Firewall/);
+  assert.match(cfg,/hostname RTR_Edge|hostname RTR-Edge|hostname RTR_Edge/i);
+  assert.doesNotMatch(cfg,/todavía no implementado en Private Engine/);
+  assert.doesNotMatch(cfg,/gateway RoaS inferido automáticamente/);
+});
+
 console.log('\nTests vendor config generators completados.');
