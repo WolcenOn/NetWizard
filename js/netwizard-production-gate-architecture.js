@@ -6,7 +6,44 @@ function tryRequire(p){try{return require(p);}catch{return null;}}
 function load(globalName,file){return root[globalName]||(typeof require==='function'?tryRequire(file):null);}
 function baseGate(){return load('NetWizardProductionGate','./netwizard-production-gate.js');}
 function routingPlan(){return load('NetWizardRoutingPlan','./netwizard-routing-plan.js');}
-function ensureScript(src,selector,key){if(!root.document||root.document.querySelector(selector))return;const s=root.document.createElement('script');s.src=src;s.dataset[key]='1';s.async=false;s.defer=false;s.onerror=()=>root.console&&root.console.error(`NetWizard: no se pudo cargar ${src}`);root.document.head.appendChild(s);}
+function modulePath(src){
+  const value=String(src||'').trim();
+  const marker='/js/';
+  try{
+    const pathname=new URL(value,root.location&&root.location.href||'http://localhost/').pathname;
+    const at=pathname.lastIndexOf(marker);
+    if(at>=0)return'js/'+pathname.slice(at+marker.length);
+  }catch(_e){}
+  return value.replace(/^\.\//,'');
+}
+function scriptPresent(src){
+  if(!root.document)return false;
+  const target=modulePath(src);
+  for(const script of Array.from(root.document.scripts||[])){
+    if(modulePath(script.src||script.getAttribute&&script.getAttribute('src'))===target)return true;
+  }
+  return false;
+}
+function sourceProfile(){
+  const M=root.NetWizardBrowserModules;
+  if(!M||typeof M.paths!=='function')return true;
+  const all=M.paths(),production=new Set(M.paths({production:true}));
+  const privatePaths=all.filter(path=>!production.has(path));
+  return privatePaths.some(path=>scriptPresent('./'+path));
+}
+function moduleAllowed(src){
+  const M=root.NetWizardBrowserModules;
+  if(!M||typeof M.paths!=='function')return true;
+  const target=modulePath(src),all=M.paths();
+  if(!all.includes(target))return true;
+  return sourceProfile()||M.paths({production:true}).includes(target);
+}
+function ensureScript(src,selector,key){
+  if(!root.document||!moduleAllowed(src)||scriptPresent(src)||root.document.querySelector(selector))return false;
+  const s=root.document.createElement('script');s.src=src;s.dataset[key]='1';s.async=false;s.defer=false;
+  s.onerror=()=>root.console&&root.console.error(`NetWizard: no se pudo cargar ${src}`);
+  root.document.head.appendChild(s);return true;
+}
 const integrations=[
 ['NetWizardArchitectureValidator','./js/netwizard-architecture-validator.js','netwizard-architecture-validator','netwizardArchitectureValidator'],
 ['NetWizardRoutingPlan','./js/netwizard-routing-plan.js','netwizard-routing-plan','netwizardRoutingPlan'],
@@ -65,5 +102,5 @@ function enhanceReport(project,options,baseReport){
 function install(){ensureIntegrations();const gate=baseGate();if(!gate||gate.__architectureExtensionInstalled)return gate;const originalRun=gate.runProductionGate.bind(gate);gate.runProductionGate=(project,options)=>enhanceReport(project,options,originalRun(project,options));gate.__architectureExtensionInstalled=true;gate.enhanceArchitectureReport=enhanceReport;root.NetWizardProductionGate=gate;return gate;}
 function injectPanels(){for(const name of ['NetWizardCapabilityUi','NetWizardResilienceUi','NetWizardWanCircuitsUi','NetWizardTrafficCapacityUi','NetWizardInternalServicesUi','NetWizardWifiPlanningUi','NetWizardIpv6VrfUi','NetWizardFailureSimulationUi','NetWizardObservedDriftUi','NetWizardDetailedReport']){const ui=root[name];if(ui&&typeof ui.inject==='function')ui.inject();}}
 function bindBrowserUi(attempt){if(!root.document)return;ensureIntegrations();const gate=install(),state=root.NetWizardState,button=root.document.getElementById('btnProductionGate'),output=root.document.getElementById('productionGateOut');if(!gate||!state||!button||!output){if((attempt||0)<50&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),120);return;}function runEnhanced(){const productionMode=root.NetWizardAudit&&root.NetWizardAudit.isProduction?root.NetWizardAudit.isProduction():false,strict=!!root.document.getElementById('pgateStrict')?.checked,report=gate.runProductionGate(state.getSnapshot(),{productionMode,strict});output.textContent=gate.summarizeGate(report,{limit:80,remediationPreview:root.document.getElementById('pgateShowGuide')?.checked?6:0});root.NetWizardLastProductionGateReport=report;injectPanels();return report;}button.onclick=runEnhanced;root.document.addEventListener('nw:project:changed',()=>{try{runEnhanced();}catch{}});root.addEventListener&&root.addEventListener('nw:mode:changed',()=>{try{runEnhanced();}catch{}});try{runEnhanced();}catch{}}
-const api={version:'netwizard-production-gate-architecture-v3.50',install,enhanceReport,mergeIssues,ensureIntegrations};root.NetWizardProductionGateArchitecture=api;if(typeof module!=='undefined'&&module.exports){install();module.exports=api;}if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>bindBrowserUi(0));else bindBrowserUi(0);}
+const api={version:'netwizard-production-gate-architecture-v3.51',install,enhanceReport,mergeIssues,ensureIntegrations,moduleAllowed,scriptPresent,sourceProfile};root.NetWizardProductionGateArchitecture=api;if(typeof module!=='undefined'&&module.exports){install();module.exports=api;}if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>bindBrowserUi(0));else bindBrowserUi(0);}
 })(typeof window!=='undefined'?window:globalThis);
