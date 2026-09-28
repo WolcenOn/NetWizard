@@ -89,7 +89,7 @@ Requiere sesión, CSRF y rol `editor` o superior. El body contiene:
 }
 ```
 
-El navegador **no envía el snapshot, configuraciones objetivo ni rutas de configuración**. El backend carga la revisión autorizada correspondiente a `expectedVersion`, genera todas las configuraciones objetivo dentro del Private Engine y ejecuta el planner sobre esa revisión. El contrato `netwizard-private-deployment-plan-v1` devuelve, cuando las etapas son válidas:
+El navegador **no envía el snapshot, configuraciones objetivo ni rutas de configuración**. El backend carga la revisión autorizada correspondiente a `expectedVersion`, genera todas las configuraciones objetivo dentro del Private Engine y ejecuta el planner sobre esa revisión. El contrato `netwizard-private-deployment-plan-v2` devuelve, cuando las etapas son válidas:
 
 - change set público;
 - plan incremental público;
