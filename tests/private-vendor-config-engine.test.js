@@ -38,7 +38,21 @@ for(const id of ['r1','sw1','asa1','win1','lin1'])assert.strictEqual(result.sour
 
 assert.match(result.configs.r1,/FW Policy ACL/);
 assert.match(result.configs.r1,/DNS outbound/);
+const routerConfig=result.configs.r1;
+assert.strictEqual((routerConfig.match(/^configure terminal$/gm)||[]).length,1,'Cisco IOS debe abrir config mode una sola vez');
+assert.strictEqual((routerConfig.match(/^end$/gm)||[]).length,1,'Cisco IOS debe cerrar config mode una sola vez');
+assert.strictEqual((routerConfig.match(/^write memory$/gm)||[]).length,1,'Cisco IOS debe guardar una sola vez al final');
+assert.ok(routerConfig.indexOf('ip domain name local')<routerConfig.lastIndexOf('\nend\n'),'Gestión debe quedar dentro de config mode');
+assert.ok(routerConfig.indexOf('HA y servicios generados desde plan neutral')<routerConfig.lastIndexOf('\nend\n'),'HA debe quedar dentro de config mode');
+assert.ok(routerConfig.lastIndexOf('\nend\n')<routerConfig.lastIndexOf('\nwrite memory\n'),'write memory debe ejecutarse después de end');
+
 assert.match(result.configs.sw1,/NetWizard switching profesional/);
+const switchConfig=result.configs.sw1;
+assert.strictEqual((switchConfig.match(/^configure terminal$/gm)||[]).length,1);
+assert.strictEqual((switchConfig.match(/^end$/gm)||[]).length,1);
+assert.strictEqual((switchConfig.match(/^write memory$/gm)||[]).length,1);
+assert.ok(switchConfig.indexOf('LACP y seguridad de acceso generados desde plan neutral')<switchConfig.lastIndexOf('\nend\n'));
+assert.ok(switchConfig.indexOf('Gestión y operación generada desde plan neutral')<switchConfig.lastIndexOf('\nend\n'));
 assert.match(result.configs.asa1,/Cisco ASA/);
 assert.match(result.configs.asa1,/access-list OUTSIDE_IN/);
 assert.match(result.configs.win1,/Windows Server \/ Windows 10\+/);
