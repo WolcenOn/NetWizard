@@ -542,6 +542,44 @@ function configForView(devId,format){
   if(privateArtifact&&(!format||requested===assigned))return privateArtifact.content||'';
   return genConfig(devId,format);
 }
+function configReadinessForView(devId,format){
+  const d=devById(devId);if(!d)return{status:'missing-device',reasons:['Dispositivo no disponible.'],source:'none'};
+  const assigned=cliText(d.vendorOs||'sin-vendor',80),requested=cliText(format||d.vendorOs||'sin-vendor',80);
+  const privateArtifact=privateConfigArtifact(devId);
+  if(privateArtifact&&(!format||requested===assigned)){
+    const raw=privateArtifact.readiness||{},status=cliText(raw.status||'',40);
+    return{
+      status:status||'review-required',
+      reasons:Array.isArray(raw.reasons)&&raw.reasons.length?raw.reasons:['Artefacto privado sin clasificación de readiness; revisar antes de aplicar.'],
+      source:'private'
+    };
+  }
+  if(localConfigGenerationAvailable()){
+    return{status:'source-preview',reasons:['Generación local/source para diseño y compatibilidad. No certifica apply-ready en SaaS.'],source:'local'};
+  }
+  return{status:'pending',reasons:['Genera Private Deployment Plan para obtener clasificación server-side.'],source:'private'};
+}
+function paintConfigReadiness(nodeId,devId,format){
+  const node=$(nodeId);if(!node)return;
+  const r=configReadinessForView(devId,format),reasons=(r.reasons||[]).filter(Boolean);
+  let label='Estado de aplicación pendiente.',cls='co co-ac';
+  if(r.status==='apply-ready'){
+    label='✅ APPLY-READY · Artefacto privado estructuralmente aplicable. La Production Gate global debe seguir en READY.';
+    cls='co co-gn';
+  }else if(r.status==='review-required'){
+    label='⚠ REVISIÓN OBLIGATORIA · '+(reasons.join(' ')||'Revisa el artefacto antes de aplicarlo.');
+  }else if(r.status==='procedure-only'){
+    label='ℹ PROCEDIMIENTO · No es una CLI universal para pegar directamente. '+(reasons.join(' ')||'');
+  }else if(r.status==='source-preview'){
+    label='🧪 PREVIEW LOCAL/SOURCE · '+reasons.join(' ');
+  }else if(r.status==='pending'){
+    label='☁ PRIVATE ENGINE PENDIENTE · '+reasons.join(' ');
+  }else{
+    label='⚠ Estado de aplicación no disponible. '+reasons.join(' ');
+  }
+  node.className=cls;
+  node.textContent=label.trim();
+}
 
 // =========================================================
 // 05. NAVEGACIÓN, DASHBOARD Y ASISTENTE
@@ -1939,7 +1977,7 @@ function selectDevCfg(devId){
   selDevCfg=devId;const d=devById(devId);if(!d)return;
   selVendorCfg=d.vendorOs||ALL_VENDORS[0].id;
   document.querySelectorAll('[data-dcfg]').forEach(el=>el.classList.toggle('on',el.dataset.dcfg===devId));
-  const paint=()=>{const cfg=configForView(selDevCfg,selVendorCfg);$('cfgOut').value=cfg;$('cfgOutComment').value=buildCommentedConfig(cfg);};
+  const paint=()=>{const cfg=configForView(selDevCfg,selVendorCfg);$('cfgOut').value=cfg;$('cfgOutComment').value=buildCommentedConfig(cfg);paintConfigReadiness('cfgReadiness',selDevCfg,selVendorCfg);};
   const vendors=localConfigGenerationAvailable()?ALL_VENDORS:ALL_VENDORS.filter(v=>v.id===selVendorCfg);
   renderVendorPills($('cfgVendorPills'), vendors.length?vendors:[{id:selVendorCfg,l:selVendorCfg}], selVendorCfg, 'vp', (id)=>{selVendorCfg=id;paint();});
   paint();
@@ -1952,7 +1990,7 @@ function openDevCfgModal(devId){
   dcmDevId=devId;dcmVendor=d.vendorOs||ALL_VENDORS[0].id;
   $('dcmTitle').textContent=`⚙ ${d.name}`;
   { const meta=$('dcmMeta'); meta.textContent=''; meta.appendChild(makeBadge(d.type||'','b bac')); meta.appendChild(document.createTextNode(' ')); meta.appendChild(makeBadge(d.vendorOs||'—','b bgr')); meta.appendChild(document.createTextNode(' ')); meta.appendChild(makeBadge(`${portsByDev(devId).length} puertos`,'b bgr')); }
-  const paint=()=>{const cfg=configForView(dcmDevId,dcmVendor);$('dcmCfg').value=cfg;$('dcmCfgComment').value=buildCommentedConfig(cfg);};
+  const paint=()=>{const cfg=configForView(dcmDevId,dcmVendor);$('dcmCfg').value=cfg;$('dcmCfgComment').value=buildCommentedConfig(cfg);paintConfigReadiness('dcmReadiness',dcmDevId,dcmVendor);};
   const vendors=localConfigGenerationAvailable()?ALL_VENDORS:ALL_VENDORS.filter(v=>v.id===dcmVendor);
   renderVendorPills($('dcmPills'), vendors.length?vendors:[{id:dcmVendor,l:dcmVendor}], dcmVendor, 'dcmp', (id)=>{dcmVendor=id;paint();});
   paint();
@@ -1968,7 +2006,8 @@ function refreshPrivateConfigViews(){
 }
 window.NetWizardConfigView=Object.assign(window.NetWizardConfigView||{},{
   refreshPrivateArtifacts:refreshPrivateConfigViews,
-  selectedDeviceId:()=>selDevCfg||null
+  selectedDeviceId:()=>selDevCfg||null,
+  readinessForDevice:(devId,format)=>configReadinessForView(devId,format)
 });
 
 function renderVtp(){
