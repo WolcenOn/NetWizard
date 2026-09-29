@@ -112,6 +112,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   await expect(page.locator('[data-dcfg="r1"]')).toHaveClass(/on/);
   await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-CLOUD/);
   await expect(page.locator('#cfgOut')).not.toHaveValue(/SERVER-ONLY-CONFIG/);
+  await expect(page.locator('#cfgReadiness')).toContainText('PREVIEW LOCAL/SOURCE');
 
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
