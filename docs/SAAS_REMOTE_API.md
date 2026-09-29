@@ -104,6 +104,8 @@ El contrato es revision-only: cualquier campo legacy como `desiredConfigs` o `co
 
 La UI cloud consume este contrato mediante `NetWizardRemoteProject.syncAndGenerateDeploymentPlan()`: primero sincroniza el snapshot editable con el control optimista habitual y después invoca el endpoint usando únicamente la versión resultante. Runbook, rollback, checklist, resúmenes y artefactos se mantienen como salidas derivadas en memoria; no se insertan en `NetWizardState`. La tarjeta de deployment permite inspeccionar, copiar o descargar cada salida devuelta por el servidor.
 
+La respuesta incluye además `productionReady`, `productionStatus` (`ready|review|blocked`), `productionGateContract=netwizard-private-production-gate-v1`, un informe compacto `productionGate` y `productionGateSummaryMarkdown`. La certificación combina la Puerta de Producción estricta sobre la revisión remota con validación de los artefactos generados en servidor: cobertura por dispositivo, origen privado, rutas seguras/únicas, ausencia de placeholders y presencia de change set, plan incremental, runbook, rollback y checklist. Solo `productionStatus=ready` implica `productionReady=true`; un plan puede tener `ok=true` y quedar en `review` o `blocked`.
+
 ## Response semantics
 
 - `401` — missing or invalid session;
