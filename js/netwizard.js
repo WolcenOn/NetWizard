@@ -1867,9 +1867,13 @@ $('dcmClose').onclick=()=>$('devCfgModal').classList.remove('on');
 $('devCfgModal').onclick=e=>{if(e.target.id==='devCfgModal'){$('devCfgModal').classList.remove('on');}};
 $('dcmCopy').onclick=()=>{navigator.clipboard.writeText($('dcmCfg').value).then(()=>alert('✓ Copiado al portapapeles.'));};
 $('dcmDl').onclick=()=>{const d=devById(dcmDevId);dl(`${d?.name||'config'}_${dcmVendor}.txt`,$('dcmCfg').value);};
-window.addEventListener('nw:private-deployment:generated',()=>{
-  if(selDevCfg)selectDevCfg(selDevCfg);
-  if(dcmDevId&&$('devCfgModal')?.classList.contains('on'))openDevCfgModal(dcmDevId);
+function refreshPrivateConfigViews(){
+  if(selDevCfg&&devById(selDevCfg))selectDevCfg(selDevCfg);
+  if(dcmDevId&&devById(dcmDevId)&&$('devCfgModal')?.classList.contains('on'))openDevCfgModal(dcmDevId);
+}
+window.NetWizardConfigView=Object.assign(window.NetWizardConfigView||{},{
+  refreshPrivateArtifacts:refreshPrivateConfigViews,
+  selectedDeviceId:()=>selDevCfg||null
 });
 
 function renderVtp(){
