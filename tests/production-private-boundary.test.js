@@ -86,8 +86,15 @@ for(const legacyFn of [
   assert.ok(!netwizardSource.includes('function '+legacyFn+'('),'netwizard.js no debe volver a incrustar '+legacyFn);
 }
 assert.ok(
-  netwizardSource.includes('Vendor/OS no implementado en navegador de producción'),
-  'El adaptador productivo debe fallar de forma explícita'
+  netwizardSource.includes('privateConfigArtifact(devId)')&&
+  netwizardSource.includes('NetWizardPrivateDeploymentUi')&&
+  netwizardSource.includes('Configuración privada pendiente'),
+  'El adaptador productivo debe delegar la vista de configuración al artefacto del Private Engine y fallar de forma explícita mientras no exista'
+);
+assert.ok(
+  !netwizardSource.includes('function genCiscoSwitch(')&&
+  !netwizardSource.includes('function genCiscoRouter('),
+  'La UX server-side no debe reintroducir generación Cisco en el navegador productivo'
 );
 assert.ok(
   netwizardSource.includes('Generación local desactivada en el navegador SaaS'),
