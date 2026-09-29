@@ -109,7 +109,8 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   await expect(card).toBeVisible();
   await expect(card.locator('#nwPrivateDeploymentContext')).toContainText('versión 4');
   await expect(page.locator('[data-dcfg="r1"]')).toHaveClass(/on/);
-  await expect(page.locator('#cfgOut')).toHaveValue(/Configuración privada pendiente/);
+  await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-CLOUD/);
+  await expect(page.locator('#cfgOut')).not.toHaveValue(/SERVER-ONLY-CONFIG/);
 
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
