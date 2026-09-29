@@ -12,6 +12,7 @@ import (
 )
 
 const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v2"
+const PrivateProductionGateContractVersion = "netwizard-private-production-gate-v1"
 
 var (
 	ErrPrivateDeploymentUnavailable = errors.New("private deployment planning unavailable")
@@ -46,6 +47,11 @@ type DeploymentPlanResult struct {
 	Issues                      json.RawMessage      `json:"issues"`
 	ConfigSources               map[string]string    `json:"configSources,omitempty"`
 	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
+	ProductionReady             bool                 `json:"productionReady"`
+	ProductionStatus            string               `json:"productionStatus"`
+	ProductionGateContract      string               `json:"productionGateContract"`
+	ProductionGate              json.RawMessage      `json:"productionGate"`
+	ProductionGateSummary       string               `json:"productionGateSummaryMarkdown"`
 }
 
 type DeploymentRunner interface {
@@ -110,6 +116,17 @@ func (r NodeDeploymentRunner) Run(ctx context.Context, request DeploymentPlanReq
 	}
 	if result.ContractVersion != PrivateDeploymentContractVersion || strings.TrimSpace(result.GeneratedAt) == "" {
 		return DeploymentPlanResult{}, fmt.Errorf("%w: worker contract mismatch", ErrPrivateDeploymentInvalid)
+	}
+	if result.ProductionGateContract != PrivateProductionGateContractVersion || len(result.ProductionGate) == 0 || !json.Valid(result.ProductionGate) {
+		return DeploymentPlanResult{}, fmt.Errorf("%w: production gate contract mismatch", ErrPrivateDeploymentInvalid)
+	}
+	switch result.ProductionStatus {
+	case "ready", "review", "blocked":
+	default:
+		return DeploymentPlanResult{}, fmt.Errorf("%w: invalid production gate status", ErrPrivateDeploymentInvalid)
+	}
+	if result.ProductionReady != (result.ProductionStatus == "ready") {
+		return DeploymentPlanResult{}, fmt.Errorf("%w: inconsistent production gate readiness", ErrPrivateDeploymentInvalid)
 	}
 	return result, nil
 }
