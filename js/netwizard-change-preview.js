@@ -69,49 +69,39 @@ Mantenimiento:
   function subnetKey(s){ return s && (s.vlanRef || s.id || s.cidr || ''); }
   function mapBy(items, fn){ const m=new Map(); for(const item of arr(items)){ const k=fn(item); if(k) m.set(String(k), item); } return m; }
 
-  function computeVlsmDiff(project, planResult, options){
-    const diff = emptyDiff('vlsm');
-    const p = clone(project || {});
-    const pl = planner();
-    if(!pl || !pl.applyVlsmPlan){ diff.warnings.push('Módulo VLSM no disponible.'); return diff; }
-    if(!planResult || !planResult.ok){ diff.warnings.push((planResult && planResult.msg) || 'Plan VLSM inválido o no calculado.'); return diff; }
-    const next = pl.applyVlsmPlan(p, planResult, options || {});
+  function computeSubnetPlanDiff(project, planResult, options){
+    const diff=emptyDiff('subnet-plan'),p=clone(project||{}),pl=planner();
+    if(!pl||(!pl.applySubnetPlan&&!pl.applyVlsmPlan)){diff.warnings.push('Motor común de subnetting no disponible.');return diff;}
+    if(!planResult||!planResult.ok){diff.warnings.push((planResult&&planResult.msg)||'Plan de subnetting inválido o no calculado.');return diff;}
+    const apply=pl.applySubnetPlan||pl.applyVlsmPlan;
+    const next=apply.call(pl,p,planResult,options||{});
 
-    const beforeSub = mapBy(p.subnets, subnetKey);
-    const afterSub = mapBy(next.subnets, subnetKey);
-    for(const [key, sn] of afterSub.entries()){
-      const old = beforeSub.get(key);
-      const label = vlanLabel(next, sn.vlanRef) || sn.vlanRef || key;
-      if(!old){ pushChange(diff, 'add', 'Subnet', label, '', `${sn.cidr || '—'} GW ${sn.gateway || '—'}`); continue; }
-      const before = `${old.cidr || '—'} GW ${old.gateway || '—'}`;
-      const after = `${sn.cidr || '—'} GW ${sn.gateway || '—'}`;
-      if(before !== after) pushChange(diff, 'change', 'Subnet', label, before, after);
-      else pushChange(diff, 'keep', 'Subnet', label, before, after);
+    const beforeSub=mapBy(p.subnets,subnetKey),afterSub=mapBy(next.subnets,subnetKey);
+    for(const [key,sn] of afterSub.entries()){
+      const old=beforeSub.get(key),label=vlanLabel(next,sn.vlanRef)||sn.vlanRef||key;
+      if(!old){pushChange(diff,'add','Subnet',label,'',`${sn.cidr||'—'} GW ${sn.gateway||'—'}`);continue;}
+      const before=`${old.cidr||'—'} GW ${old.gateway||'—'}`,after=`${sn.cidr||'—'} GW ${sn.gateway||'—'}`;
+      if(before!==after)pushChange(diff,'change','Subnet',label,before,after);
+      else pushChange(diff,'keep','Subnet',label,before,after);
     }
-    for(const [key, old] of beforeSub.entries()){
-      if(!afterSub.has(key)) pushChange(diff, 'remove', 'Subnet', vlanLabel(p, old.vlanRef) || old.vlanRef || key, `${old.cidr || '—'} GW ${old.gateway || '—'}`, '');
+    for(const [key,old] of beforeSub.entries())if(!afterSub.has(key))pushChange(diff,'remove','Subnet',vlanLabel(p,old.vlanRef)||old.vlanRef||key,`${old.cidr||'—'} GW ${old.gateway||'—'}`,'');
+    const beforeHosts=mapBy(p.hosts,h=>h&&h.id),afterHosts=mapBy(next.hosts,h=>h&&h.id);
+    for(const [id,h] of afterHosts.entries()){
+      const old=beforeHosts.get(id);if(!old)continue;
+      const before=`${old.ipMode||''} ${old.staticIp||''}`.trim(),after=`${h.ipMode||''} ${h.staticIp||''}`.trim();
+      if(before!==after)pushChange(diff,'change','Host IP',h.name||id,before||'—',after||'—');
     }
-
-    const beforeHosts = mapBy(p.hosts, h => h && h.id);
-    const afterHosts = mapBy(next.hosts, h => h && h.id);
-    for(const [id, h] of afterHosts.entries()){
-      const old = beforeHosts.get(id);
-      if(!old) continue;
-      const before = `${old.ipMode || ''} ${old.staticIp || ''}`.trim();
-      const after = `${h.ipMode || ''} ${h.staticIp || ''}`.trim();
-      if(before !== after) pushChange(diff, 'change', 'Host IP', h.name || id, before || '—', after || '—');
-    }
-
-    const beforePorts = mapBy(p.ports, x => x && x.id);
-    const afterPorts = mapBy(next.ports, x => x && x.id);
-    for(const [id, port] of afterPorts.entries()){
-      const old = beforePorts.get(id);
-      if(!old) continue;
-      const before = `${old.l3Ip || old.routedIp || ''}${old.l3Cidr || old.routedCidr ? '/' + String(old.l3Cidr || old.routedCidr).split('/')[1] : ''}`;
-      const after = `${port.l3Ip || port.routedIp || ''}${port.l3Cidr || port.routedCidr ? '/' + String(port.l3Cidr || port.routedCidr).split('/')[1] : ''}`;
-      if(before !== after) pushChange(diff, 'change', 'Interfaz L3', portLabel(next, port), before || '—', after || '—');
+    const beforePorts=mapBy(p.ports,x=>x&&x.id),afterPorts=mapBy(next.ports,x=>x&&x.id);
+    for(const [id,port] of afterPorts.entries()){
+      const old=beforePorts.get(id);if(!old)continue;
+      const before=`${old.l3Ip||old.routedIp||''}${old.l3Cidr||old.routedCidr?'/'+String(old.l3Cidr||old.routedCidr).split('/')[1]:''}`;
+      const after=`${port.l3Ip||port.routedIp||''}${port.l3Cidr||port.routedCidr?'/'+String(port.l3Cidr||port.routedCidr).split('/')[1]:''}`;
+      if(before!==after)pushChange(diff,'change','Interfaz L3',portLabel(next,port),before||'—',after||'—');
     }
     return diff;
+  }
+  function computeVlsmDiff(project,planResult,options){
+    const diff=computeSubnetPlanDiff(project,planResult,options);diff.kind='vlsm';return diff;
   }
 
   function computeTransitIpDiff(project, options){
@@ -184,7 +174,8 @@ Mantenimiento:
   }
 
   const api = {
-    version:'netwizard-change-preview-v3.19',
+    version:'netwizard-change-preview-v3.20',
+    computeSubnetPlanDiff,
     computeVlsmDiff,
     computeTransitIpDiff,
     computeDhcpDiff,
