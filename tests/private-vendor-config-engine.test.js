@@ -35,7 +35,8 @@ const result=Engine.generateAll(project);
 assert.strictEqual(result.contractVersion,'netwizard-private-vendor-config-v1');
 assert.strictEqual(result.ok,true);
 for(const id of ['r1','sw1','asa1','win1','lin1'])assert.strictEqual(result.sources[id],'private');
-assert.strictEqual(result.configReadiness.r1.status,'apply-ready');
+assert.strictEqual(result.configReadiness.r1.status,'review-required');
+assert.ok(result.configReadiness.r1.reasons.some(x=>/políticas firewall/.test(x)));
 assert.strictEqual(result.configReadiness.sw1.status,'apply-ready');
 assert.strictEqual(result.configReadiness.asa1.status,'review-required');
 assert.strictEqual(result.configReadiness.win1.status,'review-required');
@@ -78,6 +79,13 @@ assert.deepStrictEqual(
   ['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services']
 );
 assert.deepStrictEqual(result.issues,[]);
+
+const cleanRouterProject=JSON.parse(JSON.stringify(project));
+cleanRouterProject.fwRules=[];
+cleanRouterProject.devices=[JSON.parse(JSON.stringify(project.devices[0]))];
+cleanRouterProject.ports=project.ports.filter(x=>x.deviceId==='r1');
+const cleanRouter=Engine.generateAll(cleanRouterProject);
+assert.strictEqual(cleanRouter.configReadiness.r1.status,'apply-ready');
 
 const inferred=JSON.parse(JSON.stringify(project));
 inferred.devices=[{id:'r1',name:'EDGE-INFERRED',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'yes'}];
