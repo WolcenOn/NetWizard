@@ -124,6 +124,15 @@ func TestSelfHostedPrivateGenerationRequiresExplicitSessionAndCSRF(t *testing.T)
 		t.Fatal("capabilities must never expose the self-hosted token")
 	}
 
+	missingHeader := selfHostedBrowserRequest(http.MethodPost, "/api/private/self-hosted/session",
+		`{"token":"abcdefghijklmnopqrstuvwxyz123456"}`)
+	missingHeader.Header.Del("X-NetWizard-Private-Request")
+	missingHeaderRec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(missingHeaderRec, missingHeader)
+	if missingHeaderRec.Code != http.StatusForbidden {
+		t.Fatalf("same-origin login without private request header expected 403, got %d", missingHeaderRec.Code)
+	}
+
 	crossSite := selfHostedBrowserRequest(http.MethodPost, "/api/private/self-hosted/session",
 		`{"token":"abcdefghijklmnopqrstuvwxyz123456"}`)
 	crossSite.Header.Set("Origin", "https://evil.example")
@@ -215,5 +224,28 @@ func TestSelfHostedPrivateLogoutInvalidatesMemorySession(t *testing.T) {
 	server.Handler().ServeHTTP(statusRec, status)
 	if statusRec.Code != http.StatusUnauthorized {
 		t.Fatalf("expired private session expected 401, got %d", statusRec.Code)
+	}
+}
+
+
+func TestSelfHostedPrivateLoginRateLimit(t *testing.T) {
+	server, _ := newSelfHostedPrivateTestServer(t)
+	for attempt := 0; attempt < selfHostedPrivateLoginLimit; attempt++ {
+		req := selfHostedBrowserRequest(http.MethodPost, "/api/private/self-hosted/session", `{"token":"wrong-token"}`)
+		rec := httptest.NewRecorder()
+		server.Handler().ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("attempt %d expected 401, got %d", attempt+1, rec.Code)
+		}
+	}
+	req := selfHostedBrowserRequest(http.MethodPost, "/api/private/self-hosted/session",
+		`{"token":"abcdefghijklmnopqrstuvwxyz123456"}`)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("rate-limited login expected 429, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Retry-After") != "60" {
+		t.Fatalf("expected Retry-After 60, got %q", rec.Header().Get("Retry-After"))
 	}
 }
