@@ -52,3 +52,34 @@ test('subnetting rápido previsualiza y solo completa VLANs sin subnet', async (
   await expect(page.locator('#pg-vlan')).toContainText('S.subnets sigue siendo la única fuente canónica');
   expect(errors).toEqual([]);
 });
+
+
+test('asistente reutiliza el planificador común para las subnets del escenario', async ({page})=>{
+  const errors=[];page.on('pageerror',err=>errors.push(err.message));
+  await resetStorage(page);
+  await expect.poll(()=>page.evaluate(()=>typeof window.NetWizardPlanner?.applySubnetPlan==='function')).toBe(true);
+
+  await page.evaluate(()=>window.navTo('wiz'));
+  await page.locator('[data-sc="home"]').click();
+  await expect(page.locator('#wStep2Card')).toBeVisible();
+  await page.locator('#wNext2').click();
+  await expect(page.locator('#wStep3Card')).toBeVisible();
+  await page.locator('#wBase').fill('10.77.0.0/16');
+  await page.locator('#wSize').selectOption('24');
+
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#wApply').click();
+
+  await expect.poll(()=>page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    return p.vlans.map(v=>({
+      vlanId:v.vlanId,
+      cidr:p.subnets.find(s=>s.vlanRef===v.id)?.cidr||''
+    })).sort((a,b)=>a.vlanId-b.vlanId);
+  })).toEqual([
+    {vlanId:10,cidr:'10.77.0.0/24'},
+    {vlanId:20,cidr:'10.77.1.0/24'},
+    {vlanId:99,cidr:'10.77.2.0/24'}
+  ]);
+  expect(errors).toEqual([]);
+});
