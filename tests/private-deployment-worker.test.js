@@ -35,6 +35,8 @@ assert.strictEqual(actual.contractVersion,'netwizard-private-deployment-plan-v2'
 assert.strictEqual(actual.privateConfigContract,'netwizard-private-vendor-config-v1');
 assert.strictEqual(actual.configSources.r1,'private');
 assert.strictEqual(actual.configPaths.r1,configPaths.r1);
+assert.ok(actual.configReadiness.r1);
+assert.strictEqual(actual.configReadiness.r1.status,'review-required');
 assert.strictEqual(actual.ok,true);
 assert.strictEqual(actual.productionGateContract,'netwizard-private-production-gate-v1');
 assert.ok(['ready','review','blocked'].includes(actual.productionStatus));
