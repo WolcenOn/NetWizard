@@ -71,8 +71,8 @@ function safeArtifactPath(value){
   const parts=path.split('/');
   return parts.every(part=>part&&part!=='.'&&part!=='..');
 }
-function validateArtifacts(project,result){
-  const p=obj(project),r=obj(result),issues=[];
+function validateArtifacts(project,result,generated){
+  const p=obj(project),r=obj(result),g=obj(generated),issues=[];
   const artifacts=arr(r.artifacts),byPath=new Map(),devices=arr(p.devices);
   for(const artifact of artifacts){
     const path=clean(artifact&&artifact.path,512);
@@ -92,22 +92,20 @@ function validateArtifacts(project,result){
     if(configSources[id]!=='private'){
       issues.push(issue('NW-PRIVATE-GATE-001',name+': la configuración objetivo no está acreditada como privada.',{deviceId:id}));
     }
-    const configArtifacts=artifacts.filter(file=>{
-      const path=clean(file&&file.path,512);
-      return path.startsWith('configs/')&&path.includes('-'+id+'-');
-    });
-    if(configArtifacts.length!==1){
+    const expectedPath=clean(obj(g.configPaths)[id],512);
+    const configArtifacts=expectedPath?artifacts.filter(file=>clean(file&&file.path,512)===expectedPath):[];
+    if(!expectedPath||configArtifacts.length!==1){
       issues.push(issue(
         'NW-PRIVATE-GATE-002',
-        name+': se esperaba exactamente un artefacto de configuración privado y se encontraron '+configArtifacts.length+'.',
-        {deviceId:id}
+        name+': se esperaba exactamente un artefacto de configuración privado en la ruta derivada y se encontraron '+configArtifacts.length+'.',
+        {deviceId:id,path:expectedPath}
       ));
       continue;
     }
     const output=String(configArtifacts[0].content==null?'':configArtifacts[0].content);
     if(output.trim().length<20||UNSUPPORTED_OUTPUT.test(output)){
       issues.push(issue('NW-PRIVATE-GATE-003',name+': el artefacto de configuración está vacío, es demasiado corto o contiene un fallback no ejecutable.',{
-        deviceId:id,path:clean(configArtifacts[0].path,512)
+        deviceId:id,path:expectedPath
       }));
     }
   }
@@ -146,9 +144,9 @@ function summarize(report){
   else lines.push('Resultado: no presentes ni apliques este deployment como listo para producción.');
   return lines.join('\n')+'\n';
 }
-function evaluate(project,result,generatedAt){
+function evaluate(project,result,generatedAt,generated){
   const projectGate=compactProjectGate(project,generatedAt);
-  const artifactIssues=result&&result.ok?validateArtifacts(project,result):[
+  const artifactIssues=result&&result.ok?validateArtifacts(project,result,generated):[
     issue('NW-PRIVATE-GATE-000','El plan privado no se completó; no puede certificarse para producción.')
   ];
   const issues=mergeIssues(projectGate.issues,artifactIssues);
