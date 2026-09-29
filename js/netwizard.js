@@ -921,16 +921,12 @@ function optionalPortNumber(id){const node=$(id);if(!node||node.value==='')retur
 function optionalPortText(id){const node=$(id);if(!node)return null;const value=(node.value||'').trim();return value||null;}
 function setOptionalPortField(port,key,value){if(value===null||value==='')delete port[key];else port[key]=value;}
 function readAdvancedPortFields(){
-  return{
-    speedMaxMbps:optionalPortNumber('pSpeedMax'),
-    mtu:optionalPortNumber('pMtu'),
-    transceiver:optionalPortText('pTransceiver'),
-    connector:optionalPortText('pConnector'),
-    adminState:optionalPortText('pAdminState'),
-    negotiatedSpeedMbps:optionalPortNumber('pNegotiatedSpeed'),
-    utilizationPercent:optionalPortNumber('pUtilization'),
-    operState:optionalPortText('pOperState')
-  };
+  const fields={};
+  const numeric={speedMaxMbps:'pSpeedMax',mtu:'pMtu',negotiatedSpeedMbps:'pNegotiatedSpeed',utilizationPercent:'pUtilization'};
+  const textual={transceiver:'pTransceiver',connector:'pConnector',adminState:'pAdminState',operState:'pOperState'};
+  Object.entries(numeric).forEach(([key,id])=>{if($(id))fields[key]=optionalPortNumber(id);});
+  Object.entries(textual).forEach(([key,id])=>{if($(id))fields[key]=optionalPortText(id);});
+  return fields;
 }
 function applyAdvancedPortFields(port){
   const fields=readAdvancedPortFields();
