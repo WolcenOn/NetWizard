@@ -264,6 +264,9 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 			"contractVersion": result.ContractVersion,
 			"projectVersion": project.CurrentVersion,
 			"ok": result.OK,
+			"productionReady": result.ProductionReady,
+			"productionStatus": result.ProductionStatus,
+			"productionGateContract": result.ProductionGateContract,
 			"artifactCount": len(result.Artifacts),
 		}); err != nil {
 		s.internalError(w, "audit private deployment plan", err)
