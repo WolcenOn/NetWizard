@@ -28,6 +28,8 @@ type Config struct {
 	PrivateServiceKey string
 	PrivateRoutingWorker string
 	PrivateDeploymentWorker string
+	SelfHostedPrivate bool
+	SelfHostedPrivateToken string
 	AdminSubjects []string
 }
 
@@ -54,12 +56,40 @@ func (c Config) PrivateServicesConfigured() bool {
 	return strings.TrimSpace(c.PrivateServiceKey) != ""
 }
 
+func (c Config) SelfHostedPrivateConfigured() bool {
+	return c.SelfHostedPrivate &&
+		c.PrivateServicesConfigured() &&
+		strings.TrimSpace(c.SelfHostedPrivateToken) != "" &&
+		strings.TrimSpace(c.PrivateDeploymentWorker) != ""
+}
+
 func (c Config) Validate() error {
 	if c.PrivateServicesConfigured() && len([]byte(c.PrivateServiceKey)) < 32 {
 		return fmt.Errorf("NETWIZARD_PRIVATE_SERVICE_KEY must be at least 32 bytes")
 	}
+	if c.SelfHostedPrivate {
+		if c.AuthRequested() {
+			return fmt.Errorf("NETWIZARD_SELF_HOSTED_PRIVATE cannot be combined with OIDC mode")
+		}
+		if !c.PrivateServicesConfigured() {
+			return fmt.Errorf("self-hosted private generation requires NETWIZARD_PRIVATE_SERVICE_KEY")
+		}
+		if len([]byte(strings.TrimSpace(c.SelfHostedPrivateToken))) < 32 {
+			return fmt.Errorf("NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN must be at least 32 bytes")
+		}
+		if strings.TrimSpace(c.SelfHostedPrivateToken) == strings.TrimSpace(c.PrivateServiceKey) {
+			return fmt.Errorf("self-hosted access token must differ from NETWIZARD_PRIVATE_SERVICE_KEY")
+		}
+		if strings.TrimSpace(c.PrivateDeploymentWorker) == "" {
+			return fmt.Errorf("self-hosted private generation requires NETWIZARD_PRIVATE_DEPLOYMENT_WORKER")
+		}
+		if c.SessionTTL <= 0 {
+			return fmt.Errorf("session TTL must be positive")
+		}
+		return nil
+	}
 	if c.PrivateServicesConfigured() && !c.AuthRequested() {
-		return fmt.Errorf("private services require OIDC authentication configuration")
+		return fmt.Errorf("private services require OIDC authentication configuration or explicit self-hosted private mode")
 	}
 	if !c.AuthRequested() {
 		return nil
@@ -123,6 +153,13 @@ func FromEnv() Config {
 	privateServiceKey := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_SERVICE_KEY"))
 	privateRoutingWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_ROUTING_WORKER"))
 	privateDeploymentWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_DEPLOYMENT_WORKER"))
+	selfHostedPrivateToken := strings.TrimSpace(os.Getenv("NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN"))
+	selfHostedPrivate := false
+	if raw := strings.TrimSpace(os.Getenv("NETWIZARD_SELF_HOSTED_PRIVATE")); raw != "" {
+		if parsed, err := strconv.ParseBool(raw); err == nil {
+			selfHostedPrivate = parsed
+		}
+	}
 	adminSubjectsRaw := strings.TrimSpace(os.Getenv("NETWIZARD_ADMIN_SUBJECTS"))
 	var adminSubjects []string
 	if adminSubjectsRaw != "" {
@@ -175,6 +212,8 @@ func FromEnv() Config {
 		MaxProjectBytes: maxProjectBytes, PrivateServiceKey: privateServiceKey,
 		PrivateRoutingWorker: privateRoutingWorker,
 		PrivateDeploymentWorker: privateDeploymentWorker,
+		SelfHostedPrivate: selfHostedPrivate,
+		SelfHostedPrivateToken: selfHostedPrivateToken,
 		AdminSubjects: adminSubjects,
 	}
 }
