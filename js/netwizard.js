@@ -1854,6 +1854,13 @@ $('btnSaveVtp').onclick=()=>{
 // EXPORT
 const dl=(fn,txt)=>{const b=new Blob([txt],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);};
 function requireConfigExportReady(){
+  if(!localConfigGenerationAvailable()){
+    const msg='Generación local desactivada en el navegador SaaS. Usa Private Deployment Plan para obtener configuraciones y artefactos server-side.';
+    if($('cfgOut'))$('cfgOut').value=msg;
+    const status=$('deploymentPackageStatus');if(status)status.textContent=msg;
+    alert(msg);
+    return false;
+  }
   if(!(window.NetWizardAudit&&window.NetWizardAudit.isProduction&&window.NetWizardAudit.isProduction()))return true;
   if(window.NetWizardProductionGate&&window.NetWizardProductionGate.runProductionGate){
     const gate=window.NetWizardProductionGate.runProductionGate(S,{productionMode:true,strict:true});
