@@ -2,50 +2,52 @@
 
 ## Antes de empaquetar
 
-- [ ] Actualizar `package.json`.
-- [ ] Actualizar `SCHEMA_VERSION` en `netwizard-project-schema.js`.
-- [ ] Actualizar `schemas/netwizard-project.schema.json`.
-- [ ] Añadir documento `docs/Vx_y_*.md`.
-- [ ] Actualizar README.
-- [ ] Añadir/actualizar tests.
+- [ ] Confirmar la versión de aplicación en `package.json` y `VERSION`.
+- [ ] **Solo si cambia el formato persistido**, actualizar `SCHEMA_VERSION`, `schemas/netwizard-project.schema.json` y las migraciones/compatibilidad necesarias. No subir `_schemaVersion` por cambios de UI, backend o lógica que no alteren el snapshot.
+- [ ] Añadir o actualizar la documentación de release cuando exista un cambio relevante.
+- [ ] Actualizar README solo si cambian instalación, uso o capacidades públicas.
+- [ ] Añadir/actualizar tests para cada cambio funcional.
 
-## Validación local
+## CI obligatorio
 
-```bash
-npm test
-npm run check:syntax
-npm run test:e2e
-```
+Antes de considerar una PR lista para merge deben estar en verde los cuatro jobs de `NetWizard CI`:
+
+- [ ] `Quality checks` — incluye `npm run release:check` y `npm run build:pages`.
+- [ ] `Go backend tests` — incluye integración PostgreSQL cuando `NETWIZARD_TEST_DATABASE_URL` está disponible.
+- [ ] `Playwright E2E`.
+- [ ] `Docker build`.
+
+No se considera cerrado un bloque si falla Playwright o Docker.
+
+## Frontera Client Engine / Private Engine
+
+- [ ] `tests/production-private-boundary.test.js` confirma que los módulos marcados `production:false` no aparecen en el entrypoint SaaS.
+- [ ] El Docker de producción no publica `/private`, source maps ni fuentes TypeScript.
+- [ ] Los workers privados se empaquetan en `/app/private` y no como assets públicos.
+- [ ] La generación vendor y la Production Gate privada no forman parte del entrypoint browser.
+- [ ] Source/Pages/offline mantienen los módulos source-only necesarios para compatibilidad local.
+
+## Seguridad y autoridad de servidor
+
+- [ ] `backend/internal/auth/*_test.go` valida sesiones/OIDC.
+- [ ] `backend/internal/httpapi/remote_api_test.go` valida autenticación, CSRF, matriz de roles, control optimista de versión, rate limiting y auditoría de escrituras.
+- [ ] `backend/internal/httpapi/private_services_api_test.go` valida autorización, revisión almacenada, control de versión y auditoría de endpoints privados.
+- [ ] `backend/internal/storage/postgres/e4_integration_test.go` valida persistencia de sesiones/workspaces, auditoría y rate limiting en PostgreSQL.
+- [ ] Los endpoints privados consumen la revisión autorizada almacenada; no aceptan snapshots arbitrarios del navegador.
+- [ ] `productionReady=true` solo se acepta con `productionStatus=ready` y contrato `netwizard-private-production-gate-v1`.
 
 ## Validación funcional manual
 
 - [ ] Importar samples.
 - [ ] Validar `samples/production-scenarios.json` sin avisos inesperados.
-- [ ] Generar las configuraciones declaradas por cada escenario de referencia.
-- [ ] Crear VLAN, dispositivo, puerto, enlace y host desde UI.
-- [ ] Ejecutar Plan común de cambios.
-- [ ] Ejecutar Puerta de Producción.
-- [ ] Exportar configuraciones.
-- [ ] Exportar el paquete de despliegue ZIP y revisar su manifiesto, configuraciones e informes.
-- [ ] Confirmar que un proyecto con errores bloqueantes no puede descargar el paquete de despliegue.
-- [ ] Revisar que el runbook respeta dependencias físicas, controlador/AP y grupos HA/MLAG.
+- [ ] Ejecutar Private Deployment Plan en cloud y revisar `productionStatus` por separado de `ok`.
+- [ ] Confirmar que un escenario de failure simulation contractualmente obligatorio que no sobrevive deja la puerta bloqueada.
+- [ ] Revisar drift observado → deseado y no tratar el diff como comandos directos.
 - [ ] Confirmar ticket, ventana, aprobador, acceso OOB y backups reales antes del cambio.
-- [ ] Ensayar los criterios de parada y el rollback en orden inverso.
-- [ ] Si el modo es incremental, comprobar cobertura, antigüedad y fabricante de todas las capturas observadas.
-- [ ] Probar en la UI guardar/recargar una captura por dispositivo y descargar candidato/rollback solo cuando el preflight indique `candidate-ready`.
-- [ ] Revisar los diffs observado → deseado y confirmar que nadie los tratará como comandos directos.
-- [ ] Capturar fingerprints y evidencias posteriores al cambio.
-- [ ] Confirmar que cada fichero `incremental/commands/` procede de un adaptador `candidate-ready`.
-- [ ] Para Junos, revisar `show | compare`, ejecutar `commit check` y usar la política aprobada de `commit confirmed`.
-- [ ] Para Cisco IOS, confirmar que el candidato solo toca VLAN/interfaces/rutas/DHCP permitidos, no contiene guardado automático y preserva comandos observados ajenos a NetWizard.
-- [ ] Para FortiOS, confirmar VDOM, interfaces, IDs/orden de políticas, backup real y que el candidato solo toca secciones administradas.
-- [ ] Para RouterOS v7, partir de `/export terse`, validar cada selector `find`, ejecutar primero `import ... verbose=yes dry-run=yes` y custodiar export y backup binario.
-- [ ] No convertir estados `manual-review` en comandos mediante copia directa del diff.
-- [ ] Exportar inventario CSV.
-- [ ] Exportar documentación Markdown.
-- [ ] Crear y restaurar snapshot.
-- [ ] Resetear e importar el proyecto exportado.
+- [ ] Ensayar criterios de parada y rollback.
+- [ ] Capturar evidencias posteriores al cambio.
+- [ ] Exportar inventario/documentación y verificar reimportación de un snapshot 3.50 existente.
 
 ## Criterio RC
 
-La versión puede marcarse como candidata si no hay errores bloqueantes conocidos y los E2E pasan en navegador real.
+Una versión puede marcarse como candidata cuando no hay errores bloqueantes conocidos, los cuatro jobs de CI están en verde y la frontera pública/privada y las garantías de autoridad anteriores siguen verificadas.
