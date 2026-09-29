@@ -156,6 +156,8 @@ El routing privado ejecuta los generadores existentes dentro de un worker Node e
 
 El planner privado de deployment ejecuta generación vendor, change set, generación incremental y runbook sobre la revisión remota almacenada. Cisco IOS, Cisco ASA, Junos, Huawei VRP, RouterOS, FortiOS, pfSense, Aruba, UniFi, Omada, Galgus, Windows y Linux se generan dentro del Private Engine. El endpoint ya no acepta `desiredConfigs` ni `configPaths`; las rutas y configuraciones objetivo se derivan siempre en servidor y el worker nunca acepta un snapshot arbitrario del navegador. La imagen Docker empaqueta todo dentro de `/app/private/deployment-worker.cjs` y publica la capability `privateDeploymentPlan`.
 
+El mismo worker ejecuta `netwizard-private-production-gate-v1` antes de devolver el resultado: combina la Production Gate estricta/arquitectónica con comprobaciones de integridad sobre los artefactos privados. Go valida el contrato del gate y rechaza respuestas incoherentes. `ok` significa que el plan se pudo construir; `productionReady` solo es verdadero cuando el estado final es `ready`.
+
 No se deben duplicar validadores/generadores JavaScript en Go sin contrato versionado y pruebas de paridad.
 
 ## Empaquetado frontend de producción
