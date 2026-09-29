@@ -46,6 +46,16 @@ function issue(code,message,extra){
     message
   },extra||{});
 }
+function warning(code,message,extra){
+  return Object.assign({
+    code,
+    severity:'warning',
+    blocking:false,
+    category:'private-production-gate',
+    source:'private-production-gate',
+    message
+  },extra||{});
+}
 function issueKey(item){
   const i=obj(item);
   return [i.code,i.severity,i.category,i.deviceId,i.path,i.message].map(x=>String(x==null?'':x)).join('\u0001');
@@ -133,6 +143,18 @@ function validateArtifacts(project,result,generated){
     if(output.trim().length<20||UNSUPPORTED_OUTPUT.test(output)){
       issues.push(issue('NW-PRIVATE-GATE-003',name+': el artefacto de configuración está vacío, es demasiado corto o contiene un fallback no ejecutable.',{
         deviceId:id,path:expectedPath
+      }));
+    }
+    const readiness=obj(obj(g.configReadiness)[id]);
+    const status=clean(readiness.status,40);
+    if(clean(device&&device.vendorOs,80)==='cisco_ios'&&status!=='apply-ready'){
+      const reasons=arr(readiness.reasons).map(x=>clean(x,300)).filter(Boolean);
+      issues.push(issue('NW-PRIVATE-GATE-010',name+': la configuración Cisco IOS no está certificada como apply-ready.'+(reasons.length?' '+reasons.join(' '):''),{
+        deviceId:id,path:expectedPath,configReadiness:status||'missing'
+      }));
+    }else if(status&&status!=='apply-ready'){
+      issues.push(warning('NW-PRIVATE-GATE-011',name+': artefacto '+status+'; requiere procedimiento o revisión antes de aplicar.',{
+        deviceId:id,path:expectedPath,configReadiness:status
       }));
     }
   }
