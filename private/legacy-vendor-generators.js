@@ -24,6 +24,10 @@ function policyRules(project){
   return Policy.enrichPolicyRules(project,merged);
 }
 function splitPorts(value){return String(value||'any').split(',').map(x=>x.trim()).filter(Boolean);}
+function managedHost(project,device){
+  const matches=arr(project&&project.hosts).filter(h=>h&&h.deviceRef===device.id);
+  return matches.length===1?matches[0]:null;
+}
 function asaEndpoint(address){
   if(!address||address.kind==='any'||address.raw==='any')return'any';
   if(address.objectName&&address.kind!=='label')return 'object '+cliToken(address.objectName,'OBJ',60);
@@ -105,105 +109,65 @@ function renderCiscoAsa(project,device){
 }
 
 function renderWindows(project,device){
-  const p=obj(project),d=obj(device);
-  const lines=['# '+('═'.repeat(40)),'# '+cliText(d.name,80)+'  —  Windows Server / Windows 10+','# PowerShell commands','# '+('═'.repeat(40)),''];
-  const servers=arr(p.hosts).filter(h=>h&&h.type==='server'&&h.staticIp);
-  if(servers.length){
-    for(const host of servers){
-      const vlan=vlanByRef(p,host.vlanRef),subnet=subnetByVlan(p,host.vlanRef),parsed=subnet?Network.parseCidr(subnet.cidr):null;
-      lines.push('# Host: '+cliText(host.name,80)+(vlan?' (VLAN '+vlan.vlanId+')':''),'$adapter = Get-NetAdapter | Select-Object -First 1');
-      if(host.staticIp){
-        lines.push(
-          'New-NetIPAddress -InterfaceIndex $adapter.ifIndex \\',
-          '    -IPAddress "'+host.staticIp+'" \\',
-          '    -PrefixLength '+(parsed&&parsed.pfx||24)+' \\',
-          '    -DefaultGateway "'+(subnet&&subnet.gateway||'10.0.0.1')+'"',
-          'Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex \\',
-          '    -ServerAddresses "8.8.8.8","8.8.4.4"'
-        );
-      }
-      lines.push(
-        '# Firewall rules (PowerShell):',
-        'New-NetFirewallRule -DisplayName "'+cliQuoted(host.name,60)+' HTTP" -Direction Inbound -Protocol TCP -LocalPort 80,443 -Action Allow',
-        ''
-      );
-    }
+  const p=obj(project),d=obj(device),host=managedHost(p,d);
+  if(!host)return'';
+  const vlan=vlanByRef(p,host.vlanRef),subnet=subnetByVlan(p,host.vlanRef),parsed=subnet?Network.parseCidr(subnet.cidr):null;
+  const lines=[
+    '# '+('═'.repeat(40)),
+    '# '+cliText(d.name,80)+' — Windows Server / Windows',
+    '# Host lógico: '+cliText(host.name,80)+(vlan?' · VLAN '+vlan.vlanId:''),
+    '# Requiere indicar -InterfaceAlias al ejecutar.',
+    '# '+('═'.repeat(40)),
+    'param([Parameter(Mandatory=$true)][string]$InterfaceAlias)',
+    '$adapter = Get-NetAdapter -Name $InterfaceAlias -ErrorAction Stop'
+  ];
+  if(host.ipMode==='static'&&host.staticIp&&subnet&&parsed&&subnet.gateway){
+    lines.push(
+      'Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -Dhcp Disabled',
+      'Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Remove-NetIPAddress -Confirm:$false',
+      'New-NetIPAddress -InterfaceIndex $adapter.ifIndex -IPAddress "'+host.staticIp+'" -PrefixLength '+parsed.pfx+' -DefaultGateway "'+subnet.gateway+'"'
+    );
+    const dhcp=obj(p.dhcp)[String(vlan&&vlan.vlanId||'')],dns=String(dhcp&&dhcp.dns||'').split(/[\s,]+/).filter(Boolean);
+    if(dns.length)lines.push('Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses '+dns.map(x=>'"'+cliQuoted(x,80)+'"').join(','));
   }else{
     lines.push(
-      '# No hay servidores con IP estática definidos.',
-      '# Ejemplo de configuración estática (PowerShell):','',
-      '$adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1',
-      'New-NetIPAddress -InterfaceIndex $adapter.ifIndex \\',
-      '    -IPAddress "10.10.10.10" \\',
-      '    -PrefixLength 24 \\',
-      '    -DefaultGateway "10.10.10.1"',
-      'Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex \\',
-      '    -ServerAddresses "8.8.8.8","8.8.4.4"'
+      'Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -Dhcp Enabled',
+      'Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ResetServerAddresses'
     );
   }
-  lines.push(
-    '',
-    '# Unir al dominio (si aplica):',
-    '# Add-Computer -DomainName "miempresa.local" -Restart',
-    '',
-    '# Habilitar RDP:',
-    'Set-ItemProperty -Path "HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server" -Name "fDenyTSConnections" -Value 0',
-    'Enable-NetFirewallRule -DisplayGroup "Remote Desktop"'
-  );
+  lines.push('Get-NetIPConfiguration -InterfaceIndex $adapter.ifIndex');
   return lines.join('\n')+'\n';
 }
 
 function renderLinux(project,device){
-  const p=obj(project),d=obj(device);
-  const lines=['# '+('═'.repeat(40)),'# '+cliText(d.name,80)+'  —  Linux (Ubuntu/Debian/RHEL)','# '+('═'.repeat(40)),''];
-  const servers=arr(p.hosts).filter(h=>h&&(h.type==='server'||h.type==='ap')&&h.staticIp);
-  if(servers.length){
-    for(const host of servers){
-      const vlan=vlanByRef(p,host.vlanRef),subnet=subnetByVlan(p,host.vlanRef),parsed=subnet?Network.parseCidr(subnet.cidr):null;
-      lines.push('# Host: '+cliText(host.name,80)+(vlan?' — VLAN '+vlan.vlanId:''),'# ── ip command (temporal) ──');
-      if(host.staticIp)lines.push('ip addr add '+host.staticIp+'/'+(parsed&&parsed.pfx||24)+' dev eth0','ip route add default via '+(subnet&&subnet.gateway||'10.0.0.1'));
-      lines.push(
-        '',
-        '# ── /etc/network/interfaces (Debian/Ubuntu) ──',
-        'auto eth0','iface eth0 inet static',
-        '    address '+(host.staticIp||'10.0.0.10')+'/'+(parsed&&parsed.pfx||24),
-        '    gateway '+(subnet&&subnet.gateway||'10.0.0.1'),
-        '    dns-nameservers 8.8.8.8 8.8.4.4',
-        '',
-        '# ── systemd-networkd (/etc/systemd/network/10-eth0.network) ──',
-        '[Match]','Name=eth0','','[Network]',
-        'Address='+(host.staticIp||'10.0.0.10')+'/'+(parsed&&parsed.pfx||24),
-        'Gateway='+(subnet&&subnet.gateway||'10.0.0.1'),
-        'DNS=8.8.8.8','','systemctl restart systemd-networkd',''
-      );
-    }
+  const p=obj(project),d=obj(device),host=managedHost(p,d);
+  if(!host)return'';
+  const vlan=vlanByRef(p,host.vlanRef),subnet=subnetByVlan(p,host.vlanRef),parsed=subnet?Network.parseCidr(subnet.cidr):null;
+  const lines=[
+    '#!/bin/sh',
+    'set -eu',
+    '# '+('═'.repeat(40)),
+    '# '+cliText(d.name,80)+' — Linux network configuration',
+    '# Host lógico: '+cliText(host.name,80)+(vlan?' · VLAN '+vlan.vlanId:''),
+    '# Define NET_IFACE con la interfaz real antes de ejecutar.',
+    '# '+('═'.repeat(40)),
+    ': "${NET_IFACE:?Define NET_IFACE, por ejemplo NET_IFACE=ens18}"'
+  ];
+  if(host.ipMode==='static'&&host.staticIp&&subnet&&parsed&&subnet.gateway){
+    lines.push(
+      'ip link set "$NET_IFACE" up',
+      'ip addr flush dev "$NET_IFACE"',
+      'ip addr add '+host.staticIp+'/'+parsed.pfx+' dev "$NET_IFACE"',
+      'ip route replace default via '+subnet.gateway+' dev "$NET_IFACE"'
+    );
   }else{
     lines.push(
-      '# No hay servidores Linux definidos. Ejemplo genérico:','',
-      '# Configurar IP estática:','ip addr add 10.10.10.10/24 dev eth0','ip route add default via 10.10.10.1','',
-      '# Configuración permanente (/etc/netplan/01-netcfg.yaml):',
-      'network:','  version: 2','  ethernets:','    eth0:','      addresses: [10.10.10.10/24]',
-      '      routes:','        - to: default','          via: 10.10.10.1',
-      '      nameservers:','        addresses: [8.8.8.8]','','netplan apply',''
+      '# DHCP: se intenta con dhclient; adapta este bloque si el sistema usa NetworkManager/systemd-networkd.',
+      'command -v dhclient >/dev/null 2>&1 || { echo "dhclient no disponible; configura DHCP con el gestor de red del sistema" >&2; exit 2; }',
+      'dhclient -v "$NET_IFACE"'
     );
   }
-  if(arr(p.fwRules).length){
-    lines.push(
-      '# ── iptables / nftables (firewall) ──',
-      'iptables -F  # limpiar reglas',
-      'iptables -P INPUT DROP',
-      'iptables -P FORWARD DROP',
-      'iptables -P OUTPUT ACCEPT',
-      'iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT',
-      'iptables -A INPUT -i lo -j ACCEPT'
-    );
-    for(const rule of Policy.mergeWithManualRules(p).filter(x=>x&&x.enabled!==false&&x.action!=='deny').sort((a,b)=>(a.prio||100)-(b.prio||100))){
-      const proto=rule.proto==='any'?'':' -p '+rule.proto;
-      const port=rule.port&&rule.port!=='any'?' --dport '+String(rule.port).split(',')[0]:'';
-      lines.push('iptables -A INPUT'+proto+port+' -j ACCEPT  # '+cliText(rule.name||'',80));
-    }
-    lines.push('iptables-save > /etc/iptables/rules.v4');
-  }
+  lines.push('ip -4 addr show dev "$NET_IFACE"','ip route show');
   return lines.join('\n')+'\n';
 }
 
@@ -217,4 +181,4 @@ function render(project,deviceId,vendor){
   return'';
 }
 
-module.exports={VERSION,render,renderCiscoAsa,renderWindows,renderLinux,policyRules,asaEndpoint};
+module.exports={VERSION,render,renderCiscoAsa,renderWindows,renderLinux,policyRules,asaEndpoint,managedHost};

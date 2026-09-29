@@ -43,6 +43,7 @@ function resultBase(input,generatedAt){
     configSources:{},
     configPaths:{},
     configReadiness:{},
+    configCapabilities:{},
     privateConfigContract:VendorConfig.CONTRACT_VERSION,
     productionReady:false,
     productionStatus:'blocked',
@@ -76,6 +77,7 @@ function handle(request){
   result.configSources=generated.sources;
   result.configPaths=generated.configPaths;
   result.configReadiness=generated.configReadiness||{};
+  result.configCapabilities=generated.configCapabilities||{};
   result.artifacts.push(...arr(generated.artifacts));
   result.issues.push(...arr(generated.issues));
   if(!generated.ok)return finalize(result,input.project,generatedAt,generated);

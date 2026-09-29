@@ -35,6 +35,16 @@ type ConfigReadiness struct {
 	Reasons []string `json:"reasons,omitempty"`
 }
 
+type ConfigCapability struct {
+	Vendor        string `json:"vendor,omitempty"`
+	Kind          string `json:"kind,omitempty"`
+	Mode          string `json:"mode,omitempty"`
+	Supported     bool   `json:"supported"`
+	Certification string `json:"certification,omitempty"`
+	Extension     string `json:"extension,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+}
+
 type DeploymentPlanResult struct {
 	ContractVersion             string               `json:"contractVersion"`
 	GeneratedAt                 string               `json:"generatedAt"`
@@ -53,6 +63,7 @@ type DeploymentPlanResult struct {
 	ConfigSources               map[string]string    `json:"configSources,omitempty"`
 	ConfigPaths                 map[string]string    `json:"configPaths,omitempty"`
 	ConfigReadiness             map[string]ConfigReadiness `json:"configReadiness,omitempty"`
+	ConfigCapabilities          map[string]ConfigCapability `json:"configCapabilities,omitempty"`
 	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
 	ProductionReady             bool                 `json:"productionReady"`
 	ProductionStatus            string               `json:"productionStatus"`

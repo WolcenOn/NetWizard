@@ -81,6 +81,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
         configSources:{r1:'private'},
         configPaths:{r1:'configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg'},
         configReadiness:{r1:{status:'apply-ready',reasons:[]}},
+        configCapabilities:{r1:{vendor:'cisco_ios',kind:'router',mode:'cli',supported:true,certification:'dynamic',extension:'cfg'}},
         privateConfigContract:'netwizard-private-vendor-config-v1',
         productionReady:true,
         productionStatus:'ready',
@@ -134,6 +135,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
     ()=>page.evaluate(()=>window.NetWizardConfigView?.selectedDeviceId?.()||'')
   ).toBe('r1');
   await expect(page.locator('#cfgOut')).toHaveValue(/SERVER-ONLY-CONFIG/);
+  await expect(page.locator('#cfgReadiness')).toContainText('CLI PRIVADA');
   await expect(page.locator('#cfgReadiness')).toContainText('APPLY-READY');
   await expect.poll(
     ()=>page.evaluate(()=>window.NetWizardConfigView?.readinessForDevice?.('r1','cisco_ios')?.status||'')

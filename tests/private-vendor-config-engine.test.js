@@ -21,7 +21,10 @@ const project={
   ],
   vlans:[{id:'v10',vlanId:10,name:'Users'}],
   subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1'}],
-  hosts:[{id:'srv1',name:'APP-01',type:'server',vlanRef:'v10',staticIp:'10.10.10.20',ipMode:'static'}],
+  hosts:[
+    {id:'srv-win',name:'APP-WIN',type:'server',vlanRef:'v10',staticIp:'10.10.10.20',ipMode:'static',deviceRef:'win1'},
+    {id:'srv-lin',name:'APP-LINUX',type:'server',vlanRef:'v10',staticIp:'10.10.10.21',ipMode:'static',deviceRef:'lin1'}
+  ],
   links:[],
   dhcp:{'10':{enabled:true,dns:'1.1.1.1'}},
   roas:{gwId:'r1',lanIf:'GigabitEthernet0/1',wanCidr:'192.0.2.2/30',wanNh:'192.0.2.1'},
@@ -60,10 +63,15 @@ assert.ok(switchConfig.indexOf('LACP y seguridad de acceso generados desde plan 
 assert.ok(switchConfig.indexOf('Gestión y operación generada desde plan neutral')<switchConfig.lastIndexOf('\nend\n'));
 assert.match(result.configs.asa1,/Cisco ASA/);
 assert.match(result.configs.asa1,/access-list OUTSIDE_IN/);
-assert.match(result.configs.win1,/Windows Server \/ Windows 10\+/);
+assert.match(result.configs.win1,/Windows Server \/ Windows/);
+assert.match(result.configs.win1,/APP-WIN/);
+assert.match(result.configs.win1,/param\(\[Parameter\(Mandatory=\$true\)\]\[string\]\$InterfaceAlias\)/);
 assert.match(result.configs.win1,/New-NetIPAddress/);
-assert.match(result.configs.lin1,/Linux \(Ubuntu\/Debian\/RHEL\)/);
-assert.match(result.configs.lin1,/iptables -P INPUT DROP/);
+assert.doesNotMatch(result.configs.win1,/Remote Desktop|LocalPort 80,443/);
+assert.match(result.configs.lin1,/Linux network configuration/);
+assert.match(result.configs.lin1,/APP-LINUX/);
+assert.match(result.configs.lin1,/NET_IFACE/);
+assert.doesNotMatch(result.configs.lin1,/iptables -F|10\.10\.10\.10/);
 
 assert.match(result.configPaths.r1,/^configs\/01-EDGE-1-r1-cisco_ios\.cfg$/);
 assert.match(result.configPaths.asa1,/\.cfg$/);
@@ -94,6 +102,14 @@ inferred.roas={gwId:null,lanIf:'',wanCidr:'',wanNh:''};
 const inferredResult=Engine.generateAll(inferred);
 assert.strictEqual(inferredResult.configReadiness.r1.status,'review-required');
 assert.ok(inferredResult.configReadiness.r1.reasons.some(x=>/RoaS fue inferida|WAN CIDR|next-hop WAN/.test(x)));
+
+const unboundServer=JSON.parse(JSON.stringify(project));
+unboundServer.devices=[{id:'win-unbound',name:'WIN-UNBOUND',type:'server',kind:'server',vendorOs:'windows'}];
+unboundServer.hosts=[];
+unboundServer.ports=[];
+const unboundResult=Engine.generateAll(unboundServer);
+assert.strictEqual(unboundResult.ok,false);
+assert.ok(unboundResult.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-002'&&x.deviceId==='win-unbound'));
 
 const unsupported=JSON.parse(JSON.stringify(project));
 unsupported.devices=[{id:'x1',name:'Unknown',type:'router',vendorOs:'future_os'}];
