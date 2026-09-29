@@ -718,8 +718,11 @@
     </div>
     <div>
       <div class="card">
-        <div class="card-h"><div class="card-t">👁 Config por dispositivo</div></div>
-        <div class="hint" style="margin-bottom:8px;">Haz clic en un dispositivo en la topología, o selecciona aquí:</div>
+        <div class="card-h">
+          <div class="card-t">👁 Config por dispositivo</div>
+          <button class="btn bp bsm" id="cfgGenerateServer" type="button">☁ Generar en servidor</button>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Selecciona un dispositivo. La configuración productiva se genera en servidor; si cambias el proyecto, el artefacto anterior queda obsoleto.</div>
         <div id="devPickCfg"></div>
         <div class="card-t" style="margin:10px 0 6px;">Formato de salida</div>
         <div id="cfgVendorPills" class="cfg-vendor-pills"></div>
