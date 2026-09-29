@@ -64,6 +64,7 @@ function viewsFor(result){
   for(const [index,artifact] of (Array.isArray(r.artifacts)?r.artifacts:[]).entries()){
     if(!artifact||typeof artifact.content!=='string')continue;
     const path=clean(artifact.path)||('artifact-'+(index+1)+'.txt');
+    if(path==='reports/private-production-gate.md'&&typeof r.productionGateSummaryMarkdown==='string')continue;
     add('artifact:'+index,path,artifact.content,path,clean(artifact.mime)||'text/plain;charset=utf-8');
   }
   return views;
