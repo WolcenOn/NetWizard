@@ -260,11 +260,28 @@ La UI cloud sincroniza primero la revisión editable con `PUT /api/projects/{pro
 
 Las salidas del Private Engine —runbook, rollback, checklist, resúmenes y artefactos de configuración/incrementales— permanecen derivadas y fuera del snapshot. La UI permite inspeccionarlas, copiarlas o descargarlas sin reintroducir generación sensible en el navegador.
 
-### F. Siguiente bloque privado
+### F. Frontera de generadores en el navegador de producción
+
+El perfil Docker/SaaS deja de publicar los módulos especializados cuya lógica ya ejecuta el Private Engine:
+
+- renderer multivendor principal;
+- switching y firewall edge;
+- access-security;
+- management;
+- HA/services;
+- sus planes e integraciones browser.
+
+El manifiesto sigue cargándolos en source/Pages, por lo que desarrollo y modo local/offline conservan el pipeline completo. El perfil de producción mantiene `netwizard-config-pipeline.js` como envoltorio estable sobre el generador base histórico, pero el runtime ya no exige renderers/stages especializados cuando detecta ese perfil.
+
+La preparación de producción deriva toda la exclusión del manifiesto y elimina también los archivos físicos de `/app/public/js`. CI valida que ningún módulo público dependa de uno privado.
+
+Riesgo residual explícito: `netwizard.js` todavía contiene el generador histórico base y, por tanto, esa parte sigue siendo inspeccionable en Docker. No se considera retirada por este bloque; debe separarse o clasificarse explícitamente antes de afirmar que toda generación propietaria está oculta.
+
+### G. Siguiente bloque privado
 
 Orden recomendado:
 
-1. revisar qué generadores browser pueden retirarse del artefacto Docker sin degradar UX local/offline;
+1. separar el generador histórico incrustado en `netwizard.js` y decidir su frontera productiva;
 2. validación avanzada y production gate;
 3. simulación/resiliencia.
 

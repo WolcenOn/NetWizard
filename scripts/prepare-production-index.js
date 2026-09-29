@@ -7,11 +7,12 @@ const Manifest=require('../js/netwizard-browser-modules.js');
 
 const sourcePaths=Manifest.paths();
 const productionPaths=new Set(Manifest.paths({production:true}));
-const PRIVATE_ROUTING_BROWSER_MODULES=sourcePaths.filter(modulePath=>!productionPaths.has(modulePath));
+const PRIVATE_BROWSER_MODULES=sourcePaths.filter(modulePath=>!productionPaths.has(modulePath));
+const PRIVATE_ROUTING_BROWSER_MODULES=PRIVATE_BROWSER_MODULES;
 
-function stripPrivateRoutingScripts(html){
+function stripPrivateBrowserScripts(html){
   let out=String(html||'');
-  for(const asset of PRIVATE_ROUTING_BROWSER_MODULES){
+  for(const asset of PRIVATE_BROWSER_MODULES){
     const single='<script src="./'+asset+'"></script>';
     const double='<script src=\'./'+asset+'\'></script>';
     out=out.split(single).join('');
@@ -20,17 +21,19 @@ function stripPrivateRoutingScripts(html){
   return out;
 }
 
+const stripPrivateRoutingScripts=stripPrivateBrowserScripts;
+
 function applyProductionBoundary(indexPath,publicDir){
-  const html=stripPrivateRoutingScripts(fs.readFileSync(indexPath,'utf8'));
+  const html=stripPrivateBrowserScripts(fs.readFileSync(indexPath,'utf8'));
   fs.writeFileSync(indexPath,html);
   if(publicDir){
-    for(const asset of PRIVATE_ROUTING_BROWSER_MODULES){
+    for(const asset of PRIVATE_BROWSER_MODULES){
       const target=path.join(publicDir,asset);
       if(fs.existsSync(target))fs.unlinkSync(target);
       if(fs.existsSync(target))throw new Error('Private browser module still published: '+asset);
     }
   }
-  return {removed:PRIVATE_ROUTING_BROWSER_MODULES.slice()};
+  return {removed:PRIVATE_BROWSER_MODULES.slice()};
 }
 
 function main(argv){
@@ -40,4 +43,10 @@ function main(argv){
 }
 
 if(require.main===module)main(process.argv);
-module.exports={PRIVATE_ROUTING_BROWSER_MODULES,stripPrivateRoutingScripts,applyProductionBoundary};
+module.exports={
+  PRIVATE_BROWSER_MODULES,
+  PRIVATE_ROUTING_BROWSER_MODULES,
+  stripPrivateBrowserScripts,
+  stripPrivateRoutingScripts,
+  applyProductionBoundary
+};
