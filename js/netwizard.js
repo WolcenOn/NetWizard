@@ -1837,7 +1837,8 @@ function renderDevPickCfg(){
     const info=document.createElement('div'); info.className='hinfo'; const hn=document.createElement('div'); hn.className='hn'; hn.textContent=d.name||''; const hm=document.createElement('div'); hm.className='hm'; hm.textContent=`${devLabel(d)} · ${d.vendorOs||'—'}`; info.append(hn,hm); row.appendChild(info);
     row.appendChild(makeBadge('⚙','b bac')); el.appendChild(row);
   });
-  el.querySelectorAll('[data-dcfg]').forEach(el=>el.onclick=()=>selectDevCfg(el.dataset.dcfg));
+  if(!devices.some(d=>d.id===selDevCfg))selDevCfg=devices[0].id;
+  el.querySelectorAll('[data-dcfg]').forEach(row=>{row.classList.toggle('on',row.dataset.dcfg===selDevCfg);row.onclick=()=>selectDevCfg(row.dataset.dcfg);});
 }
 function selectDevCfg(devId){
   selDevCfg=devId;const d=devById(devId);if(!d)return;
