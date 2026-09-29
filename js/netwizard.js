@@ -519,13 +519,13 @@ function privateConfigArtifact(devId){
 }
 function genConfig(devId,format){
   const d=devById(devId);if(!d)return'';
-  const api=localConfigGenerator();
-  if(api)return api.generate(S,devId,format);
   const assigned=cliText(d.vendorOs||'sin-vendor',80),requested=cliText(format||d.vendorOs||'sin-vendor',80);
   const privateArtifact=privateConfigArtifact(devId);
   if(privateArtifact&&(!format||requested===assigned)){
     return privateArtifact.content||'';
   }
+  const api=localConfigGenerator();
+  if(api)return api.generate(S,devId,format);
   if(privateArtifact&&requested!==assigned){
     return `! El Private Engine generó este dispositivo para ${assigned}.
 ! La previsualización cruzada como ${requested} no está disponible en producción.
