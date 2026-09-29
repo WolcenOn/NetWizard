@@ -48,14 +48,13 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   const token=process.env.NETWIZARD_TEST_SELF_HOSTED_TOKEN||'';
   expect(token.length).toBeGreaterThanOrEqual(32);
   await expect(page.locator('#nwPrivateDeploymentCard')).toBeVisible();
-  await expect(page.locator('#nwSelfHostedPrivateLogin')).toBeVisible();
+  await expect(page.locator('#cfgGenerateServer')).toHaveText(/Desbloquear y generar/);
+  await page.locator('#cfgGenerateServer').click();
+  await expect(page.locator('#nwSelfHostedPrivateToken')).toBeFocused();
   await page.locator('#nwSelfHostedPrivateToken').fill(token);
   await page.locator('#nwSelfHostedPrivateLogin').click();
 
-  await expect(page.locator('#nwPrivateDeploymentGenerate')).toBeVisible();
   await expect(page.locator('#nwPrivateDeploymentContext')).toContainText('Snapshot actual');
-  await page.locator('#nwPrivateDeploymentGenerate').click();
-
   await expect(page.locator('#cfgOut')).toHaveValue(/configure terminal/);
   await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-PROD/);
   await expect(page.locator('#cfgReadiness')).toContainText('CLI PRIVADA');
@@ -67,6 +66,19 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   expect(privateArtifact).toBeTruthy();
   expect(privateArtifact.content).toContain('hostname RTR-PROD');
   expect(privateArtifact.capability.mode).toBe('cli');
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices[0].name='RTR-PROD-EDITED';
+    window.NetWizardState.replaceProject(p,{source:'e2e-production-stale'});
+  });
+  await expect(page.locator('#cfgReadiness')).toContainText('CONFIG OBSOLETA');
+  await expect(page.locator('#cfgOut')).toHaveValue(/STALE|OBSOLETA|obsoleto/i);
+  expect(await page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.deviceConfig?.('r1')||null)).toBeNull();
+
+  await page.locator('#cfgGenerateServer').click();
+  await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-PROD-EDITED/);
+  await expect(page.locator('#cfgReadiness')).not.toContainText('CONFIG OBSOLETA');
 
   const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('src')||''));
   expect(scripts.some(src=>src.includes('netwizard-legacy-config-generator.js'))).toBe(false);
