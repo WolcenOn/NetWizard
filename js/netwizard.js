@@ -531,8 +531,8 @@ function genConfig(devId,format){
 `;
   }
   return `! Configuración privada pendiente para ${assigned}.
-! Pulsa "Sincronizar y generar deployment plan" en Private Deployment Plan.
-! Cuando termine, esta vista mostrará aquí el artefacto server-side del dispositivo.
+! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.
+! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.
 `;
 }
 function configForView(devId,format){
