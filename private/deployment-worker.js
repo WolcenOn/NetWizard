@@ -4,6 +4,7 @@ const ChangeSet=require('../js/netwizard-change-set.js');
 const Incremental=require('../js/netwizard-incremental-generators.js');
 const Runbook=require('../js/netwizard-deployment-runbook.js');
 const VendorConfig=require('./vendor-config-engine.js');
+const ProductionGate=require('./deployment-production-gate.js');
 
 const CONTRACT_VERSION='netwizard-private-deployment-plan-v2';
 const MAX_DEVICES=1000;
@@ -40,8 +41,27 @@ function resultBase(input,generatedAt){
     artifacts:[],
     issues:[],
     configSources:{},
-    privateConfigContract:VendorConfig.CONTRACT_VERSION
+    privateConfigContract:VendorConfig.CONTRACT_VERSION,
+    productionReady:false,
+    productionStatus:'blocked',
+    productionGateContract:ProductionGate.CONTRACT_VERSION,
+    productionGate:null,
+    productionGateSummaryMarkdown:''
   };
+}
+
+function finalize(result,project,generatedAt,generated){
+  const report=ProductionGate.evaluate(project,result,generatedAt,generated);
+  result.productionReady=report.ready;
+  result.productionStatus=report.status;
+  result.productionGate=report;
+  result.productionGateSummaryMarkdown=report.summaryMarkdown;
+  result.artifacts.push({
+    path:'reports/private-production-gate.md',
+    content:report.summaryMarkdown,
+    mime:'text/markdown;charset=utf-8'
+  });
+  return result;
 }
 
 function handle(request){
@@ -54,7 +74,7 @@ function handle(request){
   result.configSources=generated.sources;
   result.artifacts.push(...arr(generated.artifacts));
   result.issues.push(...arr(generated.issues));
-  if(!generated.ok)return result;
+  if(!generated.ok)return finalize(result,input.project,generatedAt,generated);
 
   const desiredConfigs=generated.configs;
   const configPaths=generated.configPaths;
@@ -69,7 +89,7 @@ function handle(request){
     path:file.path,content:file.content,mime:'text/x-diff;charset=utf-8'
   })));
   result.issues.push(...arr(changeSet.issues));
-  if(!changeSet.ok)return result;
+  if(!changeSet.ok)return finalize(result,input.project,generatedAt,generated);
 
   const incrementalPlan=Incremental.buildPlan(input.project,{
     generatedAt,
@@ -83,7 +103,7 @@ function handle(request){
     path:file.path,content:file.content,mime:file.mime||'text/plain;charset=utf-8'
   })));
   result.issues.push(...arr(incrementalPlan.issues));
-  if(!incrementalPlan.ok)return result;
+  if(!incrementalPlan.ok)return finalize(result,input.project,generatedAt,generated);
 
   const deploymentPlan=Runbook.buildDeploymentPlan(input.project,{
     generatedAt,
@@ -93,13 +113,13 @@ function handle(request){
   });
   result.deploymentPlan=deploymentPlan;
   result.issues.push(...arr(deploymentPlan.issues));
-  if(!deploymentPlan.ok)return result;
+  if(!deploymentPlan.ok)return finalize(result,input.project,generatedAt,generated);
 
   result.ok=true;
   result.runbookMarkdown=Runbook.buildMarkdown(deploymentPlan);
   result.rollbackMarkdown=Runbook.buildRollbackMarkdown(deploymentPlan);
   result.postChangeChecklistMarkdown=ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan);
-  return result;
+  return finalize(result,input.project,generatedAt,generated);
 }
 
 function main(){
