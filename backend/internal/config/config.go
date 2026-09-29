@@ -57,9 +57,13 @@ func (c Config) PrivateServicesConfigured() bool {
 }
 
 func (c Config) SelfHostedPrivateConfigured() bool {
+	key := strings.TrimSpace(c.PrivateServiceKey)
+	token := strings.TrimSpace(c.SelfHostedPrivateToken)
 	return c.SelfHostedPrivate &&
-		c.PrivateServicesConfigured() &&
-		strings.TrimSpace(c.SelfHostedPrivateToken) != "" &&
+		!c.AuthRequested() &&
+		len([]byte(key)) >= 32 &&
+		len([]byte(token)) >= 32 &&
+		key != token &&
 		strings.TrimSpace(c.PrivateDeploymentWorker) != ""
 }
 
