@@ -135,6 +135,14 @@ function validateArtifacts(project,result,generated){
         deviceId:id,path:expectedPath
       }));
     }
+    const readiness=obj(obj(g.configReadiness)[id]);
+    const status=clean(readiness.status,40);
+    if(clean(device&&device.vendorOs,80)==='cisco_ios'&&status!=='apply-ready'){
+      const reasons=arr(readiness.reasons).map(x=>clean(x,300)).filter(Boolean);
+      issues.push(issue('NW-PRIVATE-GATE-010',name+': la configuración Cisco IOS no está certificada como apply-ready.'+(reasons.length?' '+reasons.join(' '):''),{
+        deviceId:id,path:expectedPath,configReadiness:status||'missing'
+      }));
+    }
   }
 
   if(!obj(r.changeSet)||!obj(r.incrementalPlan)||!obj(r.deploymentPlan)){
