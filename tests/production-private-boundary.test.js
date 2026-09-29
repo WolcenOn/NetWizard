@@ -26,7 +26,8 @@ for(const required of [
   './js/netwizard-runtime.js',
   './js/netwizard-rack-model.js',
   './js/netwizard-structured-cabling.js',
-  './js/netwizard-private-deployment-ui.js'
+  './js/netwizard-private-deployment-ui.js',
+  './js/netwizard-self-hosted-private-client.js'
 ]){
   assert.ok(production.includes(required),'production entrypoint must preserve '+required);
 }
@@ -68,6 +69,11 @@ assert.ok(docker.includes('test ! -e /out/public/private'),'El directorio privat
 assert.ok(!html.includes('./private/vendor-config-engine.js'),'El motor vendor privado no debe formar parte del entrypoint browser');
 assert.ok(!html.includes('./private/legacy-vendor-generators.js'),'Cisco ASA/Windows/Linux privados no deben formar parte del entrypoint browser');
 assert.ok(!html.includes('./private/deployment-production-gate.js'),'La Production Gate privada nunca debe formar parte del entrypoint browser');
+const selfHostedClient=fs.readFileSync(path.join(root,'js/netwizard-self-hosted-private-client.js'),'utf8');
+for(const forbidden of ['NetWizardVendorConfigGenerators','netwizard-vendor-config-generators','private/vendor-config-engine','genCiscoRouter','genCiscoSwitch']){
+  assert.ok(!selfHostedClient.includes(forbidden),'El transporte self-hosted no debe contener lógica vendor privada: '+forbidden);
+}
+assert.ok(selfHostedClient.includes('/api/private/self-hosted/deployment-plan'),'El cliente self-hosted debe delegar la generación al endpoint server-side');
 assert.ok(docker.includes('private/deployment-worker.js --bundle'),'Vendor generation debe viajar solo dentro del bundle privado de deployment');
 const privateWorkerSource=fs.readFileSync(path.join(root,'private/deployment-worker.js'),'utf8');
 assert.ok(
