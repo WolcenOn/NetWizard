@@ -121,11 +121,13 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
     window.NetWizardState.replaceProject(p,{source:'e2e-private-deployment-edit'});
   });
 
-  await card.locator('#nwPrivateDeploymentGenerate').click();
+  await expect(page.locator('#cfgGenerateServer')).toHaveText(/Generar en servidor/);
+  await page.locator('#cfgGenerateServer').click();
 
   await expect(card.locator('#nwPrivateDeploymentStatus')).toContainText('Deployment plan privado generado');
   await expect(card.locator('#nwPrivateDeploymentStatus')).toContainText('Production Gate: LISTO');
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('Production Gate');
+  await expect(card.locator('#nwPrivateDeploymentView')).toContainText('Diagnóstico de generación');
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER RUNBOOK/);
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg');
   await expect.poll(
