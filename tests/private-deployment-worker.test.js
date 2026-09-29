@@ -37,6 +37,9 @@ assert.strictEqual(actual.configSources.r1,'private');
 assert.strictEqual(actual.configPaths.r1,configPaths.r1);
 assert.ok(actual.configReadiness.r1);
 assert.strictEqual(actual.configReadiness.r1.status,'review-required');
+assert.ok(actual.configCapabilities.r1);
+assert.strictEqual(actual.configCapabilities.r1.mode,'cli');
+assert.strictEqual(actual.configCapabilities.r1.kind,'router');
 assert.strictEqual(actual.ok,true);
 assert.strictEqual(actual.productionGateContract,'netwizard-private-production-gate-v1');
 assert.ok(['ready','review','blocked'].includes(actual.productionStatus));
@@ -66,7 +69,7 @@ assert.throws(
 
 const windowsProject=JSON.parse(JSON.stringify(project));
 windowsProject.devices[0]={id:'r1',name:'WIN-UTIL',type:'server',kind:'server',vendorOs:'windows'};
-windowsProject.hosts=[{id:'h1',name:'APP-01',type:'server',vlanRef:'v10',ipMode:'static',staticIp:'10.10.10.20'}];
+windowsProject.hosts=[{id:'h1',name:'APP-01',type:'server',vlanRef:'v10',ipMode:'static',staticIp:'10.10.10.20',deviceRef:'r1'}];
 const windows=Worker.handle({project:windowsProject,generatedAt});
 assert.strictEqual(windows.configSources.r1,'private');
 assert.ok(windows.changeSet);
