@@ -5,6 +5,7 @@
 const clean=v=>String(v==null?'':v).trim();
 let lastResult=null;
 let lastResultContext=null;
+let lastResultMode='';
 let selectedKey='';
 
 function authState(){
@@ -70,13 +71,16 @@ function viewsFor(result){
   return views;
 }
 function resultMatchesContext(remote){
-  if(!lastResult||!lastResultContext||!remote||typeof remote.context!=='function')return false;
+  if(!lastResult)return false;
+  if(lastResultMode==='self-hosted')return true;
+  if(!lastResultContext||!remote||typeof remote.context!=='function')return false;
   const ctx=remote.context();
   return !!(ctx&&ctx.projectId===lastResultContext.projectId&&ctx.currentVersion===lastResultContext.currentVersion);
 }
 function clearResult(){
   lastResult=null;
   lastResultContext=null;
+  lastResultMode='';
   selectedKey='';
 }
 function selectedView(result){
@@ -158,40 +162,90 @@ function render(){
   if(!card)return false;
   const auth=authState(),caps=auth.capabilities||{};
   const cloudAvailable=!!(caps.authEnforced&&caps.privateDeploymentPlan);
-  card.style.display=cloudAvailable?'':'none';
-  if(!cloudAvailable)return false;
+  const selfHostedAvailable=!!caps.selfHostedPrivateGeneration;
+  const available=cloudAvailable||selfHostedAvailable;
+  card.style.display=available?'':'none';
+  if(!available)return false;
 
+  const mode=cloudAvailable?'remote':'self-hosted';
   const remote=root.NetWizardRemoteProject;
+  const selfHosted=root.NetWizardSelfHostedPrivate;
   const ctx=remote&&typeof remote.context==='function'?remote.context():null;
-  if(lastResult&&!resultMatchesContext(remote))clearResult();
+  const localState=selfHosted&&typeof selfHosted.state==='function'?selfHosted.state():{authenticated:false};
+  if(lastResult&&lastResultMode==='remote'&&!resultMatchesContext(remote))clearResult();
 
   card.textContent='';
   const head=el('div',{className:'card-h'});
   head.append(
-    el('div',{className:'card-t'},'☁ Private Deployment Plan'),
-    el('span',{className:'b bac'},ctx?('v'+ctx.currentVersion):'sin contexto')
+    el('div',{className:'card-t'},mode==='remote'?'☁ Private Deployment Plan':'🔒 Private Engine self-hosted'),
+    el('span',{className:'b bac'},mode==='remote'?(ctx?('v'+ctx.currentVersion):'sin contexto'):(localState.authenticated?'sesión activa':'bloqueado'))
   );
   card.appendChild(head);
-  card.appendChild(el('div',{className:'hint'},
-    'Sincroniza la revisión cloud y genera configuraciones, change set, plan incremental, runbook y rollback en el Private Engine. Las salidas son derivadas y no se guardan dentro del snapshot.'));
+  card.appendChild(el('div',{className:'hint'},mode==='remote'
+    ? 'Sincroniza la revisión cloud y genera configuraciones, change set, plan incremental, runbook y rollback en el Private Engine. Las salidas son derivadas y no se guardan dentro del snapshot.'
+    : 'Genera configuraciones y artefactos en el Private Engine del servidor. El navegador envía solo el snapshot 3.50 actual; los generadores vendor y las claves privadas no se publican al cliente.'));
+
+  if(mode==='self-hosted'&&!localState.authenticated){
+    const authRow=el('div',{className:'row'});
+    const tokenCol=el('div');
+    tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},'Token de operador self-hosted'));
+    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'current-password',placeholder:'Token configurado en el servidor'});
+    tokenCol.appendChild(tokenInput);
+    const actionCol=el('div');
+    actionCol.append(el('label',{className:'fl'},'Sesión privada'));
+    const unlock=el('button',{type:'button',className:'btn bp',id:'nwSelfHostedPrivateLogin'},'🔓 Desbloquear Private Engine');
+    actionCol.appendChild(unlock);
+    authRow.append(tokenCol,actionCol);
+    card.appendChild(authRow);
+    const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'},
+      'El token solo se usa para abrir una sesión HttpOnly en este servidor; no se guarda en el proyecto.');
+    card.appendChild(status);
+    unlock.onclick=async()=>{
+      if(!selfHosted||typeof selfHosted.login!=='function')return setStatus('Cliente self-hosted no disponible.','error');
+      unlock.disabled=true;
+      setStatus('Abriendo sesión privada local…','info');
+      try{
+        await selfHosted.login(tokenInput.value);
+        tokenInput.value='';
+        render();
+      }catch(err){
+        tokenInput.value='';
+        setStatus('No se pudo abrir la sesión privada: '+(err&&err.message||'error desconocido')+'.','error');
+        unlock.disabled=false;
+      }
+    };
+    tokenInput.onkeydown=e=>{if(e.key==='Enter')unlock.click();};
+    return true;
+  }
 
   const actionRow=el('div',{className:'row'});
   const infoCol=el('div');
-  infoCol.append(el('label',{className:'fl'},'Proyecto remoto'));
-  infoCol.append(el('div',{className:'co co-ac',id:'nwPrivateDeploymentContext'},
-    ctx?((ctx.name||ctx.projectId)+' · versión '+ctx.currentVersion):'Abre primero un proyecto cloud.'));
+  infoCol.append(el('label',{className:'fl'},mode==='remote'?'Proyecto remoto':'Proyecto local'));
+  infoCol.append(el('div',{className:'co co-ac',id:'nwPrivateDeploymentContext'},mode==='remote'
+    ? (ctx?((ctx.name||ctx.projectId)+' · versión '+ctx.currentVersion):'Abre primero un proyecto cloud.')
+    : 'Snapshot actual · schema 3.50.0 · generación efímera server-side'));
   const actionCol=el('div');
   actionCol.append(el('label',{className:'fl'},'Private Engine'));
-  const generate=el('button',{type:'button',className:'btn bp',id:'nwPrivateDeploymentGenerate'},'☁ Sincronizar y generar deployment plan');
-  generate.disabled=!(remote&&remote.canUsePrivateDeploymentPlan&&remote.canUsePrivateDeploymentPlan());
+  const generate=el('button',{type:'button',className:'btn bp',id:'nwPrivateDeploymentGenerate'},
+    mode==='remote'?'☁ Sincronizar y generar deployment plan':'🔒 Generar en servidor');
+  generate.disabled=mode==='remote'
+    ? !(remote&&remote.canUsePrivateDeploymentPlan&&remote.canUsePrivateDeploymentPlan())
+    : !(selfHosted&&typeof selfHosted.generateDeploymentPlan==='function'&&localState.authenticated);
   actionCol.appendChild(generate);
+  if(mode==='self-hosted'){
+    const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Bloquear sesión');
+    actionCol.appendChild(lock);
+    lock.onclick=async()=>{
+      try{if(selfHosted&&typeof selfHosted.logout==='function')await selfHosted.logout();}finally{clearResult();render();}
+    };
+  }
   actionRow.append(infoCol,actionCol);
   card.appendChild(actionRow);
 
   const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'});
-  status.textContent=ctx
-    ? ('Listo para generar desde la revisión remota '+ctx.currentVersion+'.')
-    : 'Abre un proyecto SaaS para activar el deployment privado.';
+  status.textContent=mode==='remote'
+    ? (ctx?('Listo para generar desde la revisión remota '+ctx.currentVersion+'.'):'Abre un proyecto SaaS para activar el deployment privado.')
+    : ('Sesión privada self-hosted activa'+(localState.expiresAt?' hasta '+localState.expiresAt:'')+'.');
   card.appendChild(status);
 
   const selectorRow=el('div',{className:'row'});
@@ -223,7 +277,7 @@ function render(){
   actions.append(copy,download);
   card.appendChild(actions);
 
-  if(lastResult&&resultMatchesContext(remote)){
+  if(lastResult&&lastResultMode===mode&&resultMatchesContext(remote)){
     renderResult(lastResult);
     const issueCount=Array.isArray(lastResult.issues)?lastResult.issues.length:0;
     const gateIssues=lastResult.productionGate&&Array.isArray(lastResult.productionGate.issues)?lastResult.productionGate.issues.length:0;
@@ -237,28 +291,39 @@ function render(){
   }
 
   generate.onclick=async()=>{
-    if(!remote||typeof remote.syncAndGenerateDeploymentPlan!=='function')return setStatus('Cliente SaaS remoto no disponible.','error');
     generate.disabled=true;
     clearResult();
     output.value='';select.disabled=true;copy.disabled=true;download.disabled=true;
-    setStatus('Sincronizando revisión y ejecutando Private Deployment Plan…','info');
+    setStatus(mode==='remote'
+      ? 'Sincronizando revisión y ejecutando Private Deployment Plan…'
+      : 'Validando snapshot y ejecutando Private Engine en el servidor…','info');
     try{
-      const result=await remote.syncAndGenerateDeploymentPlan();
-      const latest=remote.context();
+      let result=null,latest=null;
+      if(mode==='remote'){
+        if(!remote||typeof remote.syncAndGenerateDeploymentPlan!=='function')throw new Error('Cliente SaaS remoto no disponible');
+        result=await remote.syncAndGenerateDeploymentPlan();
+        latest=remote.context();
+      }else{
+        if(!selfHosted||typeof selfHosted.generateDeploymentPlan!=='function')throw new Error('Cliente self-hosted no disponible');
+        result=await selfHosted.generateDeploymentPlan();
+      }
       lastResult=result;
-      lastResultContext=latest?{projectId:latest.projectId,currentVersion:latest.currentVersion}:null;
+      lastResultMode=mode;
+      lastResultContext=mode==='remote'&&latest?{projectId:latest.projectId,currentVersion:latest.currentVersion}:null;
       selectedKey='';
       render();
       if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
         root.NetWizardConfigView.refreshPrivateArtifacts();
       }
     }catch(err){
-      const conflict=err&&[409,412].includes(err.status);
+      const conflict=mode==='remote'&&err&&[409,412].includes(err.status);
       const suffix=conflict?' Recarga el proyecto cloud antes de reintentar.':'';
       setStatus('No se pudo generar el deployment plan privado: '+(err&&err.message||'error desconocido')+'.'+suffix,'error');
     }finally{
       const live=root.document.getElementById('nwPrivateDeploymentGenerate');
-      if(live)live.disabled=!(remote&&remote.canUsePrivateDeploymentPlan&&remote.canUsePrivateDeploymentPlan());
+      if(live)live.disabled=mode==='remote'
+        ? !(remote&&remote.canUsePrivateDeploymentPlan&&remote.canUsePrivateDeploymentPlan())
+        : !(selfHosted&&typeof selfHosted.state==='function'&&selfHosted.state().authenticated);
     }
   };
 
@@ -287,6 +352,7 @@ function install(){
   const remoteChanged=()=>rerender();
   root.addEventListener&&root.addEventListener('nw:auth:changed',rerender);
   root.addEventListener&&root.addEventListener('nw:remote-project:changed',remoteChanged);
+  root.addEventListener&&root.addEventListener('nw:self-hosted-private:changed',rerender);
   root.document.addEventListener&&root.document.addEventListener('nw:project:changed',()=>{
     clearResult();
     rerender();
