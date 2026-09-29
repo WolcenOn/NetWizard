@@ -236,7 +236,11 @@ function render(){
     const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Bloquear sesión');
     actionCol.appendChild(lock);
     lock.onclick=async()=>{
-      try{if(selfHosted&&typeof selfHosted.logout==='function')await selfHosted.logout();}finally{clearResult();render();}
+      clearResult();
+      if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
+        root.NetWizardConfigView.refreshPrivateArtifacts();
+      }
+      try{if(selfHosted&&typeof selfHosted.logout==='function')await selfHosted.logout();}finally{render();}
     };
   }
   actionRow.append(infoCol,actionCol);
