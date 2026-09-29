@@ -6,6 +6,7 @@ const clean=v=>String(v==null?'':v).trim();
 let lastResult=null;
 let lastResultContext=null;
 let lastResultMode='';
+let lastResultStale=false;
 let selectedKey='';
 
 function authState(){
@@ -48,6 +49,35 @@ function safeFileName(value,fallback){
   const out=clean(value).replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-').replace(/^-+|-+$/g,'');
   return out||fallback||'netwizard-artifact.txt';
 }
+function generationDiagnosticsMarkdown(result){
+  const r=result||{},caps=r.configCapabilities&&typeof r.configCapabilities==='object'?r.configCapabilities:{};
+  const readiness=r.configReadiness&&typeof r.configReadiness==='object'?r.configReadiness:{};
+  const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
+  const issues=Array.isArray(r.issues)?r.issues:[];
+  const ids=new Set([...Object.keys(caps),...Object.keys(readiness),...Object.keys(paths),...issues.map(x=>clean(x&&x.deviceId)).filter(Boolean)]);
+  const lines=['# Diagnóstico de generación privada','',`Generado: ${clean(r.generatedAt)||'—'}`,'', '| Dispositivo | Vendor | Tipo | Modo | Estado | Detalle |','| --- | --- | --- | --- | --- | --- |'];
+  for(const id of Array.from(ids).sort()){
+    const cap=caps[id]&&typeof caps[id]==='object'?caps[id]:{};
+    const ready=readiness[id]&&typeof readiness[id]==='object'?readiness[id]:{};
+    const ownIssues=issues.filter(x=>clean(x&&x.deviceId)===id);
+    const hasArtifact=(Array.isArray(r.artifacts)?r.artifacts:[]).some(a=>clean(a&&a.path)===clean(paths[id])&&typeof a.content==='string');
+    let status=clean(ready.status);
+    if(!status){
+      if(cap.supported===false)status='unsupported';
+      else if(ownIssues.length)status='generation-error';
+      else if(hasArtifact)status='generated';
+      else status='missing-artifact';
+    }
+    const details=[
+      clean(cap.reason),
+      ...(Array.isArray(ready.reasons)?ready.reasons.map(clean):[]),
+      ...ownIssues.map(x=>clean(x&&x.code)+(clean(x&&x.message)?': '+clean(x.message):''))
+    ].filter(Boolean).join(' · ').replace(/\|/g,'\\|');
+    lines.push(`| ${id} | ${clean(cap.vendor)||'—'} | ${clean(cap.kind)||'—'} | ${clean(cap.mode)||'—'} | ${status} | ${details||'—'} |`);
+  }
+  if(!ids.size)lines.push('| — | — | — | — | sin dispositivos | — |');
+  return lines.join('\n')+'\n';
+}
 function viewsFor(result){
   const r=result||{};
   const views=[];
@@ -62,6 +92,7 @@ function viewsFor(result){
   add('post-change','Checklist post-change',r.postChangeChecklistMarkdown,'post-change-checklist.md','text/markdown;charset=utf-8');
   add('change-summary','Resumen change set',r.changeSummaryMarkdown,'change-summary.md','text/markdown;charset=utf-8');
   add('incremental-summary','Resumen incremental',r.incrementalSummaryMarkdown,'incremental-summary.md','text/markdown;charset=utf-8');
+  add('generation-diagnostics','Diagnóstico de generación',generationDiagnosticsMarkdown(r),'private-generation-diagnostics.md','text/markdown;charset=utf-8');
   for(const [index,artifact] of (Array.isArray(r.artifacts)?r.artifacts:[]).entries()){
     if(!artifact||typeof artifact.content!=='string')continue;
     const path=clean(artifact.path)||('artifact-'+(index+1)+'.txt');
@@ -81,7 +112,13 @@ function clearResult(){
   lastResult=null;
   lastResultContext=null;
   lastResultMode='';
+  lastResultStale=false;
   selectedKey='';
+}
+function markResultStale(){
+  if(!lastResult)return;
+  lastResultStale=true;
+  selectedKey='generation-diagnostics';
 }
 function selectedView(result){
   const views=viewsFor(result);
@@ -120,8 +157,45 @@ function configArtifactForDevice(result,deviceId){
   };
   return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8',readiness,capability};
 }
+function deviceStatusFromResult(result,deviceId,options){
+  const r=result||{},id=clean(deviceId),opts=options||{};
+  if(!id)return{status:'missing-device',reasons:['Dispositivo no disponible.'],issues:[],capability:null,artifact:null};
+  if(!result)return{status:'pending',reasons:['Todavía no se ha ejecutado Private Engine para este proyecto.'],issues:[],capability:null,artifact:null};
+  const capabilityMap=r.configCapabilities&&typeof r.configCapabilities==='object'?r.configCapabilities:{};
+  const rawCapability=capabilityMap[id]&&typeof capabilityMap[id]==='object'?capabilityMap[id]:null;
+  const capability=rawCapability?{
+    vendor:clean(rawCapability.vendor),kind:clean(rawCapability.kind),mode:clean(rawCapability.mode),
+    supported:rawCapability.supported!==false,certification:clean(rawCapability.certification),
+    extension:clean(rawCapability.extension),reason:clean(rawCapability.reason)
+  }:null;
+  const ownIssues=(Array.isArray(r.issues)?r.issues:[]).filter(item=>clean(item&&item.deviceId)===id).map(item=>({
+    code:clean(item&&item.code),severity:clean(item&&item.severity),blocking:item&&item.blocking===true,message:clean(item&&item.message)
+  }));
+  if(opts.stale){
+    return{status:'stale',reasons:['El proyecto cambió después de la última generación. Regenera antes de usar la configuración.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+  }
+  const artifact=configArtifactForDevice(r,id);
+  if(artifact){
+    const ready=artifact.readiness||{},reasons=Array.isArray(ready.reasons)?ready.reasons.map(clean).filter(Boolean):[];
+    return{status:clean(ready.status)||'generated',reasons,issues:ownIssues,capability:artifact.capability||capability,artifact,generatedAt:clean(r.generatedAt)};
+  }
+  if(capability&&capability.supported===false){
+    return{status:'unsupported',reasons:[capability.reason||'La combinación vendor/tipo no está soportada.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+  }
+  if(ownIssues.length){
+    return{status:'generation-error',reasons:ownIssues.map(x=>(x.code?x.code+': ':'')+(x.message||'Error de generación')).filter(Boolean),issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+  }
+  const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
+  if(clean(paths[id])){
+    return{status:'missing-artifact',reasons:['Private Engine calculó una ruta de configuración pero no devolvió el artefacto.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+  }
+  return{status:'not-generated',reasons:['El resultado privado no contiene datos de generación para este dispositivo.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+}
+function deviceStatus(deviceId){
+  return deviceStatusFromResult(lastResult,deviceId,{stale:lastResultStale});
+}
 function deviceConfig(deviceId){
-  if(!lastResult)return null;
+  if(!lastResult||lastResultStale)return null;
   return configArtifactForDevice(lastResult,deviceId);
 }
 function renderResult(result){
@@ -286,12 +360,16 @@ function render(){
     const issueCount=Array.isArray(lastResult.issues)?lastResult.issues.length:0;
     const gateIssues=lastResult.productionGate&&Array.isArray(lastResult.productionGate.issues)?lastResult.productionGate.issues.length:0;
     const gateLabel=lastResult.productionStatus==='ready'?'LISTO':lastResult.productionStatus==='review'?'REVISIÓN':'BLOQUEADO';
-    setStatus(
-      lastResult.ok
-        ? ('Deployment plan privado generado · Production Gate: '+gateLabel+' · '+(lastResult.artifacts||[]).length+' artefacto(s) · '+gateIssues+' incidencia(s) de gate.')
-        : ('Deployment plan incompleto · Production Gate: '+gateLabel+' · '+issueCount+' incidencia(s) de generación.'),
-      lastResult.productionReady?'ok':(lastResult.productionStatus==='blocked'?'error':'info')
-    );
+    if(lastResultStale){
+      setStatus('Resultado privado OBSOLETO: el proyecto cambió después de generar. Regenera antes de usar cualquier configuración.','error');
+    }else{
+      setStatus(
+        lastResult.ok
+          ? ('Deployment plan privado generado · Production Gate: '+gateLabel+' · '+(lastResult.artifacts||[]).length+' artefacto(s) · '+gateIssues+' incidencia(s) de gate.')
+          : ('Deployment plan incompleto · Production Gate: '+gateLabel+' · '+issueCount+' incidencia(s) de generación. Revisa “Diagnóstico de generación”.'),
+        lastResult.productionReady?'ok':(lastResult.productionStatus==='blocked'?'error':'info')
+      );
+    }
   }
 
   generate.onclick=async()=>{
@@ -313,6 +391,7 @@ function render(){
       }
       lastResult=result;
       lastResultMode=mode;
+      lastResultStale=false;
       lastResultContext=mode==='remote'&&latest?{projectId:latest.projectId,currentVersion:latest.currentVersion}:null;
       selectedKey='';
       render();
@@ -358,14 +437,17 @@ function install(){
   root.addEventListener&&root.addEventListener('nw:remote-project:changed',remoteChanged);
   root.addEventListener&&root.addEventListener('nw:self-hosted-private:changed',rerender);
   root.document.addEventListener&&root.document.addEventListener('nw:project:changed',()=>{
-    clearResult();
+    markResultStale();
     rerender();
+    if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
+      root.NetWizardConfigView.refreshPrivateArtifacts();
+    }
   });
   if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',rerender,{once:true});else rerender();
   return true;
 }
 
-const api={version:'netwizard-private-deployment-ui-v2',viewsFor,configArtifactForDevice,deviceConfig,render,install,clearResult};
+const api={version:'netwizard-private-deployment-ui-v3',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,render,install,clearResult};
 root.NetWizardPrivateDeploymentUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();
