@@ -36,6 +36,10 @@ test('imagen productiva mantiene la frontera browser/private y no genera Cisco l
   await expect(page.locator('[data-dcfg="r1"]')).toHaveClass(/on/);
   await expect(page.locator('#cfgOut')).toHaveValue(/Configuración privada pendiente para cisco_ios/);
   await expect(page.locator('#cfgOut')).not.toHaveValue(/configure terminal|hostname RTR-PROD/);
+  await expect(page.locator('#cfgReadiness')).toContainText('PRIVATE ENGINE PENDIENTE');
+  await expect.poll(
+    ()=>page.evaluate(()=>window.NetWizardConfigView?.readinessForDevice?.('r1','cisco_ios')?.status||'')
+  ).toBe('pending');
 
   const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('src')||''));
   expect(scripts.some(src=>src.includes('netwizard-legacy-config-generator.js'))).toBe(false);
