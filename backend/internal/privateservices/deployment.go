@@ -30,6 +30,11 @@ type DeploymentArtifact struct {
 	MIME    string `json:"mime"`
 }
 
+type ConfigReadiness struct {
+	Status  string   `json:"status"`
+	Reasons []string `json:"reasons,omitempty"`
+}
+
 type DeploymentPlanResult struct {
 	ContractVersion             string               `json:"contractVersion"`
 	GeneratedAt                 string               `json:"generatedAt"`
@@ -47,6 +52,7 @@ type DeploymentPlanResult struct {
 	Issues                      json.RawMessage      `json:"issues"`
 	ConfigSources               map[string]string    `json:"configSources,omitempty"`
 	ConfigPaths                 map[string]string    `json:"configPaths,omitempty"`
+	ConfigReadiness             map[string]ConfigReadiness `json:"configReadiness,omitempty"`
 	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
 	ProductionReady             bool                 `json:"productionReady"`
 	ProductionStatus            string               `json:"productionStatus"`
