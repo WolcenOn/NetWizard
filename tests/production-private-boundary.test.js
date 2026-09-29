@@ -67,7 +67,13 @@ assert.ok(
 assert.ok(docker.includes('test ! -e /out/public/private'),'El directorio private nunca debe publicarse como asset');
 assert.ok(!html.includes('./private/vendor-config-engine.js'),'El motor vendor privado no debe formar parte del entrypoint browser');
 assert.ok(!html.includes('./private/legacy-vendor-generators.js'),'Cisco ASA/Windows/Linux privados no deben formar parte del entrypoint browser');
+assert.ok(!html.includes('./private/deployment-production-gate.js'),'La Production Gate privada nunca debe formar parte del entrypoint browser');
 assert.ok(docker.includes('private/deployment-worker.js --bundle'),'Vendor generation debe viajar solo dentro del bundle privado de deployment');
+const privateWorkerSource=fs.readFileSync(path.join(root,'private/deployment-worker.js'),'utf8');
+assert.ok(
+  privateWorkerSource.includes("require('./deployment-production-gate.js')"),
+  'El worker privado debe empaquetar la Production Gate server-side'
+);
 
 assert.ok(privateModules.includes('js/netwizard-legacy-config-generator.js'),'El generador histórico extraído debe ser source-only');
 assert.ok(!production.includes('./js/netwizard-legacy-config-generator.js'),'Docker no debe cargar el generador histórico extraído');
