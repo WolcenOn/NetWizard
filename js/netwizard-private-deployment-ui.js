@@ -55,6 +55,7 @@ function viewsFor(result){
     if(!text)return;
     views.push({key,label,content:text,fileName:safeFileName(fileName,key+'.txt'),mime:mime||'text/plain;charset=utf-8'});
   };
+  add('production-gate','Production Gate',r.productionGateSummaryMarkdown,'private-production-gate.md','text/markdown;charset=utf-8');
   add('runbook','Runbook',r.runbookMarkdown,'deployment-runbook.md','text/markdown;charset=utf-8');
   add('rollback','Rollback',r.rollbackMarkdown,'deployment-rollback.md','text/markdown;charset=utf-8');
   add('post-change','Checklist post-change',r.postChangeChecklistMarkdown,'post-change-checklist.md','text/markdown;charset=utf-8');
@@ -63,6 +64,7 @@ function viewsFor(result){
   for(const [index,artifact] of (Array.isArray(r.artifacts)?r.artifacts:[]).entries()){
     if(!artifact||typeof artifact.content!=='string')continue;
     const path=clean(artifact.path)||('artifact-'+(index+1)+'.txt');
+    if(path==='reports/private-production-gate.md'&&typeof r.productionGateSummaryMarkdown==='string')continue;
     add('artifact:'+index,path,artifact.content,path,clean(artifact.mime)||'text/plain;charset=utf-8');
   }
   return views;
@@ -193,11 +195,13 @@ function render(){
   if(lastResult&&resultMatchesContext(remote)){
     renderResult(lastResult);
     const issueCount=Array.isArray(lastResult.issues)?lastResult.issues.length:0;
+    const gateIssues=lastResult.productionGate&&Array.isArray(lastResult.productionGate.issues)?lastResult.productionGate.issues.length:0;
+    const gateLabel=lastResult.productionStatus==='ready'?'LISTO':lastResult.productionStatus==='review'?'REVISIÓN':'BLOQUEADO';
     setStatus(
       lastResult.ok
-        ? ('Deployment plan privado generado · '+(lastResult.artifacts||[]).length+' artefacto(s) · '+issueCount+' incidencia(s).')
-        : ('Deployment plan bloqueado · '+issueCount+' incidencia(s). Revisa las salidas antes de continuar.'),
-      lastResult.ok?'ok':'error'
+        ? ('Deployment plan privado generado · Production Gate: '+gateLabel+' · '+(lastResult.artifacts||[]).length+' artefacto(s) · '+gateIssues+' incidencia(s) de gate.')
+        : ('Deployment plan incompleto · Production Gate: '+gateLabel+' · '+issueCount+' incidencia(s) de generación.'),
+      lastResult.productionReady?'ok':(lastResult.productionStatus==='blocked'?'error':'info')
     );
   }
 

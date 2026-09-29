@@ -288,13 +288,29 @@ El antiguo `genConfig` base y sus renderers Cisco IOS/ASA, Junos, Aruba, pfSense
 
 Con esta separación, la lógica de generación clasificada como propietaria deja de residir en el artefacto browser productivo salvo utilidades genéricas aceptadas explícitamente como inspeccionables.
 
-### H. Siguiente bloque privado
+### H. Production Gate privada sobre artefactos
+
+El deployment privado ejecuta una puerta adicional `netwizard-private-production-gate-v1` dentro del worker. La decisión combina:
+
+- Production Gate estricta y extensión arquitectónica sobre la revisión remota autoritativa;
+- hardening vendor y validadores de L1/L2/L3, DHCP, políticas, cableado, PoE y arquitectura disponibles en servidor;
+- cobertura de una configuración privada por dispositivo;
+- `configSources=device:private`;
+- rutas de artefacto relativas, seguras y no duplicadas;
+- rechazo de placeholders/fallbacks no ejecutables;
+- presencia de change set, incremental plan, deployment plan, runbook, rollback y checklist.
+
+`ok=true` ya no debe interpretarse como certificación de producción: solo indica que el plan se construyó. `productionReady=true` exige `productionStatus=ready`; `review` y `blocked` se muestran como tales en la UI cloud.
+
+Los validadores se requieren estáticamente desde el worker para que esbuild los incluya dentro de `deployment-worker.cjs`; el gate privado no depende de fuentes JS públicas en runtime.
+
+### I. Siguiente bloque privado
 
 Orden recomendado:
 
-1. reforzar validación avanzada y production gate alrededor de los artefactos privados;
-2. revisar simulación/resiliencia para decidir qué parte merece frontera privada;
-3. cerrar checklist de publicación y seguridad.
+1. revisar simulación/resiliencia para decidir qué resultados deben incorporarse a la certificación privada;
+2. cerrar checklist de publicación y seguridad;
+3. pasar a mejoras de producto/UX salvo bloqueo verificado.
 
 La selección se hará por relación entre valor intelectual, facilidad de aislamiento y dependencia del modo offline.
 

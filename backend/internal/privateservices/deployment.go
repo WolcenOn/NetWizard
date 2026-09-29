@@ -12,6 +12,7 @@ import (
 )
 
 const PrivateDeploymentContractVersion = "netwizard-private-deployment-plan-v2"
+const PrivateProductionGateContractVersion = "netwizard-private-production-gate-v1"
 
 var (
 	ErrPrivateDeploymentUnavailable = errors.New("private deployment planning unavailable")
@@ -46,6 +47,11 @@ type DeploymentPlanResult struct {
 	Issues                      json.RawMessage      `json:"issues"`
 	ConfigSources               map[string]string    `json:"configSources,omitempty"`
 	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
+	ProductionReady             bool                 `json:"productionReady"`
+	ProductionStatus            string               `json:"productionStatus"`
+	ProductionGateContract      string               `json:"productionGateContract"`
+	ProductionGate              json.RawMessage      `json:"productionGate"`
+	ProductionGateSummary       string               `json:"productionGateSummaryMarkdown"`
 }
 
 type DeploymentRunner interface {
@@ -108,10 +114,28 @@ func (r NodeDeploymentRunner) Run(ctx context.Context, request DeploymentPlanReq
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		return DeploymentPlanResult{}, fmt.Errorf("%w: invalid worker response", ErrPrivateDeploymentInvalid)
 	}
-	if result.ContractVersion != PrivateDeploymentContractVersion || strings.TrimSpace(result.GeneratedAt) == "" {
-		return DeploymentPlanResult{}, fmt.Errorf("%w: worker contract mismatch", ErrPrivateDeploymentInvalid)
+	if err := validateDeploymentPlanResult(result); err != nil {
+		return DeploymentPlanResult{}, err
 	}
 	return result, nil
+}
+
+func validateDeploymentPlanResult(result DeploymentPlanResult) error {
+	if result.ContractVersion != PrivateDeploymentContractVersion || strings.TrimSpace(result.GeneratedAt) == "" {
+		return fmt.Errorf("%w: worker contract mismatch", ErrPrivateDeploymentInvalid)
+	}
+	if result.ProductionGateContract != PrivateProductionGateContractVersion || len(result.ProductionGate) == 0 || !json.Valid(result.ProductionGate) {
+		return fmt.Errorf("%w: production gate contract mismatch", ErrPrivateDeploymentInvalid)
+	}
+	switch result.ProductionStatus {
+	case "ready", "review", "blocked":
+	default:
+		return fmt.Errorf("%w: invalid production gate status", ErrPrivateDeploymentInvalid)
+	}
+	if result.ProductionReady != (result.ProductionStatus == "ready") {
+		return fmt.Errorf("%w: inconsistent production gate readiness", ErrPrivateDeploymentInvalid)
+	}
+	return nil
 }
 
 func (s *Service) SetDeploymentRunner(runner DeploymentRunner) {
@@ -129,7 +153,14 @@ func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMe
 	if s == nil || s.deployment == nil {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentUnavailable
 	}
-	return s.deployment.Run(ctx, DeploymentPlanRequest{
+	result, err := s.deployment.Run(ctx, DeploymentPlanRequest{
 		Project: project, GeneratedAt: generatedAt,
 	})
+	if err != nil {
+		return DeploymentPlanResult{}, err
+	}
+	if err := validateDeploymentPlanResult(result); err != nil {
+		return DeploymentPlanResult{}, err
+	}
+	return result, nil
 }

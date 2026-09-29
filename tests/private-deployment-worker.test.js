@@ -35,6 +35,11 @@ assert.strictEqual(actual.contractVersion,'netwizard-private-deployment-plan-v2'
 assert.strictEqual(actual.privateConfigContract,'netwizard-private-vendor-config-v1');
 assert.strictEqual(actual.configSources.r1,'private');
 assert.strictEqual(actual.ok,true);
+assert.strictEqual(actual.productionGateContract,'netwizard-private-production-gate-v1');
+assert.ok(['ready','review','blocked'].includes(actual.productionStatus));
+assert.strictEqual(actual.productionReady,actual.productionStatus==='ready');
+assert.ok(actual.productionGate&&Array.isArray(actual.productionGate.issues));
+assert.ok(actual.artifacts.some(x=>x.path==='reports/private-production-gate.md'));
 assert.deepStrictEqual(actual.changeSet,ChangeSet.publicChangeSet(changeSet));
 assert.deepStrictEqual(actual.incrementalPlan,Incremental.publicPlan(incrementalPlan));
 assert.deepStrictEqual(actual.deploymentPlan,deploymentPlan);
@@ -71,6 +76,9 @@ assert.strictEqual(blocked.ok,false);
 assert.strictEqual(blocked.changeSet,null);
 assert.strictEqual(blocked.incrementalPlan,null);
 assert.strictEqual(blocked.deploymentPlan,null);
+assert.strictEqual(blocked.productionReady,false);
+assert.strictEqual(blocked.productionStatus,'blocked');
+assert.ok(blocked.productionGate.issues.some(x=>x.code==='NW-PRIVATE-GATE-000'));
 assert.ok(blocked.issues.some(x=>x.code==='NW-PRIVATE-CONFIG-003'&&x.blocking));
 
 console.log('✓ Private deployment deriva todas las configs en servidor y rechaza inputs cliente');

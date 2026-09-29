@@ -281,6 +281,11 @@ func TestPrivateDeploymentPlanUsesStoredRevisionAndAudits(t *testing.T) {
 		IncrementalPlan: json.RawMessage(`{"format":"netwizard-incremental-plan"}`),
 		DeploymentPlan: json.RawMessage(`{"format":"netwizard-deployment-plan"}`),
 		Issues: json.RawMessage(`[]`),
+		ProductionReady: true,
+		ProductionStatus: "ready",
+		ProductionGateContract: privateservices.PrivateProductionGateContractVersion,
+		ProductionGate: json.RawMessage(`{"contractVersion":"netwizard-private-production-gate-v1","status":"ready","ready":true,"canExport":true,"issues":[]}`),
+		ProductionGateSummary: "Private Production Gate: LISTO",
 	}}
 	privateService.SetDeploymentRunner(runner)
 
@@ -320,6 +325,9 @@ func TestPrivateDeploymentPlanUsesStoredRevisionAndAudits(t *testing.T) {
 	if result.ContractVersion != privateservices.PrivateDeploymentContractVersion || !result.OK {
 		t.Fatalf("unexpected private deployment result: %#v", result)
 	}
+	if !result.ProductionReady || result.ProductionStatus != "ready" || result.ProductionGateContract != privateservices.PrivateProductionGateContractVersion {
+		t.Fatalf("unexpected private production gate result: %#v", result)
+	}
 	if string(runner.project) != string(snapshot) {
 		t.Fatalf("worker must receive stored revision, got %s", string(runner.project))
 	}
@@ -358,6 +366,10 @@ func TestPrivateDeploymentPlanRejectsViewerAndStaleVersion(t *testing.T) {
 		OK: true,
 		ChangeSet: json.RawMessage(`{}`), IncrementalPlan: json.RawMessage(`{}`),
 		DeploymentPlan: json.RawMessage(`{}`), Issues: json.RawMessage(`[]`),
+		ProductionReady: false,
+		ProductionStatus: "blocked",
+		ProductionGateContract: privateservices.PrivateProductionGateContractVersion,
+		ProductionGate: json.RawMessage(`{"contractVersion":"netwizard-private-production-gate-v1","status":"blocked","ready":false,"canExport":false,"issues":[]}`),
 	}})
 	ws, err := store.CreateWorkspace(context.Background(), workspaces.CreateInput{
 		ID: "ws-deployment-guards", Name: "Deployment", UserID: "usr-remote", CreatedBy: "sub-remote",

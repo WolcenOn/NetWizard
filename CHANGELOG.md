@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Private Production Gate: el deployment server-side certifica revisión y artefactos con `ready|review|blocked`, valida integridad/cobertura/rutas y expone `productionReady` separado de `ok`.
+
 - Legacy Config Extraction: el `genConfig` histórico sale de `netwizard.js` a un módulo source-only; Docker no lo publica y bloquea export ZIP/TXT/preflight local, derivando la generación SaaS al Private Deployment Plan v2.
 
 - Production Browser Boundary: el Docker SaaS deja de publicar renderers/stages especializados de vendor, switching, firewall, access-security, management y HA ya cubiertos por Private Engine; source/Pages conserva el pipeline completo y CI valida el grafo productivo.

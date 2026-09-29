@@ -81,7 +81,12 @@ const fetchFn=async(url,init)=>{
       artifacts:[{path:'configs/01-RTR-EDITED-r1-cisco_ios.cfg',content:'hostname RTR-EDITED\n',mime:'text/plain;charset=utf-8'}],
       issues:[],
       configSources:{r1:'private'},
-      privateConfigContract:'netwizard-private-vendor-config-v1'
+      privateConfigContract:'netwizard-private-vendor-config-v1',
+      productionReady:true,
+      productionStatus:'ready',
+      productionGateContract:'netwizard-private-production-gate-v1',
+      productionGate:{status:'ready',ready:true,canExport:true,counts:{errors:0,warnings:0,info:0,blocking:0},issues:[]},
+      productionGateSummaryMarkdown:'# Private Production Gate\n\nLISTO\n'
     });
   }
   throw new Error('unexpected fetch '+url);
@@ -105,6 +110,9 @@ const fetchFn=async(url,init)=>{
   const deployment=await client.syncAndGenerateDeploymentPlan();
   assert.strictEqual(deployment.contractVersion,'netwizard-private-deployment-plan-v2');
   assert.strictEqual(deployment.ok,true);
+  assert.strictEqual(deployment.productionReady,true);
+  assert.strictEqual(deployment.productionStatus,'ready');
+  assert.strictEqual(deployment.productionGateContract,'netwizard-private-production-gate-v1');
   assert.match(deployment.artifacts[0].content,/RTR-EDITED/);
   assert.strictEqual(calls[3].url,'/api/projects/prj_test/private/deployment-plan');
 
