@@ -58,7 +58,7 @@ assert.ok(html.includes('id="btnAutoSnPreview"'));
 assert.ok(main.includes('planner.buildFixedSubnetPlan'));
 assert.ok(main.includes('planner.applySubnetPlan'));
 assert.ok(main.includes('wizardSubnetPlan=subnetPlanner.buildFixedSubnetPlan'));
-assert.strictEqual((main.match(/S\\.subnets\\.push/g)||[]).length,1,'Solo la edición manual explícita puede insertar directamente en S.subnets');
+assert.strictEqual((main.match(/S\.subnets\.push/g)||[]).length,1,'Solo la edición manual explícita puede insertar directamente en S.subnets');
 const quickFlow=main.slice(main.indexOf('function buildQuickSubnetPlan'),main.indexOf('function renderVlans'));
 assert.ok(quickFlow.length>0);
 assert.ok(!quickFlow.includes('S.subnets.push'),'La asignación rápida no debe escribir S.subnets directamente');
