@@ -548,10 +548,14 @@ function configReadinessForView(devId,format){
   const privateArtifact=privateConfigArtifact(devId);
   if(privateArtifact&&(!format||requested===assigned)){
     const raw=privateArtifact.readiness||{},status=cliText(raw.status||'',40);
+    const capability=privateArtifact.capability||{};
     return{
       status:status||'review-required',
       reasons:Array.isArray(raw.reasons)&&raw.reasons.length?raw.reasons:['Artefacto privado sin clasificación de readiness; revisar antes de aplicar.'],
-      source:'private'
+      source:'private',
+      mode:cliText(capability.mode||'',30),
+      kind:cliText(capability.kind||'',40),
+      certification:cliText(capability.certification||'',40)
     };
   }
   if(localConfigGenerationAvailable()){
@@ -562,12 +566,13 @@ function configReadinessForView(devId,format){
 function paintConfigReadiness(nodeId,devId,format){
   const node=$(nodeId);if(!node)return;
   const r=configReadinessForView(devId,format),reasons=(r.reasons||[]).filter(Boolean);
+  const modeLabel=r.mode==='cli'?'CLI PRIVADA':r.mode==='script'?'SCRIPT PRIVADO':r.mode==='procedure'?'PROCEDIMIENTO':'';
   let label='Estado de aplicación pendiente.',cls='co co-ac';
   if(r.status==='apply-ready'){
-    label='✅ APPLY-READY · Artefacto privado estructuralmente aplicable. La Production Gate global debe seguir en READY.';
+    label='✅ '+(modeLabel?modeLabel+' · ':'')+'APPLY-READY · Artefacto privado estructuralmente aplicable. La Production Gate global debe seguir en READY.';
     cls='co co-gn';
   }else if(r.status==='review-required'){
-    label='⚠ REVISIÓN OBLIGATORIA · '+(reasons.join(' ')||'Revisa el artefacto antes de aplicarlo.');
+    label='⚠ '+(modeLabel?modeLabel+' · ':'')+'REVISIÓN OBLIGATORIA · '+(reasons.join(' ')||'Revisa el artefacto antes de aplicarlo.');
   }else if(r.status==='procedure-only'){
     label='ℹ PROCEDIMIENTO · No es una CLI universal para pegar directamente. '+(reasons.join(' ')||'');
   }else if(r.status==='source-preview'){
