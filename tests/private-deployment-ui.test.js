@@ -30,6 +30,7 @@ assert.strictEqual(views[6].mime,'text/plain;charset=utf-8');
 const configResult={
   configPaths:{r1:'configs/01-edge.cfg'},
   configReadiness:{r1:{status:'apply-ready',reasons:[]}},
+  configCapabilities:{r1:{vendor:'cisco_ios',kind:'router',mode:'cli',supported:true,certification:'dynamic',extension:'cfg'}},
   artifacts:[{path:'configs/01-edge.cfg',content:'hostname EDGE\n',mime:'text/plain;charset=utf-8'}]
 };
 const config=Ui.configArtifactForDevice(configResult,'r1');
@@ -38,6 +39,9 @@ assert.strictEqual(config.path,'configs/01-edge.cfg');
 assert.match(config.content,/hostname EDGE/);
 assert.strictEqual(config.readiness.status,'apply-ready');
 assert.deepStrictEqual(config.readiness.reasons,[]);
+assert.strictEqual(config.capability.mode,'cli');
+assert.strictEqual(config.capability.kind,'router');
+assert.strictEqual(config.capability.certification,'dynamic');
 
 const blockedAfterGeneration={
   configPaths:{r1:'configs/01-edge.cfg'},
