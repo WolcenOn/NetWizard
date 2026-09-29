@@ -106,7 +106,7 @@
         const current=await client.refresh();
         const caps=current.capabilities||{};
         if(!caps.authEnforced){
-          status.textContent='Modo local';
+          status.textContent=caps.selfHostedPrivateGeneration?'Modo self-hosted · Private Engine':'Modo local';
           setVisible(loginButton,false);
           setVisible(logoutButton,false);
           return;
