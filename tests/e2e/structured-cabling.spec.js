@@ -18,8 +18,11 @@ test('editor físico crea una ruta completa switch → patch panel → toma → 
       racks:[{id:'rack1',name:'Rack 1',rackUnits:24}],
       rackItems:[],pdus:[],powerConnections:[],
       devices:[{id:'sw1',name:'SW-01',type:'switch',kind:'switch',vendorOs:'cisco_ios',rackId:'rack1',rackUnit:10,rackUnits:1}],
-      ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',media:'GE'}],
-      hosts:[{id:'h1',name:'PC-01',type:'pc',portRef:'p1'}],
+      ports:[
+        {id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',media:'GE'},
+        {id:'p2',deviceId:'sw1',name:'Gi1/0/2',mode:'access',media:'GE'}
+      ],
+      hosts:[{id:'h1',name:'PC-01',type:'pc',portRef:'p2',connectedDeviceId:'sw1'}],
       patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[]
     });
     window.NetWizardState.replaceProject(p,{source:'e2e-cabling'});
@@ -78,5 +81,19 @@ test('editor físico crea una ruta completa switch → patch panel → toma → 
   await expect(page.locator('#structuredCablingMount')).toContainText('CPD → Oficina');
   await expect(page.locator('#structuredCablingMount')).toContainText('SW-01 · Gi1/0/1');
   await expect(page.locator('#structuredCablingMount')).toContainText('PC-01');
+
+  await expect.poll(()=>page.evaluate(()=>{
+    const h=window.NetWizardState.getSnapshot().hosts.find(x=>x.id==='h1');
+    return {portRef:h?.portRef,deviceId:h?.connectedDeviceId};
+  })).toEqual({portRef:'p1',deviceId:'sw1'});
+
+  await page.evaluate(()=>window.navTo('hosts'));
+  await page.locator('[data-eh="h1"]').click();
+  await expect(page.locator('#hConnDev')).toBeDisabled();
+  await expect(page.locator('#hPortMode')).toBeDisabled();
+  await expect(page.locator('#hPort')).toBeDisabled();
+  await expect(page.locator('#hPort')).toHaveValue('p1');
+  await expect(page.locator('#hDevHint')).toHaveValue(/Físico.*SW-01.*Gi1\/0\/1/);
+  await expect(page.locator('#hConnAuthority')).toContainText('Inventario físico');
   expect(errors).toEqual([]);
 });
