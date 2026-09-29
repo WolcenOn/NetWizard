@@ -319,7 +319,8 @@ Mantenimiento:
     if(!base)return{ok:false,kind:'fixed-missing',code:'invalid_base',msg:'Bloque base inválido. Usa formato tipo 10.10.0.0/16.',plans:[],warnings:[]};
     if(!Number.isInteger(pfx)||pfx<base.pfx||pfx>30)return{ok:false,kind:'fixed-missing',code:'invalid_prefix',msg:`El prefijo /${prefix} no es válido dentro de ${base.cidr}.`,plans:[],warnings:[]};
     const current=isArray(project&&project.subnets).filter(sn=>sn&&parseCidr&&parseCidr(sn.cidr));
-    const missing=isArray(project&&project.vlans).filter(v=>v&&v.id&&!subnetByVlan(project,v.id)).slice().sort((a,b)=>(a.vlanId||99999)-(b.vlanId||99999));
+    const requestedRefs=Array.isArray(opts.vlanRefs)&&opts.vlanRefs.length?new Set(opts.vlanRefs.map(cleanStr).filter(Boolean)):null;
+    const missing=isArray(project&&project.vlans).filter(v=>v&&v.id&&!subnetByVlan(project,v.id)&&(!requestedRefs||requestedRefs.has(v.id))).slice().sort((a,b)=>(a.vlanId||99999)-(b.vlanId||99999));
     const size=blockSize(pfx),plans=[],warnings=[];
     let cursor=alignUp(base.net,size);
     const overlapsUsed=cidr=>current.some(sn=>cidrOverlaps&&cidrOverlaps(cidr,sn.cidr))||plans.some(p=>cidrOverlaps&&cidrOverlaps(cidr,p.cidr));
