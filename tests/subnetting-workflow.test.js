@@ -35,6 +35,10 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(quickApplied.subnets.find(x=>x.vlanRef==='v20').cidr,'10.10.1.0/24');
 
+const targeted=Planner.buildFixedSubnetPlan(project,'10.10.0.0/16',24,{gatewayMode:'first',vlanRefs:['v30']});
+assert.deepStrictEqual(targeted.plans.map(x=>x.vlanRef),['v30']);
+assert.strictEqual(targeted.plans[0].cidr,'10.10.1.0/24');
+
 const vlsm=Planner.buildVlsmPlan('172.16.0.0/24',[
   {vlanRef:'v10',vlanId:10,name:'Usuarios',hostsRequired:40},
   {vlanRef:'v20',vlanId:20,name:'Servidores',hostsRequired:10}
@@ -53,6 +57,8 @@ assert.ok(html.includes('Asignación rápida conservadora'));
 assert.ok(html.includes('id="btnAutoSnPreview"'));
 assert.ok(main.includes('planner.buildFixedSubnetPlan'));
 assert.ok(main.includes('planner.applySubnetPlan'));
+assert.ok(main.includes('wizardSubnetPlan=subnetPlanner.buildFixedSubnetPlan'));
+assert.strictEqual((main.match(/S\\.subnets\\.push/g)||[]).length,1,'Solo la edición manual explícita puede insertar directamente en S.subnets');
 const quickFlow=main.slice(main.indexOf('function buildQuickSubnetPlan'),main.indexOf('function renderVlans'));
 assert.ok(quickFlow.length>0);
 assert.ok(!quickFlow.includes('S.subnets.push'),'La asignación rápida no debe escribir S.subnets directamente');
