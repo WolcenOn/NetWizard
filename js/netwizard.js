@@ -1122,7 +1122,7 @@ function updManualSnHint(){
   const ref=$('mSnVlan')?.value||'';
   const hint=$('mSnHint');
   if(!hint)return;
-  if(!ref){hint.textContent='Asigna manualmente la red y gateway de cada VLAN. Si la VLAN ya tiene subnet, se actualiza.';return;}
+  if(!ref){hint.textContent='Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.';return;}
   const v=vByRef(ref);const sn=snByVRef(ref);
   hint.textContent=sn?`Editando VLAN ${v?.vlanId||'—'}: ${sn.cidr} · GW ${sn.gateway||'—'}`:`Nueva subnet manual para VLAN ${v?.vlanId||'—'}.`;
   if(sn){$('mSnCidr').value=sn.cidr||'';$('mSnGw').value=sn.gateway||'';}
@@ -1212,7 +1212,7 @@ function renderSubnets(){
   const srows=S.subnets.slice(); const ssort=S.uiSort.subnets||{key:'vlan',dir:1};
   srows.sort((a,b)=>{const va=vByRef(a.vlanRef),vb=vByRef(b.vlanRef); let av='',bv=''; switch(ssort.key){case 'cidr': av=a.cidr; bv=b.cidr; break; case 'gw': av=a.gateway||''; bv=b.gateway||''; break; default: av=va?.vlanId||99999; bv=vb?.vlanId||99999;} return ssort.dir*cmpMixed(av,bv);});
   const el=$('snList'); el.textContent='';
-  if(!S.subnets.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin subnets. Puedes crearlas manualmente o usar Auto-subnetting.'; empty.appendChild(p); el.appendChild(empty); return; }
+  if(!S.subnets.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin subnets. Puedes definirlas manualmente, completar solo faltantes o usar el planificador VLSM.'; empty.appendChild(p); el.appendChild(empty); return; }
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
   const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.appendChild(document.createElement('th')); trh.appendChild(createSortTh('subnets','vlan','VLAN')); trh.appendChild(createSortTh('subnets','cidr','CIDR')); trh.appendChild(createSortTh('subnets','gw','GW')); trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
