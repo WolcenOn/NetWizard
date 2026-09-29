@@ -15,9 +15,9 @@ Antes de considerar una PR lista para merge deben estar en verde los cuatro jobs
 - [ ] `Quality checks` — incluye `npm run release:check` y `npm run build:pages`.
 - [ ] `Go backend tests` — incluye integración PostgreSQL cuando `NETWIZARD_TEST_DATABASE_URL` está disponible.
 - [ ] `Playwright E2E`.
-- [ ] `Docker build`.
+- [ ] `Docker build` — además de construir la imagen, arranca el contenedor y ejecuta `playwright.production.config.js` contra el navegador productivo.
 
-No se considera cerrado un bloque si falla Playwright o Docker.
+No se considera cerrado un bloque si falla Playwright source, el smoke Playwright productivo o Docker.
 
 ## Frontera Client Engine / Private Engine
 
@@ -26,6 +26,7 @@ No se considera cerrado un bloque si falla Playwright o Docker.
 - [ ] Los workers privados se empaquetan en `/app/private` y no como assets públicos.
 - [ ] La generación vendor y la Production Gate privada no forman parte del entrypoint browser.
 - [ ] Source/Pages/offline mantienen los módulos source-only necesarios para compatibilidad local.
+- [ ] `tests/e2e-production/production-browser.spec.js` confirma en la imagen real que los generadores source-only no existen en `window` y que Config espera al Private Engine.
 
 ## Seguridad y autoridad de servidor
 
@@ -35,6 +36,7 @@ No se considera cerrado un bloque si falla Playwright o Docker.
 - [ ] `backend/internal/storage/postgres/e4_integration_test.go` valida persistencia de sesiones/workspaces, auditoría y rate limiting en PostgreSQL.
 - [ ] Los endpoints privados consumen la revisión autorizada almacenada; no aceptan snapshots arbitrarios del navegador.
 - [ ] `productionReady=true` solo se acepta con `productionStatus=ready` y contrato `netwizard-private-production-gate-v1`.
+- [ ] La UI distingue `apply-ready`, `review-required`, `procedure-only`, preview local y pending; `apply-ready` por dispositivo no se presenta como sustituto de la Production Gate global.
 
 ## Validación funcional manual
 
@@ -47,6 +49,7 @@ No se considera cerrado un bloque si falla Playwright o Docker.
 - [ ] Ensayar criterios de parada y rollback.
 - [ ] Capturar evidencias posteriores al cambio.
 - [ ] Exportar inventario/documentación y verificar reimportación de un snapshot 3.50 existente.
+- [ ] Revisar `docs/MODEL_AUTHORITY.md`: rack placement, host cabling, subnetting y configuración deben conservar una sola autoridad por concepto.
 
 ## Criterio RC
 
