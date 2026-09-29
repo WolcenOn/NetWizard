@@ -79,6 +79,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
         }],
         issues:[],
         configSources:{r1:'private'},
+        configPaths:{r1:'configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg'},
         privateConfigContract:'netwizard-private-vendor-config-v1',
         productionReady:true,
         productionStatus:'ready',
@@ -121,6 +122,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('Production Gate');
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER RUNBOOK/);
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg');
+  await expect(page.locator('#cfgOut')).toHaveValue(/SERVER-ONLY-CONFIG/);
 
   await card.locator('#nwPrivateDeploymentView').selectOption('artifact:0');
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER-ONLY-CONFIG/);
