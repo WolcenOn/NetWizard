@@ -8,6 +8,18 @@ const num=v=>{if(v==null||String(v).trim()==='')return null;const n=Number(v);re
 const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 function ensureArrays(project){for(const k of ['patchPanels','telecomOutlets','cableRuns','patchConnections','hostOutletConnections','rackItems'])if(!Array.isArray(project[k]))project[k]=[];return project;}
+function syncHostAccessMirrors(project){
+ const next=ensureArrays(clone(project));
+ if(!MODEL||typeof MODEL.hostAccess!=='function')return next;
+ for(const host of arr(next.hosts)){
+   const access=MODEL.hostAccess(next,host.id);
+   if(access&&access.structured&&access.complete){
+     host.portRef=access.switchPortId||host.portRef||null;
+     host.connectedDeviceId=access.deviceId||host.connectedDeviceId||null;
+   }
+ }
+ return next;
+}
 function addPatchPanel(project,input){const next=ensureArrays(clone(project));const panel={id:clean(input.id)||uid('patch'),rackId:clean(input.rackId),name:clean(input.name)||'Patch panel',portCount:Math.max(1,Math.floor(num(input.portCount)||24)),category:clean(input.category)||'Cat6A',rackUnit:num(input.rackUnit)};next.patchPanels.push(panel);if(panel.rackId&&panel.rackUnit!=null)next.rackItems.push({id:`rackitem-${panel.id}`,rackId:panel.rackId,type:'patch-panel',patchPanelId:panel.id,label:panel.name,startUnit:panel.rackUnit,heightUnits:1,face:'front'});return next;}
 function addOutlet(project,input){const next=ensureArrays(clone(project));next.telecomOutlets.push({id:clean(input.id)||uid('outlet'),locationId:clean(input.locationId)||null,name:clean(input.name)||'Toma de red',portCount:Math.max(1,Math.floor(num(input.portCount)||1)),category:clean(input.category)||'Cat6A',room:clean(input.room)||null});return next;}
 function addCableRun(project,input){const next=ensureArrays(clone(project));next.cableRuns.push({id:clean(input.id)||uid('cable'),label:clean(input.label)||null,patchPanelId:clean(input.patchPanelId),patchPort:Math.max(1,Math.floor(num(input.patchPort)||1)),outletId:clean(input.outletId),outletPort:Math.max(1,Math.floor(num(input.outletPort)||1)),cableType:clean(input.cableType)||'Cat6A',lengthM:num(input.lengthM),route:clean(input.route)||null});return next;}
@@ -64,10 +76,10 @@ function bind(mount,state){mount.onclick=e=>{const a=e.target?.dataset?.action;i
  if(a==='add-cable-run'){const r=mount.querySelector('[data-form="cable-run"]').elementsRef;next=addCableRun(p,{patchPanelId:r.rpanel.value,patchPort:r.rp.value,outletId:r.rout.value,outletPort:r.rop.value,cableType:r.rtype.value,lengthM:r.rlen.value,route:r.rroute.value});}
  if(a==='add-cable-patch'){const r=mount.querySelector('[data-form="cable-patch"]').elementsRef;next=addPatchConnection(p,{patchPanelId:r.ppanel.value,patchPort:r.pp.value,switchPortId:r.sport.value,patchCordLengthM:r.plen.value});}
  if(a==='add-cable-host'){const r=mount.querySelector('[data-form="cable-host"]').elementsRef;next=addHostOutletConnection(p,{outletId:r.hout.value,outletPort:r.hop.value,hostId:r.hhost.value,patchCordLengthM:r.hlen.value});}
- if(next!==p)state.replaceProject(next,{source:'structured-cabling-editor'});};}
+ if(next!==p)state.replaceProject(syncHostAccessMirrors(next),{source:'structured-cabling-editor'});};}
 function render(project){project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');wrap.append(editor(project),inventoryCard(project),pathsCard(project));return wrap;}
 function inject(){if(!root.document||!MODEL)return;const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev');const state=root.NetWizardState;if(!page||!state)return;let mount=root.document.getElementById('structuredCablingMount');if(!mount){mount=root.document.createElement('div');mount.id='structuredCablingMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
-const api={version:'netwizard-structured-cabling-ui-v2',ensureArrays,addPatchPanel,addOutlet,addCableRun,addPatchConnection,addHostOutletConnection,removeEntity,render,inject};
+const api={version:'netwizard-structured-cabling-ui-v3',ensureArrays,syncHostAccessMirrors,addPatchPanel,addOutlet,addCableRun,addPatchConnection,addHostOutletConnection,removeEntity,render,inject};
 root.NetWizardStructuredCablingUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
 })(typeof window!=='undefined'?window:globalThis);
