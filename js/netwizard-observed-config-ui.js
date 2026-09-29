@@ -41,6 +41,7 @@
     const p=clone(project),opts=obj(options),id=clean(deviceId,120),device=arr(p.devices).find(item=>clean(item&&item.id,120)===id);
     if(!device)return{ok:false,status:'blocked',issues:[{code:'NW-OBS-UI-001',blocking:true,message:'El dispositivo seleccionado no existe.'}],candidate:'',rollback:''};
     const changeSetApi=opts.changeSet||root.NetWizardChangeSet,incrementalApi=opts.incremental||root.NetWizardIncrementalGenerators,generate=opts.generateConfig||root.genConfig;
+    if(root.document&&!opts.generateConfig&&!root.NetWizardLegacyConfigGenerator)return{ok:false,status:'blocked',issues:[{code:'NW-OBS-UI-002',blocking:true,message:'El preflight local no está disponible en el navegador SaaS. Usa Private Deployment Plan.'}],candidate:'',rollback:''};
     if(!changeSetApi||typeof changeSetApi.buildChangeSet!=='function'||!incrementalApi||typeof incrementalApi.buildPlan!=='function'||typeof generate!=='function')return{ok:false,status:'blocked',issues:[{code:'NW-OBS-UI-002',blocking:true,message:'El runtime incremental todavía no está disponible.'}],candidate:'',rollback:''};
     let desired='';try{desired=normalizeConfig(generate(id,clean(device.vendorOs,80)||undefined,p));}catch(error){return{ok:false,status:'blocked',issues:[{code:'NW-OBS-UI-003',blocking:true,message:`No se pudo generar el objetivo: ${error&&error.message||error}`}],candidate:'',rollback:''};}
     if(!desired)return{ok:false,status:'blocked',issues:[{code:'NW-OBS-UI-004',blocking:true,message:'El generador no produjo una configuración objetivo.'}],candidate:'',rollback:''};
