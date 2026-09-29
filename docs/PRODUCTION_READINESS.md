@@ -9,7 +9,7 @@ El workflow `NetWizard CI` es la referencia de release y debe completar:
 1. `Quality checks`: `npm run release:check` y `npm run build:pages`.
 2. `Go backend tests`: `go test ./...` con PostgreSQL de integración.
 3. `Playwright E2E`.
-4. `Docker build`.
+4. `Docker build`: construye la imagen y, dentro del mismo job, arranca el contenedor y ejecuta un smoke Playwright contra el navegador productivo.
 
 Localmente pueden reproducirse con:
 
@@ -19,10 +19,13 @@ npm run release:check
 go test ./...
 npm run test:e2e:install
 npm run test:e2e
-docker build .
+docker build -t netwizard-local .
+docker run --rm -p 8080:8080 --name netwizard-local netwizard-local
+# En otra terminal:
+NETWIZARD_PRODUCTION_BASE_URL=http://127.0.0.1:8080 npx playwright test --config=playwright.production.config.js
 ```
 
-No se considera listo un bloque si Playwright o Docker fallan.
+No se considera listo un bloque si Playwright, el smoke del navegador productivo o Docker fallan.
 
 ## Criterio de salida del proyecto
 
@@ -35,14 +38,17 @@ La decisión final debe proceder de la Production Gate actual, no de una lectura
 
 La puerta estricta agrega validaciones de arquitectura, L1/L2/L3, DHCP, políticas, cableado, PoE, inventario físico, resiliencia, WAN, capacidad, servicios internos, Wi-Fi, IPv6/VRF, failure simulation y drift observado. Los fallos bloqueantes de cualquiera de esos módulos impiden `productionReady=true`.
 
-Además, la puerta privada verifica integridad de los artefactos derivados: configuración privada por dispositivo, origen `private`, rutas seguras/no duplicadas, ausencia de placeholders y presencia de change set, incremental plan, deployment plan, runbook, rollback y checklist post-change.
+Además, la puerta privada verifica integridad de los artefactos derivados: configuración privada por dispositivo, origen `private`, rutas seguras/no duplicadas, ausencia de fallbacks y presencia de change set, incremental plan, deployment plan, runbook, rollback y checklist post-change.
+
+La aplicabilidad de un artefacto se informa por dispositivo mediante `configReadiness`: `apply-ready`, `review-required` o `procedure-only`. Esta clasificación **no sustituye** a la Production Gate global. Un artefacto puede ser `apply-ready` y, aun así, el deployment permanecer bloqueado por arquitectura, cableado, capacidad, seguridad u otra validación global.
 
 ## Frontera de publicación
 
 La frontera declarativa vive en `js/netwizard-browser-modules.js`.
 
 - Los módulos `production:false` permanecen disponibles en Source/Pages/offline, pero no se cargan en el browser SaaS.
-- `tests/production-private-boundary.test.js` comprueba que el entrypoint productivo excluye generadores especializados y el generador histórico.
+- `tests/production-private-boundary.test.js` comprueba estáticamente que el entrypoint productivo excluye generadores especializados y el generador histórico.
+- `tests/e2e-production/production-browser.spec.js` comprueba en Chromium contra el contenedor real que esos generadores no están disponibles y que Cisco queda pendiente del Private Engine en lugar de generarse localmente.
 - El Docker ejecuta `scripts/prepare-production-index.js`, no publica `/private` y rechaza source maps/TypeScript en `/out/public`.
 - Los workers `routing-worker.cjs` y `deployment-worker.cjs` se empaquetan en el área privada del contenedor.
 - La Production Gate privada y la generación vendor server-side no deben entrar en el entrypoint browser.
@@ -73,3 +79,8 @@ Antes de publicar:
 ## Alcance
 
 El modo local/offline sigue siendo compatible y no requiere backend. En SaaS, las operaciones con autoridad, datos remotos o lógica privada pasan por el backend/Private Engine. La compatibilidad de snapshots 3.50 no debe romperse por reorganizaciones de UX ni por cambios de publicación que no modifiquen el formato persistido.
+
+
+## Autoridad del modelo
+
+La matriz C/R/D/O/T/X/A, el orden canónico de navegación y las reglas de compatibilidad están documentados en `docs/MODEL_AUTHORITY.md`. Las reorganizaciones de UX no deben crear una segunda autoridad persistida para equipos, puertos, colocación, cableado o subnets.
