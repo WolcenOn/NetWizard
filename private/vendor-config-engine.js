@@ -39,6 +39,53 @@ function formatWild(cidr){
   return Network.ip4s(parsed.net)+' '+Network.ip4s((~parsed.mask)>>>0);
 }
 function splitPorts(value){return String(value||'any').split(',').map(x=>x.trim()).filter(Boolean);}
+function finalizeCiscoIosConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n');
+  const leading=[];
+  let i=0;
+  while(i<lines.length){
+    const t=lines[i].trim();
+    if(t==='configure terminal')break;
+    if(t===''||t.startsWith('!')){leading.push(lines[i]);i++;continue;}
+    break;
+  }
+  const body=[];
+  for(;i<lines.length;i++){
+    const line=lines[i],t=line.trim().toLowerCase();
+    if(t==='configure terminal'||t==='end'||t==='write memory'||t==='copy running-config startup-config')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  const prefix=leading.length?leading:[];
+  const out=[...prefix,'configure terminal',...body,'end','write memory','!'];
+  return out.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function configReadiness(project,device,output){
+  const p=obj(project),d=obj(device),vendor=clean(d.vendorOs,80),text=String(output||''),reasons=[];
+  if(['ubiquiti_unifi','tplink_omada','galgus_cloud','pfsense'].includes(vendor)){
+    return{status:'procedure-only',reasons:['La plataforma se configura mediante controlador, GUI/API o procedimiento específico; el artefacto no es una CLI universal para pegar directamente.']};
+  }
+  if(vendor!=='cisco_ios'){
+    return{status:'review-required',reasons:['El generador privado produce artefacto vendor-specific, pero este vendor aún no está certificado como apply-ready por NetWizard.']};
+  }
+  if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
+  if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
+  if(/NEXT_HOP|TODO|REVISAR|VALIDAR/i.test(text))reasons.push('La configuración contiene placeholders o instrucciones de revisión manual.');
+  if(String(d.internetEdge||'').toLowerCase()==='yes'){
+    const roas=obj(p.roas);
+    if(!clean(roas.wanCidr,80))reasons.push('El equipo edge no tiene WAN CIDR explícita.');
+    if(!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito.');
+  }
+  if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
+    reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
+  }
+  if((text.match(/^configure terminal$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente una entrada a config mode.');
+  if((text.match(/^end$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un cierre de config mode.');
+  if((text.match(/^write memory$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un guardado final.');
+  const endAt=text.lastIndexOf('\nend\n'),saveAt=text.lastIndexOf('\nwrite memory\n');
+  if(endAt<0||saveAt<0||saveAt<endAt)reasons.push('El cierre/guardado de Cisco IOS no está en orden aplicable.');
+  return{status:reasons.length?'review-required':'apply-ready',reasons};
+}
 function firewallAcl(project){
   let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
   rules=Policy.enrichPolicyRules(project,rules);
@@ -131,20 +178,22 @@ function create(project){
 }
 function generateAll(project){
   const p=obj(project),pipeline=create(p);
-  const configs={},paths={},artifacts=[],issues=[],sources={};
+  const configs={},paths={},artifacts=[],issues=[],sources={},readiness={};
   for(const [index,device] of arr(p.devices).entries()){
     const id=clean(device&&device.id,256),vendor=clean(device&&device.vendorOs,80);
     if(!id)continue;
     const path=configPath(device,index);
     paths[id]=path;
     if(PRIVATE_VENDORS.has(vendor)){
-      const output=String(pipeline.generate(id,vendor)||'');
+      let output=String(pipeline.generate(id,vendor)||'');
+      if(vendor==='cisco_ios')output=finalizeCiscoIosConfig(output);
       if(!output.trim()||/todavía no implementado en Private Engine/i.test(output)){
         issues.push({code:'NW-PRIVATE-CONFIG-002',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': Private Engine no produjo una configuración utilizable.'});
         continue;
       }
       configs[id]=output;
       sources[id]='private';
+      readiness[id]=configReadiness(p,device,output);
       artifacts.push({path,content:output.endsWith('\n')?output:output+'\n',mime:'text/plain;charset=utf-8'});
       continue;
     }
@@ -153,12 +202,12 @@ function generateAll(project){
   return {
     contractVersion:CONTRACT_VERSION,
     ok:!issues.some(x=>x.blocking),
-    configs,configPaths:paths,artifacts,issues,sources,
+    configs,configPaths:paths,artifacts,issues,sources,configReadiness:readiness,
     pipeline:pipeline.inspect()
   };
 }
 
 module.exports={
   CONTRACT_VERSION,MODULAR_VENDORS,PRIVATE_VENDORS,
-  create,generateAll,configPath,extension,firewallAcl
+  create,generateAll,configPath,extension,firewallAcl,finalizeCiscoIosConfig,configReadiness
 };
