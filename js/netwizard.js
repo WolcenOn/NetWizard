@@ -917,6 +917,31 @@ function renderDevs(){
 function boolToSelect(v){ return v === true ? 'yes' : v === false ? 'no' : 'auto'; }
 function selectToBool(v){ return v === 'yes' ? true : v === 'no' ? false : null; }
 function setBoolField(obj, key, val){ if(val === null){ delete obj[key]; } else obj[key] = val; }
+function optionalPortNumber(id){const node=$(id);if(!node||node.value==='')return null;const n=Number(node.value);return Number.isFinite(n)?n:null;}
+function optionalPortText(id){const node=$(id);if(!node)return null;const value=(node.value||'').trim();return value||null;}
+function setOptionalPortField(port,key,value){if(value===null||value==='')delete port[key];else port[key]=value;}
+function readAdvancedPortFields(){
+  return{
+    speedMaxMbps:optionalPortNumber('pSpeedMax'),
+    mtu:optionalPortNumber('pMtu'),
+    transceiver:optionalPortText('pTransceiver'),
+    connector:optionalPortText('pConnector'),
+    adminState:optionalPortText('pAdminState'),
+    negotiatedSpeedMbps:optionalPortNumber('pNegotiatedSpeed'),
+    utilizationPercent:optionalPortNumber('pUtilization'),
+    operState:optionalPortText('pOperState')
+  };
+}
+function applyAdvancedPortFields(port){
+  const fields=readAdvancedPortFields();
+  Object.entries(fields).forEach(([key,value])=>setOptionalPortField(port,key,value));
+  return port;
+}
+function loadAdvancedPortFields(port){
+  const map={pSpeedMax:port?.speedMaxMbps,pMtu:port?.mtu,pTransceiver:port?.transceiver,pConnector:port?.connector,pAdminState:port?.adminState,pNegotiatedSpeed:port?.negotiatedSpeedMbps,pUtilization:port?.utilizationPercent,pOperState:port?.operState};
+  Object.entries(map).forEach(([id,value])=>{const node=$(id);if(node)node.value=value==null?'':String(value);});
+}
+function clearAdvancedPortFields(){['pSpeedMax','pMtu','pTransceiver','pConnector','pAdminState','pNegotiatedSpeed','pUtilization','pOperState'].forEach(id=>{const node=$(id);if(node)node.value='';});}
 function updatePortL2Wrap(){
   const role = $('pRole') ? $('pRole').value : '';
   const isSwitch = isSwitchDevice(devById($('pDev')?.value));
@@ -957,8 +982,8 @@ function updatePortRoleOpts(){
 $('pDev').onchange=()=>{updatePortRoleOpts();};
 $('pRole').onchange=()=>{updatePortL2Wrap();};
 
-function clearPortForm(){ $('portEditId').value=''; $('pName').value=''; $('pDesc').value=''; if($('pAllowedVlans'))$('pAllowedVlans').value=''; if($('pNativeVlan'))$('pNativeVlan').value=''; if($('pUplink'))$('pUplink').value='auto'; if($('pAccessProtection'))$('pAccessProtection').value='default'; $('btnAddPort').textContent='➕ Añadir'; $('btnCancelPortEdit').style.display='none'; $('pHint').textContent=''; $('pHint').className='hint'; updatePortRoleOpts(); }
-function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(isSwitchDevice(d)){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.mode==='trunk'?'lan':(p.role||'routed'); } if($('pNativeVlan'))$('pNativeVlan').value=p.nativeVlanRef||''; if($('pAllowedVlans'))$('pAllowedVlans').value=(p.allowedVlans||[]).join(','); if($('pUplink'))$('pUplink').value=boolToSelect(p.uplink); if($('pAccessProtection'))$('pAccessProtection').value=(p.portFast===false&&p.bpduGuard===false)?'off':(p.portFast===true&&p.bpduGuard===true)?'strict':'default'; $('pDesc').value=p.desc||''; $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; updatePortL2Wrap(); navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
+function clearPortForm(){ $('portEditId').value=''; $('pName').value=''; $('pDesc').value=''; if($('pAllowedVlans'))$('pAllowedVlans').value=''; if($('pNativeVlan'))$('pNativeVlan').value=''; if($('pUplink'))$('pUplink').value='auto'; if($('pAccessProtection'))$('pAccessProtection').value='default'; clearAdvancedPortFields(); $('btnAddPort').textContent='➕ Añadir'; $('btnCancelPortEdit').style.display='none'; $('pHint').textContent=''; $('pHint').className='hint'; updatePortRoleOpts(); }
+function startPortEdit(id){ const p=S.ports.find(x=>x.id===id); if(!p)return; const d=devById(p.deviceId); $('portEditId').value=id; $('pDev').value=p.deviceId; updatePortRoleOpts(); $('pName').value=p.name||''; $('pMedia').value=p.media||'GE'; if(isSwitchDevice(d)){ $('pRole').value=(p.mode==='access'?'access':'trunk'); $('pVlan').value=p.accessVlanRef||''; } else { $('pRole').value=p.mode==='trunk'?'lan':(p.role||'routed'); } if($('pNativeVlan'))$('pNativeVlan').value=p.nativeVlanRef||''; if($('pAllowedVlans'))$('pAllowedVlans').value=(p.allowedVlans||[]).join(','); if($('pUplink'))$('pUplink').value=boolToSelect(p.uplink); if($('pAccessProtection'))$('pAccessProtection').value=(p.portFast===false&&p.bpduGuard===false)?'off':(p.portFast===true&&p.bpduGuard===true)?'strict':'default'; $('pDesc').value=p.desc||''; loadAdvancedPortFields(p); $('btnAddPort').textContent='💾 Guardar cambios'; $('btnCancelPortEdit').style.display=''; updatePortL2Wrap(); navTo('ports'); window.scrollTo({top:0,behavior:'smooth'}); }
 $('btnCancelPortEdit').onclick=()=>clearPortForm();
 $('btnAddPort').onclick=()=>{
   const devId=$('pDev').value;
@@ -991,9 +1016,11 @@ $('btnAddPort').onclick=()=>{
   if(editId){
     const p=S.ports.find(x=>x.id===editId); if(!p)return alert('No se encontró el puerto a editar.');
     Object.assign(p,{deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef,allowedVlans,desc,role:realRole});
+    applyAdvancedPortFields(p);
     setBoolField(p,'uplink',up); if(mode!=='access'){delete p.portFast;delete p.bpduGuard;} else { if(!('portFast' in extra))delete p.portFast; if(!('bpduGuard' in extra))delete p.bpduGuard; Object.assign(p,extra); }
   }else{
-    S.ports.push(Object.assign({id:uid('port'),deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef,allowedVlans,desc,position:null,role:realRole},extra));
+    const port=Object.assign({id:uid('port'),deviceId:devId,name:pname,media,mode,accessVlanRef,nativeVlanRef,allowedVlans,desc,position:null,role:realRole},extra);
+    applyAdvancedPortFields(port);S.ports.push(port);
   }
   clearPortForm(); save();refresh();
   $('pHint').textContent=`✓ Puerto "${pname}" guardado en ${d.name}`;
