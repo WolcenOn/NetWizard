@@ -64,6 +64,27 @@ const placeholder={
 const placeholderIssues=Gate.validateArtifacts(project,placeholder,generated);
 assert.ok(placeholderIssues.some(item=>item.code==='NW-PRIVATE-GATE-003'));
 
+const reviewProject=JSON.parse(JSON.stringify(project));
+const cisco=reviewProject.devices.find(d=>d.vendorOs==='cisco_ios');
+if(cisco){
+  cisco.internetEdge='yes';
+  reviewProject.roas=Object.assign({},reviewProject.roas||{},{gwId:null,wanCidr:'',wanNh:''});
+  const reviewGenerated=Vendor.generateAll(reviewProject);
+  const reviewResult={
+    ok:true,
+    configSources:Object.assign({},reviewGenerated.sources),
+    artifacts:reviewGenerated.artifacts.slice(),
+    changeSet:{format:'netwizard-change-set'},
+    incrementalPlan:{format:'netwizard-incremental-plan'},
+    deploymentPlan:{format:'netwizard-deployment-plan'},
+    runbookMarkdown:'# Runbook\n\nApply safely.\n',
+    rollbackMarkdown:'# Rollback\n\nUndo safely.\n',
+    postChangeChecklistMarkdown:'# Checklist\n\nValidate safely.\n'
+  };
+  const reviewIssues=Gate.validateArtifacts(reviewProject,reviewResult,reviewGenerated);
+  assert.ok(reviewIssues.some(item=>item.code==='NW-PRIVATE-GATE-010'&&item.deviceId===cisco.id&&item.blocking));
+}
+
 assert.strictEqual(Gate.safeArtifactPath('configs/a.cfg'),true);
 assert.strictEqual(Gate.safeArtifactPath('../a.cfg'),false);
 assert.strictEqual(Gate.safeArtifactPath('/etc/passwd'),false);
