@@ -5,10 +5,10 @@
 ========================================================= */
 (function initNetWizardConnectivityModel(root,factory){
   'use strict';
-  const api=factory();
+  const api=factory(root);
   root.NetWizardConnectivityModel=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
-})(typeof window!=='undefined'?window:globalThis,function(){
+})(typeof window!=='undefined'?window:globalThis,function(root){
   'use strict';
 
   const SERVICES={
@@ -23,6 +23,13 @@
   const clean=v=>String(v==null?'':v).trim();
   const lower=v=>clean(v).toLowerCase();
   const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
+  let requiredCabling=null;
+  function structuredCabling(){
+    if(root&&root.NetWizardStructuredCabling)return root.NetWizardStructuredCabling;
+    if(requiredCabling)return requiredCabling;
+    try{if(typeof require==='function')requiredCabling=require('./netwizard-structured-cabling.js');}catch(_){}
+    return requiredCabling;
+  }
 
   function ipv4Int(value){
     const parts=clean(value).split('.');
@@ -93,10 +100,14 @@
     if(!endpoint)return{port:null,device:null,accessNode:null};
     if(endpoint.kind==='host'){
       const h=endpoint.raw||{};
-      const portId=h.portRef||h.portId||h.connectedPortId||h.port||null;
+      const cabling=structuredCabling();
+      const physical=cabling&&typeof cabling.hostAccess==='function'?cabling.hostAccess(project,h.id):null;
+      const portId=physical&&physical.structured&&physical.complete
+        ? physical.switchPortId
+        : (h.portRef||h.portId||h.connectedPortId||h.port||null);
       const port=byId(project.ports,portId);
       const device=port?byId(project.devices,port.deviceId):null;
-      return{port,device,accessNode:null};
+      return{port,device,accessNode:null,physicalAccess:physical||null,accessSource:physical&&physical.structured?'structured-cabling':'direct'};
     }
     const iotState=options.iotState||project.iot||{};
     const d=endpoint.raw||{};
