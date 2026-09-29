@@ -513,12 +513,28 @@ function genHostCsv(){
 }
 
 // MAIN CONFIG DISPATCH
+function privateConfigArtifact(devId){
+  const api=window.NetWizardPrivateDeploymentUi;
+  return api&&typeof api.deviceConfig==='function'?api.deviceConfig(devId):null;
+}
 function genConfig(devId,format){
   const d=devById(devId);if(!d)return'';
   const api=localConfigGenerator();
   if(api)return api.generate(S,devId,format);
-  return `! Vendor/OS no implementado en navegador de producción: ${cliText(format||d.vendorOs||'sin-vendor',80)}
-! La generación local está desactivada. Usa Private Deployment Plan para obtener artefactos server-side.
+  const assigned=cliText(d.vendorOs||'sin-vendor',80),requested=cliText(format||d.vendorOs||'sin-vendor',80);
+  const privateArtifact=privateConfigArtifact(devId);
+  if(privateArtifact&&(!format||requested===assigned)){
+    return privateArtifact.content||'';
+  }
+  if(privateArtifact&&requested!==assigned){
+    return `! El Private Engine generó este dispositivo para ${assigned}.
+! La previsualización cruzada como ${requested} no está disponible en producción.
+! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.
+`;
+  }
+  return `! Configuración privada pendiente para ${assigned}.
+! Pulsa "Sincronizar y generar deployment plan" en Private Deployment Plan.
+! Cuando termine, esta vista mostrará aquí el artefacto server-side del dispositivo.
 `;
 }
 
@@ -1828,7 +1844,8 @@ function selectDevCfg(devId){
   selVendorCfg=d.vendorOs||ALL_VENDORS[0].id;
   document.querySelectorAll('[data-dcfg]').forEach(el=>el.classList.toggle('on',el.dataset.dcfg===devId));
   const paint=()=>{const cfg=genConfig(selDevCfg,selVendorCfg);$('cfgOut').value=cfg;$('cfgOutComment').value=buildCommentedConfig(cfg);};
-  renderVendorPills($('cfgVendorPills'), ALL_VENDORS, selVendorCfg, 'vp', (id)=>{selVendorCfg=id;paint();});
+  const vendors=localConfigGenerationAvailable()?ALL_VENDORS:ALL_VENDORS.filter(v=>v.id===selVendorCfg);
+  renderVendorPills($('cfgVendorPills'), vendors.length?vendors:[{id:selVendorCfg,l:selVendorCfg}], selVendorCfg, 'vp', (id)=>{selVendorCfg=id;paint();});
   paint();
 }
 
@@ -1840,7 +1857,8 @@ function openDevCfgModal(devId){
   $('dcmTitle').textContent=`⚙ ${d.name}`;
   { const meta=$('dcmMeta'); meta.textContent=''; meta.appendChild(makeBadge(d.type||'','b bac')); meta.appendChild(document.createTextNode(' ')); meta.appendChild(makeBadge(d.vendorOs||'—','b bgr')); meta.appendChild(document.createTextNode(' ')); meta.appendChild(makeBadge(`${portsByDev(devId).length} puertos`,'b bgr')); }
   const paint=()=>{const cfg=genConfig(dcmDevId,dcmVendor);$('dcmCfg').value=cfg;$('dcmCfgComment').value=buildCommentedConfig(cfg);};
-  renderVendorPills($('dcmPills'), ALL_VENDORS, dcmVendor, 'dcmp', (id)=>{dcmVendor=id;paint();});
+  const vendors=localConfigGenerationAvailable()?ALL_VENDORS:ALL_VENDORS.filter(v=>v.id===dcmVendor);
+  renderVendorPills($('dcmPills'), vendors.length?vendors:[{id:dcmVendor,l:dcmVendor}], dcmVendor, 'dcmp', (id)=>{dcmVendor=id;paint();});
   paint();
   $('devCfgModal').classList.add('on');
 }
@@ -1848,6 +1866,10 @@ $('dcmClose').onclick=()=>$('devCfgModal').classList.remove('on');
 $('devCfgModal').onclick=e=>{if(e.target.id==='devCfgModal'){$('devCfgModal').classList.remove('on');}};
 $('dcmCopy').onclick=()=>{navigator.clipboard.writeText($('dcmCfg').value).then(()=>alert('✓ Copiado al portapapeles.'));};
 $('dcmDl').onclick=()=>{const d=devById(dcmDevId);dl(`${d?.name||'config'}_${dcmVendor}.txt`,$('dcmCfg').value);};
+window.addEventListener('nw:private-deployment:generated',()=>{
+  if(selDevCfg)selectDevCfg(selDevCfg);
+  if(dcmDevId&&$('devCfgModal')?.classList.contains('on'))openDevCfgModal(dcmDevId);
+});
 
 function renderVtp(){
   if($('vtpDomain'))$('vtpDomain').value=S.vtp?.domain||'';
