@@ -27,6 +27,22 @@ assert.strictEqual(views[6].fileName,'configs-01-edge.cfg');
 assert.match(views[6].content,/hostname EDGE/);
 assert.strictEqual(views[6].mime,'text/plain;charset=utf-8');
 
+const configResult={
+  configPaths:{r1:'configs/01-edge.cfg'},
+  artifacts:[{path:'configs/01-edge.cfg',content:'hostname EDGE\n',mime:'text/plain;charset=utf-8'}]
+};
+const config=Ui.configArtifactForDevice(configResult,'r1');
+assert.ok(config);
+assert.strictEqual(config.path,'configs/01-edge.cfg');
+assert.match(config.content,/hostname EDGE/);
+
+const blockedAfterGeneration={
+  configPaths:{r1:'configs/01-edge.cfg'},
+  deploymentPlan:null,
+  artifacts:[{path:'configs/01-edge.cfg',content:'hostname EDGE\n'}]
+};
+assert.match(Ui.configArtifactForDevice(blockedAfterGeneration,'r1').content,/hostname EDGE/);
+
 const sparse=Ui.viewsFor({artifacts:[{path:'rollback/r1.txt',content:'undo\n'}]});
 assert.deepStrictEqual(sparse.map(x=>x.key),['artifact:0']);
 assert.strictEqual(sparse[0].fileName,'rollback-r1.txt');
