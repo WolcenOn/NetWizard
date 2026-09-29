@@ -65,6 +65,12 @@ func privateSessionKey(raw string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func privateSecretEqual(left, right string) bool {
+	leftHash := sha256.Sum256([]byte(strings.TrimSpace(left)))
+	rightHash := sha256.Sum256([]byte(strings.TrimSpace(right)))
+	return subtle.ConstantTimeCompare(leftHash[:], rightHash[:]) == 1
+}
+
 func (a *selfHostedPrivateAuthState) create(ttl time.Duration, now time.Time) (string, selfHostedPrivateSession, error) {
 	if ttl <= 0 {
 		ttl = 12 * time.Hour
@@ -240,8 +246,7 @@ func (s *Server) requireSelfHostedPrivateSession(w http.ResponseWriter, r *http.
 	}
 	if csrf {
 		provided := strings.TrimSpace(r.Header.Get("X-NetWizard-CSRF"))
-		if provided == "" || len(provided) != len(session.CSRF) ||
-			subtle.ConstantTimeCompare([]byte(provided), []byte(session.CSRF)) != 1 {
+		if provided == "" || !privateSecretEqual(provided, session.CSRF) {
 			noStore(w)
 			http.Error(w, "csrf check failed", http.StatusForbidden)
 			return "", selfHostedPrivateSession{}, false
@@ -326,8 +331,7 @@ func (s *Server) handleSelfHostedPrivateLogin(w http.ResponseWriter, r *http.Req
 	}
 	provided := strings.TrimSpace(body.Token)
 	expected := strings.TrimSpace(s.cfg.SelfHostedPrivateToken)
-	if provided == "" || len(provided) != len(expected) ||
-		subtle.ConstantTimeCompare([]byte(provided), []byte(expected)) != 1 {
+	if provided == "" || !privateSecretEqual(provided, expected) {
 		noStore(w)
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
