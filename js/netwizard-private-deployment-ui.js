@@ -189,7 +189,7 @@ function render(){
     const authRow=el('div',{className:'row'});
     const tokenCol=el('div');
     tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},'Token de operador self-hosted'));
-    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'current-password',placeholder:'Token configurado en el servidor'});
+    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'off',spellcheck:'false',placeholder:'Token configurado en el servidor'});
     tokenCol.appendChild(tokenInput);
     const actionCol=el('div');
     actionCol.append(el('label',{className:'fl'},'Sesión privada'));
