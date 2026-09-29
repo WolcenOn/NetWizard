@@ -1418,6 +1418,12 @@ function fillHostDeviceSel(){
   const opts=[makeOption('','— Sin equipo —'), ...connectableDevices().map(d=>makeOption(d.id,`${d.name||''} · ${d.type||'equipo'}`))];
   setOptions($('hConnDev'),opts);
 }
+function fillHostManagedDeviceSel(keepValue){
+  const eligible=S.devices.filter(d=>['server','access_point','appliance'].includes(devKind(d))).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const prev=keepValue!==undefined?keepValue:($('hDeviceRef')?.value||'');
+  setOptions($('hDeviceRef'),[makeOption('','— No representa dispositivo gestionado —'),...eligible.map(d=>makeOption(d.id,`${d.name||d.id} · ${devLabel(d)} · ${d.vendorOs||'sin vendor'}`))]);
+  if(prev&&eligible.some(d=>d.id===prev))$('hDeviceRef').value=prev;
+}
 function fillHostPortSel(deviceId,keepValue){
   const devId=deviceId||$('hConnDev').value||'';
   const prev=keepValue!==undefined?keepValue:($('hPort')?.value||'');
@@ -1482,8 +1488,8 @@ function updateHostDeviceHint(){
   const hint=$('hConnAuthority');if(hint)hint.textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.';
   if(finalDev && !$('hLoc').value)$('hLoc').value=deviceVisualLoc(finalDev.id)||'';
 }
-function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType').value='pc'; $('hVlan').value=''; $('hIpMode').value='dhcp'; $('hStaticIp').value=''; $('hMac').value=''; $('hPhysLoc').value=''; if($('hPhysLocSel'))$('hPhysLocSel').value=''; $('hNotes').value=''; fillHostDeviceSel(); fillHostLocSel(); setHostConnectionControlsLocked(false); $('hConnDev').value=''; $('hPortMode').value='auto'; fillHostPortSel(''); $('hPort').value=''; $('hLoc').value=''; $('hDevHint').value='Sin equipo asociado'; if($('hConnAuthority'))$('hConnAuthority').textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.'; $('hStaticSec').style.display='none'; $('btnAddHost').textContent='➕ Añadir host'; $('btnCancelHostEdit').style.display='none'; $('hSnHint').textContent=''; }
-function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; const resolvedPortId=hostResolvedPortId(h); $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,resolvedPortId||''); $('hPort').value=resolvedPortId||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').textContent='💾 Guardar cambios'; $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
+function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType').value='pc'; $('hVlan').value=''; $('hIpMode').value='dhcp'; $('hStaticIp').value=''; $('hMac').value=''; $('hPhysLoc').value=''; if($('hPhysLocSel'))$('hPhysLocSel').value=''; $('hNotes').value=''; fillHostDeviceSel(); fillHostManagedDeviceSel(''); fillHostLocSel(); setHostConnectionControlsLocked(false); $('hConnDev').value=''; $('hPortMode').value='auto'; fillHostPortSel(''); $('hPort').value=''; $('hLoc').value=''; $('hDevHint').value='Sin equipo asociado'; if($('hConnAuthority'))$('hConnAuthority').textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.'; $('hStaticSec').style.display='none'; $('btnAddHost').textContent='➕ Añadir host'; $('btnCancelHostEdit').style.display='none'; $('hSnHint').textContent=''; }
+function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostManagedDeviceSel(h.deviceRef||''); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; const resolvedPortId=hostResolvedPortId(h); $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,resolvedPortId||''); $('hPort').value=resolvedPortId||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').textContent='💾 Guardar cambios'; $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
 if($('btnCancelPhysLocEdit')) $('btnCancelPhysLocEdit').onclick=()=>clearPhysicalLocationForm();
 if($('btnAddPhysLoc')) $('btnAddPhysLoc').onclick=()=>{
   const payload={
@@ -1506,6 +1512,7 @@ $('btnCancelHostEdit').onclick=()=>clearHostForm();
 $('btnAddHost').onclick=()=>{
   const name=($('hName').value||'').trim();const type=$('hType').value;const vRef=$('hVlan').value||null;const ipMode=$('hIpMode').value;
   const sip=($('hStaticIp').value||'').trim()||null;const mac=($('hMac').value||'').trim()||null;const editId=$('hostEditId').value||null;
+  const deviceRef=$('hDeviceRef')?.value||null;
   let connectedDeviceId=$('hConnDev').value||null;let portAssignMode=$('hPortMode').value||'auto';
   let portRef=$('hPort').value||null;const physicalLocation=(($('hPhysLoc').value||$('hPhysLocSel').value||'').trim())||null;const notes=($('hNotes').value||'').trim()||null;
   const existingHost=editId?S.hosts.find(x=>x.id===editId):null,physicalAccess=existingHost?structuredHostAccess(existingHost):null;
@@ -1519,8 +1526,8 @@ $('btnAddHost').onclick=()=>{
   if(!physicalAccess?.structured&&connectedDeviceId && portAssignMode==='auto')portRef=suggestHostPort(connectedDeviceId,editId)||null;
   if(portRef){const port=S.ports.find(p=>p.id===portRef);if(!port)return alert('El puerto seleccionado ya no existe.');if(connectedDeviceId&&port.deviceId!==connectedDeviceId)return alert('El puerto no pertenece al equipo seleccionado.');if(hostPortUsedByOther(portRef,editId))return alert('Ese puerto ya está asociado a otro host.');}
   const locVal=$('hLoc').value||'';
-  if(editId){ const h=S.hosts.find(x=>x.id===editId); if(!h)return alert('No se encontró el host a editar.'); Object.assign(h,{name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode}); if(locVal)setHostVisualLoc(editId,locVal); else if(connectedDeviceId)setHostVisualLoc(editId,deviceVisualLoc(connectedDeviceId)||hostVisualLoc(editId)||''); }
-  else { const id=uid('h'); S.hosts.push({id,name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode}); if(locVal)setHostVisualLoc(id,locVal); else if(connectedDeviceId)setHostVisualLoc(id,deviceVisualLoc(connectedDeviceId)||''); }
+  if(editId){ const h=S.hosts.find(x=>x.id===editId); if(!h)return alert('No se encontró el host a editar.'); Object.assign(h,{name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode,deviceRef}); if(locVal)setHostVisualLoc(editId,locVal); else if(connectedDeviceId)setHostVisualLoc(editId,deviceVisualLoc(connectedDeviceId)||hostVisualLoc(editId)||''); }
+  else { const id=uid('h'); S.hosts.push({id,name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode,deviceRef}); if(locVal)setHostVisualLoc(id,locVal); else if(connectedDeviceId)setHostVisualLoc(id,deviceVisualLoc(connectedDeviceId)||''); }
   clearHostForm(); save();refresh();
 };
 $('btnBulk').onclick=()=>$('bulkModal').classList.add('on');
@@ -2746,7 +2753,7 @@ function refresh(){
   renderDevs();
   renderPortsList();
   renderVlans();renderSubnets();fillVlanSels();updManualSnHint();
-  renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
+  renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostManagedDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
   fillSwDevSels();fillLinkPickers();renderVisPorts();renderLinks();
   renderFwRules();renderVlanMatrix();
   ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
