@@ -727,7 +727,15 @@ $('wApply').onclick=()=>{
     return;
   }
   if(!confirm(`¿Aplicar escenario "${sc.name}"? Se añadirá al proyecto actual.`))return;
-  const bCidr=parseCidr(base);const step=2**(32-szPfx);let snIdx=0;
+  const subnetPlanner=window.NetWizardPlanner;
+  const plannedVlanAdds=sc.vlans.filter(vd=>!S.vlans.some(v=>v.vlanId===vd.id)).map(vd=>({id:uid('vlan'),vlanId:vd.id,name:vd.n,color:vd.c}));
+  let wizardSubnetPlan=null;
+  if(plannedVlanAdds.length){
+    if(!subnetPlanner||typeof subnetPlanner.buildFixedSubnetPlan!=='function'||typeof subnetPlanner.applySubnetPlan!=='function')return alert('Motor común de subnetting no disponible.');
+    const planningProject=projectSnapshot();planningProject.vlans=(planningProject.vlans||[]).concat(plannedVlanAdds);
+    wizardSubnetPlan=subnetPlanner.buildFixedSubnetPlan(planningProject,base,szPfx,{gatewayMode:'first',vlanRefs:plannedVlanAdds.map(v=>v.id)});
+    if(!wizardSubnetPlan.ok)return alert(wizardSubnetPlan.msg||'No se pudo planificar el direccionamiento del escenario.');
+  }
   // Devices
   let fwId=null,swId=null,apId=null;
   const addDev=(name,kind,vendorOs,edge,wanIf,extra={})=>{
@@ -761,13 +769,11 @@ $('wApply').onclick=()=>{
     apId=addDev('AP-01','access_point','generic_network','no',null,{wifiRole:'ap',hasWifi:true});
     addPort(apId,'eth0','trunk','uplink','Uplink AP / SSID VLANs');
   }
-  // VLANs
-  for(const vd of sc.vlans){
-    if(S.vlans.some(v=>v.vlanId===vd.id))continue;
-    const vRef=uid('vlan');
-    S.vlans.push({id:vRef,vlanId:vd.id,name:vd.n,color:vd.c});
-    if(bCidr){const net=(bCidr.net+snIdx*step)>>>0;const cidr=`${ip4s(net)}/${szPfx}`;const ci=parseCidr(cidr);const gw=ci?.fh?ip4s(ci.fh):null;S.subnets.push({id:uid('sn'),vlanRef:vRef,cidr,gateway:gw});}
-    snIdx++;
+  // VLANs + subnetting through the common planner
+  for(const vlan of plannedVlanAdds)S.vlans.push(vlan);
+  if(wizardSubnetPlan&&wizardSubnetPlan.plans.length){
+    const addressed=subnetPlanner.applySubnetPlan(S,wizardSubnetPlan,{replaceExisting:false,assignMode:'none'});
+    S.subnets=addressed.subnets;
   }
   // Hosts from picker
   const pickVlan=(pattern)=>S.vlans.find(v=>pattern.test(v.name||''))||S.vlans[0]||null;
