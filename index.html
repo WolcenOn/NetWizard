@@ -54,7 +54,7 @@
     <div class="sb-it" data-step="graphs"><div class="sb-num">🧭</div>🧭 Vistas gráficas</div>
     <div class="sb-div"></div>
     <div class="sb-sec">Conectividad</div>
-    <div class="sb-it" data-step="links"><div class="sb-num">6</div>🔗 Puertos & Enlaces</div>
+    <div class="sb-it" data-step="links"><div class="sb-num">6</div>🔗 Enlaces</div>
     <div class="sb-div"></div>
     <div class="sb-sec">Seguridad</div>
     <div class="sb-it" data-step="fw"><div class="sb-num">7</div>🔒 Firewall</div>
@@ -307,6 +307,26 @@
           <button class="btn bs" id="btnQuick24">⚡ Generar 24 GE (switch)</button>
         </div>
       </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">📐 Layout switch (generación en bloque)</div>
+        <div class="row">
+          <div><label class="fl">Switch</label><select id="lyDev"></select></div>
+          <div><label class="fl">Total puertos</label><input id="lyTotal" type="number" min="1" placeholder="24"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Columnas</label><input id="lyCols" type="number" min="2" max="16" value="12"/></div>
+          <div><label class="fl">Base naming</label><input id="lyBase" placeholder="0/  ó  0/0/  ó  1/1/"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">VLAN access por defecto</label><select id="lyVlan"></select></div>
+          <div><label class="fl">Modo</label><select id="lyMode"><option value="replace">Reemplazar</option><option value="merge">Mezclar</option></select></div>
+        </div>
+        <div class="brow">
+          <button class="btn bs" id="btnBuildLy">📐 Ver layout</button>
+          <button class="btn bp" id="btnApplyLy">✔ Generar puertos</button>
+        </div>
+        <div id="lyEditor" style="margin-top:9px;"></div>
+      </div>
     </div>
     <div>
       <div class="card">
@@ -479,31 +499,12 @@
   </div>
 </div>
 
-<!-- ═══════════ PUERTOS VISUAL + ENLACES ═══════════ -->
+<!-- ═══════════ ENLACES ═══════════ -->
 <div class="pg" id="pg-links">
-  <div class="ph"><h1>🔗 Puertos & Enlaces</h1></div>
+  <div class="ph"><h1>🔗 Enlaces</h1><p>Conecta puertos existentes y documenta el medio físico entre equipos. La creación y edición de puertos se realiza en Puertos & Interfaces.</p></div>
   <div class="g2">
     <div>
-      <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">📐 Layout switch (generación en bloque)</div>
-        <div class="row">
-          <div><label class="fl">Switch</label><select id="lyDev"></select></div>
-          <div><label class="fl">Total puertos</label><input id="lyTotal" type="number" min="1" placeholder="24"/></div>
-        </div>
-        <div class="row">
-          <div><label class="fl">Columnas</label><input id="lyCols" type="number" min="2" max="16" value="12"/></div>
-          <div><label class="fl">Base naming</label><input id="lyBase" placeholder="0/  ó  0/0/  ó  1/1/"/></div>
-        </div>
-        <div class="row">
-          <div><label class="fl">VLAN access por defecto</label><select id="lyVlan"></select></div>
-          <div><label class="fl">Modo</label><select id="lyMode"><option value="replace">Reemplazar</option><option value="merge">Mezclar</option></select></div>
-        </div>
-        <div class="brow">
-          <button class="btn bs" id="btnBuildLy">📐 Ver layout</button>
-          <button class="btn bp" id="btnApplyLy">✔ Generar puertos</button>
-        </div>
-        <div id="lyEditor" style="margin-top:9px;"></div>
-      </div>
+
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🔗 Crear enlace</div>
         <div class="row">
