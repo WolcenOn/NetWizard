@@ -175,6 +175,24 @@ jobs:
           NETWIZARD_PRODUCTION_BASE_URL: http://127.0.0.1:8080
         run: npx playwright test --config=playwright.production.config.js
 
+      - name: Upload production Playwright report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-production-report-${{ github.run_id }}
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload production test results
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-production-results-${{ github.run_id }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Production container logs
         if: failure()
         run: docker logs netwizard-ci-runtime || true
