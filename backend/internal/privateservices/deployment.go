@@ -114,21 +114,28 @@ func (r NodeDeploymentRunner) Run(ctx context.Context, request DeploymentPlanReq
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		return DeploymentPlanResult{}, fmt.Errorf("%w: invalid worker response", ErrPrivateDeploymentInvalid)
 	}
+	if err := validateDeploymentPlanResult(result); err != nil {
+		return DeploymentPlanResult{}, err
+	}
+	return result, nil
+}
+
+func validateDeploymentPlanResult(result DeploymentPlanResult) error {
 	if result.ContractVersion != PrivateDeploymentContractVersion || strings.TrimSpace(result.GeneratedAt) == "" {
-		return DeploymentPlanResult{}, fmt.Errorf("%w: worker contract mismatch", ErrPrivateDeploymentInvalid)
+		return fmt.Errorf("%w: worker contract mismatch", ErrPrivateDeploymentInvalid)
 	}
 	if result.ProductionGateContract != PrivateProductionGateContractVersion || len(result.ProductionGate) == 0 || !json.Valid(result.ProductionGate) {
-		return DeploymentPlanResult{}, fmt.Errorf("%w: production gate contract mismatch", ErrPrivateDeploymentInvalid)
+		return fmt.Errorf("%w: production gate contract mismatch", ErrPrivateDeploymentInvalid)
 	}
 	switch result.ProductionStatus {
 	case "ready", "review", "blocked":
 	default:
-		return DeploymentPlanResult{}, fmt.Errorf("%w: invalid production gate status", ErrPrivateDeploymentInvalid)
+		return fmt.Errorf("%w: invalid production gate status", ErrPrivateDeploymentInvalid)
 	}
 	if result.ProductionReady != (result.ProductionStatus == "ready") {
-		return DeploymentPlanResult{}, fmt.Errorf("%w: inconsistent production gate readiness", ErrPrivateDeploymentInvalid)
+		return fmt.Errorf("%w: inconsistent production gate readiness", ErrPrivateDeploymentInvalid)
 	}
-	return result, nil
+	return nil
 }
 
 func (s *Service) SetDeploymentRunner(runner DeploymentRunner) {
