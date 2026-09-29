@@ -39,6 +39,27 @@ function formatWild(cidr){
   return Network.ip4s(parsed.net)+' '+Network.ip4s((~parsed.mask)>>>0);
 }
 function splitPorts(value){return String(value||'any').split(',').map(x=>x.trim()).filter(Boolean);}
+function finalizeCiscoIosConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n');
+  const leading=[];
+  let i=0;
+  while(i<lines.length){
+    const t=lines[i].trim();
+    if(t==='configure terminal')break;
+    if(t===''||t.startsWith('!')){leading.push(lines[i]);i++;continue;}
+    break;
+  }
+  const body=[];
+  for(;i<lines.length;i++){
+    const line=lines[i],t=line.trim().toLowerCase();
+    if(t==='configure terminal'||t==='end'||t==='write memory'||t==='copy running-config startup-config')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  const prefix=leading.length?leading:[];
+  const out=[...prefix,'configure terminal',...body,'end','write memory','!'];
+  return out.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
 function firewallAcl(project){
   let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
   rules=Policy.enrichPolicyRules(project,rules);
@@ -138,7 +159,8 @@ function generateAll(project){
     const path=configPath(device,index);
     paths[id]=path;
     if(PRIVATE_VENDORS.has(vendor)){
-      const output=String(pipeline.generate(id,vendor)||'');
+      let output=String(pipeline.generate(id,vendor)||'');
+      if(vendor==='cisco_ios')output=finalizeCiscoIosConfig(output);
       if(!output.trim()||/todavía no implementado en Private Engine/i.test(output)){
         issues.push({code:'NW-PRIVATE-CONFIG-002',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': Private Engine no produjo una configuración utilizable.'});
         continue;
@@ -160,5 +182,5 @@ function generateAll(project){
 
 module.exports={
   CONTRACT_VERSION,MODULAR_VENDORS,PRIVATE_VENDORS,
-  create,generateAll,configPath,extension,firewallAcl
+  create,generateAll,configPath,extension,firewallAcl,finalizeCiscoIosConfig
 };
