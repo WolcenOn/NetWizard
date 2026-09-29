@@ -1,83 +1,75 @@
-# Preparación para producción local/controlada
+# Preparación para producción local/controlada y SaaS
 
-NetWizard puede considerarse preparado para uso local/controlado cuando se cumplen estas condiciones.
+NetWizard considera separadas la preparación del proyecto y la preparación de la plataforma. Ninguna de las dos sustituye a la otra.
 
-## Validaciones técnicas
+## Validaciones técnicas obligatorias
 
-1. Ejecutar unit tests:
+El workflow `NetWizard CI` es la referencia de release y debe completar:
 
-```bash
-npm test
-```
+1. `Quality checks`: `npm run release:check` y `npm run build:pages`.
+2. `Go backend tests`: `go test ./...` con PostgreSQL de integración.
+3. `Playwright E2E`.
+4. `Docker build`.
 
-2. Ejecutar comprobación sintáctica:
-
-```bash
-npm run check:syntax
-```
-
-3. Ejecutar los tests del backend Go:
+Localmente pueden reproducirse con:
 
 ```bash
+npm ci
+npm run release:check
 go test ./...
-```
-
-4. Validar que el contenedor de producción construye:
-
-```bash
+npm run test:e2e:install
+npm run test:e2e
 docker build .
 ```
 
-5. Instalar y ejecutar E2E:
+No se considera listo un bloque si Playwright o Docker fallan.
 
-```bash
-npm run test:e2e:install
-npm run test:e2e
-```
+## Criterio de salida del proyecto
 
-El smoke test debe confirmar `NetWizardRuntime.status.ok === true`: ningún módulo requerido ausente, ningún script duplicado, puerta de arquitectura activa y todas las etapas del pipeline de configuración instaladas.
+La decisión final debe proceder de la Production Gate actual, no de una lectura aislada de `ok`.
 
-6. Abrir el proyecto real en navegador y ejecutar:
+- `ok` en Private Deployment Plan significa que el plan pudo construirse.
+- `productionReady` solo puede ser `true` cuando `productionStatus === "ready"`.
+- `review` requiere revisión humana.
+- `blocked` impide presentar el deployment como listo para producción.
 
-- Puerta de producción.
-- Auditoría L2 avanzada.
-- Auditoría capa 1.
-- Validación DHCP.
-- Hardening exportación vendor.
-- Matriz de conectividad.
-- Checklist de producción.
+La puerta estricta agrega validaciones de arquitectura, L1/L2/L3, DHCP, políticas, cableado, PoE, inventario físico, resiliencia, WAN, capacidad, servicios internos, Wi-Fi, IPv6/VRF, failure simulation y drift observado. Los fallos bloqueantes de cualquiera de esos módulos impiden `productionReady=true`.
 
-## Criterio de salida
+Además, la puerta privada verifica integridad de los artefactos derivados: configuración privada por dispositivo, origen `private`, rutas seguras/no duplicadas, ausencia de placeholders y presencia de change set, incremental plan, deployment plan, runbook, rollback y checklist post-change.
 
-- Sin errores bloqueantes en Puerta de Producción.
-- Sin errores de schema/importación.
-- Sin IPs duplicadas ni fuera de subnet.
-- Sin DHCP que pise gateway/IPs estáticas.
-- Sin VLANs críticas sin gateway o sin continuidad L2.
-- Sin PoE/cableado fuera de especificación en elementos críticos.
-- Sin colisiones de rack, referencias de PDU/tomas inválidas ni rutas de cableado estructurado incompletas en los elementos documentados.
-- En proyectos multisede, cada subnet con gateway debe quedar asociada o inferida correctamente al borde/firewall correspondiente.
-- Sin exportaciones vendor bloqueadas en modo producción.
-- Todos los vendors ofrecidos por la UI generan una salida no vacía y no caen en `Sin vendor asignado`.
-- Los scripts pfSense PHP deben revisarse en laboratorio contra la versión concreta de pfSense y ejecutarse únicamente con backup previo de `config.xml`.
-- La vista física no sustituye la validación del JSON: racks, tomas y ubicaciones deben estar correctamente referenciados en el modelo 3.50.
-- El artefacto de Pages se construye con `npm run build:pages` sin recursos locales ausentes.
+## Frontera de publicación
 
-## Publicación en GitHub Pages
+La frontera declarativa vive en `js/netwizard-browser-modules.js`.
 
-El workflow `NetWizard CI` empaqueta y despliega Pages únicamente después de superar Quality JS, tests Go, Playwright y la construcción del contenedor. En la configuración del repositorio debe seleccionarse **GitHub Actions** como origen de Pages; no debe coexistir un despliegue independiente desde rama.
+- Los módulos `production:false` permanecen disponibles en Source/Pages/offline, pero no se cargan en el browser SaaS.
+- `tests/production-private-boundary.test.js` comprueba que el entrypoint productivo excluye generadores especializados y el generador histórico.
+- El Docker ejecuta `scripts/prepare-production-index.js`, no publica `/private` y rechaza source maps/TypeScript en `/out/public`.
+- Los workers `routing-worker.cjs` y `deployment-worker.cjs` se empaquetan en el área privada del contenedor.
+- La Production Gate privada y la generación vendor server-side no deben entrar en el entrypoint browser.
 
-La rama `main` debe protegerse exigiendo como comprobaciones obligatorias:
+## Autoridad y seguridad backend
 
-- `Quality checks`
-- `Go backend tests`
-- `Playwright E2E`
-- `Docker build`
+La plataforma SaaS ya dispone de autenticación/sesiones, workspaces, roles, persistencia PostgreSQL, control optimista de versiones, auditoría y rate limiting.
 
-El entorno `github-pages` puede protegerse adicionalmente para limitar despliegues a `main`.
+Las verificaciones principales son:
+
+- `backend/internal/auth/*_test.go`: identidad, sesión y OIDC.
+- `backend/internal/httpapi/remote_api_test.go`: 401/403, CSRF, owner/editor/viewer, conflictos de versión, rate limiting y auditoría.
+- `backend/internal/httpapi/private_services_api_test.go`: autorización y revisión almacenada para routing/deployment privados, además de auditoría.
+- `backend/internal/storage/postgres/e4_integration_test.go`: persistencia de identidad/sesión/workspace, auditoría y rate limiting PostgreSQL.
+
+Los endpoints privados no deben aceptar un snapshot cliente como autoridad; deben cargar la revisión almacenada correspondiente a `expectedVersion`.
+
+## Publicación
+
+Antes de publicar:
+
+- proteger `main` con los cuatro checks de CI;
+- revisar que la imagen pública no contiene fuentes/bundles privados ni source maps;
+- verificar que las capacidades que permanecen en navegador están aceptadas como inspeccionables;
+- confirmar que autenticación, autorización, auditoría y límites están activos en el entorno;
+- verificar backup/restauración de PostgreSQL como responsabilidad operativa del despliegue.
 
 ## Alcance
 
-Esta preparación es para ejecución local, laboratorio, formación, preventa, documentación o uso profesional controlado.
-
-Existe un backend Go mínimo y un despliegue de contenedor, pero esto no equivale a plataforma SaaS multiusuario: todavía no hay autenticación, autorización por proyecto, persistencia remota, auditoría de usuarios ni backups de base de datos.
+El modo local/offline sigue siendo compatible y no requiere backend. En SaaS, las operaciones con autoridad, datos remotos o lógica privada pasan por el backend/Private Engine. La compatibilidad de snapshots 3.50 no debe romperse por reorganizaciones de UX ni por cambios de publicación que no modifiquen el formato persistido.
