@@ -539,11 +539,11 @@ Mantenimiento:
       if(!left) return;
       const card = doc.createElement('div');
       card.className = 'card';
-      const staticHtml = '<div class="card-t" style="margin-bottom:11px;">🧮 VLSM automático por necesidad</div>'+
-        '<div class="co co-ac" style="margin-bottom:9px;">Calcula subredes de tamaño variable según hosts, puertos access, IoT e intención por VLAN; las VLANs de Tránsito L3 se dimensionan como redes punto a punto. Antes de aplicar, audita la capa 1 y el direccionamiento actual.</div>'+
+      const staticHtml = '<div class="card-t" style="margin-bottom:11px;">🧮 Planificador VLSM · replanificación revisable</div>'+
+        '<div class="co co-ac" style="margin-bottom:9px;">Motor recomendado para redimensionar direccionamiento: calcula subredes según hosts, puertos access, IoT e intención por VLAN. S.subnets sigue siendo la única fuente canónica; este plan puede actualizar asignaciones existentes únicamente al pulsar Aplicar, después de previsualización/diff.</div>'+
         '<div class="row"><div><label class="fl">Bloque base</label><input id="vlsmBase" value="10.10.0.0/16"/></div><div><label class="fl">Reserva crecimiento por VLAN</label><input id="vlsmMargin" type="number" min="0" value="5"/></div></div>'+
         '<div class="row"><div><label class="fl">Gateway</label><select id="vlsmGw"><option value="first">Primera IP usable</option><option value="last">Última IP usable</option></select></div><div><label class="fl">Asignar IPs a hosts</label><select id="vlsmAssign"><option value="static_only">Solo estáticos sin IP</option><option value="all_hosts">Todos los hosts de VLAN</option><option value="none">No tocar hosts</option></select></div></div>'+
-        '<div class="brow"><button class="btn bs" id="btnVlsmPreview">👁 Previsualizar VLSM</button><button class="btn bs" id="btnVlsmDiff">🧾 Ver diff</button><button class="btn bp" id="btnVlsmApply">✔ Aplicar VLSM + IPs</button></div>'+
+        '<div class="brow"><button class="btn bs" id="btnVlsmPreview">👁 Previsualizar VLSM</button><button class="btn bs" id="btnVlsmDiff">🧾 Ver diff</button><button class="btn bp" id="btnVlsmApply">✔ Aplicar plan VLSM</button></div>'+
         '<pre class="cfg" id="vlsmOut" style="min-height:120px;white-space:pre-wrap;"></pre>';
       card.appendChild(doc.createRange().createContextualFragment(staticHtml));
       left.appendChild(card);
