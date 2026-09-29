@@ -50,6 +50,18 @@ const endpoints=model.endpointList(project);
 assert.ok(endpoints.some(x=>x.id==='host:h1'&&x.ip==='10.0.10.10'));
 assert.ok(endpoints.some(x=>x.id==='iot:iot1'&&x.vlanRef==='v20'));
 
+const structured=JSON.parse(JSON.stringify(project));
+structured.hosts[0].portRef='h2p';
+structured.patchPanels=[{id:'pp1',name:'PP-01',portCount:24}];
+structured.telecomOutlets=[{id:'to1',name:'TO-01',portCount:1}];
+structured.cableRuns=[{id:'run1',patchPanelId:'pp1',patchPort:1,outletId:'to1',outletPort:1,cableType:'Cat6A'}];
+structured.patchConnections=[{id:'pc1',patchPanelId:'pp1',patchPort:1,switchPortId:'h1p'}];
+structured.hostOutletConnections=[{id:'hc1',hostId:'h1',outletId:'to1',outletPort:1}];
+const structuredAccess=model.endpointAccess(structured,model.endpointList(structured).find(x=>x.id==='host:h1'));
+assert.strictEqual(structuredAccess.accessSource,'structured-cabling');
+assert.strictEqual(structuredAccess.port.id,'h1p');
+assert.strictEqual(structuredAccess.device.id,'sw1');
+
 const route=model.shortestDevicePath(project,'sw1','sw2');
 assert.ok(route);
 assert.deepStrictEqual(route.devices,['sw1','r1','sw2']);
