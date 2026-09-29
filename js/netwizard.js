@@ -518,6 +518,10 @@ function privateConfigArtifact(devId){
   const api=window.NetWizardPrivateDeploymentUi;
   return api&&typeof api.deviceConfig==='function'?api.deviceConfig(devId):null;
 }
+function privateConfigStatus(devId){
+  const api=window.NetWizardPrivateDeploymentUi;
+  return api&&typeof api.deviceStatus==='function'?api.deviceStatus(devId):null;
+}
 function genConfig(devId,format){
   const d=devById(devId);if(!d)return'';
   const api=localConfigGenerator();
@@ -528,6 +532,14 @@ function genConfig(devId,format){
     return `! El Private Engine generó este dispositivo para ${assigned}.
 ! La previsualización cruzada como ${requested} no está disponible en producción.
 ! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.
+`;
+  }
+  const status=privateConfigStatus(devId);
+  if(status&&['unsupported','generation-error','missing-artifact','not-generated','stale'].includes(status.status)){
+    const reasons=(status.reasons||[]).filter(Boolean);
+    return `! Private Engine: ${status.status.toUpperCase()} para ${assigned}.
+${reasons.map(reason=>'! '+reason).join('\n')}
+! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.
 `;
   }
   return `! Configuración privada pendiente para ${assigned}.
@@ -561,7 +573,19 @@ function configReadinessForView(devId,format){
   if(localConfigGenerationAvailable()){
     return{status:'source-preview',reasons:['Generación local/source para diseño y compatibilidad. No certifica apply-ready en SaaS.'],source:'local'};
   }
-  return{status:'pending',reasons:['Genera Private Deployment Plan para obtener clasificación server-side.'],source:'private'};
+  const privateStatus=privateConfigStatus(devId);
+  if(privateStatus&&privateStatus.status&&privateStatus.status!=='pending'){
+    const capability=privateStatus.capability||{};
+    return{
+      status:privateStatus.status,
+      reasons:Array.isArray(privateStatus.reasons)?privateStatus.reasons:[],
+      source:'private',
+      mode:cliText(capability.mode||'',30),
+      kind:cliText(capability.kind||'',40),
+      certification:cliText(capability.certification||'',40)
+    };
+  }
+  return{status:'pending',reasons:['Private Engine está disponible, pero todavía no existe un artefacto generado para este dispositivo.'],source:'private'};
 }
 function paintConfigReadiness(nodeId,devId,format){
   const node=$(nodeId);if(!node)return;
@@ -577,6 +601,17 @@ function paintConfigReadiness(nodeId,devId,format){
     label='ℹ PROCEDIMIENTO · No es una CLI universal para pegar directamente. '+(reasons.join(' ')||'');
   }else if(r.status==='source-preview'){
     label='🧪 PREVIEW LOCAL/SOURCE · '+reasons.join(' ');
+  }else if(r.status==='unsupported'){
+    label='⛔ NO SOPORTADO · '+reasons.join(' ');
+    cls='co co-rd';
+  }else if(r.status==='generation-error'||r.status==='missing-artifact'){
+    label='❌ ERROR DE GENERACIÓN · '+reasons.join(' ');
+    cls='co co-rd';
+  }else if(r.status==='stale'){
+    label='♻ CONFIG OBSOLETA · '+reasons.join(' ');
+    cls='co co-rd';
+  }else if(r.status==='not-generated'){
+    label='⚠ SIN ARTEFACTO · '+reasons.join(' ');
   }else if(r.status==='pending'){
     label='☁ PRIVATE ENGINE PENDIENTE · '+reasons.join(' ');
   }else{
