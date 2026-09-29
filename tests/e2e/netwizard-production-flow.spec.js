@@ -285,7 +285,7 @@ test('la UI guarda una captura Cisco IOS, ejecuta preflight y descarga candidato
     if(!target)throw new Error('No existe switch Cisco IOS');
     const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replace(/^(\s*switchport access vlan )\d+$/m,(_line,prefix)=>`${prefix}999`);
     if(observed===desired)throw new Error('La salida Cisco IOS no contiene una VLAN access');
-    window.navTo('cfg');return{deviceId:target.id,observed};
+    window.navTo('validate');return{deviceId:target.id,observed};
   },payload);
   await expect(page.locator('#observedConfigCard')).toBeVisible();
   await page.selectOption('#observedDevice',fixture.deviceId);
@@ -328,7 +328,7 @@ test('la UI genera un candidato FortiOS reversible desde la configuración obser
     if(!target)throw new Error('No existe firewall Fortinet');
     const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replaceAll('set hostname "FW1"','set hostname "FW-OLD"');
     if(observed===desired)throw new Error('La salida FortiOS no contiene el hostname esperado');
-    window.navTo('cfg');return{deviceId:target.id,observed};
+    window.navTo('validate');return{deviceId:target.id,observed};
   },payload);
   await page.selectOption('#observedDevice',fixture.deviceId);
   await page.fill('#observedSource','show full-configuration / Playwright');
@@ -361,7 +361,7 @@ test('la UI genera un candidato RouterOS v7 reversible desde export terse', asyn
     window.NetWizardState.replaceProject(prepared.project,{source:'e2e-routeros-observed-ui'});
     const desired=window.genConfig(target.id,target.vendorOs),observed=desired.replace(/pvid=\d+/, 'pvid=999');
     if(observed===desired)throw new Error('La salida RouterOS no contiene un PVID administrado');
-    window.navTo('cfg');return{deviceId:target.id,observed};
+    window.navTo('validate');return{deviceId:target.id,observed};
   },payload);
   await page.selectOption('#observedDevice',fixture.deviceId);
   await page.fill('#observedSource','/export terse / Playwright');

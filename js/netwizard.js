@@ -44,8 +44,8 @@ const devIcon=d=>NWDevice?NWDevice.icon(d):(devKind(d)==='switch'?'🔀':devKind
 const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 
 // ── CONSTANTS ──
-const DESIGN_STEP_ORDER=['dash','wiz','loc','dev','physical','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
-const INVENTORY_STEP_ORDER=['dash','loc','dev','physical','ports','links','vlan','hosts','iot','graphs','fw','cfg'];
+const DESIGN_STEP_ORDER=['dash','wiz','loc','dev','physical','ports','vlan','hosts','iot','graphs','links','fw','validate','cfg'];
+const INVENTORY_STEP_ORDER=['dash','loc','dev','physical','ports','links','vlan','hosts','iot','graphs','fw','validate','cfg'];
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
@@ -651,7 +651,7 @@ document.querySelectorAll('.bnit[data-step]').forEach(el=>el.onclick=()=>navTo(e
 
 const stepIdx=s=>navigationOrder().indexOf(s);
 $('prevBtn').onclick=()=>{const order=navigationOrder(),i=order.indexOf(S.step);if(i>0)navTo(order[i-1]);};
-$('nextBtn').onclick=()=>{const order=navigationOrder(),i=order.indexOf(S.step);if(i<order.length-1)navTo(order[i+1]);else alert((window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Exporta en la sección Config.'));};
+$('nextBtn').onclick=()=>{const order=navigationOrder(),i=order.indexOf(S.step);if(i<order.length-1)navTo(order[i+1]);else alert((window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Revisa Validación y genera los artefactos en Despliegue.'));};
 
 // TABS
 document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{

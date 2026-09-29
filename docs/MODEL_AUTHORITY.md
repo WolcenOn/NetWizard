@@ -52,13 +52,13 @@ Los espejos legacy se conservan solo por compatibilidad 3.50. Cuando existe una 
 
 ### Diseño To-Be
 
-`Panel → Asistente de diseño → Ubicaciones → Dispositivos → Inventario físico → Puertos → VLANs/Subnets → Hosts → IoT → Vistas → Enlaces → Firewall → Configuración`
+`Panel → Asistente de diseño → Ubicaciones → Dispositivos → Inventario físico → Puertos → VLANs/Subnets → Hosts → IoT → Vistas → Enlaces → Firewall → Validación → Despliegue`
 
 El Asistente es una **acción de bootstrap To-Be**, no una segunda autoridad del proyecto.
 
 ### Inventario As-Built
 
-`Panel → Ubicaciones → Dispositivos → Inventario físico → Puertos → Enlaces → VLANs/Subnets → Hosts → IoT → Vistas → Firewall → Configuración`
+`Panel → Ubicaciones → Dispositivos → Inventario físico → Puertos → Enlaces → VLANs/Subnets → Hosts → IoT → Vistas → Firewall → Validación → Despliegue`
 
 Golden Path físico:
 
@@ -84,3 +84,10 @@ Incluso un artefacto `apply-ready` necesita que la **Production Gate global** es
 - Ninguno de estos cambios crea una colección persistida nueva.
 - Offline/Source conserva las capacidades locales aceptadas.
 - SaaS/Docker mantiene la lógica vendor propietaria y la certificación de aplicabilidad en el Private Engine.
+
+
+## Separación de superficies de UX
+
+- **Vistas**: V5 es la vista operativa principal y Topología física la vista de cableado/enlaces. Los grafos unificados experimentales no son una tercera autoridad visual.
+- **Validación**: contiene análisis derivados (compatibilidad, capacidad, resiliencia, servicios, fallos y estado observado). No escribe una segunda fuente de verdad.
+- **Despliegue**: consume el proyecto vigente para generar artefactos privados, readiness, incremental/rollback y exportaciones.

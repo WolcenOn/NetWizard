@@ -40,6 +40,14 @@ No se considera cerrado un bloque si falla Playwright source, el smoke Playwrigh
 - [ ] `productionReady=true` solo se acepta con `productionStatus=ready` y contrato `netwizard-private-production-gate-v1`.
 - [ ] La UI distingue `apply-ready`, `review-required`, `procedure-only`, preview local y pending; `apply-ready` por dispositivo no se presenta como sustituto de la Production Gate global.
 
+## Arquitectura de información
+
+- [ ] Vistas gráficas expone únicamente V5 principal y Topología física.
+- [ ] Los prototipos Bridge/grafo unificado no aparecen en navegación ni Export.
+- [ ] Compatibilidad, capacidad, resiliencia, WAN/servicios, Wi-Fi, IPv6/VRF, fallos y observed/drift se muestran en **Validación & análisis**, no en Despliegue.
+- [ ] **Despliegue & Exportación** mantiene generación server-side, readiness y exportaciones como responsabilidad principal.
+- [ ] Los módulos derivados no crean nuevas colecciones persistidas ni otra autoridad del proyecto.
+
 ## Validación funcional manual
 
 - [ ] Importar samples.

@@ -1,19 +1,17 @@
 # Graph Viewer Notes
 
-El visor v1.5 es deliberadamente de solo lectura. Su función es validar que el grafo normalizado generado por `NetWizardBridge` es útil para IoTWizard.
+## Estado
 
-## Criterios de diseño
-- No sustituye el mapa actual.
-- No escribe sobre el estado `S`.
-- No importa módulos ES todavía.
-- Se carga después de `netwizard-bridge.js` y `netwizard-bridge-ui.js`.
-- Puede eliminarse sin afectar NetWizard.
+El visor `netwizard-graph-viewer.js` queda **retirado del entrypoint normal**.
 
-## Relación futura con IoTWizard
-IoTWizard podrá consumir la misma estructura `nw-unified-graph-v1` y añadir:
-- nodos `iot_device`,
-- enlaces `wireless`, `lora`, `zigbee`, `thread`, `mqtt`,
-- credenciales y parámetros de conexión,
-- reglas sugeridas y validaciones IoT.
+Fue un prototipo de solo lectura para validar el contrato `NetWizardBridge` y demostrar que el grafo normalizado podía consumirse por una futura integración con IoTWizard. Su objetivo experimental ya se cumplió y hoy duplica información que V5 y la topología física presentan mejor.
 
-El siguiente paso será definir un `iotWizardToUnifiedGraph()` equivalente y después un `mergeUnifiedGraphs()`.
+## Decisión de producto
+
+- V5 es la vista visual principal y editable.
+- Topología física cubre cableado, puertos y enlaces.
+- No se expone un tercer grafo global de auditoría en la navegación.
+- `NetWizardBridge` puede mantenerse como API interna mientras siga siendo útil para IoT/compatibilidad.
+- `netwizard-graph-viewer.js`, `netwizard-bridge-ui.js` y `netwizard-unified-config-map.js` no se cargan en el browser normal.
+
+Los archivos se conservan temporalmente como referencia histórica. Pueden eliminarse físicamente en una limpieza posterior cuando no tengan consumidores ni valor de compatibilidad.

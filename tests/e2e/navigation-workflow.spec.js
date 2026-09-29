@@ -93,3 +93,40 @@ test('panel y sidebar usan los mismos contadores canónicos', async ({page})=>{
 
   expect(errors).toEqual([]);
 });
+
+
+test('validación y despliegue tienen responsabilidades separadas', async ({page})=>{
+  const errors=[];page.on('pageerror',err=>errors.push(err.message));
+  await resetStorage(page);
+
+  await page.locator('.sb-it[data-step="validate"]').click();
+  await expect(page.locator('#pg-validate')).toHaveClass(/on/);
+  await expect(page.locator('#observedConfigCard')).toBeVisible();
+  await expect(page.locator('#nwWanCircuitsPanel')).toHaveCount(0);
+  await expect(page.locator('#nwWifiPlanningPanel')).toHaveCount(0);
+  await expect(page.locator('#nwFailureSimulationPanel')).toHaveCount(0);
+  await expect(page.locator('#pg-cfg')).not.toHaveClass(/on/);
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices=[{id:'r1',name:'R1',type:'router',kind:'router',vendorOs:'cisco_ios'}];
+    window.NetWizardState.replaceProject(p,{source:'e2e-validation-context'});
+  });
+  await expect(page.locator('#nwCapabilityPanel')).toBeVisible();
+
+  await page.locator('.sb-it[data-step="cfg"]').click();
+  await expect(page.locator('#pg-cfg')).toHaveClass(/on/);
+  await expect(page.getByRole('heading',{name:/Despliegue & Exportación/})).toBeVisible();
+  await expect(page.locator('#cfgGenerateServer')).toBeVisible();
+  await expect(page.locator('#observedConfigCard')).not.toBeVisible();
+
+  await page.locator('.sb-it[data-step="graphs"]').click();
+  await expect(page.locator('#pg-graphs')).toHaveClass(/on/);
+  await expect(page.locator('[data-tab="graphs-v5"]')).toBeVisible();
+  await expect(page.locator('[data-tab="graphs-topo"]')).toBeVisible();
+  await expect(page.locator('[data-tab="graphs-unified"]')).toHaveCount(0);
+  await expect(page.locator('#nwBridgePreview')).toHaveCount(0);
+  await expect(page.locator('#nwBridgeDownload')).toHaveCount(0);
+
+  expect(errors).toEqual([]);
+});

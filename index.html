@@ -59,8 +59,11 @@
     <div class="sb-sec">Seguridad</div>
     <div class="sb-it" data-step="fw"><div class="sb-num">7</div>🔒 Firewall</div>
     <div class="sb-div"></div>
-    <div class="sb-sec">Exportar</div>
-    <div class="sb-it" data-step="cfg"><div class="sb-num">8</div>⚙ Configuración</div>
+    <div class="sb-sec">Comprobar</div>
+    <div class="sb-it" data-step="validate"><div class="sb-num">✓</div>🧪 Validación & análisis</div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">Desplegar</div>
+    <div class="sb-it" data-step="cfg"><div class="sb-num">8</div>🚀 Despliegue</div>
     <div class="sb-div"></div>
     <div class="sb-sec">Resumen</div>
     <div class="sb-stat" id="sbD">— dispositivos</div>
@@ -631,11 +634,10 @@
 
 <!-- ═══════════ GRAPH VIEWS ═══════════ -->
 <div class="pg" id="pg-graphs">
-  <div class="ph"><h1>🧭 Vistas gráficas</h1><p>Representaciones separadas por propósito: V5 como mapa operativo principal, topología para enlaces físicos y auditoría unificada para filtros globales.</p></div>
+  <div class="ph"><h1>🧭 Vistas gráficas</h1><p>Dos vistas con propósito claro: V5 para operar el diseño y topología física para revisar cableado, puertos y enlaces.</p></div>
   <div class="tabs">
     <button class="tab on" data-tab="graphs-v5">🧭 V5 principal</button>
     <button class="tab" data-tab="graphs-topo">🗺 Topología física</button>
-    <button class="tab" data-tab="graphs-unified">🧬 Auditoría unificada</button>
   </div>
 
   <div class="tc on" id="graphs-v5">
@@ -687,15 +689,53 @@
     </div>
   </div>
 
-  <div class="tc" id="graphs-unified">
-    <div id="nwuGraphSlot"></div>
-    <div class="co co-yw">Esta vista es de auditoría: mezcla el grafo NetWizard + IoT y permite comprobar filtros globales. La edición visual principal se concentra en V5.</div>
-  </div>
 </div>
 
-<!-- ═══════════ CFG / EXPORT ═══════════ -->
+<!-- ═══════════ VALIDATION / ANALYSIS ═══════════ -->
+<div class="pg" id="pg-validate">
+  <div class="ph"><h1>🧪 Validación & análisis</h1><p>Comprueba compatibilidad, capacidad, resiliencia, servicios y diferencias frente al estado observado antes de desplegar.</p></div>
+  <div class="co co-ac" style="margin-bottom:12px;">
+    Esta sección reúne comprobaciones derivadas. No es otra fuente de verdad: corrige los datos en sus pantallas canónicas y vuelve aquí para validar.
+  </div>
+  <div class="card" id="observedConfigCard">
+    <div class="card-h"><div class="card-t">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
+    <div class="hint" style="margin-bottom:9px;">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
+    <div class="row">
+      <div><label class="fl" for="observedDevice">Dispositivo</label><select id="observedDevice"></select></div>
+      <div><label class="fl" for="observedSource">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador"/></div>
+    </div>
+    <div class="row">
+      <div><label class="fl" for="observedCapturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
+      <div><label class="fl" for="observedMaxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
+    </div>
+    <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> Exigir candidato incremental ejecutable para todos los cambios del ZIP</label>
+    <label class="fl" for="observedConfig" style="margin-top:9px;">Configuración observada</label>
+    <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" style="min-height:180px;"></textarea>
+    <div class="brow">
+      <button class="btn bg" id="observedSave">💾 Guardar y analizar</button>
+      <button class="btn bp" id="observedPreflight">🧪 Analizar sin guardar</button>
+      <button class="btn bd" id="observedRemove">✕ Eliminar captura</button>
+    </div>
+    <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;">Sin captura observada.</pre>
+    <div class="g2">
+      <div>
+        <div class="card-t" style="margin:8px 0 6px;">Candidato incremental</div>
+        <textarea class="cfg" id="observedCandidate" readonly style="min-height:180px;"></textarea>
+        <button class="btn bs bsm" id="observedDownloadCandidate" disabled>⬇ Descargar candidato</button>
+      </div>
+      <div>
+        <div class="card-t" style="margin:8px 0 6px;">Rollback candidato</div>
+        <textarea class="cfg" id="observedRollback" readonly style="min-height:180px;"></textarea>
+        <button class="btn bs bsm" id="observedDownloadRollback" disabled>⬇ Descargar rollback</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->
 <div class="pg" id="pg-cfg">
-  <div class="ph"><h1>⚙ Configuración & Export</h1></div>
+  <div class="ph"><h1>🚀 Despliegue & Exportación</h1><p>Genera artefactos desde el Private Engine, revisa su readiness y exporta únicamente resultados vigentes.</p></div>
   <div class="g2">
     <div>
       <div class="card">
@@ -738,39 +778,6 @@
           </div>
         </div>
       </div>
-      <div class="card" id="observedConfigCard">
-        <div class="card-h"><div class="card-t">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
-        <div class="hint" style="margin-bottom:9px;">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
-        <div class="row">
-          <div><label class="fl" for="observedDevice">Dispositivo</label><select id="observedDevice"></select></div>
-          <div><label class="fl" for="observedSource">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador"/></div>
-        </div>
-        <div class="row">
-          <div><label class="fl" for="observedCapturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
-          <div><label class="fl" for="observedMaxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
-        </div>
-        <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> Exigir candidato incremental ejecutable para todos los cambios del ZIP</label>
-        <label class="fl" for="observedConfig" style="margin-top:9px;">Configuración observada</label>
-        <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" style="min-height:180px;"></textarea>
-        <div class="brow">
-          <button class="btn bg" id="observedSave">💾 Guardar y analizar</button>
-          <button class="btn bp" id="observedPreflight">🧪 Analizar sin guardar</button>
-          <button class="btn bd" id="observedRemove">✕ Eliminar captura</button>
-        </div>
-        <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;">Sin captura observada.</pre>
-        <div class="g2">
-          <div>
-            <div class="card-t" style="margin:8px 0 6px;">Candidato incremental</div>
-            <textarea class="cfg" id="observedCandidate" readonly style="min-height:180px;"></textarea>
-            <button class="btn bs bsm" id="observedDownloadCandidate" disabled>⬇ Descargar candidato</button>
-          </div>
-          <div>
-            <div class="card-t" style="margin:8px 0 6px;">Rollback candidato</div>
-            <textarea class="cfg" id="observedRollback" readonly style="min-height:180px;"></textarea>
-            <button class="btn bs bsm" id="observedDownloadRollback" disabled>⬇ Descargar rollback</button>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
         <div class="hint" style="margin-bottom:8px;">Parámetros importantes: dominio, contraseña, versión y rol por switch. Para VTP, los enlaces entre switches deben ir en trunk.</div>
@@ -794,11 +801,8 @@
           <button class="btn bs" id="expCsv">📋 Hosts CSV</button>
           <button class="btn bs" id="expJson">💾 JSON</button>
           <button class="btn bs" id="impJson">📂 Importar</button>
-          <button class="btn by" id="nwBridgePreview" title="Genera un snapshot compatible con IoTWizard sin modificar el proyecto">🌉 Vista IoT-ready</button>
-          <button class="btn bs" id="nwBridgeDownload" title="Descarga el snapshot + grafo unificado para pruebas de integración">⬇ Grafo unificado</button>
         </div>
         <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set, candidatos incrementales seguros, evidencias y rollback.</pre>
-        <div class="hint" id="nwBridgeStatus" style="margin-top:6px;">Bridge IoT-ready: genera una copia de lectura para futuras integraciones sin alterar NetWizard.</div>
         <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" style="min-height:80px;margin-top:8px;"></textarea>
       </div>
     </div>
@@ -825,7 +829,7 @@
   <div class="bnit" data-step="iot"><span class="ni">🛰</span>IoT</div>
   <div class="bnit" data-step="graphs"><span class="ni">🧭</span>Mapas</div>
   <div class="bnit" data-step="fw"><span class="ni">🔒</span>FW</div>
-  <div class="bnit" data-step="cfg"><span class="ni">⚙</span>Config</div>
+  <div class="bnit" data-step="cfg"><span class="ni">🚀</span>Deploy</div>
 </div></nav>
 
 <!-- PORT MODAL -->
@@ -1007,11 +1011,8 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <script src="./js/netwizard-config-pipeline.js"></script>
 <script src="./js/netwizard-vendor-config-generators.js"></script>
 <script src="./js/netwizard-bridge.js"></script>
-<script src="./js/netwizard-bridge-ui.js"></script>
-<script src="./js/netwizard-graph-viewer.js"></script>
 <script src="./js/netwizard-iot-publisher.js"></script>
 <script src="./js/netwizard-iot-embedded.js"></script>
-<script src="./js/netwizard-unified-config-map.js"></script>
 <script src="./js/netwizard-v5-iot-extension.js"></script>
 <script src="./js/netwizard-v5-layout-manager.js"></script>
 <script src="./js/netwizard-cabling-utils.js"></script>
