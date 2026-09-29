@@ -69,4 +69,33 @@ assert.ok(!html.includes('./private/vendor-config-engine.js'),'El motor vendor p
 assert.ok(!html.includes('./private/legacy-vendor-generators.js'),'Cisco ASA/Windows/Linux privados no deben formar parte del entrypoint browser');
 assert.ok(docker.includes('private/deployment-worker.js --bundle'),'Vendor generation debe viajar solo dentro del bundle privado de deployment');
 
-console.log('✓ El frontend de producción excluye generadores especializados y conserva workers fuera de public');
+assert.ok(privateModules.includes('js/netwizard-legacy-config-generator.js'),'El generador histórico extraído debe ser source-only');
+assert.ok(!production.includes('./js/netwizard-legacy-config-generator.js'),'Docker no debe cargar el generador histórico extraído');
+
+const netwizardSource=fs.readFileSync(path.join(root,'js/netwizard.js'),'utf8');
+for(const legacyFn of [
+  'genCiscoSwitch','genCiscoRouter','genCiscoAsa','genJuniper','genAruba',
+  'genPfSense','genFortigate','genWindowsServer','genLinux'
+]){
+  assert.ok(!netwizardSource.includes('function '+legacyFn+'('),'netwizard.js no debe volver a incrustar '+legacyFn);
+}
+assert.ok(
+  netwizardSource.includes('Vendor/OS no implementado en navegador de producción'),
+  'El adaptador productivo debe fallar de forma explícita'
+);
+assert.ok(
+  netwizardSource.includes('Generación local desactivada en el navegador SaaS'),
+  'Las exportaciones locales deben quedar bloqueadas cuando el generador source-only no existe'
+);
+const bundleSource=fs.readFileSync(path.join(root,'js/netwizard-deployment-bundle.js'),'utf8');
+assert.ok(
+  bundleSource.includes("missing.push('LocalConfigGenerator')"),
+  'El ZIP local debe bloquearse en browser productivo sin generador local'
+);
+const observedSource=fs.readFileSync(path.join(root,'js/netwizard-observed-config-ui.js'),'utf8');
+assert.ok(
+  observedSource.includes('El preflight local no está disponible en el navegador SaaS'),
+  'El preflight observado debe bloquearse en browser productivo'
+);
+
+console.log('✓ El frontend de producción excluye generadores especializados y el fallback histórico del monolito');

@@ -2,6 +2,8 @@
 
 ## Unreleased · Consolidación técnica
 
+- Legacy Config Extraction: el `genConfig` histórico sale de `netwizard.js` a un módulo source-only; Docker no lo publica y bloquea export ZIP/TXT/preflight local, derivando la generación SaaS al Private Deployment Plan v2.
+
 - Production Browser Boundary: el Docker SaaS deja de publicar renderers/stages especializados de vendor, switching, firewall, access-security, management y HA ya cubiertos por Private Engine; source/Pages conserva el pipeline completo y CI valida el grafo productivo.
 
 - Cloud Private Deployment UI: el cliente SaaS sincroniza la revisión y consume `netwizard-private-deployment-plan-v2`; runbook, rollback y artefactos server-side se inspeccionan/descargan sin persistirse en el snapshot.

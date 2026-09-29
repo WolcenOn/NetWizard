@@ -271,19 +271,30 @@ El perfil Docker/SaaS deja de publicar los módulos especializados cuya lógica 
 - HA/services;
 - sus planes e integraciones browser.
 
-El manifiesto sigue cargándolos en source/Pages, por lo que desarrollo y modo local/offline conservan el pipeline completo. El perfil de producción mantiene `netwizard-config-pipeline.js` como envoltorio estable sobre el generador base histórico, pero el runtime ya no exige renderers/stages especializados cuando detecta ese perfil.
+El manifiesto sigue cargándolos en source/Pages, por lo que desarrollo y modo local/offline conservan el pipeline completo. El perfil de producción mantiene `netwizard-config-pipeline.js` como envoltorio estable, pero el runtime ya no exige renderers/stages especializados cuando detecta ese perfil.
 
 La preparación de producción deriva toda la exclusión del manifiesto y elimina también los archivos físicos de `/app/public/js`. CI valida que ningún módulo público dependa de uno privado.
 
-Riesgo residual explícito: `netwizard.js` todavía contiene el generador histórico base y, por tanto, esa parte sigue siendo inspeccionable en Docker. No se considera retirada por este bloque; debe separarse o clasificarse explícitamente antes de afirmar que toda generación propietaria está oculta.
+### G. Generador histórico extraído
 
-### G. Siguiente bloque privado
+El antiguo `genConfig` base y sus renderers Cisco IOS/ASA, Junos, Aruba, pfSense, FortiGate, Windows y Linux dejan de estar incrustados en `netwizard.js`. Viven en `netwizard-legacy-config-generator.js`, marcado `production:false`.
+
+- source/Pages/offline cargan ese módulo y mantienen compatibilidad con generación local;
+- Docker/SaaS no publica el módulo;
+- `netwizard.js` conserva únicamente un adaptador estable;
+- si el módulo no existe, el adaptador devuelve un estado explícito de generación local no disponible;
+- exportación local TXT/por dispositivo, ZIP local y preflight incremental quedan bloqueados en el navegador SaaS para evitar tratar ese estado como configuración real;
+- el flujo cloud autorizado continúa por Private Deployment Plan v2.
+
+Con esta separación, la lógica de generación clasificada como propietaria deja de residir en el artefacto browser productivo salvo utilidades genéricas aceptadas explícitamente como inspeccionables.
+
+### H. Siguiente bloque privado
 
 Orden recomendado:
 
-1. separar el generador histórico incrustado en `netwizard.js` y decidir su frontera productiva;
-2. validación avanzada y production gate;
-3. simulación/resiliencia.
+1. reforzar validación avanzada y production gate alrededor de los artefactos privados;
+2. revisar simulación/resiliencia para decidir qué parte merece frontera privada;
+3. cerrar checklist de publicación y seguridad.
 
 La selección se hará por relación entre valor intelectual, facilidad de aislamiento y dependencia del modo offline.
 
