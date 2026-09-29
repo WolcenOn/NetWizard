@@ -1,5 +1,32 @@
 'use strict';
 
+// Cargas estáticas deliberadas: esbuild debe incluir todos los validadores dentro
+// de deployment-worker.cjs. La puerta browser puede resolverlos dinámicamente,
+// pero el worker privado no debe depender de fuentes JS externas al bundle.
+require('../js/netwizard-audit.js');
+require('../js/netwizard-network-utils.js');
+require('../js/netwizard-project-schema.js');
+require('../js/netwizard-vlsm-physical-planner.js');
+require('../js/netwizard-dhcp-utils.js');
+require('../js/netwizard-policy-utils.js');
+require('../js/netwizard-broadcast-utils.js');
+require('../js/netwizard-cabling-utils.js');
+require('../js/netwizard-poe-utils-v2.js');
+require('../js/netwizard-l2-utils.js');
+require('../js/netwizard-vendor-hardening.js');
+require('../js/netwizard-architecture-validator.js');
+require('../js/netwizard-capability-registry.js');
+require('../js/netwizard-physical-inventory.js');
+require('../js/netwizard-resilience-topology.js');
+require('../js/netwizard-wan-circuits.js');
+require('../js/netwizard-traffic-capacity.js');
+require('../js/netwizard-internal-services.js');
+require('../js/netwizard-wifi-planning.js');
+require('../js/netwizard-ipv6-vrf.js');
+require('../js/netwizard-failure-simulation.js');
+require('../js/netwizard-observed-drift.js');
+require('../js/netwizard-routing-plan.js');
+
 const BaseGate=require('../js/netwizard-production-gate.js');
 const ArchitectureGate=require('../js/netwizard-production-gate-architecture.js');
 
