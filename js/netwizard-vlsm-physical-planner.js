@@ -311,7 +311,36 @@ Mantenimiento:
       });
       cursor = (bc + 1) >>> 0;
     }
-    return {ok:true, base:base.cidr, plans, warnings};
+    return {ok:true, kind:'vlsm', replaceExisting:true, base:base.cidr, plans, warnings};
+  }
+
+  function buildFixedSubnetPlan(project, baseCidr, prefix, options){
+    const opts=options||{},base=parseCidr?parseCidr(baseCidr):null,pfx=Number(prefix);
+    if(!base)return{ok:false,kind:'fixed-missing',code:'invalid_base',msg:'Bloque base inválido. Usa formato tipo 10.10.0.0/16.',plans:[],warnings:[]};
+    if(!Number.isInteger(pfx)||pfx<base.pfx||pfx>30)return{ok:false,kind:'fixed-missing',code:'invalid_prefix',msg:`El prefijo /${prefix} no es válido dentro de ${base.cidr}.`,plans:[],warnings:[]};
+    const current=isArray(project&&project.subnets).filter(sn=>sn&&parseCidr&&parseCidr(sn.cidr));
+    const requestedRefs=Array.isArray(opts.vlanRefs)&&opts.vlanRefs.length?new Set(opts.vlanRefs.map(cleanStr).filter(Boolean)):null;
+    const missing=isArray(project&&project.vlans).filter(v=>v&&v.id&&!subnetByVlan(project,v.id)&&(!requestedRefs||requestedRefs.has(v.id))).slice().sort((a,b)=>(a.vlanId||99999)-(b.vlanId||99999));
+    const size=blockSize(pfx),plans=[],warnings=[];
+    let cursor=alignUp(base.net,size);
+    const overlapsUsed=cidr=>current.some(sn=>cidrOverlaps&&cidrOverlaps(cidr,sn.cidr))||plans.some(p=>cidrOverlaps&&cidrOverlaps(cidr,p.cidr));
+    for(const vlan of missing){
+      let selected=null;
+      while(cursor<=base.bc){
+        const net=cursor>>>0,bc=net+size-1;
+        if(bc>base.bc||bc<net)break;
+        const cidr=`${ip4s(net)}/${pfx}`;
+        cursor=bc+1;
+        if(overlapsUsed(cidr))continue;
+        const gateway=opts.gatewayMode==='last'?ip4s(bc-1):ip4s(net+1);
+        selected={vlanRef:vlan.id,vlanId:vlan.vlanId,name:vlan.name||'',prefix:pfx,cidr,gateway,firstHost:ip4s(net+1),lastHost:ip4s(bc-1),usableHosts:usableHostsForPrefix(pfx),hostsRequired:null,margin:0};
+        break;
+      }
+      if(!selected)return{ok:false,kind:'fixed-missing',code:'base_too_small',msg:`El bloque ${base.cidr} no tiene espacio libre suficiente para completar las VLANs sin subnet con /${pfx}.`,plans,warnings};
+      plans.push(selected);
+    }
+    if(!missing.length)warnings.push('Todas las VLANs ya tienen subnet; no hay asignaciones rápidas pendientes.');
+    return{ok:true,kind:'fixed-missing',replaceExisting:false,base:base.cidr,prefix:pfx,plans,warnings};
   }
 
   function inferVlanNeeds(project, options){
@@ -460,32 +489,40 @@ Mantenimiento:
     return {project:next, assigned, warnings, ok:warnings.length===0};
   }
 
-  function applyVlsmPlan(project, planResult, options){
-    if(!planResult || planResult.ok===false) throw new Error('No se puede aplicar un plan VLSM inválido.');
-    const opts = options || {};
-    const next = clone(project || {});
-    const currentSubnets = isArray(next.subnets);
-    next.subnets = currentSubnets.filter(sn=>!isArray(planResult.plans).some(p=>p.vlanRef===sn.vlanRef));
-    for(const p of isArray(planResult.plans)){
-      const existing = currentSubnets.find(sn=>sn.vlanRef===p.vlanRef);
-      next.subnets.push({id:existing?.id || uid('sn'), vlanRef:p.vlanRef, cidr:p.cidr, gateway:p.gateway});
+  function applySubnetPlan(project, planResult, options){
+    if(!planResult || planResult.ok===false) throw new Error('No se puede aplicar un plan de subnetting inválido.');
+    const opts=options||{},next=clone(project||{}),currentSubnets=isArray(next.subnets),plans=isArray(planResult.plans);
+    const replaceExisting=opts.replaceExisting!==undefined?!!opts.replaceExisting:planResult.replaceExisting!==false;
+    const targetRefs=new Set(plans.map(p=>p&&p.vlanRef).filter(Boolean));
+    next.subnets=replaceExisting?currentSubnets.filter(sn=>!targetRefs.has(sn.vlanRef)):currentSubnets.slice();
+    for(const p of plans){
+      if(!p||!p.vlanRef)continue;
+      const existing=currentSubnets.find(sn=>sn.vlanRef===p.vlanRef);
+      if(existing&&!replaceExisting)continue;
+      next.subnets.push({id:existing?.id||uid('sn'),vlanRef:p.vlanRef,cidr:p.cidr,gateway:p.gateway});
     }
-    const assignMode = opts.assignMode || 'static_only';
-    const used = usedStaticIps(next);
-    for(const p of isArray(planResult.plans)){
-      const ci = parseCidr(p.cidr);
-      for(const h of isArray(next.hosts).filter(h=>h.vlanRef===p.vlanRef)){
-        const shouldAssign = assignMode==='all_hosts' || (h.ipMode==='static' && !cleanStr(h.staticIp));
-        if(!shouldAssign) continue;
-        const ip = nextUsableIp(ci, used, p.gateway);
-        if(ip){ h.ipMode='static'; h.staticIp=ip; }
+    const assignMode=opts.assignMode||'none',used=usedStaticIps(next);
+    if(assignMode!=='none'){
+      for(const p of plans){
+        const ci=parseCidr(p.cidr);
+        if(!ci)continue;
+        for(const h of isArray(next.hosts).filter(h=>h.vlanRef===p.vlanRef)){
+          const shouldAssign=assignMode==='all_hosts'||(h.ipMode==='static'&&!cleanStr(h.staticIp));
+          if(!shouldAssign)continue;
+          const ip=nextUsableIp(ci,used,p.gateway);
+          if(ip){h.ipMode='static';h.staticIp=ip;}
+        }
       }
     }
     if(opts.assignTransitInterfaces){
-      const transit = assignTransitInterfaceIps(next, {overwrite: !!opts.overwriteTransitIps});
+      const transit=assignTransitInterfaceIps(next,{overwrite:!!opts.overwriteTransitIps});
       return transit.project;
     }
     return next;
+  }
+
+  function applyVlsmPlan(project, planResult, options){
+    return applySubnetPlan(project,planResult,Object.assign({replaceExisting:true,assignMode:'static_only'},options||{}));
   }
 
   function summarizeAudit(audit){ return summarizeIssues('', audit); }
@@ -503,11 +540,11 @@ Mantenimiento:
       if(!left) return;
       const card = doc.createElement('div');
       card.className = 'card';
-      const staticHtml = '<div class="card-t" style="margin-bottom:11px;">🧮 VLSM automático por necesidad</div>'+
-        '<div class="co co-ac" style="margin-bottom:9px;">Calcula subredes de tamaño variable según hosts, puertos access, IoT e intención por VLAN; las VLANs de Tránsito L3 se dimensionan como redes punto a punto. Antes de aplicar, audita la capa 1 y el direccionamiento actual.</div>'+
+      const staticHtml = '<div class="card-t" style="margin-bottom:11px;">🧮 Planificador VLSM · replanificación revisable</div>'+
+        '<div class="co co-ac" style="margin-bottom:9px;">Motor recomendado para redimensionar direccionamiento: calcula subredes según hosts, puertos access, IoT e intención por VLAN. S.subnets sigue siendo la única fuente canónica; este plan puede actualizar asignaciones existentes únicamente al pulsar Aplicar, después de previsualización/diff.</div>'+
         '<div class="row"><div><label class="fl">Bloque base</label><input id="vlsmBase" value="10.10.0.0/16"/></div><div><label class="fl">Reserva crecimiento por VLAN</label><input id="vlsmMargin" type="number" min="0" value="5"/></div></div>'+
         '<div class="row"><div><label class="fl">Gateway</label><select id="vlsmGw"><option value="first">Primera IP usable</option><option value="last">Última IP usable</option></select></div><div><label class="fl">Asignar IPs a hosts</label><select id="vlsmAssign"><option value="static_only">Solo estáticos sin IP</option><option value="all_hosts">Todos los hosts de VLAN</option><option value="none">No tocar hosts</option></select></div></div>'+
-        '<div class="brow"><button class="btn bs" id="btnVlsmPreview">👁 Previsualizar VLSM</button><button class="btn bs" id="btnVlsmDiff">🧾 Ver diff</button><button class="btn bp" id="btnVlsmApply">✔ Aplicar VLSM + IPs</button></div>'+
+        '<div class="brow"><button class="btn bs" id="btnVlsmPreview">👁 Previsualizar VLSM</button><button class="btn bs" id="btnVlsmDiff">🧾 Ver diff</button><button class="btn bp" id="btnVlsmApply">✔ Aplicar plan VLSM</button></div>'+
         '<pre class="cfg" id="vlsmOut" style="min-height:120px;white-space:pre-wrap;"></pre>';
       card.appendChild(doc.createRange().createContextualFragment(staticHtml));
       left.appendChild(card);
@@ -642,7 +679,7 @@ Mantenimiento:
     root.addEventListener && root.addEventListener('nw:mode:changed', ()=>{ if($('readinessProdMode') && NWA) $('readinessProdMode').checked = NWA.isProduction(); });
   }
 
-  const api = {version:'netwizard-vlsm-physical-planner-v8', usableHostsForPrefix, prefixForHosts, buildVlsmPlan, inferVlanNeeds, validatePhysicalCompatibility, collectAddressingIssues, preflightProject, readinessAudit, assignTransitInterfaceIps, applyVlsmPlan, summarizeAudit, summarizeReadiness};
+  const api = {version:'netwizard-vlsm-physical-planner-v9', usableHostsForPrefix, prefixForHosts, buildVlsmPlan, buildFixedSubnetPlan, inferVlanNeeds, validatePhysicalCompatibility, collectAddressingIssues, preflightProject, readinessAudit, assignTransitInterfaceIps, applySubnetPlan, applyVlsmPlan, summarizeAudit, summarizeReadiness};
   root.NetWizardPlanner = api;
   if(typeof module!=='undefined' && module.exports) module.exports = api;
   bindBrowserUi();

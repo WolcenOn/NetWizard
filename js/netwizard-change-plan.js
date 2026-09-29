@@ -65,7 +65,7 @@ Mantenimiento:
     }
 
     if(opts.includeVlsm){
-      if(!pl || !pl.inferVlanNeeds || !pl.buildVlsmPlan || !pl.applyVlsmPlan){
+      if(!pl || !pl.inferVlanNeeds || !pl.buildVlsmPlan || (!pl.applySubnetPlan && !pl.applyVlsmPlan)){
         const d = emptyDiff('vlsm'); addStep('vlsm', 'VLSM', d);
       } else {
         const needs = pl.inferVlanNeeds(simulated, {minPerVlan:2});
@@ -77,7 +77,8 @@ Mantenimiento:
         } else {
           const d = cp && cp.computeVlsmDiff ? cp.computeVlsmDiff(simulated, plan, {assignMode:opts.assignMode}) : emptyDiff('vlsm');
           addStep('vlsm', 'VLSM', d, {plan});
-          simulated = pl.applyVlsmPlan(simulated, plan, {assignMode:opts.assignMode});
+          const applySubnet=pl.applySubnetPlan||pl.applyVlsmPlan;
+          simulated = applySubnet.call(pl, simulated, plan, {assignMode:opts.assignMode,replaceExisting:true});
         }
       }
     }
@@ -177,7 +178,7 @@ Mantenimiento:
     card.className = 'card';
     card.id = 'changePlanCard';
     const staticHtml = '<div class="card-h"><div class="card-t">🧭 Plan común de cambios</div><button class="btn bs bsm" id="btnPlanPreview">Previsualizar</button></div>'+
-      '<div class="co co-ac" style="margin-bottom:9px;">Reúne automatismos revisables: VLSM, DHCP, IPs L3 y políticas. No sustituye los botones específicos; sirve para aplicar un lote con snapshot previo.</div>'+
+      '<div class="co co-ac" style="margin-bottom:9px;">Orquesta los mismos motores revisables de VLSM, DHCP, IPs L3 y políticas en un único lote con snapshot previo. VLSM reutiliza el planificador de VLAN/Subnets; no crea una segunda fuente de direccionamiento.</div>'+
       '<div class="g2"><div>'+
       '<label class="chk"><input type="checkbox" id="planUseVlsm" checked> Incluir VLSM</label>'+
       '<label class="fl">Bloque base VLSM</label><input id="planBaseCidr" value="10.10.0.0/16">'+
