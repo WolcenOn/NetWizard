@@ -102,9 +102,17 @@ test('validación y despliegue tienen responsabilidades separadas', async ({page
   await page.locator('.sb-it[data-step="validate"]').click();
   await expect(page.locator('#pg-validate')).toHaveClass(/on/);
   await expect(page.locator('#observedConfigCard')).toBeVisible();
-  await expect(page.locator('#nwCapabilityPanel')).toBeVisible();
-  await expect(page.locator('#nwResiliencePanel')).toBeVisible();
+  await expect(page.locator('#nwWanCircuitsPanel')).toHaveCount(0);
+  await expect(page.locator('#nwWifiPlanningPanel')).toHaveCount(0);
+  await expect(page.locator('#nwFailureSimulationPanel')).toHaveCount(0);
   await expect(page.locator('#pg-cfg')).not.toHaveClass(/on/);
+
+  await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    p.devices=[{id:'r1',name:'R1',type:'router',kind:'router',vendorOs:'cisco_ios'}];
+    window.NetWizardState.replaceProject(p,{source:'e2e-validation-context'});
+  });
+  await expect(page.locator('#nwCapabilityPanel')).toBeVisible();
 
   await page.locator('.sb-it[data-step="cfg"]').click();
   await expect(page.locator('#pg-cfg')).toHaveClass(/on/);
