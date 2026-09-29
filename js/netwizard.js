@@ -44,7 +44,8 @@ const devIcon=d=>NWDevice?NWDevice.icon(d):(devKind(d)==='switch'?'🔀':devKind
 const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 
 // ── CONSTANTS ──
-const STEP_ORDER=['dash','wiz','loc','physical','dev','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
+const DESIGN_STEP_ORDER=['dash','wiz','loc','dev','physical','ports','vlan','hosts','iot','graphs','links','fw','cfg'];
+const INVENTORY_STEP_ORDER=['dash','loc','dev','physical','ports','links','vlan','hosts','iot','graphs','fw','cfg'];
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
@@ -546,16 +547,33 @@ function configForView(devId,format){
 // 05. NAVEGACIÓN, DASHBOARD Y ASISTENTE
 // Cambio de pantallas, panel principal y asistente automático de escenarios.
 // =========================================================
-function navTo(step){S.step=step;save();refresh();}
+function navigationOrder(){
+  return S.workflow?.mode==='inventory'?INVENTORY_STEP_ORDER:DESIGN_STEP_ORDER;
+}
+function normalizeWorkflowStep(step){
+  if(S.workflow?.mode==='inventory'&&step==='wiz')return'loc';
+  return step;
+}
+function navTo(step){S.step=normalizeWorkflowStep(step);save();refresh();}
+function projectCounters(project=S){
+  const p=project||{},iot=p.iot||{};
+  return{
+    devices:Array.isArray(p.devices)?p.devices.length:0,
+    vlans:Array.isArray(p.vlans)?p.vlans.length:0,
+    hosts:Array.isArray(p.hosts)?p.hosts.length:0,
+    iot:(Array.isArray(iot.accessNodes)?iot.accessNodes.length:0)+(Array.isArray(iot.devices)?iot.devices.length:0),
+    fwRules:Array.isArray(p.fwRules)?p.fwRules.length:0
+  };
+}
 
 $('hbg').onclick=()=>{$('sb').classList.toggle('open');document.body.classList.toggle('ov');};
 document.addEventListener('click',e=>{if($('sb').classList.contains('open')&&!$('sb').contains(e.target)&&!$('hbg').contains(e.target)){$('sb').classList.remove('open');document.body.classList.remove('ov');}});
 document.querySelectorAll('.sb-it[data-step]').forEach(el=>el.onclick=()=>{navTo(el.dataset.step);$('sb').classList.remove('open');document.body.classList.remove('ov');});
 document.querySelectorAll('.bnit[data-step]').forEach(el=>el.onclick=()=>navTo(el.dataset.step));
 
-const stepIdx=s=>STEP_ORDER.indexOf(s);
-$('prevBtn').onclick=()=>{const i=stepIdx(S.step);if(i>0)navTo(STEP_ORDER[i-1]);};
-$('nextBtn').onclick=()=>{const i=stepIdx(S.step);if(i<STEP_ORDER.length-1)navTo(STEP_ORDER[i+1]);else alert((window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Exporta en la sección Config.'));};
+const stepIdx=s=>navigationOrder().indexOf(s);
+$('prevBtn').onclick=()=>{const order=navigationOrder(),i=order.indexOf(S.step);if(i>0)navTo(order[i-1]);};
+$('nextBtn').onclick=()=>{const order=navigationOrder(),i=order.indexOf(S.step);if(i<order.length-1)navTo(order[i+1]);else alert((window.NetWizardI18n?window.NetWizardI18n.t('msg.projectComplete'): '¡Proyecto completo! Exporta en la sección Config.'));};
 
 // TABS
 document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
@@ -569,25 +587,23 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
 
 // ─────────────────── RENDER NAV ───────────────────
 function renderNav(){
+  const safeStep=normalizeWorkflowStep(S.step);if(safeStep!==S.step)S.step=safeStep;
   document.querySelectorAll('.sb-it[data-step]').forEach(el=>el.classList.toggle('on',S.step===el.dataset.step));
   document.querySelectorAll('.bnit[data-step]').forEach(el=>el.classList.toggle('on',S.step===el.dataset.step));
   document.querySelectorAll('.pg').forEach(pg=>pg.classList.remove('on'));
   const pg=$(`pg-${S.step}`);if(pg)pg.classList.add('on');
   const noFt=['dash','wiz'];
   $('navFt').style.display=noFt.includes(S.step)?'none':'flex';
-  const i=stepIdx(S.step);
+  const order=navigationOrder(),i=order.indexOf(S.step);
   $('prevBtn').disabled=i<=0;
-  $('nextBtn').textContent=i>=STEP_ORDER.length-1?'Finalizar':'Siguiente →';
+  $('nextBtn').textContent=i>=order.length-1?'Finalizar':'Siguiente →';
+  const counts=projectCounters(S);
   const setSide=(id,count,label)=>{const el=$(id); if(!el)return; clearNode(el); const b=document.createElement('b'); b.textContent=String(count); el.append(b,document.createTextNode(` ${label}`));};
-  setSide('sbD',S.devices.length,'dispositivos');
-  setSide('sbV',S.vlans.length,'VLANs');
-  setSide('sbH',S.hosts.length,'hosts');
-  if($('sbIOT')){
-    const iotState=window.NetWizardIoTEmbedded&&window.NetWizardIoTEmbedded.getState?window.NetWizardIoTEmbedded.getState():null;
-    const iotCount=iotState?(iotState.accessNodes.length+iotState.devices.length):0;
-    setSide('sbIOT',iotCount,'IoT');
-  }
-  setSide('sbFW',S.fwRules.length,'reglas FW');
+  setSide('sbD',counts.devices,'dispositivos');
+  setSide('sbV',counts.vlans,'VLANs');
+  setSide('sbH',counts.hosts,'hosts');
+  setSide('sbIOT',counts.iot,'IoT');
+  setSide('sbFW',counts.fwRules,'reglas FW');
   if(S.step==='iot'&&window.NetWizardIoTEmbedded&&window.NetWizardIoTEmbedded.render){setTimeout(window.NetWizardIoTEmbedded.render,0);}
   if(S.step==='graphs')setTimeout(()=>{drawTopo();resizeV5();renderV5Panel();},50);
 }
@@ -598,11 +614,12 @@ function renderDash(){
   $('projName').value=S.projName||'';
 
   const stats=$('dStats'); clearNode(stats);
+  const counts=projectCounters(S);
   [
-    ['var(--ac)', S.devices.length, 'Dispositivos'],
-    ['var(--gn)', S.vlans.length, 'VLANs'],
-    ['var(--yw)', S.hosts.length, 'Hosts'],
-    ['var(--pu)', S.fwRules.length, 'Reglas FW']
+    ['var(--ac)', counts.devices, 'Dispositivos'],
+    ['var(--gn)', counts.vlans, 'VLANs'],
+    ['var(--yw)', counts.hosts, 'Hosts'],
+    ['var(--pu)', counts.fwRules, 'Reglas FW']
   ].forEach(([color,value,label])=>{
     const stat=makeEl('div','stat'); stat.style.borderTopColor=color;
     const sv=makeEl('div','sv',value); sv.style.color=color;
