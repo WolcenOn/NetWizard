@@ -74,7 +74,9 @@ Esta versión queda como **candidata de producción local/controlada** cuando pa
 
 NetWizard sigue siendo client-first para interacción y edición local, pero el backend ya implementa OIDC, sesiones server-side, workspaces, roles, persistencia remota, revisiones, colaboración, auditoría y rate limits cuando PostgreSQL y autenticación están configurados. El fan-out WebSocket sigue siendo por proceso; múltiples réplicas requieren sticky routing hasta incorporar pub/sub compartido. El modo local/offline no requiere backend.
 
-El Private Engine expone servicios autenticados ligados a revisiones remotas. En la imagen Docker de producción el routing avanzado se ejecuta en el worker privado y sus generadores completos no se publican en `/app/public`; el árbol fuente/Pages conserva temporalmente esos módulos para desarrollo y modo local.
+El Private Engine expone servicios ligados a revisiones remotas en modo SaaS y, opcionalmente, generación autenticada self-hosted para una instancia Docker controlada. En ambos casos los workers privados se ejecutan en servidor y sus generadores completos no se publican en `/app/public`; el árbol fuente/Pages conserva temporalmente esos módulos para desarrollo y modo local.
+
+Para self-hosted, activa `NETWIZARD_SELF_HOSTED_PRIVATE=true` y configura dos secretos distintos de al menos 32 bytes: `NETWIZARD_PRIVATE_SERVICE_KEY` (solo servidor) y `NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN` (token de operador). La UI convierte este último en una sesión HttpOnly+CSRF y genera desde el snapshot actual mediante el worker server-side. Consulta `docs/PRODUCTION_READINESS.md` para la configuración segura.
 
 ## Empaquetado
 
@@ -88,6 +90,8 @@ El ZIP se genera en `dist/`.
 
 - `docs/STABLE_BASELINE_3_48.md`
 - `docs/PRODUCTION_READINESS.md`
+- `docs/VENDOR_CONFIG_COVERAGE.md`
+- `docs/CLIENT_PRIVATE_ENGINE_STRATEGY.md`
 - `docs/MAINTENANCE_GUIDE.md`
 - `docs/V5_MODULARIZATION.md`
 - `docs/BACKEND_BOUNDARIES.md`

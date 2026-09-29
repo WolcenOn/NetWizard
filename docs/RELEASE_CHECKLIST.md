@@ -26,7 +26,7 @@ No se considera cerrado un bloque si falla Playwright source, el smoke Playwrigh
 - [ ] Los workers privados se empaquetan en `/app/private` y no como assets públicos.
 - [ ] La generación vendor y la Production Gate privada no forman parte del entrypoint browser.
 - [ ] Source/Pages/offline mantienen los módulos source-only necesarios para compatibilidad local.
-- [ ] `tests/e2e-production/production-browser.spec.js` confirma en la imagen real que los generadores source-only no existen en `window` y que Config espera al Private Engine.
+- [ ] `tests/e2e-production/production-browser.spec.js` confirma en la imagen real que los generadores source-only no existen en `window`, abre una sesión self-hosted y recibe la configuración del dispositivo desde el Private Engine server-side.
 
 ## Seguridad y autoridad de servidor
 
@@ -34,7 +34,9 @@ No se considera cerrado un bloque si falla Playwright source, el smoke Playwrigh
 - [ ] `backend/internal/httpapi/remote_api_test.go` valida autenticación, CSRF, matriz de roles, control optimista de versión, rate limiting y auditoría de escrituras.
 - [ ] `backend/internal/httpapi/private_services_api_test.go` valida autorización, revisión almacenada, control de versión y auditoría de endpoints privados.
 - [ ] `backend/internal/storage/postgres/e4_integration_test.go` valida persistencia de sesiones/workspaces, auditoría y rate limiting en PostgreSQL.
-- [ ] Los endpoints privados consumen la revisión autorizada almacenada; no aceptan snapshots arbitrarios del navegador.
+- [ ] En SaaS, los endpoints privados consumen la revisión autorizada almacenada; no aceptan snapshots arbitrarios del navegador.
+- [ ] En self-hosted, el único endpoint que acepta snapshot exige modo explícito, token de operador distinto de la service key, cookie HttpOnly/SameSite=Strict, CSRF, same-origin, rate limit, tamaño máximo y schema 3.50.
+- [ ] El runner privado no hereda variables de entorno del proceso servidor (`cmd.Env=[]`), evitando exponer service key/token al worker.
 - [ ] `productionReady=true` solo se acepta con `productionStatus=ready` y contrato `netwizard-private-production-gate-v1`.
 - [ ] La UI distingue `apply-ready`, `review-required`, `procedure-only`, preview local y pending; `apply-ready` por dispositivo no se presenta como sustituto de la Production Gate global.
 
@@ -43,6 +45,7 @@ No se considera cerrado un bloque si falla Playwright source, el smoke Playwrigh
 - [ ] Importar samples.
 - [ ] Validar `samples/production-scenarios.json` sin avisos inesperados.
 - [ ] Ejecutar Private Deployment Plan en cloud y revisar `productionStatus` por separado de `ok`.
+- [ ] Si se publica modo self-hosted, desbloquear la sesión con el token de operador, generar una config y volver a bloquear la sesión comprobando que la vista deja de usar el artefacto privado.
 - [ ] Confirmar que un escenario de failure simulation contractualmente obligatorio que no sobrevive deja la puerta bloqueada.
 - [ ] Revisar drift observado → deseado y no tratar el diff como comandos directos.
 - [ ] Confirmar ticket, ventana, aprobador, acceso OOB y backups reales antes del cambio.

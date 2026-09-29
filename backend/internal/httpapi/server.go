@@ -41,6 +41,7 @@ type Server struct {
 	operations realtime.OperationStore
 	realtime   *realtime.Hub
 	privateServices *privateservices.Service
+	selfHostedPrivateAuth *selfHostedPrivateAuthState
 	catalog catalog.Store
 }
 
@@ -60,6 +61,9 @@ func NewServerWithDependencies(cfg config.Config, logger *slog.Logger, deps Depe
 		operations: deps.Operations, realtime: deps.Realtime,
 		privateServices: deps.PrivateServices, catalog: deps.Catalog,
 	}
+	if cfg.SelfHostedPrivate {
+		s.selfHostedPrivateAuth = newSelfHostedPrivateAuthState()
+	}
 	s.routes()
 	return s
 }
@@ -72,6 +76,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
 	s.mux.HandleFunc("GET /api/capabilities", s.handleCapabilities)
+	if s.selfHostedPrivateDeploymentReady() {
+		s.selfHostedPrivateRoutes()
+	}
 	if s.auth != nil {
 		s.mux.HandleFunc("GET /api/auth/login", s.handleAuthLogin)
 		s.mux.HandleFunc("GET /api/auth/callback", s.handleAuthCallback)
@@ -149,6 +156,7 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		"privateServices":     s.privateServicesReady(),
 		"privateRouting":      s.privateRoutingReady(),
 		"privateDeploymentPlan": s.privateDeploymentReady(),
+		"selfHostedPrivateGeneration": s.selfHostedPrivateDeploymentReady(),
 		"globalDeviceCatalog": s.catalog != nil,
 		"maxProjectBytes":     s.cfg.MaxProjectBytes,
 	})

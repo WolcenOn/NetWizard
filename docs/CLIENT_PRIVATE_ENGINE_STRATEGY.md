@@ -260,6 +260,33 @@ La UI cloud sincroniza primero la revisión editable con `PUT /api/projects/{pro
 
 Las salidas del Private Engine —runbook, rollback, checklist, resúmenes y artefactos de configuración/incrementales— permanecen derivadas y fuera del snapshot. La UI permite inspeccionarlas, copiarlas o descargarlas sin reintroducir generación sensible en el navegador.
 
+### E.1. Generación privada self-hosted
+
+El despliegue Docker puede activar un modo privado self-hosted sin PostgreSQL ni OIDC mediante una frontera distinta del SaaS.
+
+Requisitos:
+
+- `NETWIZARD_SELF_HOSTED_PRIVATE=true`;
+- `NETWIZARD_PRIVATE_SERVICE_KEY` de al menos 32 bytes, reservado al servidor;
+- `NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN` de al menos 32 bytes y **distinto** de la service key;
+- `NETWIZARD_PRIVATE_DEPLOYMENT_WORKER` configurado;
+- self-hosted y OIDC son modos mutuamente excluyentes.
+
+El token de operador solo abre una sesión local. El backend emite una cookie HttpOnly + SameSite=Strict y un token CSRF; el token de operador no se persiste en el proyecto ni se reutiliza como clave del motor.
+
+`POST /api/private/self-hosted/deployment-plan` acepta exclusivamente `{snapshot}`. Antes de ejecutar el worker:
+
+1. exige sesión privada válida y CSRF;
+2. exige petición same-origin y cabecera `X-NetWizard-Private-Request`;
+3. aplica rate limit en memoria;
+4. limita el tamaño;
+5. valida JSON y schema 3.50 con `projects.ValidateSnapshot`;
+6. rechaza campos cliente como `desiredConfigs` o `configPaths`.
+
+A diferencia del SaaS, este modo no dispone de una revisión PostgreSQL autoritativa: el snapshot actual del navegador es la entrada de diseño porque el propio operador self-hosted controla esa instancia. Esta excepción no modifica la regla SaaS de cargar siempre la revisión autorizada desde almacenamiento remoto.
+
+Los generadores vendor permanecen exclusivamente en `deployment-worker.cjs`; el navegador solo contiene el transporte hacia el endpoint.
+
 ### F. Frontera de generadores en el navegador de producción
 
 El perfil Docker/SaaS deja de publicar los módulos especializados cuya lógica ya ejecuta el Private Engine:

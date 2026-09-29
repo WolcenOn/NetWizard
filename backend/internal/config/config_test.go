@@ -113,3 +113,62 @@ func TestValidatePrivateServicesRequireStrongKeyAndOIDC(t *testing.T) {
 		t.Fatalf("expected private services with secure OIDC config, got %v", err)
 	}
 }
+
+
+func TestValidateAllowsExplicitSelfHostedPrivateMode(t *testing.T) {
+	cfg := Config{
+		SessionTTL: time.Hour,
+		PrivateServiceKey: "12345678901234567890123456789012",
+		PrivateDeploymentWorker: "/app/private/deployment-worker.cjs",
+		SelfHostedPrivate: true,
+		SelfHostedPrivateToken: "abcdefghijklmnopqrstuvwxyz123456",
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected explicit self-hosted private mode to validate, got %v", err)
+	}
+	if !cfg.SelfHostedPrivateConfigured() {
+		t.Fatal("expected self-hosted private mode to be detected")
+	}
+}
+
+func TestValidateRejectsWeakOrAmbiguousSelfHostedPrivateMode(t *testing.T) {
+	base := Config{
+		SessionTTL: time.Hour,
+		PrivateServiceKey: "12345678901234567890123456789012",
+		PrivateDeploymentWorker: "/app/private/deployment-worker.cjs",
+		SelfHostedPrivate: true,
+		SelfHostedPrivateToken: "short",
+	}
+	if err := base.Validate(); err == nil {
+		t.Fatal("expected weak self-hosted token to fail")
+	}
+
+	base.SelfHostedPrivateToken = base.PrivateServiceKey
+	if err := base.Validate(); err == nil {
+		t.Fatal("expected self-hosted access token equal to service key to fail")
+	}
+
+	base.SelfHostedPrivateToken = "abcdefghijklmnopqrstuvwxyz123456"
+	base.OIDCIssuerURL = "https://issuer.example"
+	if err := base.Validate(); err == nil {
+		t.Fatal("expected self-hosted private mode combined with OIDC to fail")
+	}
+
+	base.OIDCIssuerURL = ""
+	base.PrivateDeploymentWorker = ""
+	if err := base.Validate(); err == nil {
+		t.Fatal("expected self-hosted mode without deployment worker to fail")
+	}
+}
+
+func TestFromEnvReadsSelfHostedPrivateSettings(t *testing.T) {
+	t.Setenv("NETWIZARD_SELF_HOSTED_PRIVATE", "true")
+	t.Setenv("NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN", "abcdefghijklmnopqrstuvwxyz123456")
+	cfg := FromEnv()
+	if !cfg.SelfHostedPrivate {
+		t.Fatal("expected self-hosted private env flag")
+	}
+	if cfg.SelfHostedPrivateToken != "abcdefghijklmnopqrstuvwxyz123456" {
+		t.Fatalf("unexpected self-hosted token: %q", cfg.SelfHostedPrivateToken)
+	}
+}

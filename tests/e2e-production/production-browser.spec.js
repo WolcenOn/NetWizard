@@ -1,9 +1,13 @@
 const { test, expect } = require('@playwright/test');
 
-test('imagen productiva mantiene la frontera browser/private y no genera Cisco localmente', async ({page,request})=>{
+test('imagen productiva genera config en servidor sin publicar generadores vendor', async ({page,request})=>{
   const health=await request.get('/api/health');
   expect(health.ok()).toBeTruthy();
   expect((await health.json()).ok).toBe(true);
+
+  const caps=await request.get('/api/capabilities');
+  expect(caps.ok()).toBeTruthy();
+  expect((await caps.json()).selfHostedPrivateGeneration).toBe(true);
 
   const errors=[];
   page.on('pageerror',err=>errors.push(err.message));
@@ -12,11 +16,13 @@ test('imagen productiva mantiene la frontera browser/private y no genera Cisco l
   await expect.poll(()=>page.evaluate(()=>({
     state:typeof window.NetWizardState?.getSnapshot==='function',
     privateUi:typeof window.NetWizardPrivateDeploymentUi?.deviceConfig==='function',
+    selfHosted:typeof window.NetWizardSelfHostedPrivate?.generateDeploymentPlan==='function',
     legacy:typeof window.NetWizardLegacyConfigGenerator,
     vendorGenerators:typeof window.NetWizardVendorConfigGenerators
   }))).toEqual({
     state:true,
     privateUi:true,
+    selfHosted:true,
     legacy:'undefined',
     vendorGenerators:'undefined'
   });
@@ -24,10 +30,11 @@ test('imagen productiva mantiene la frontera browser/private y no genera Cisco l
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
     Object.assign(p,{
-      projName:'Production browser boundary',
+      projName:'Production server-side generation',
       workflow:{mode:'design'},
-      devices:[{id:'r1',name:'RTR-PROD',type:'router',kind:'router',vendorOs:'cisco_ios'}],
-      ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[]
+      devices:[{id:'r1',name:'RTR-PROD',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'no'}],
+      ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
+      management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
     });
     window.NetWizardState.replaceProject(p,{source:'e2e-production-boundary'});
     window.navTo('cfg');
@@ -37,9 +44,29 @@ test('imagen productiva mantiene la frontera browser/private y no genera Cisco l
   await expect(page.locator('#cfgOut')).toHaveValue(/Configuración privada pendiente para cisco_ios/);
   await expect(page.locator('#cfgOut')).not.toHaveValue(/configure terminal|hostname RTR-PROD/);
   await expect(page.locator('#cfgReadiness')).toContainText('PRIVATE ENGINE PENDIENTE');
+
+  const token=process.env.NETWIZARD_TEST_SELF_HOSTED_TOKEN||'';
+  expect(token.length).toBeGreaterThanOrEqual(32);
+  await expect(page.locator('#nwPrivateDeploymentCard')).toBeVisible();
+  await expect(page.locator('#nwSelfHostedPrivateLogin')).toBeVisible();
+  await page.locator('#nwSelfHostedPrivateToken').fill(token);
+  await page.locator('#nwSelfHostedPrivateLogin').click();
+
+  await expect(page.locator('#nwPrivateDeploymentGenerate')).toBeVisible();
+  await expect(page.locator('#nwPrivateDeploymentContext')).toContainText('Snapshot actual');
+  await page.locator('#nwPrivateDeploymentGenerate').click();
+
+  await expect(page.locator('#cfgOut')).toHaveValue(/configure terminal/);
+  await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-PROD/);
+  await expect(page.locator('#cfgReadiness')).toContainText('CLI PRIVADA');
   await expect.poll(
-    ()=>page.evaluate(()=>window.NetWizardConfigView?.readinessForDevice?.('r1','cisco_ios')?.status||'')
-  ).toBe('pending');
+    ()=>page.evaluate(()=>window.NetWizardSelfHostedPrivate?.state?.().authenticated===true)
+  ).toBe(true);
+
+  const privateArtifact=await page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.deviceConfig?.('r1')||null);
+  expect(privateArtifact).toBeTruthy();
+  expect(privateArtifact.content).toContain('hostname RTR-PROD');
+  expect(privateArtifact.capability.mode).toBe('cli');
 
   const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('src')||''));
   expect(scripts.some(src=>src.includes('netwizard-legacy-config-generator.js'))).toBe(false);

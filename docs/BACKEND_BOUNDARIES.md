@@ -183,3 +183,19 @@ La primera migración PostgreSQL existe como contrato de datos, pero en E1:
 - no hay WebSocket público.
 
 El endpoint `GET /api/capabilities` debe reflejar estas capacidades de forma explícita para evitar que el frontend asuma servicios que todavía no están disponibles.
+
+
+## Excepción controlada: Private Engine self-hosted
+
+La regla de autoridad remota sigue siendo estricta en SaaS: routing/deployment privados cargan la revisión PostgreSQL autorizada y no aceptan configuraciones objetivo enviadas por el cliente.
+
+El modo `NETWIZARD_SELF_HOSTED_PRIVATE=true` es una frontera de despliegue diferente para una instancia controlada por un único operador o perímetro local. En ese modo:
+
+- no se habilitan workspaces, OIDC ni escrituras remotas;
+- el navegador puede enviar **solo** el snapshot portable 3.50 actual a `/api/private/self-hosted/deployment-plan`;
+- el backend valida schema/tamaño y ejecuta el mismo worker privado empaquetado fuera del directorio público;
+- la llamada exige autenticación por token de operador convertido en sesión HttpOnly, CSRF, same-origin y rate limit;
+- `desiredConfigs`, `configPaths` y cualquier intento de sustituir artefactos derivados se rechazan como campos desconocidos;
+- el código de generación vendor continúa fuera del bundle público.
+
+Esta excepción no debe reutilizarse para SaaS multiusuario ni para operaciones que requieran autoridad compartida/auditoría durable.
