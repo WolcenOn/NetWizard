@@ -99,7 +99,13 @@ function configArtifactForDevice(result,deviceId){
   if(!path)return null;
   const artifact=(Array.isArray(r.artifacts)?r.artifacts:[]).find(item=>clean(item&&item.path)===path&&typeof item.content==='string');
   if(!artifact)return null;
-  return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8'};
+  const readinessMap=r.configReadiness&&typeof r.configReadiness==='object'?r.configReadiness:{};
+  const rawReadiness=readinessMap[id]&&typeof readinessMap[id]==='object'?readinessMap[id]:{};
+  const readiness={
+    status:clean(rawReadiness.status),
+    reasons:(Array.isArray(rawReadiness.reasons)?rawReadiness.reasons:[]).map(clean).filter(Boolean)
+  };
+  return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8',readiness};
 }
 function deviceConfig(deviceId){
   if(!lastResult)return null;
