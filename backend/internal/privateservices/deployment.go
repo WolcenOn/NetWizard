@@ -153,7 +153,14 @@ func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMe
 	if s == nil || s.deployment == nil {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentUnavailable
 	}
-	return s.deployment.Run(ctx, DeploymentPlanRequest{
+	result, err := s.deployment.Run(ctx, DeploymentPlanRequest{
 		Project: project, GeneratedAt: generatedAt,
 	})
+	if err != nil {
+		return DeploymentPlanResult{}, err
+	}
+	if err := validateDeploymentPlanResult(result); err != nil {
+		return DeploymentPlanResult{}, err
+	}
+	return result, nil
 }
