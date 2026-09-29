@@ -20,9 +20,15 @@ go test ./...
 npm run test:e2e:install
 npm run test:e2e
 docker build -t netwizard-local .
-docker run --rm -p 8080:8080 --name netwizard-local netwizard-local
+docker run --rm -p 8080:8080 --name netwizard-local \
+  -e NETWIZARD_SELF_HOSTED_PRIVATE=true \
+  -e NETWIZARD_PRIVATE_SERVICE_KEY="<clave-servidor-32+-bytes>" \
+  -e NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN="<token-operador-distinto-32+-bytes>" \
+  netwizard-local
 # En otra terminal:
-NETWIZARD_PRODUCTION_BASE_URL=http://127.0.0.1:8080 npx playwright test --config=playwright.production.config.js
+NETWIZARD_PRODUCTION_BASE_URL=http://127.0.0.1:8080 \
+NETWIZARD_TEST_SELF_HOSTED_TOKEN="<token-operador-distinto-32+-bytes>" \
+npx playwright test --config=playwright.production.config.js
 ```
 
 No se considera listo un bloque si Playwright, el smoke del navegador productivo o Docker fallan.
@@ -48,7 +54,7 @@ La frontera declarativa vive en `js/netwizard-browser-modules.js`.
 
 - Los módulos `production:false` permanecen disponibles en Source/Pages/offline, pero no se cargan en el browser SaaS.
 - `tests/production-private-boundary.test.js` comprueba estáticamente que el entrypoint productivo excluye generadores especializados y el generador histórico.
-- `tests/e2e-production/production-browser.spec.js` comprueba en Chromium contra el contenedor real que esos generadores no están disponibles y que Cisco queda pendiente del Private Engine en lugar de generarse localmente.
+- `tests/e2e-production/production-browser.spec.js` comprueba en Chromium contra el contenedor real que esos generadores no están disponibles, abre una sesión self-hosted y verifica que Cisco se genera en servidor y aparece en la vista existente de Config.
 - El Docker ejecuta `scripts/prepare-production-index.js`, no publica `/private` y rechaza source maps/TypeScript en `/out/public`.
 - Los workers `routing-worker.cjs` y `deployment-worker.cjs` se empaquetan en el área privada del contenedor.
 - La Production Gate privada y la generación vendor server-side no deben entrar en el entrypoint browser.
@@ -64,7 +70,9 @@ Las verificaciones principales son:
 - `backend/internal/httpapi/private_services_api_test.go`: autorización y revisión almacenada para routing/deployment privados, además de auditoría.
 - `backend/internal/storage/postgres/e4_integration_test.go`: persistencia de identidad/sesión/workspace, auditoría y rate limiting PostgreSQL.
 
-Los endpoints privados no deben aceptar un snapshot cliente como autoridad; deben cargar la revisión almacenada correspondiente a `expectedVersion`.
+En SaaS, los endpoints privados no deben aceptar un snapshot cliente como autoridad; deben cargar la revisión almacenada correspondiente a `expectedVersion`.
+
+El modo self-hosted es una frontera diferente y explícita: no usa PostgreSQL/OIDC, acepta únicamente el snapshot 3.50 actual y exige token de operador, sesión HttpOnly, CSRF, same-origin, límite de tamaño y rate limit. La service key nunca se entrega al navegador.
 
 ## Publicación
 
@@ -84,3 +92,18 @@ El modo local/offline sigue siendo compatible y no requiere backend. En SaaS, la
 ## Autoridad del modelo
 
 La matriz C/R/D/O/T/X/A, el orden canónico de navegación y las reglas de compatibilidad están documentados en `docs/MODEL_AUTHORITY.md`. Las reorganizaciones de UX no deben crear una segunda autoridad persistida para equipos, puertos, colocación, cableado o subnets.
+
+
+## Modo Private Engine self-hosted
+
+Para recuperar generación server-side en una instalación Docker local/controlada sin desplegar el stack SaaS completo:
+
+- activa `NETWIZARD_SELF_HOSTED_PRIVATE=true`;
+- genera una `NETWIZARD_PRIVATE_SERVICE_KEY` aleatoria de 32 bytes o más;
+- genera un `NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN` distinto, también de 32 bytes o más;
+- usa HTTPS y `NETWIZARD_COOKIE_SECURE=true` cuando la instancia sea accesible fuera de localhost/LAN controlada;
+- no publiques el token de operador en imágenes, repositorios ni variables del frontend.
+
+El operador introduce el token en la tarjeta **Private Engine self-hosted**. Tras autenticarse, el token se descarta del formulario y se trabaja con una sesión HttpOnly efímera. Reiniciar el servidor invalida esas sesiones.
+
+Este modo protege la lógica propietaria y autentica la generación, pero no sustituye un control de acceso perimetral para una instancia expuesta a Internet. Si se publica externamente, debe usarse HTTPS y una capa de acceso controlada; para multiusuario/autoridad compartida se recomienda el modo SaaS OIDC/PostgreSQL.
