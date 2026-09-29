@@ -86,10 +86,12 @@ for(const legacyFn of [
   assert.ok(!netwizardSource.includes('function '+legacyFn+'('),'netwizard.js no debe volver a incrustar '+legacyFn);
 }
 assert.ok(
+  netwizardSource.includes('function configForView(devId,format)')&&
   netwizardSource.includes('privateConfigArtifact(devId)')&&
   netwizardSource.includes('NetWizardPrivateDeploymentUi')&&
+  netwizardSource.includes("const cfg=configForView(selDevCfg,selVendorCfg)")&&
   netwizardSource.includes('Configuración privada pendiente'),
-  'El adaptador productivo debe delegar la vista de configuración al artefacto del Private Engine y fallar de forma explícita mientras no exista'
+  'La vista productiva debe priorizar el artefacto del Private Engine fuera del pipeline local y fallar de forma explícita mientras no exista'
 );
 assert.ok(
   !netwizardSource.includes('function genCiscoSwitch(')&&
