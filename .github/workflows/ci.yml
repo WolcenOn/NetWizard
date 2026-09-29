@@ -158,9 +158,19 @@ jobs:
       - name: Build production image
         run: docker build --pull --tag netwizard-ci:${{ github.sha }} .
 
+      - name: Prepare self-hosted smoke credentials
+        run: |
+          echo "NETWIZARD_CI_PRIVATE_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "NETWIZARD_CI_OPERATOR_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
       - name: Start production container
         run: |
-          docker run --detach --rm --name netwizard-ci-runtime -p 8080:8080 netwizard-ci:${{ github.sha }}
+          docker run --detach --rm --name netwizard-ci-runtime -p 8080:8080 \
+            -e NETWIZARD_SELF_HOSTED_PRIVATE=true \
+            -e NETWIZARD_PRIVATE_SERVICE_KEY="$NETWIZARD_CI_PRIVATE_KEY" \
+            -e NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN="$NETWIZARD_CI_OPERATOR_TOKEN" \
+            -e NETWIZARD_SESSION_TTL=1h \
+            netwizard-ci:${{ github.sha }}
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:8080/api/health >/dev/null; then
               exit 0
@@ -173,7 +183,7 @@ jobs:
       - name: Playwright production smoke
         env:
           NETWIZARD_PRODUCTION_BASE_URL: http://127.0.0.1:8080
-        run: npx playwright test --config=playwright.production.config.js
+        run: NETWIZARD_TEST_SELF_HOSTED_TOKEN="$NETWIZARD_CI_OPERATOR_TOKEN" npx playwright test --config=playwright.production.config.js
 
       - name: Upload production Playwright report
         if: always()
