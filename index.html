@@ -355,7 +355,7 @@
         <div class="brow"><button class="btn bp" id="btnAddVlan">➕ Añadir VLAN</button></div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">✍ Configuración manual de VLAN / Subnet</div>
+        <div class="card-t" style="margin-bottom:11px;">✍ Subnet canónica por VLAN</div>
         <div class="row">
           <div><label class="fl">VLAN</label><select id="mSnVlan"></select></div>
           <div><label class="fl">CIDR</label><input id="mSnCidr" placeholder="10.10.10.0/24"/></div>
@@ -364,22 +364,24 @@
           <div><label class="fl">Gateway</label><input id="mSnGw" placeholder="10.10.10.1"/></div>
           <div><label class="fl">RoaS nativa</label><select id="aNatV"></select></div>
         </div>
-        <div class="hint" id="mSnHint">Asigna manualmente la red y gateway de cada VLAN. Si la VLAN ya tiene subnet, se actualiza.</div>
+        <div class="hint" id="mSnHint">Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.</div>
         <div class="brow"><button class="btn bg" id="btnAddManualSn">💾 Guardar subnet manual</button></div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">⚡ Auto-subnetting</div>
+        <div class="card-t" style="margin-bottom:11px;">⚡ Asignación rápida conservadora</div>
+        <div class="co co-ac" style="margin-bottom:9px;">Completa únicamente VLANs que todavía no tienen subnet. Usa el mismo motor de planes que VLSM, evita solapamientos con las subnets existentes y nunca reemplaza una asignación ya definida.</div>
         <div class="row">
           <div><label class="fl">Bloque base</label><input id="aBase" placeholder="10.10.0.0/16"/></div>
-          <div><label class="fl">Prefijo por VLAN</label>
+          <div><label class="fl">Prefijo fijo por VLAN</label>
             <select id="aSize"><option value="24">/24</option><option value="25">/25</option><option value="26">/26</option><option value="23">/23</option></select>
           </div>
         </div>
         <div class="row">
-          <div><label class="fl">Gateway</label><select id="aGw"><option value="first">Primera IP (.1)</option><option value="last">Última IP</option></select></div>
-          <div><label class="fl">Modo</label><input value="Solo VLANs sin subnet" readonly/></div>
+          <div><label class="fl">Gateway</label><select id="aGw"><option value="first">Primera IP usable</option><option value="last">Última IP usable</option></select></div>
+          <div><label class="fl">Autoridad</label><input value="S.subnets · solo faltantes" readonly/></div>
         </div>
-        <div class="brow"><button class="btn bp" id="btnAutoSn">⚡ Generar subnets</button></div>
+        <div class="brow"><button class="btn bs" id="btnAutoSnPreview">👁 Previsualizar</button><button class="btn bp" id="btnAutoSn">✔ Aplicar faltantes</button></div>
+        <pre class="cfg" id="aSnOut" style="min-height:90px;white-space:pre-wrap;"></pre>
       </div>
     </div>
     <div>
