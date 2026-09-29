@@ -94,7 +94,8 @@ function configArtifactForDevice(result,deviceId){
   if(!id)return null;
   const plan=r.deploymentPlan&&typeof r.deploymentPlan==='object'?r.deploymentPlan:{};
   const step=(Array.isArray(plan.steps)?plan.steps:[]).find(item=>clean(item&&item.deviceId)===id);
-  const path=clean(step&&step.configPath);
+  const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
+  const path=clean(paths[id]||step&&step.configPath);
   if(!path)return null;
   const artifact=(Array.isArray(r.artifacts)?r.artifacts:[]).find(item=>clean(item&&item.path)===path&&typeof item.content==='string');
   if(!artifact)return null;
