@@ -22,6 +22,22 @@ function paths(project){
    return{id:run.id,label:run.label||run.id,patchPanelId:run.patchPanelId,patchPort:Number(run.patchPort)||null,outletId:run.outletId,outletPort:Number(run.outletPort)||1,cableType:run.cableType||'Cat6A',lengthM:num(run.lengthM),route:run.route||run.physicalPath||null,switchPortId:patch&&patch.switchPortId||null,hostId:host&&host.hostId||null,patchCordLengthM:num(patch&&patch.patchCordLengthM),hostCordLengthM:num(host&&host.patchCordLengthM),panelLabel:panel?panel.name||panel.id:run.patchPanelId,outletLabel:outlet?outlet.name||outlet.id:run.outletId,switchPortLabel:patch?portLabel(project,patch.switchPortId):'Sin puerto de switch',hostLabel:host?hostLabel(project,host.hostId):'Sin host',complete:!!(panel&&outlet&&patch&&host)};
  });
 }
+function hostAccess(project,hostId){
+ const id=clean(hostId),connections=arr(project&&project.hostOutletConnections).filter(x=>x&&x.hostId===id);
+ if(!id||!connections.length)return{structured:false,ambiguous:false,complete:false,hostId:id,switchPortId:null,deviceId:null,path:null};
+ if(connections.length!==1)return{structured:true,ambiguous:true,complete:false,hostId:id,switchPortId:null,deviceId:null,path:null,connectionCount:connections.length};
+ const connection=connections[0],run=arr(project&&project.cableRuns).find(x=>x&&x.outletId===connection.outletId&&Number(x.outletPort||1)===Number(connection.outletPort||1))||null;
+ const patch=run?arr(project&&project.patchConnections).find(x=>x&&x.patchPanelId===run.patchPanelId&&Number(x.patchPort)===Number(run.patchPort))||null:null;
+ const port=patch?byId(project&&project.ports,patch.switchPortId):null;
+ const device=port?byId(project&&project.devices,port.deviceId):null;
+ return{
+   structured:true,ambiguous:false,complete:!!(run&&patch&&port&&device),hostId:id,
+   hostOutletConnectionId:connection.id||null,outletId:connection.outletId||null,outletPort:Number(connection.outletPort||1),
+   cableRunId:run&&run.id||null,patchPanelId:run&&run.patchPanelId||null,patchPort:run&&Number(run.patchPort)||null,
+   patchConnectionId:patch&&patch.id||null,switchPortId:port&&port.id||null,deviceId:device&&device.id||null,
+   path:run?{route:run.route||run.physicalPath||null,cableType:run.cableType||null,lengthM:num(run.lengthM)}:null
+ };
+}
 function validate(project){
  const issues=[],panels=arr(project&&project.patchPanels),outlets=arr(project&&project.telecomOutlets),runs=arr(project&&project.cableRuns),patches=arr(project&&project.patchConnections),hosts=arr(project&&project.hostOutletConnections);
  const panelMap=new Map(panels.map(x=>[x.id,x])),outletMap=new Map(outlets.map(x=>[x.id,x])),portMap=new Map(arr(project&&project.ports).map(x=>[x.id,x])),hostMap=new Map(arr(project&&project.hosts).map(x=>[x.id,x])),rackMap=new Map(arr(project&&project.racks).map(x=>[x.id,x]));
@@ -63,7 +79,7 @@ function validate(project){
    if(!run){issues.push(issue('NW-CABLE-017','error',`${host.name||host.id}: está conectado a una toma sin tramo permanente documentado.`,{hostId:host.id,outletId:h.outletId}));continue;}
    const patch=patchByPanelPort.get(`${run.patchPanelId}|${run.patchPort}`);
    if(!patch){issues.push(issue('NW-CABLE-018','error',`${host.name||host.id}: su ruta física llega a ${panelLabel(project,run.patchPanelId)} P${run.patchPort}, pero no está parcheada a ningún puerto de red.`,{hostId:host.id,patchPanelId:run.patchPanelId,patchPort:run.patchPort}));continue;}
-   if(host.portRef&&patch.switchPortId&&host.portRef!==patch.switchPortId)issues.push(issue('NW-CABLE-016','error',`${host.name||host.id}: portRef lógico (${portLabel(project,host.portRef)}) no coincide con el puerto físico parcheado (${portLabel(project,patch.switchPortId)}).`,{hostId:host.id,portId:patch.switchPortId,logicalPortId:host.portRef}));
+   if(host.portRef&&patch.switchPortId&&host.portRef!==patch.switchPortId)issues.push(issue('NW-CABLE-016','warning',`${host.name||host.id}: portRef de compatibilidad (${portLabel(project,host.portRef)}) difiere del puerto físico parcheado (${portLabel(project,patch.switchPortId)}). La ruta de cableado estructurado es autoritativa.`,{hostId:host.id,portId:patch.switchPortId,logicalPortId:host.portRef}));
  }
  return{version:'netwizard-structured-cabling-v1',ok:!issues.some(x=>x.blocking),issues,counts:{blocking:issues.filter(x=>x.blocking).length,warnings:issues.filter(x=>x.severity==='warning').length},paths:paths(project)};
 }
@@ -75,6 +91,6 @@ function billOfMaterials(project){
  const patchCount=arr(project&&project.patchConnections).length,hostCount=arr(project&&project.hostOutletConnections).length;if(patchCount)rows.push({kind:'Latiguillo rack',description:'Latiguillos patch panel ↔ switch',quantity:patchCount});if(hostCount)rows.push({kind:'Latiguillo usuario',description:'Latiguillos toma ↔ host',quantity:hostCount});
  return rows;
 }
-const api={version:'netwizard-structured-cabling-v1',validate,paths,rackEdges,billOfMaterials,portLabel,hostLabel,panelLabel,outletLabel};
+const api={version:'netwizard-structured-cabling-v2',validate,paths,hostAccess,rackEdges,billOfMaterials,portLabel,hostLabel,panelLabel,outletLabel};
 root.NetWizardStructuredCabling=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
