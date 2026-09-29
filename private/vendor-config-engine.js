@@ -76,6 +76,9 @@ function configReadiness(project,device,output){
     if(!clean(roas.wanCidr,80))reasons.push('El equipo edge no tiene WAN CIDR explícita.');
     if(!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito.');
   }
+  if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
+    reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
+  }
   if((text.match(/^configure terminal$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente una entrada a config mode.');
   if((text.match(/^end$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un cierre de config mode.');
   if((text.match(/^write memory$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un guardado final.');
