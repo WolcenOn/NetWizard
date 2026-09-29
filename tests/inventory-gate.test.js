@@ -30,6 +30,8 @@ assert.strictEqual(coherent.ok,true);
 assert.strictEqual(coherent.score.locations,1);
 assert.strictEqual(coherent.score.racks,1);
 assert.strictEqual(coherent.score.devices,1);
+assert.strictEqual(coherent.score.rackItems,1);
+assert.strictEqual(coherent.score.placedDevices,1);
 assert.strictEqual(coherent.score.ports,1);
 assert.strictEqual(coherent.score.pdus,1);
 assert.strictEqual(coherent.score.powerConnections,1);

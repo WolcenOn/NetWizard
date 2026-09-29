@@ -8,7 +8,7 @@ const el=(tag,cls,text)=>{const n=root.document.createElement(tag);if(cls)n.clas
 function snapshot(){return state()?.getSnapshot?.()||{};}
 function setMode(mode){
  const S=state();if(!S)return;
- S.updateProject(p=>Object.assign({},p,{workflow:Object.assign({},p.workflow||{},{mode:mode==='inventory'?'inventory':'design'}),step:mode==='inventory'?'physical':'loc'}),{source:'workflow-mode-ui'});
+ S.updateProject(p=>Object.assign({},p,{workflow:Object.assign({},p.workflow||{},{mode:mode==='inventory'?'inventory':'design'}),step:mode==='inventory'?'loc':'wiz'}),{source:'workflow-mode-ui'});
 }
 function nav(step){
  const S=state();if(!S)return;
@@ -24,7 +24,7 @@ function workflowSelector(){
  box.append(row);return box;
 }
 function stepCard(index,title,done,detail,target){
- const card=el('button',`btn ${done?'bs':'bp'}`);card.type='button';card.style.cssText='text-align:left;display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:start;width:100%;padding:11px;margin:6px 0';
+ const card=el('button',`btn ${done?'bs':'bp'}`);card.type='button';card.dataset.inventoryStep=String(index);card.style.cssText='text-align:left;display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:start;width:100%;padding:11px;margin:6px 0';
  const n=el('span','',done?'✓':String(index));n.style.cssText='display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:'+(done?'#14532d':'#1d4ed8')+';color:#fff;font-weight:800';
  const body=el('span');const b=el('b','',title),small=el('small','',detail);small.style.cssText='display:block;margin-top:3px;opacity:.75';body.append(b,small);card.append(n,body);card.onclick=()=>nav(target);return card;
 }
@@ -35,14 +35,14 @@ function renderGoldenPath(project){
  }
  const g=gate()?.validate(project)||{status:'review',counts:{},score:{}},s=g.score||{};
  const head=el('div','card nw-card-wide'),hh=el('div','card-h');hh.append(el('div','card-t','⭐ Golden Path · Inventario As-Built'),el('span',`b ${g.status==='ready'?'bgn':g.status==='blocked'?'brd':'byw'}`,g.status==='ready'?'Documentación coherente':g.status==='blocked'?'Bloqueos físicos':'Revisión pendiente'));head.append(hh);
- head.append(el('p','hint','Documenta lo que existe de fuera hacia dentro: ubicación → rack → ocupación → alimentación → puertos → cableado → lógica observada.'));
- const stats=el('div','stats');for(const [v,l] of [[s.locations,'Ubicaciones'],[s.racks,'Racks'],[s.devices,'Equipos'],[s.ports,'Puertos'],[s.pdus,'PDU'],[s.cableRuns,'Tramos']]){const x=el('div');x.append(el('b','',v||0),el('span','',l));stats.append(x);}head.append(stats);wrap.append(head);
+ head.append(el('p','hint','Documenta lo que existe en orden de dependencia: ubicación → rack contenedor → equipos → colocación y alimentación → puertos → cableado → lógica observada.'));
+ const stats=el('div','stats');for(const [v,l] of [[s.locations,'Ubicaciones'],[s.racks,'Racks'],[s.devices,'Equipos'],[s.placedDevices,'Colocados'],[s.ports,'Puertos'],[s.cableRuns,'Tramos']]){const x=el('div');x.append(el('b','',v||0),el('span','',l));stats.append(x);}head.append(stats);wrap.append(head);
  const flow=el('div','card nw-card-wide');flow.append(el('div','card-t','Recorrido recomendado'));
  flow.append(
    stepCard(1,'Ubicaciones',s.locations>0,'Sedes, plantas, salas técnicas y armarios.','loc'),
-   stepCard(2,'Racks y ocupación',s.racks>0,'Altura U, equipos, patch panels, organizadores, bandejas y huecos.','physical'),
-   stepCard(3,'Equipos',s.devices>0,'Fabricante, modelo, serial/asset, U, altura, consumo y PSU.','dev'),
-   stepCard(4,'Alimentación',s.pdus>0&&s.powerConnections>0,'PDU, feed A/B, toma y PSU asociada.','physical'),
+   stepCard(2,'Racks contenedores',s.racks>0,'Crea armarios/racks, altura U y ubicación. La ocupación se documenta después de crear los equipos.','physical'),
+   stepCard(3,'Equipos',s.devices>0,'Identidad del equipo: tipo, fabricante, modelo, serial/asset y capacidades.','dev'),
+   stepCard(4,'Colocación y alimentación',s.placedDevices>0&&(s.pdus===0||s.powerConnections>0),'Asigna rack/U desde Inventario físico y documenta PDU, feed, toma y PSU cuando aplique.','physical'),
    stepCard(5,'Puertos físicos',s.ports>0,'Medio, velocidad máxima/negociada, PoE, transceptor y estado.','ports'),
    stepCard(6,'Cableado y conexiones',s.cableRuns>0||arr(project.links).length>0,'Patch panel, toma, ruta física, longitud y enlaces directos.','physical'),
    stepCard(7,'Lógica observada',arr(project.vlans).length>0||project.observedState,'VLAN/IP/configuración solo cuando se conoce.','vlan')

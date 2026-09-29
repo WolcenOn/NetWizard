@@ -36,10 +36,13 @@ function validate(project){
  const blocking=dedup.filter(i=>i.blocking||i.severity==='error').length;
  const warnings=dedup.filter(i=>i.severity==='warning').length;
  const info=dedup.filter(i=>i.severity==='info').length;
+ const placedDeviceIds=new Set(arr(p.rackItems).filter(x=>x&&x.type==='device'&&x.deviceId).map(x=>x.deviceId));
  const score={
    locations:arr(p.physicalLocations).length,
    racks:arr(p.racks).length,
+   rackItems:arr(p.rackItems).length,
    devices:arr(p.devices).length,
+   placedDevices:placedDeviceIds.size,
    ports:arr(p.ports).length,
    pdus:arr(p.pdus).length,
    powerConnections:arr(p.powerConnections).length,
