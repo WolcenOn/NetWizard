@@ -1152,31 +1152,43 @@ $('btnAddVlan').onclick=()=>{
   for(const p of S.ports){if(p.mode==='trunk'&&!p.allowedVlans.includes(vid)){p.allowedVlans.push(vid);p.allowedVlans.sort((a,b)=>a-b);}}
   save();refresh();
 };
-$('btnAutoSn').onclick=()=>{
-  if(!S.vlans.length)return alert('Crea VLANs primero.');
+function buildQuickSubnetPlan(){
+  const planner=window.NetWizardPlanner;
+  if(!planner||typeof planner.buildFixedSubnetPlan!=='function')return{ok:false,msg:'Motor común de subnetting no disponible.',plans:[],warnings:[]};
   const rawBase=($('aBase').value||'').trim()||'10.10.0.0/16';
   const pfx=parseInt($('aSize').value||'24',10);
-  const rule=$('aGw').value;
-  const info=subnettingExplain(rawBase,pfx,S.vlans.length);
-  if(!info.ok)return alert(info.msg+(info.note?`
-
-Nota: ${info.note}`:''));
-  const bc=info.ci;
-  const step=2**(32-pfx);let c=0;const skipped=[];
-  const sortedVlans=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
-  for(let i=0;i<sortedVlans.length;i++){const v=sortedVlans[i];if(S.subnets.some(s=>s.vlanRef===v.id))continue;
-    const net=(bc.net+i*step)>>>0;const cidr=`${ip4s(net)}/${pfx}`;const ci=parseCidr(cidr);if(!ci)continue;
-    const gw=rule==='last'?(ci.lh?ip4s(ci.lh):null):(ci.fh?ip4s(ci.fh):null);
-    const check=validateSubnetAssignment({vlanRef:v.id,cidr,gateway:gw},S.subnets);
-    if(!check.ok){skipped.push(`VLAN ${v.vlanId}: ${check.msg}`);continue;}
-    S.subnets.push({id:uid('sn'),vlanRef:v.id,cidr:check.cidr,gateway:check.gateway});c++;}
-  const nv=$('aNatV').value;if(nv)S.roas.natVRef=nv;save();refresh();
-  const msg=[`${c} subnets generadas.`];
-  if(info.note)msg.push(info.note);
-  if(skipped.length)msg.push('Subnets omitidas por validación:\n'+skipped.join('\n'));
-  if(c===0&&!skipped.length)msg.push('No se han creado subnets nuevas porque esas VLANs ya tenían una asignada.');
-  alert(msg.join('\n\n'));
-};
+  return planner.buildFixedSubnetPlan(S,rawBase,pfx,{gatewayMode:$('aGw').value||'first'});
+}
+function quickSubnetPlanSummary(plan){
+  if(!plan?.ok)return plan?.msg||'Plan de subnetting inválido.';
+  const cp=window.NetWizardChangePreview;
+  const diffFn=cp&&(cp.computeSubnetPlanDiff||cp.computeVlsmDiff);
+  if(diffFn&&typeof diffFn==='function'){
+    const diff=diffFn.call(cp,S,plan,{assignMode:'none',replaceExisting:false});
+    return cp.summarizeDiff?cp.summarizeDiff(diff,'Asignación rápida · solo subnets faltantes'):'';
+  }
+  const lines=[`Base: ${plan.base} · prefijo /${plan.prefix}`];
+  for(const p of plan.plans||[])lines.push(`VLAN ${p.vlanId||p.vlanRef}: ${p.cidr} · GW ${p.gateway||'—'}`);
+  if(plan.warnings?.length)lines.push('',...plan.warnings.map(x=>'! '+x));
+  return lines.join('\n');
+}
+function runQuickSubnetPlan(apply){
+  if(!S.vlans.length){alert('Crea VLANs primero.');return;}
+  const plan=buildQuickSubnetPlan(),out=$('aSnOut');
+  if(out)out.textContent=quickSubnetPlanSummary(plan);
+  if(!plan.ok){if(apply)alert(plan.msg||'Plan de subnetting inválido.');return plan;}
+  if(!apply)return plan;
+  if(!plan.plans.length){alert('No hay VLANs sin subnet que completar.');return plan;}
+  const planner=window.NetWizardPlanner;
+  const next=planner.applySubnetPlan(S,plan,{replaceExisting:false,assignMode:'none'});
+  const nv=$('aNatV').value;if(nv){next.roas=next.roas||{};next.roas.natVRef=nv;}
+  if(!confirm(`${quickSubnetPlanSummary(plan)}\n\n¿Aplicar ${plan.plans.length} subnet(s) faltante(s)? Las asignaciones existentes no se modificarán.`))return plan;
+  replaceProject(next,{source:'quick-subnet-plan'});
+  if($('aSnOut'))$('aSnOut').textContent='✓ Plan aplicado sobre S.subnets. No se reemplazó ninguna subnet existente.';
+  return plan;
+}
+$('btnAutoSnPreview').onclick=()=>runQuickSubnetPlan(false);
+$('btnAutoSn').onclick=()=>runQuickSubnetPlan(true);
 function renderVlans(){
   const vrows=S.vlans.slice(); const vsort=S.uiSort.vlans||{key:'id',dir:1};
   vrows.sort((a,b)=>vsort.dir*cmpMixed(vsort.key==='name'?a.name:a.vlanId, vsort.key==='name'?b.name:b.vlanId));
