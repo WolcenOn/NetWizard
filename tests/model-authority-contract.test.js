@@ -12,7 +12,7 @@ const cabling=read('js/netwizard-structured-cabling.js');
 const rack=read('js/netwizard-rack-model.js');
 const planner=read('js/netwizard-vlsm-physical-planner.js');
 const privateUi=read('js/netwizard-private-deployment-ui.js');
-const privateEngine=read('private/vendor-config-engine.js');
+const PrivateEngine=require('../private/vendor-config-engine.js');
 const workflow=read('.github/workflows/ci.yml');
 const authority=read('docs/MODEL_AUTHORITY.md');
 
@@ -35,9 +35,22 @@ assert.strictEqual(
 assert.ok(planner.includes('function applySubnetPlan('),'Los automatismos de subnetting deben compartir applySubnetPlan');
 assert.ok(main.includes('wizardSubnetPlan=subnetPlanner.buildFixedSubnetPlan'),'El Wizard debe reutilizar el planificador común');
 
-assert.ok(privateEngine.includes("status:'apply-ready'"),'Private Engine debe clasificar aplicabilidad');
-assert.ok(privateEngine.includes("status:'review-required'"),'Private Engine debe poder exigir revisión');
-assert.ok(privateEngine.includes("status:'procedure-only'"),'Private Engine debe distinguir procedimientos no CLI');
+const validCisco='configure terminal\nhostname SW1\nend\nwrite memory\n';
+assert.strictEqual(
+  PrivateEngine.configReadiness({fwRules:[]},{id:'sw1',name:'SW1',type:'switch',kind:'switch',vendorOs:'cisco_ios'},validCisco).status,
+  'apply-ready',
+  'Cisco IOS limpio debe poder clasificarse apply-ready'
+);
+assert.strictEqual(
+  PrivateEngine.configReadiness({fwRules:[{id:'f1',enabled:true}]},{id:'r1',name:'R1',type:'router',kind:'router',vendorOs:'cisco_ios'},validCisco).status,
+  'review-required',
+  'Cisco IOS con política no vinculada debe exigir revisión'
+);
+assert.strictEqual(
+  PrivateEngine.configReadiness({}, {id:'u1',name:'U1',type:'access_point',vendorOs:'ubiquiti_unifi'},'').status,
+  'procedure-only',
+  'Plataformas de controlador deben distinguirse como procedimiento'
+);
 assert.ok(privateUi.includes('configReadiness'),'La UI privada debe transportar configReadiness');
 assert.ok(main.includes('function configReadinessForView('),'Config por dispositivo debe exponer la clasificación');
 assert.ok(main.includes('La Production Gate global debe seguir en READY'),'La UI no debe equiparar apply-ready con productionReady');
