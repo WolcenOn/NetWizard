@@ -113,6 +113,7 @@
     if(!runbook||typeof runbook.buildDeploymentPlan!=='function'||typeof runbook.buildMarkdown!=='function'||typeof runbook.buildRollbackMarkdown!=='function') missing.push('DeploymentRunbook');
     if(!changeSetBuilder||typeof changeSetBuilder.buildChangeSet!=='function'||typeof changeSetBuilder.buildSummaryMarkdown!=='function'||typeof changeSetBuilder.buildPostChangeChecklist!=='function'||typeof changeSetBuilder.publicChangeSet!=='function') missing.push('ChangeSet');
     if(!incrementalBuilder||typeof incrementalBuilder.buildPlan!=='function'||typeof incrementalBuilder.buildSummaryMarkdown!=='function'||typeof incrementalBuilder.publicPlan!=='function') missing.push('IncrementalGenerators');
+    if(root.document&&!opts.generateConfig&&!root.NetWizardLegacyConfigGenerator) missing.push('LocalConfigGenerator');
     if(typeof generate!=='function') missing.push('ConfigGenerator');
     if(missing.length) return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,issues:[gateIssue('NW-BUNDLE-001',`Dependencias no disponibles: ${missing.join(', ')}`)],files:[]};
 
