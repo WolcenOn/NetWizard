@@ -234,10 +234,8 @@ function render(){
       lastResultContext=latest?{projectId:latest.projectId,currentVersion:latest.currentVersion}:null;
       selectedKey='';
       render();
-      if(root.dispatchEvent){
-        const detail={projectId:lastResultContext&&lastResultContext.projectId,currentVersion:lastResultContext&&lastResultContext.currentVersion};
-        try{root.dispatchEvent(new CustomEvent('nw:private-deployment:generated',{detail}));}
-        catch(_){try{root.dispatchEvent(new Event('nw:private-deployment:generated'));}catch(__){}}
+      if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
+        root.NetWizardConfigView.refreshPrivateArtifacts();
       }
     }catch(err){
       const conflict=err&&[409,412].includes(err.status);
