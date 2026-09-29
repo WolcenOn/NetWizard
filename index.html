@@ -433,6 +433,11 @@
           <div><label class="fl">Asignación de puerto</label><select id="hPortMode"><option value="auto">Automática</option><option value="manual">Manual</option></select></div>
           <div><label class="fl">Puerto del equipo</label><select id="hPort"></select></div>
         </div>
+        <div class="row">
+          <div><label class="fl">Dispositivo gestionado representado</label><select id="hDeviceRef"></select></div>
+          <div><label class="fl">Uso</label><input value="Servidor/AP/appliance · generación vendor" readonly/></div>
+        </div>
+        <div class="hint">Esta relación identifica el dispositivo que representa el host. No sustituye “Equipo conectado”, que documenta el switch/router de acceso.</div>
         <div class="hint" id="hConnAuthority">Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.</div>
         <label class="fl">Resumen conexión</label><input id="hDevHint" placeholder="Selecciona equipo y puerto" readonly/>
         <label class="fl">Notas host</label><input id="hNotes" placeholder="Observaciones, servicio, toma, usuario…"/>
