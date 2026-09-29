@@ -167,6 +167,11 @@ function createClient(options){
       body.contractVersion!=='netwizard-private-deployment-plan-v2'||
       typeof body.generatedAt!=='string'||
       typeof body.ok!=='boolean'||
+      typeof body.productionReady!=='boolean'||
+      !['ready','review','blocked'].includes(clean(body.productionStatus))||
+      body.productionGateContract!=='netwizard-private-production-gate-v1'||
+      !body.productionGate||typeof body.productionGate!=='object'||
+      body.productionReady!==(body.productionStatus==='ready')||
       !Array.isArray(body.artifacts)||
       !Array.isArray(body.issues)
     ){
