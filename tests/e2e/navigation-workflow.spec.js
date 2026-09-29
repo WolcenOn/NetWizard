@@ -78,15 +78,18 @@ test('panel y sidebar usan los mismos contadores canónicos', async ({page})=>{
   await expect(page.locator('#sbIOT')).toContainText('2 IoT');
   await expect(page.locator('#sbFW')).toContainText('1 reglas FW');
 
-  const stats=page.locator('#dStats .stat');
-  await expect(stats.nth(0)).toContainText('2');
-  await expect(stats.nth(0)).toContainText('Dispositivos');
-  await expect(stats.nth(1)).toContainText('1');
-  await expect(stats.nth(1)).toContainText('VLANs');
-  await expect(stats.nth(2)).toContainText('3');
-  await expect(stats.nth(2)).toContainText('Hosts');
-  await expect(stats.nth(3)).toContainText('1');
-  await expect(stats.nth(3)).toContainText('Reglas FW');
+  const dashboardValues=page.locator('#dStats .sv');
+  await expect(dashboardValues).toHaveText(['2','1','3','1']);
+
+  const parity=await page.evaluate(()=>{
+    const number=id=>Number((document.querySelector(id+' b')?.textContent||'0').trim());
+    const dashboard=Array.from(document.querySelectorAll('#dStats .sv')).map(el=>Number(el.textContent||0));
+    return{
+      sidebar:[number('#sbD'),number('#sbV'),number('#sbH'),number('#sbFW')],
+      dashboard
+    };
+  });
+  expect(parity.dashboard).toEqual(parity.sidebar);
 
   expect(errors).toEqual([]);
 });
