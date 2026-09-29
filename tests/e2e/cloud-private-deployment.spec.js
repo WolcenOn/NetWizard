@@ -79,6 +79,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
         }],
         issues:[],
         configSources:{r1:'private'},
+        configPaths:{r1:'configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg'},
         privateConfigContract:'netwizard-private-vendor-config-v1',
         productionReady:true,
         productionStatus:'ready',
@@ -107,6 +108,9 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   const card=page.locator('#nwPrivateDeploymentCard');
   await expect(card).toBeVisible();
   await expect(card.locator('#nwPrivateDeploymentContext')).toContainText('versión 4');
+  await expect(page.locator('[data-dcfg="r1"]')).toHaveClass(/on/);
+  await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-CLOUD/);
+  await expect(page.locator('#cfgOut')).not.toHaveValue(/SERVER-ONLY-CONFIG/);
 
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
@@ -121,6 +125,13 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('Production Gate');
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER RUNBOOK/);
   await expect(card.locator('#nwPrivateDeploymentView')).toContainText('configs/01-RTR-CLOUD-DEPLOY-EDITED-r1-cisco_ios.cfg');
+  await expect.poll(
+    ()=>page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.deviceConfig('r1')?.content||'')
+  ).toMatch(/SERVER-ONLY-CONFIG/);
+  await expect.poll(
+    ()=>page.evaluate(()=>window.NetWizardConfigView?.selectedDeviceId?.()||'')
+  ).toBe('r1');
+  await expect(page.locator('#cfgOut')).toHaveValue(/SERVER-ONLY-CONFIG/);
 
   await card.locator('#nwPrivateDeploymentView').selectOption('artifact:0');
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER-ONLY-CONFIG/);

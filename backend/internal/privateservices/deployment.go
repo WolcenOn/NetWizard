@@ -46,6 +46,7 @@ type DeploymentPlanResult struct {
 	Artifacts                   []DeploymentArtifact `json:"artifacts"`
 	Issues                      json.RawMessage      `json:"issues"`
 	ConfigSources               map[string]string    `json:"configSources,omitempty"`
+	ConfigPaths                 map[string]string    `json:"configPaths,omitempty"`
 	PrivateConfigContract       string               `json:"privateConfigContract,omitempty"`
 	ProductionReady             bool                 `json:"productionReady"`
 	ProductionStatus            string               `json:"productionStatus"`

@@ -89,6 +89,22 @@ function selectedView(result){
   }
   return view;
 }
+function configArtifactForDevice(result,deviceId){
+  const r=result||{},id=clean(deviceId);
+  if(!id)return null;
+  const plan=r.deploymentPlan&&typeof r.deploymentPlan==='object'?r.deploymentPlan:{};
+  const step=(Array.isArray(plan.steps)?plan.steps:[]).find(item=>clean(item&&item.deviceId)===id);
+  const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
+  const path=clean(paths[id]||step&&step.configPath);
+  if(!path)return null;
+  const artifact=(Array.isArray(r.artifacts)?r.artifacts:[]).find(item=>clean(item&&item.path)===path&&typeof item.content==='string');
+  if(!artifact)return null;
+  return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8'};
+}
+function deviceConfig(deviceId){
+  if(!lastResult)return null;
+  return configArtifactForDevice(lastResult,deviceId);
+}
 function renderResult(result){
   const select=root.document&&root.document.getElementById('nwPrivateDeploymentView');
   const output=root.document&&root.document.getElementById('nwPrivateDeploymentOutput');
@@ -218,6 +234,9 @@ function render(){
       lastResultContext=latest?{projectId:latest.projectId,currentVersion:latest.currentVersion}:null;
       selectedKey='';
       render();
+      if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
+        root.NetWizardConfigView.refreshPrivateArtifacts();
+      }
     }catch(err){
       const conflict=err&&[409,412].includes(err.status);
       const suffix=conflict?' Recarga el proyecto cloud antes de reintentar.':'';
@@ -261,7 +280,7 @@ function install(){
   return true;
 }
 
-const api={version:'netwizard-private-deployment-ui-v1',viewsFor,render,install,clearResult};
+const api={version:'netwizard-private-deployment-ui-v2',viewsFor,configArtifactForDevice,deviceConfig,render,install,clearResult};
 root.NetWizardPrivateDeploymentUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();
