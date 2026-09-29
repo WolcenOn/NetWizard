@@ -167,7 +167,10 @@ function firewallAcl(project){
   lines.push(' deny ip any any log ! Implicit deny');
   return lines.join('\n');
 }
-function extension(vendor){return EXTENSIONS[clean(vendor,80)]||'txt';}
+function extension(vendor){
+  const id=clean(vendor,80),cap=Capabilities.definition(id);
+  return (cap&&cap.extension)||EXTENSIONS[id]||'txt';
+}
 function configPath(device,index){
   const vendor=clean(device&&device.vendorOs,80)||'generic';
   return 'configs/'+String(index+1).padStart(2,'0')+'-'+safeName(device&&device.name,'device')+'-'+safeName(device&&device.id,'id')+'-'+safeName(vendor,'vendor')+'.'+extension(vendor);
