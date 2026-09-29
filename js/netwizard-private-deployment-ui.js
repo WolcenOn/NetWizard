@@ -7,6 +7,7 @@ let lastResult=null;
 let lastResultContext=null;
 let lastResultMode='';
 let lastResultStale=false;
+let pendingGenerateAfterLogin=false;
 let selectedKey='';
 
 function authState(){
@@ -44,6 +45,29 @@ function setStatus(message,kind){
   if(!node)return;
   node.className='co '+(kind==='error'?'co-rd':kind==='ok'?'co-gn':'co-ac');
   node.textContent=message;
+}
+function bindPrimaryGenerateAction(options){
+  const opts=options||{},button=root.document&&root.document.getElementById('cfgGenerateServer');
+  if(!button)return;
+  if(!opts.available){
+    button.disabled=true;
+    button.textContent='☁ Generación server-side no disponible';
+    button.onclick=null;
+    return;
+  }
+  button.disabled=false;
+  const locked=opts.mode==='self-hosted'&&!opts.authenticated;
+  button.textContent=locked?'🔒 Desbloquear y generar':'☁ Generar en servidor';
+  button.onclick=()=>{
+    const live=root.document&&root.document.getElementById('nwPrivateDeploymentGenerate');
+    if(live&&!live.disabled){live.click();return;}
+    if(locked){
+      pendingGenerateAfterLogin=true;
+      if(opts.card&&typeof opts.card.scrollIntoView==='function')opts.card.scrollIntoView({behavior:'smooth',block:'center'});
+      const token=root.document&&root.document.getElementById('nwSelfHostedPrivateToken');
+      if(token&&typeof token.focus==='function')token.focus();
+    }
+  };
 }
 function safeFileName(value,fallback){
   const out=clean(value).replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-').replace(/^-+|-+$/g,'');
@@ -239,13 +263,17 @@ function render(){
   const selfHostedAvailable=!!caps.selfHostedPrivateGeneration;
   const available=cloudAvailable||selfHostedAvailable;
   card.style.display=available?'':'none';
-  if(!available)return false;
+  if(!available){
+    bindPrimaryGenerateAction({available:false,card});
+    return false;
+  }
 
   const mode=cloudAvailable?'remote':'self-hosted';
   const remote=root.NetWizardRemoteProject;
   const selfHosted=root.NetWizardSelfHostedPrivate;
   const ctx=remote&&typeof remote.context==='function'?remote.context():null;
   const localState=selfHosted&&typeof selfHosted.state==='function'?selfHosted.state():{authenticated:false};
+  bindPrimaryGenerateAction({available:true,mode,authenticated:!!localState.authenticated,card});
   if(lastResult&&lastResultMode==='remote'&&!resultMatchesContext(remote))clearResult();
 
   card.textContent='';
@@ -281,8 +309,15 @@ function render(){
       try{
         await selfHosted.login(tokenInput.value);
         tokenInput.value='';
+        const shouldGenerate=pendingGenerateAfterLogin;
+        pendingGenerateAfterLogin=false;
         render();
+        if(shouldGenerate){
+          const live=root.document&&root.document.getElementById('nwPrivateDeploymentGenerate');
+          if(live&&!live.disabled)live.click();
+        }
       }catch(err){
+        pendingGenerateAfterLogin=false;
         tokenInput.value='';
         setStatus('No se pudo abrir la sesión privada: '+(err&&err.message||'error desconocido')+'.','error');
         unlock.disabled=false;
@@ -310,6 +345,7 @@ function render(){
     const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Bloquear sesión');
     actionCol.appendChild(lock);
     lock.onclick=async()=>{
+      pendingGenerateAfterLogin=false;
       clearResult();
       if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
         root.NetWizardConfigView.refreshPrivateArtifacts();
@@ -447,7 +483,7 @@ function install(){
   return true;
 }
 
-const api={version:'netwizard-private-deployment-ui-v3',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,render,install,clearResult};
+const api={version:'netwizard-private-deployment-ui-v3',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,bindPrimaryGenerateAction,render,install,clearResult};
 root.NetWizardPrivateDeploymentUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();
