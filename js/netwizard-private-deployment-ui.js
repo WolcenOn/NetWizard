@@ -105,7 +105,16 @@ function configArtifactForDevice(result,deviceId){
     status:clean(rawReadiness.status),
     reasons:(Array.isArray(rawReadiness.reasons)?rawReadiness.reasons:[]).map(clean).filter(Boolean)
   };
-  return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8',readiness};
+  const capabilityMap=r.configCapabilities&&typeof r.configCapabilities==='object'?r.configCapabilities:{};
+  const rawCapability=capabilityMap[id]&&typeof capabilityMap[id]==='object'?capabilityMap[id]:{};
+  const capability={
+    mode:clean(rawCapability.mode),
+    supported:rawCapability.supported!==false,
+    kind:clean(rawCapability.kind),
+    certification:clean(rawCapability.certification),
+    reason:clean(rawCapability.reason)
+  };
+  return {deviceId:id,vendor:clean(step&&step.vendor),path,content:artifact.content,mime:clean(artifact.mime)||'text/plain;charset=utf-8',readiness,capability};
 }
 function deviceConfig(deviceId){
   if(!lastResult)return null;
