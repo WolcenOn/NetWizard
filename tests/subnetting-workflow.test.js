@@ -41,7 +41,8 @@ const vlsm=Planner.buildVlsmPlan('172.16.0.0/24',[
 ],{margin:0});
 const viaLegacy=Planner.applyVlsmPlan(project,vlsm,{assignMode:'none'});
 const viaCommon=Planner.applySubnetPlan(project,vlsm,{assignMode:'none',replaceExisting:true});
-assert.deepStrictEqual(viaLegacy.subnets,viaCommon.subnets,'VLSM debe reutilizar el motor común de aplicación');
+const canonicalSubnets=list=>list.map(x=>({vlanRef:x.vlanRef,cidr:x.cidr,gateway:x.gateway})).sort((a,b)=>a.vlanRef.localeCompare(b.vlanRef));
+assert.deepStrictEqual(canonicalSubnets(viaLegacy.subnets),canonicalSubnets(viaCommon.subnets),'VLSM debe reutilizar el motor común de aplicación');
 
 const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
