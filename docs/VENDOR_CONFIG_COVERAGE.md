@@ -58,3 +58,15 @@ Para promocionar una familia de `review-required` a `apply-ready` se necesita:
 8. Production Gate en verde para el deployment global.
 
 La certificación debe ser conservadora: si el modelo/versión no permite demostrar la sintaxis correcta, el artefacto sigue siendo útil como CLI revisable, pero no se etiqueta `apply-ready`.
+
+
+## Ejecución en producción
+
+La misma generación privada puede consumirse por dos fronteras:
+
+- **SaaS:** revisión almacenada + OIDC/RBAC + endpoint por proyecto.
+- **Self-hosted:** snapshot 3.50 actual + sesión privada local autenticada.
+
+En ambos casos el artefacto lo produce `deployment-worker.cjs` en el servidor. El navegador productivo no carga `netwizard-vendor-config-generators.js`, el generador legacy ni el motor `private/vendor-config-engine.js`.
+
+El modo self-hosted no cambia la matriz de certificación anterior: recuperar la generación server-side no convierte automáticamente un vendor `review-required` en `apply-ready`.
