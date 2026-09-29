@@ -12,6 +12,7 @@ const Ha=require('../js/netwizard-ha-services-generator.js');
 const Legacy=require('./legacy-vendor-generators.js');
 const Policy=require('../js/netwizard-policy-utils.js');
 const Network=require('../js/netwizard-network-utils.js');
+const Capabilities=require('./vendor-config-capabilities.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -60,13 +61,69 @@ function finalizeCiscoIosConfig(config){
   const out=[...prefix,'configure terminal',...body,'end','write memory','!'];
   return out.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
 }
+function finalizeCiscoAsaConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n'),body=[];
+  for(const line of lines){
+    const t=line.trim().toLowerCase();
+    if(t==='configure terminal'||t==='conf t'||t==='end'||t==='write memory'||t==='copy running-config startup-config')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  return ['configure terminal',...body,'end','write memory','!'].join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function finalizeJunosConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n'),body=[];
+  for(const line of lines){
+    const t=line.trim().toLowerCase();
+    if(t==='configure'||t==='commit'||t==='commit check'||t==='commit and-quit'||t==='exit')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  return ['configure',...body,'commit check','commit and-quit'].join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function finalizeHuaweiConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n'),body=[];
+  for(const line of lines){
+    const t=line.trim().toLowerCase();
+    if(t==='system-view'||t==='return'||t==='save'||t==='save force')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  return ['system-view',...body,'return','save'].join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function finalizeArubaAosConfig(config){
+  const lines=String(config||'').replace(/\r/g,'').split('\n'),body=[];
+  for(const line of lines){
+    const t=line.trim().toLowerCase();
+    if(t==='configure terminal'||t==='write memory')continue;
+    body.push(line);
+  }
+  while(body.length&&!body[body.length-1].trim())body.pop();
+  return ['configure terminal',...body,'exit','write memory'].join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function finalizeVendorConfig(vendor,config){
+  if(vendor==='cisco_ios')return finalizeCiscoIosConfig(config);
+  if(vendor==='cisco_asa')return finalizeCiscoAsaConfig(config);
+  if(vendor==='juniper_junos')return finalizeJunosConfig(config);
+  if(vendor==='huawei_vrp')return finalizeHuaweiConfig(config);
+  if(vendor==='aruba_aoss')return finalizeArubaAosConfig(config);
+  return String(config||'');
+}
 function configReadiness(project,device,output){
   const p=obj(project),d=obj(device),vendor=clean(d.vendorOs,80),text=String(output||''),reasons=[];
-  if(['ubiquiti_unifi','tplink_omada','galgus_cloud','pfsense'].includes(vendor)){
+  const capability=Capabilities.capabilityFor(d);
+  if(!capability.supported){
+    return{status:'review-required',reasons:[capability.reason||'Combinación vendor/tipo no soportada por el generador privado.']};
+  }
+  if(capability.mode==='procedure'){
     return{status:'procedure-only',reasons:['La plataforma se configura mediante controlador, GUI/API o procedimiento específico; el artefacto no es una CLI universal para pegar directamente.']};
   }
+  if(capability.mode==='script'){
+    return{status:'review-required',reasons:['El Private Engine genera un script por sistema operativo, pero necesita asociación inequívoca al host/dispositivo y revisión de interfaz/servicios antes de ejecución.']};
+  }
   if(vendor!=='cisco_ios'){
-    return{status:'review-required',reasons:['El generador privado produce artefacto vendor-specific, pero este vendor aún no está certificado como apply-ready por NetWizard.']};
+    const family=clean(d.model,120);
+    return{status:'review-required',reasons:[`Se generó CLI vendor-specific y se normalizó su cierre, pero ${vendor} requiere certificar familia/modelo${family?' '+family:''} y versión antes de marcarlo apply-ready.`]};
   }
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
@@ -178,15 +235,17 @@ function create(project){
 }
 function generateAll(project){
   const p=obj(project),pipeline=create(p);
-  const configs={},paths={},artifacts=[],issues=[],sources={},readiness={};
+  const configs={},paths={},artifacts=[],issues=[],sources={},readiness={},capabilities={};
   for(const [index,device] of arr(p.devices).entries()){
     const id=clean(device&&device.id,256),vendor=clean(device&&device.vendorOs,80);
     if(!id)continue;
     const path=configPath(device,index);
     paths[id]=path;
-    if(PRIVATE_VENDORS.has(vendor)){
+    const capability=Capabilities.capabilityFor(device);
+    capabilities[id]=capability;
+    if(capability.supported&&PRIVATE_VENDORS.has(vendor)){
       let output=String(pipeline.generate(id,vendor)||'');
-      if(vendor==='cisco_ios')output=finalizeCiscoIosConfig(output);
+      output=finalizeVendorConfig(vendor,output);
       if(!output.trim()||/todavía no implementado en Private Engine/i.test(output)){
         issues.push({code:'NW-PRIVATE-CONFIG-002',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': Private Engine no produjo una configuración utilizable.'});
         continue;
@@ -197,17 +256,20 @@ function generateAll(project){
       artifacts.push({path,content:output.endsWith('\n')?output:output+'\n',mime:'text/plain;charset=utf-8'});
       continue;
     }
-    issues.push({code:'NW-PRIVATE-CONFIG-003',severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': vendor '+(vendor||'sin asignar')+' no tiene generación privada.'});
+    const code=Capabilities.definition(vendor)?'NW-PRIVATE-CONFIG-004':'NW-PRIVATE-CONFIG-003';
+    issues.push({code,severity:'error',blocking:true,category:'private-vendor-generation',deviceId:id,vendor,message:(device.name||id)+': '+(capability.reason||('vendor '+(vendor||'sin asignar')+' no tiene generación privada.'))});
   }
   return {
     contractVersion:CONTRACT_VERSION,
     ok:!issues.some(x=>x.blocking),
-    configs,configPaths:paths,artifacts,issues,sources,configReadiness:readiness,
+    configs,configPaths:paths,artifacts,issues,sources,configReadiness:readiness,configCapabilities:capabilities,
     pipeline:pipeline.inspect()
   };
 }
 
 module.exports={
   CONTRACT_VERSION,MODULAR_VENDORS,PRIVATE_VENDORS,
-  create,generateAll,configPath,extension,firewallAcl,finalizeCiscoIosConfig,configReadiness
+  create,generateAll,configPath,extension,firewallAcl,
+  finalizeCiscoIosConfig,finalizeCiscoAsaConfig,finalizeJunosConfig,finalizeHuaweiConfig,finalizeArubaAosConfig,finalizeVendorConfig,
+  configReadiness
 };
