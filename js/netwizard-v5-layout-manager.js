@@ -5,7 +5,6 @@
    - Cada ubicación se calcula como bloques verticales:
      [router/switch/AP] a la izquierda + hosts asociados en UNA columna a la derecha.
    - Las ubicaciones raíz se colocan por árbol de conectividad con separación garantizada.
-   - Auditoría Unificada conserva controles de layout.
 ========================================================= */
 (function(){
   'use strict';
@@ -13,13 +12,6 @@
   const V5=window.NetWizardV5;
   const CORE=window.NetWizardV5Core;
   const SK = 'netwizard_v5_layout_manager_v29';
-  const UNIFIED_MANUAL_SK = 'netwizard_unified_manual_positions_v29';
-  const UNIFIED_VIEW_SK = 'netwizard_unified_view_v30';
-  let unifiedHits=[];
-  let unifiedDrag=null;
-  let unifiedPanDrag=null;
-  let unifiedSelection=null;
-  let unifiedInteractionReady=false;
   const MODES = {
     treeBlocks: 'Árbol · bloques por puerto',
     locationColumns: 'Por ubicación · columnas',
@@ -35,19 +27,6 @@
     }catch(e){}
     return String(v ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
   }
-  function clearEl(el){ while(el && el.firstChild) el.removeChild(el.firstChild); return el; }
-  function txt(value){ return document.createTextNode(String(value ?? '')); }
-  function el(tag, className, text){
-    const node=document.createElement(tag);
-    if(className) node.className=className;
-    if(text !== undefined) node.textContent=String(text ?? '');
-    return node;
-  }
-  function addKv(parent, key, value){
-    const b=el('b', '', key);
-    const span=el('span', '', value);
-    parent.appendChild(b); parent.appendChild(span);
-  }
   function addOption(select, value, label, selected){
     const opt=document.createElement('option');
     opt.value=String(value ?? ''); opt.textContent=String(label ?? value ?? '');
@@ -57,7 +36,7 @@
   function S(){ return V5?.project?.()||{}; }
   function V(){ return V5?.visual?.()||null; }
   function safe(fn, fallback){ try{return fn();}catch(e){ console.warn('[V5 layout manager v2.8.1]', e); return fallback; } }
-  function readCfg(){ try{return {...{v5Mode:'treeBlocks',unifiedMode:'treeBlocks'},...JSON.parse(localStorage.getItem(SK)||'{}')};}catch{return {v5Mode:'treeBlocks',unifiedMode:'treeBlocks'};} }
+  function readCfg(){ try{return {...{v5Mode:'treeBlocks'},...JSON.parse(localStorage.getItem(SK)||'{}')};}catch{return {v5Mode:'treeBlocks'};} }
   function saveCfg(cfg){ localStorage.setItem(SK, JSON.stringify(cfg)); }
   function cfg(){ return readCfg(); }
   function byName(a,b){ return String(a?.name||a?.label||a?.id||'').localeCompare(String(b?.name||b?.label||b?.id||''), undefined, {numeric:true,sensitivity:'base'}); }
@@ -117,27 +96,6 @@
     if(autoBtn && autoBtn.nextSibling) bar.insertBefore(span, autoBtn.nextSibling); else bar.appendChild(span);
     $('v5LayoutMode')?.addEventListener('change', e=>{const c=cfg(); c.v5Mode=e.target.value; saveCfg(c);});
     $('v5ApplyLayout')?.addEventListener('click', ()=>applyV5SmartLayout(true));
-  }
-
-  function injectUnifiedControls(){
-    const tryInject = () => {
-      const toolbar = document.querySelector('#nwuCard .nwu-toolbar');
-      if(!toolbar || $('nwuLayoutMode')) return false;
-      const cfg0 = cfg();
-      const span = document.createElement('span');
-      span.className = 'nwu-layout-controls';
-      const select = document.createElement('select');
-      select.id='nwuLayoutMode'; select.className='v5-layout-select'; select.title='Algoritmo de ordenación Auditoría Unificada';
-      Object.entries(MODES).forEach(([k,v])=>addOption(select,k,v,cfg0.unifiedMode===k));
-      const button = document.createElement('button');
-      button.className='btn bp bsm'; button.id='nwuApplyLayout'; button.type='button'; button.textContent='🧠 Ordenar auditoría';
-      span.appendChild(select); span.appendChild(button);
-      toolbar.insertBefore(span, toolbar.firstChild);
-      $('nwuLayoutMode')?.addEventListener('change', e=>{const c=cfg(); c.unifiedMode=e.target.value; saveCfg(c); renderUnifiedManaged();});
-      $('nwuApplyLayout')?.addEventListener('click', renderUnifiedManaged);
-      return true;
-    };
-    if(!tryInject()) setTimeout(tryInject, 300);
   }
 
   // ───────── Layout V5: tamaños ─────────
@@ -406,183 +364,9 @@
     const bounds={}; vLocs().forEach(l=>{ bounds[l.id]={x:l.x,y:l.y,w:Math.max(430,l.w||430),h:Math.max(205,l.h||205)}; }); V().proBounds=bounds; return bounds;
   };
 
-  // ───────── Auditoría Unificada ─────────
-  function readUnifiedManual(){try{return JSON.parse(localStorage.getItem(UNIFIED_MANUAL_SK)||'{}');}catch{return {};}}
-  function writeUnifiedManual(m){localStorage.setItem(UNIFIED_MANUAL_SK,JSON.stringify(m||{}));}
-  function applyUnifiedManual(pos){const m=readUnifiedManual(); Object.entries(m).forEach(([id,p])=>{if(pos.has(id)&&Number.isFinite(p.x)&&Number.isFinite(p.y))pos.set(id,{...pos.get(id),x:p.x,y:p.y});});}
-  function readUnifiedView(){try{return {...{panX:0,panY:0,scale:1},...JSON.parse(localStorage.getItem(UNIFIED_VIEW_SK)||'{}')};}catch{return {panX:0,panY:0,scale:1};}}
-  function writeUnifiedView(v){localStorage.setItem(UNIFIED_VIEW_SK,JSON.stringify(v||{panX:0,panY:0,scale:1}));}
-  function getProjectLocations(){
-    try{const snap=window.NetWizardBridge?.getProjectSnapshot?.(); const locs=snap?.project?.physicalLocations; if(Array.isArray(locs)&&locs.length)return locs;}catch(e){}
-    try{const raw=localStorage.getItem('nwp_v4'); const p=raw?JSON.parse(raw):null; if(Array.isArray(p?.physicalLocations)&&p.physicalLocations.length)return p.physicalLocations;}catch(e){}
-    return [];
-  }
-  function locLabelById(id){const l=getProjectLocations().find(x=>x.id===id);return l?l.name:'';}
-  function nodeLocationKey(n){
-    const r=n?.ref||{};
-    const id=r.locationId||r.meta?.locationId||r.meta?.physicalLocationId||'';
-    const phys=r.physicalLocation||r.meta?.physicalLocation||'';
-    if(id)return `id:${id}`;
-    if(phys)return `name:${String(phys).trim().toLowerCase()}`;
-    return 'unknown';
-  }
-  function nodeLocationLabel(key){
-    if(key==='unknown')return 'Sin ubicación';
-    if(key.startsWith('id:'))return locLabelById(key.slice(3))||'Ubicación';
-    if(key.startsWith('name:'))return key.slice(5)||'Ubicación';
-    return 'Ubicación';
-  }
-  function canvasPoint(canvas,e){
-    const r=canvas.getBoundingClientRect();
-    const v=readUnifiedView();
-    return {x:(e.clientX-r.left-(v.panX||0))/(v.scale||1),y:(e.clientY-r.top-(v.panY||0))/(v.scale||1),screenX:e.clientX-r.left,screenY:e.clientY-r.top};
-  }
-  function findUnifiedHit(p){return unifiedHits.slice().reverse().find(h=>Math.hypot(h.x-p.x,h.y-p.y)<=h.r+8)||null;}
-  function renderUnifiedDetails(node){
-    const details=$('nwuDetails');
-    if(!details)return;
-    clearEl(details);
-    if(!node){
-      details.appendChild(el('h3','', 'Selecciona un nodo'));
-      details.appendChild(el('div','nwu-mini','Puedes ordenar automáticamente, hacer zoom/pan y luego arrastrar nodos para ajuste fino. Las posiciones manuales quedan guardadas.'));
-      return;
-    }
-    const ref=node.ref||{};
-    const h3=document.createElement('h3');
-    h3.appendChild(txt(node.icon||'●'));
-    h3.appendChild(txt(' '));
-    h3.appendChild(txt(node.label||node.id));
-    details.appendChild(h3);
-    const tags=el('div','devtags');
-    tags.appendChild(el('span','b bcy',node.kind||''));
-    tags.appendChild(el('span','b bgr',node.type||''));
-    if(node.tech) tags.appendChild(el('span','b bac',node.tech));
-    details.appendChild(tags);
-    const kv=el('div','nwu-kv');
-    addKv(kv,'ID',node.id||'');
-    addKv(kv,'Capa',node.layer||'—');
-    addKv(kv,'Ubicación',nodeLocationLabel(nodeLocationKey(node)));
-    addKv(kv,'VLAN',ref.vlanName||ref.vlanRef||ref.serviceVlanRef||'—');
-    addKv(kv,'IP',ref.ip||ref.mgmtIp||ref.staticIp||ref.identifier||'—');
-    details.appendChild(kv);
-  }
-  function installUnifiedInteraction(){
-    const canvas=$('nwuConfigCanvas');if(!canvas||unifiedInteractionReady)return;unifiedInteractionReady=true;
-    canvas.addEventListener('wheel',e=>{
-      e.preventDefault();e.stopImmediatePropagation();
-      const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; const v=readUnifiedView();
-      const oldScale=v.scale||1; const next=Math.max(.35,Math.min(2.8,oldScale*(e.deltaY<0?1.08:.92)));
-      const wx=(mx-(v.panX||0))/oldScale, wy=(my-(v.panY||0))/oldScale;
-      v.scale=next; v.panX=mx-wx*next; v.panY=my-wy*next; writeUnifiedView(v); renderUnifiedManaged();
-    },{capture:true,passive:false});
-    canvas.addEventListener('mousedown',e=>{
-      const p=canvasPoint(canvas,e);const hit=findUnifiedHit(p);
-      if(hit){unifiedDrag={id:hit.id,dx:p.x-hit.x,dy:p.y-hit.y,moved:false};unifiedSelection=hit.id;renderUnifiedDetails(hit.node);} 
-      else {const v=readUnifiedView();unifiedPanDrag={x:e.clientX,y:e.clientY,px:v.panX||0,py:v.panY||0};}
-      e.preventDefault();e.stopImmediatePropagation();
-    },true);
-    window.addEventListener('mousemove',e=>{
-      if(unifiedDrag){const p=canvasPoint(canvas,e);const m=readUnifiedManual();m[unifiedDrag.id]={x:p.x-unifiedDrag.dx,y:p.y-unifiedDrag.dy};writeUnifiedManual(m);unifiedDrag.moved=true;renderUnifiedManaged();e.preventDefault();e.stopImmediatePropagation();return;}
-      if(unifiedPanDrag){const v=readUnifiedView();v.panX=unifiedPanDrag.px+e.clientX-unifiedPanDrag.x;v.panY=unifiedPanDrag.py+e.clientY-unifiedPanDrag.y;writeUnifiedView(v);renderUnifiedManaged();e.preventDefault();e.stopImmediatePropagation();}
-    },true);
-    window.addEventListener('mouseup',e=>{if(unifiedDrag||unifiedPanDrag){unifiedDrag=null;unifiedPanDrag=null;e.preventDefault();e.stopImmediatePropagation();}},true);
-    canvas.addEventListener('click',e=>{const p=canvasPoint(canvas,e);const hit=findUnifiedHit(p);unifiedSelection=hit?hit.id:null;renderUnifiedDetails(hit?hit.node:null);renderUnifiedManaged();e.preventDefault();e.stopImmediatePropagation();},true);
-  }
-  function renderUnifiedManaged(){
-    const api = window.NetWizardUnifiedConfigMap;
-    const canvas = $('nwuConfigCanvas');
-    if(!api || !api.buildUnifiedMap || !canvas) return;
-    injectUnifiedControls();
-    const ctx = canvas.getContext('2d');
-    const wrap = canvas.parentElement; const r=wrap.getBoundingClientRect(); const dpr=window.devicePixelRatio||1;
-    const w=Math.max(560,Math.floor(r.width||900)); const h=Math.max(380,Math.floor(r.height||520));
-    canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr); canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(dpr,0,0,dpr,0,0);
-    const map = api.buildUnifiedMap();
-    const mode = $('nwuLayoutMode')?.value || cfg().unifiedMode || 'treeBlocks';
-    const c=cfg(); c.unifiedMode=mode; saveCfg(c);
-    const pos = unifiedLayout(map,w,h,mode);
-    applyUnifiedManual(pos);
-    unifiedHits=[]; installUnifiedInteraction();
-    ctx.clearRect(0,0,w,h); ctx.fillStyle='#07090f'; ctx.fillRect(0,0,w,h);
-    drawUnifiedBands(ctx,map.graph,w);
-    const v=readUnifiedView();
-    ctx.save(); ctx.translate(v.panX||0,v.panY||0); ctx.scale(v.scale||1,v.scale||1);
-    map.links.forEach(l=>drawUnifiedLink(ctx,l,pos));
-    map.nodes.forEach(n=>{const p=pos.get(n.id);drawUnifiedNode(ctx,n,p);if(p)unifiedHits.push({id:n.id,x:p.x,y:p.y,r:p.r||24,node:n});});
-    ctx.restore();
-    const summary=$('nwuSummary'); if(summary) summary.textContent=`${map.nodes.filter(n=>n.kind==='network').length} red · ${map.nodes.filter(n=>n.kind==='access').length} accesos IoT · ${map.nodes.filter(n=>n.kind==='iot').length} IoT · ${map.links.length} enlaces · ${MODES[mode]} · zoom ${Math.round((v.scale||1)*100)}%`;
-  }
-  window.renderUnifiedManaged = renderUnifiedManaged;
-
-  function unifiedLayout(map,w,h,mode){
-    const pos=new Map();
-    const byLoc=new Map();
-    const unknown='unknown';
-    for(const n of map.nodes){
-      const k=nodeLocationKey(n)||unknown;
-      if(!byLoc.has(k)) byLoc.set(k,[]);
-      byLoc.get(k).push(n);
-    }
-    const locEntries=[...byLoc.entries()].sort((a,b)=>nodeLocationLabel(a[0]).localeCompare(nodeLocationLabel(b[0]),'es',{numeric:true,sensitivity:'base'}));
-    if(mode==='radial'){
-      const cx=w*.5,cy=h*.5; let ring=0;
-      for(const [key,nodes] of locEntries){
-        const rad=120+ring*95; nodes.sort(byName).forEach((n,i)=>{const a=(-Math.PI/2)+(i/Math.max(1,nodes.length))*Math.PI*2;pos.set(n.id,{x:cx+Math.cos(a)*rad,y:cy+Math.sin(a)*rad,r:n.kind==='network'?28:n.kind==='access'?25:n.kind==='iot'?20:16});}); ring++;
-      }
-      return pos;
-    }
-    const margin=70, gapX=90, gapY=120;
-    const locBlocks=[];
-    for(const [key,nodes] of locEntries){
-      const network=nodes.filter(n=>n.kind==='network').sort((a,b)=>{const r={firewall:0,router:1,switch:2};return (r[a.type]??5)-(r[b.type]??5)||byName(a,b);});
-      const access=nodes.filter(n=>n.kind==='access').sort(byName);
-      const endpoints=nodes.filter(n=>n.kind==='endpoint'||n.kind==='iot_candidate').sort(byName);
-      const iot=nodes.filter(n=>n.kind==='iot').sort(byName);
-      const rows=Math.max(network.length, access.length, endpoints.length, iot.length, 1);
-      locBlocks.push({key,network,access,endpoints,iot,rows,w:560,h:70+rows*54});
-    }
-    let x=margin,y=margin,rowH=0;
-    for(const block of locBlocks){
-      if(x+block.w>w-margin && x>margin){x=margin;y+=rowH+gapY;rowH=0;}
-      block.x=x;block.y=y;rowH=Math.max(rowH,block.h);x+=block.w+gapX;
-      const cols={network:x-block.w+70,access:x-block.w+210,endpoints:x-block.w+350,iot:x-block.w+485};
-      block.network.forEach((n,i)=>pos.set(n.id,{x:cols.network,y:block.y+55+i*54,r:28}));
-      block.access.forEach((n,i)=>pos.set(n.id,{x:cols.access,y:block.y+55+i*54,r:25}));
-      block.endpoints.forEach((n,i)=>pos.set(n.id,{x:cols.endpoints,y:block.y+55+i*44,r:n.kind==='iot_candidate'?18:16}));
-      block.iot.forEach((n,i)=>pos.set(n.id,{x:cols.iot,y:block.y+55+i*44,r:20}));
-    }
-    // Nodos sin ubicación se reparten en columnas si el modo no es por ubicación explícita.
-    if(mode==='hierarchy'){
-      const network=map.nodes.filter(n=>n.kind==='network').sort(byName);
-      const access=map.nodes.filter(n=>n.kind==='access').sort(byName);
-      const endpoints=map.nodes.filter(n=>n.kind==='endpoint'||n.kind==='iot_candidate').sort(byName);
-      const iot=map.nodes.filter(n=>n.kind==='iot').sort(byName);
-      const cols=[w*.12,w*.34,w*.58,w*.80];
-      network.forEach((n,i)=>pos.set(n.id,{x:cols[0]+(n.type==='switch'?55:0),y:70+i*66,r:28}));
-      access.forEach((n,i)=>pos.set(n.id,{x:cols[1],y:80+i*72,r:26}));
-      endpoints.forEach((n,i)=>pos.set(n.id,{x:cols[2],y:80+i*50,r:n.kind==='iot_candidate'?18:16}));
-      iot.forEach((n,i)=>pos.set(n.id,{x:cols[3],y:80+i*54,r:20}));
-    }
-    if(mode==='forceLite') unifiedForce(map.nodes,pos,w,h);
-    return pos;
-  }
-  function unifiedForce(nodes,pos,w,h){
-    for(let k=0;k<55;k++){
-      for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
-        const a=pos.get(nodes[i].id),b=pos.get(nodes[j].id);if(!a||!b)continue;const dx=a.x-b.x,dy=a.y-b.y,d=Math.max(1,Math.hypot(dx,dy));if(d<54){const p=(54-d)*.035;a.x+=dx/d*p;b.x-=dx/d*p;a.y+=dy/d*p;b.y-=dy/d*p;}
-      }
-      nodes.forEach(n=>{const p=pos.get(n.id);if(!p)return;p.x=Math.max(45,Math.min(w-45,p.x));p.y=Math.max(55,Math.min(h-45,p.y));});
-    }
-  }
-  function drawUnifiedBands(ctx,map,w){const segs=(map.segments||[]).slice(0,6);segs.forEach((s,i)=>{ctx.globalAlpha=.08;ctx.fillStyle=s.color||'#3b82f6';ctx.fillRect(10,10+i*22,w-20,17);ctx.globalAlpha=1;ctx.fillStyle='#8fa3c0';ctx.font='10px Space Grotesk';ctx.fillText(`${s.vlanNumber||s.vlanId||''} · ${s.name||'VLAN'}`,18,22+i*22);});}
-  function drawUnifiedLink(ctx,l,pos){const a=pos.get(l.from),b=pos.get(l.to);if(!a||!b)return;ctx.beginPath();ctx.moveTo(a.x,a.y);const mid=(a.x+b.x)/2;ctx.bezierCurveTo(mid,a.y,mid,b.y,b.x,b.y);ctx.strokeStyle=l.layer==='iot'?'#06b6d4':'#8fa3c0';ctx.globalAlpha=.62;ctx.lineWidth=l.layer==='iot'?2.1:1.25;ctx.stroke();ctx.globalAlpha=1;}
-  function colorFor(n){if(n.kind==='access')return '#06b6d4';if(n.kind==='iot')return '#10b981';if(n.kind==='port')return '#4d6580';if(n.kind==='endpoint'||n.kind==='iot_candidate')return '#8b5cf6';if(n.type==='router')return '#10b981';if(n.type==='firewall')return '#ef4444';return '#3b82f6';}
-  function drawUnifiedNode(ctx,n,p){if(!p)return;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=colorFor(n);ctx.fill();ctx.strokeStyle=unifiedSelection===n.id?'#f59e0b':'#2a3547';ctx.lineWidth=unifiedSelection===n.id?3:1.3;ctx.stroke();ctx.fillStyle='#e2eaf7';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='18px sans-serif';ctx.fillText(n.icon||'●',p.x,p.y-1);ctx.fillStyle='#8fa3c0';ctx.font='10px Space Grotesk';ctx.fillText(String(n.label||n.id).slice(0,18),p.x,p.y+p.r+13);ctx.textAlign='left';}
-
   function init(){
-    injectV5Controls(); injectUnifiedControls(); setTimeout(injectUnifiedControls,600);
+    injectV5Controls();
     document.addEventListener('click', e=>{
-      if(e.target.closest('[data-tab="graphs-unified"]')) setTimeout(()=>{injectUnifiedControls(); renderUnifiedManaged();},250);
       if(e.target.closest('[data-tab="graphs-v5"], [data-step="graphs"]')) setTimeout(injectV5Controls,100);
     });
   }

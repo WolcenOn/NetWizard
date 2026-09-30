@@ -258,9 +258,9 @@
     syncFilters();
     document.addEventListener('nw:iot:changed',()=>{try{window.drawV5();window.renderV5Panel();}catch{}});
     document.addEventListener('click',e=>{
-      if(e.target.closest('[data-step="graphs"], .bnit[data-step="graphs"]'))setTimeout(()=>{syncFilters();window.drawTopo?.();window.resizeV5?.();window.drawV5?.();window.NetWizardUnifiedConfigMap?.render?.();},180);
+      if(e.target.closest('[data-step="graphs"], .bnit[data-step="graphs"]'))setTimeout(()=>{syncFilters();window.drawTopo?.();window.resizeV5?.();window.drawV5?.();},180);
       const tab=e.target.closest('[data-tab^="graphs-"]');
-      if(tab)setTimeout(()=>{syncFilters();window.drawTopo?.();window.resizeV5?.();window.drawV5?.();window.NetWizardUnifiedConfigMap?.render?.();},120);
+      if(tab)setTimeout(()=>{syncFilters();window.drawTopo?.();window.resizeV5?.();window.drawV5?.();},120);
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,50));else setTimeout(init,50);

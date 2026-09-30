@@ -1156,15 +1156,19 @@ test('Production gate exporta checklist Markdown priorizado', () => {
 
 console.log('\nTests UX producción v3.48 completados.');
 
-test('V5 unified details evita innerHTML para datos de proyecto', () => {
-  const src = fs.readFileSync(path.join(root, 'js', 'netwizard-v5-layout-manager.js'), 'utf8');
-  assert.ok(src.includes('function renderUnifiedDetails(node)'), 'renderUnifiedDetails debe existir');
-  assert.ok(src.includes('createTextNode') || src.includes('textContent'), 'debe existir renderizado DOM/textContent');
-  assert.ok(src.includes('addKv(kv'), 'debe usar helper de DOM para pares clave/valor');
-  const start = src.indexOf('function renderUnifiedDetails(node)');
-  const next = src.indexOf('function installUnifiedInteraction', start);
-  const fn = src.slice(start, next);
-  assert.ok(!fn.includes('innerHTML=`'), 'renderUnifiedDetails no debe interpolar plantilla HTML con datos del proyecto');
+test('V5 IoT panel evita HTML dinámico y no revive el grafo unificado retirado', () => {
+  const iotSrc = fs.readFileSync(path.join(root, 'js', 'netwizard-v5-iot-extension.js'), 'utf8');
+  const layoutSrc = fs.readFileSync(path.join(root, 'js', 'netwizard-v5-layout-manager.js'), 'utf8');
+  assert.ok(iotSrc.includes('function renderIoTPanel(sel)'), 'renderIoTPanel debe existir');
+  const start = iotSrc.indexOf('function renderIoTPanel(sel)');
+  const next = iotSrc.indexOf('function canvasWorldPoint', start);
+  const fn = iotSrc.slice(start, next);
+  assert.ok(fn.includes('textContent'), 'el panel IoT debe renderizar datos con textContent');
+  assert.ok(!fn.includes('innerHTML'), 'renderIoTPanel no debe interpolar HTML con datos del proyecto');
+  for(const forbidden of ['NetWizardUnifiedConfigMap','renderUnifiedManaged','nwuConfigCanvas']){
+    assert.ok(!iotSrc.includes(forbidden), 'V5 IoT no debe conservar '+forbidden);
+    assert.ok(!layoutSrc.includes(forbidden), 'V5 layout no debe conservar '+forbidden);
+  }
 });
 
 
