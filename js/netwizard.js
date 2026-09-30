@@ -2084,9 +2084,28 @@ $('btnSaveVtp').onclick=()=>{
 
 // EXPORT
 const dl=(fn,txt)=>{const b=new Blob([txt],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);};
+function currentPrivateExportResult(){
+  const api=window.NetWizardPrivateDeploymentUi;
+  return api&&typeof api.currentResult==='function'?api.currentResult():null;
+}
+function privateConfigArtifactForExport(deviceId){
+  const api=window.NetWizardPrivateDeploymentUi;
+  return api&&typeof api.deviceConfig==='function'?api.deviceConfig(deviceId):null;
+}
+function privateConfigExportAvailable(){
+  const result=currentPrivateExportResult();
+  if(!result)return false;
+  const devices=Array.isArray(S.devices)?S.devices:[];
+  return devices.every(d=>!!privateConfigArtifactForExport(d.id));
+}
 function requireConfigExportReady(){
   if(!localConfigGenerationAvailable()){
-    const msg='Generación local desactivada en el navegador SaaS. Usa Private Deployment Plan para obtener configuraciones y artefactos server-side.';
+    if(privateConfigExportAvailable())return true;
+    const state=window.NetWizardPrivateDeploymentUi&&typeof window.NetWizardPrivateDeploymentUi.exportState==='function'
+      ? window.NetWizardPrivateDeploymentUi.exportState():null;
+    const msg=state&&state.stale
+      ? 'Las configuraciones server-side están obsoletas porque el proyecto cambió. Regenera antes de exportar.'
+      : 'No hay configuraciones server-side vigentes para todos los dispositivos. Pulsa “Generar en servidor” antes de exportar.';
     if($('cfgOut'))$('cfgOut').value=msg;
     const status=$('deploymentPackageStatus');if(status)status.textContent=msg;
     alert(msg);
@@ -2116,8 +2135,30 @@ function requireConfigExportReady(){
   }
   return true;
 }
-$('expAll').onclick=()=>{if(!requireConfigExportReady())return;for(const d of S.devices){const ext=d.vendorOs==='juniper_junos'?'set.txt':'cfg';dl(`${d.name}.${ext}`,genConfig(d.id));}};
-$('expBundle').onclick=()=>{if(!requireConfigExportReady())return;let out='';for(const d of S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){out+=`\n${'#'.repeat(50)}\n# ${d.name} (${d.vendorOs||'—'})\n${'#'.repeat(50)}\n\n`+genConfig(d.id)+'\n';}dl('configs_bundle.txt',out);$('cfgOut').value=out;};
+$('expAll').onclick=()=>{
+  if(!requireConfigExportReady())return;
+  for(const d of S.devices){
+    const privateArtifact=!localConfigGenerationAvailable()?privateConfigArtifactForExport(d.id):null;
+    if(privateArtifact){
+      const name=(privateArtifact.path||d.name+'.cfg').split('/').pop()||d.name+'.cfg';
+      dl(name,privateArtifact.content);
+      continue;
+    }
+    const ext=d.vendorOs==='juniper_junos'?'set.txt':'cfg';
+    dl(`${d.name}.${ext}`,genConfig(d.id));
+  }
+};
+$('expBundle').onclick=()=>{
+  if(!requireConfigExportReady())return;
+  let out='';
+  for(const d of S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){
+    const privateArtifact=!localConfigGenerationAvailable()?privateConfigArtifactForExport(d.id):null;
+    const content=privateArtifact?privateArtifact.content:genConfig(d.id);
+    const readiness=privateArtifact&&privateArtifact.readiness&&privateArtifact.readiness.status?privateArtifact.readiness.status:'local';
+    out+=`\n${'#'.repeat(50)}\n# ${d.name} (${d.vendorOs||'—'}) · ${readiness}\n${'#'.repeat(50)}\n\n`+content+'\n';
+  }
+  dl('configs_bundle.txt',out);$('cfgOut').value=out;
+};
 $('expCsv').onclick=()=>dl('hosts.csv',genHostCsv());
 $('expJson').onclick=()=>{
   const snap=window.NetWizardState.getSnapshot();
