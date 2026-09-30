@@ -57,7 +57,7 @@ function bindPrimaryGenerateAction(options){
   }
   button.disabled=false;
   const locked=opts.mode==='self-hosted'&&!opts.authenticated;
-  button.textContent=locked?'🔒 Desbloquear y generar':'☁ Generar en servidor';
+  button.textContent=locked?'🔒 Autorizar y generar':'☁ Generar en servidor';
   button.onclick=()=>{
     const live=root.document&&root.document.getElementById('nwPrivateDeploymentGenerate');
     if(live&&!live.disabled){live.click();return;}
