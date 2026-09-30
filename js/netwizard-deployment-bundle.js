@@ -171,6 +171,17 @@
       addDerived('project/netwizard-project.json',JSON.stringify(exported,null,2)+'\n','application/json');
       addDerived('reports/private-production-gate.json',JSON.stringify(gate,null,2)+'\n','application/json');
       addDerived('reports/private-production-gate.md',r.productionGateSummaryMarkdown,'text/markdown;charset=utf-8');
+      addDerived('reports/private-generation.json',JSON.stringify({
+        contractVersion:clean(r.contractVersion,100),
+        privateConfigContract:clean(r.privateConfigContract,100),
+        generatedAt,
+        productionStatus:clean(r.productionStatus,20),
+        productionReady:!!r.productionReady,
+        configPaths:obj(r.configPaths),
+        configReadiness:obj(r.configReadiness),
+        configCapabilities:obj(r.configCapabilities),
+        issues:arr(r.issues)
+      },null,2)+'\n','application/json');
       if(r.deploymentPlan)addDerived('deployment/plan.json',JSON.stringify(r.deploymentPlan,null,2)+'\n','application/json');
       addDerived('deployment/runbook.md',r.runbookMarkdown,'text/markdown;charset=utf-8');
       addDerived('deployment/rollback-checklist.md',r.rollbackMarkdown,'text/markdown;charset=utf-8');
@@ -387,13 +398,15 @@
         pkg=buildPrivateDeploymentPackage(root.NetWizardState.getSnapshot(),privateState.result,{locale});
       }else if(privateState&&privateState.stale){
         pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-107','La generación privada está obsoleta. Regenera en servidor antes de exportar.')],files:[]};
+      }else if(root.document&&!root.NetWizardLegacyConfigGenerator){
+        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-108','Todavía no existe una generación server-side vigente. Pulsa “Generar en servidor” antes de exportar.')],files:[]};
       }else{
         pkg=buildDeploymentPackage(root.NetWizardState.getSnapshot(),{locale});
       }
       root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg);
       const gateOut=root.document.getElementById('productionGateOut'); if(gateOut&&pkg.report&&root.NetWizardProductionGate&&root.NetWizardProductionGate.summarizeGate) gateOut.textContent=root.NetWizardProductionGate.summarizeGate(pkg.report,{limit:80});
       if(!pkg.ok){
-        const needsServer=pkg.issues&&pkg.issues.some(issue=>['NW-BUNDLE-001','NW-BUNDLE-107'].includes(issue.code));
+        const needsServer=pkg.issues&&pkg.issues.some(issue=>['NW-BUNDLE-001','NW-BUNDLE-107','NW-BUNDLE-108'].includes(issue.code));
         root.alert&&root.alert(needsServer?'Genera o regenera las configuraciones en servidor antes de exportar.':'Paquete bloqueado: corrige los errores de producción indicados.');
         return;
       }
