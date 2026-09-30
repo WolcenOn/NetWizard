@@ -67,6 +67,30 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   expect(privateArtifact.content).toContain('hostname RTR-PROD');
   expect(privateArtifact.capability.mode).toBe('cli');
 
+  const bundleDownloadPromise=page.waitForEvent('download');
+  await page.locator('#expBundle').click();
+  const bundleDownload=await bundleDownloadPromise;
+  expect(bundleDownload.suggestedFilename()).toBe('configs_bundle.txt');
+  const bundleStream=await bundleDownload.createReadStream();
+  let bundleText='';
+  for await (const chunk of bundleStream)bundleText+=chunk.toString('utf8');
+  expect(bundleText).toContain('hostname RTR-PROD');
+  expect(bundleText).toContain('cisco_ios');
+
+  const deviceDownloadPromise=page.waitForEvent('download');
+  await page.locator('#expAll').click();
+  const deviceDownload=await deviceDownloadPromise;
+  const deviceStream=await deviceDownload.createReadStream();
+  let deviceText='';
+  for await (const chunk of deviceStream)deviceText+=chunk.toString('utf8');
+  expect(deviceText).toContain('configure terminal');
+  expect(deviceText).toContain('hostname RTR-PROD');
+
+  const exportState=await page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.exportState?.());
+  expect(exportState.available).toBe(true);
+  expect(exportState.stale).toBe(false);
+  expect(exportState.result?.contractVersion).toBe('netwizard-private-deployment-plan-v2');
+
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
     p.devices[0].name='RTR-PROD-EDITED';
@@ -75,6 +99,7 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   await expect(page.locator('#cfgReadiness')).toContainText('CONFIG OBSOLETA');
   await expect(page.locator('#cfgOut')).toHaveValue(/STALE|OBSOLETA|obsoleto/i);
   expect(await page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.deviceConfig?.('r1')||null)).toBeNull();
+  expect(await page.evaluate(()=>window.NetWizardPrivateDeploymentUi?.exportState?.().available)).toBe(false);
 
   await page.locator('#cfgGenerateServer').click();
   await expect(page.locator('#cfgOut')).toHaveValue(/hostname RTR-PROD-EDITED/);
