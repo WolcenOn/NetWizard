@@ -3,6 +3,7 @@
 'use strict';
 
 const clean=v=>String(v==null?'':v).trim();
+const clone=v=>v==null?v:JSON.parse(JSON.stringify(v));
 let lastResult=null;
 let lastResultContext=null;
 let lastResultMode='';
@@ -221,6 +222,22 @@ function deviceStatus(deviceId){
 function deviceConfig(deviceId){
   if(!lastResult||lastResultStale)return null;
   return configArtifactForDevice(lastResult,deviceId);
+}
+function exportState(){
+  const remote=root.NetWizardRemoteProject;
+  const contextValid=lastResultMode!=='remote'||resultMatchesContext(remote);
+  return{
+    available:!!lastResult&&contextValid&&!lastResultStale,
+    stale:!!lastResult&&lastResultStale,
+    mode:lastResultMode,
+    generatedAt:clean(lastResult&&lastResult.generatedAt),
+    productionStatus:clean(lastResult&&lastResult.productionStatus),
+    productionReady:!!(lastResult&&lastResult.productionReady),
+    result:lastResult&&contextValid&&!lastResultStale?clone(lastResult):null
+  };
+}
+function exportResult(){
+  return exportState().result;
 }
 function renderResult(result){
   const select=root.document&&root.document.getElementById('nwPrivateDeploymentView');
@@ -483,7 +500,7 @@ function install(){
   return true;
 }
 
-const api={version:'netwizard-private-deployment-ui-v3',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,bindPrimaryGenerateAction,render,install,clearResult};
+const api={version:'netwizard-private-deployment-ui-v4',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,exportState,exportResult,bindPrimaryGenerateAction,render,install,clearResult};
 root.NetWizardPrivateDeploymentUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();

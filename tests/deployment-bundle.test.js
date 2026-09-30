@@ -181,4 +181,70 @@ assert.strictEqual(routerOsBundle.manifest.incremental.manualReview,0);
 assert.ok(routerOsBundle.files.some(file=>file.path.startsWith('incremental/commands/')&&file.path.endsWith('.rsc')&&/name="MT-EDGE"/.test(file.content)));
 assert.ok(routerOsBundle.files.some(file=>file.path.startsWith('incremental/rollback/')&&file.path.endsWith('.rsc')&&/name="MT-OLD"/.test(file.content)));
 
+
+const privateResult={
+  contractVersion:'netwizard-private-deployment-plan-v2',
+  generatedAt,
+  ok:true,
+  projectName:'Oficina Norte',
+  productionReady:false,
+  productionStatus:'review',
+  productionGateContract:'netwizard-private-production-gate-v1',
+  productionGate:{contractVersion:'netwizard-private-production-gate-v1',status:'review',ready:false,canExport:true,counts:{errors:0,warnings:1},issues:[{code:'NW-TEST-REVIEW',severity:'warning',blocking:false,message:'Revisión manual'}]},
+  configPaths:{sw1:'configs/01-sw1.cfg',fw1:'configs/02-fw1.conf'},
+  configSources:{sw1:'private',fw1:'private'},
+  configReadiness:{sw1:{status:'apply-ready',reasons:[]},fw1:{status:'review-required',reasons:['Perfil sin certificar']}},
+  configCapabilities:{sw1:{vendor:'cisco_ios',kind:'switch',mode:'cli',supported:true},fw1:{vendor:'fortinet',kind:'firewall',mode:'cli',supported:true}},
+  privateConfigContract:'netwizard-private-vendor-config-v1',
+  deploymentPlan:{ok:true,steps:[{deviceId:'sw1',configPath:'configs/01-sw1.cfg'},{deviceId:'fw1',configPath:'configs/02-fw1.conf'}]},
+  runbookMarkdown:'# Runbook privado\n',
+  rollbackMarkdown:'# Rollback privado\n',
+  postChangeChecklistMarkdown:'# Checklist privado\n',
+  changeSet:{format:'netwizard-change-set',ok:true},
+  changeSummaryMarkdown:'# Change privado\n',
+  incrementalPlan:{format:'netwizard-incremental-plan',ok:true},
+  incrementalSummaryMarkdown:'# Incremental privado\n',
+  productionGateSummaryMarkdown:'# Gate privado\n\nREVIEW\n',
+  issues:[{code:'NW-TEST-REVIEW',severity:'warning',blocking:false,message:'Revisión manual'}],
+  artifacts:[
+    {path:'configs/01-sw1.cfg',content:'configure terminal\nhostname SERVER-SW\nend\nwrite memory\n',mime:'text/plain;charset=utf-8'},
+    {path:'configs/02-fw1.conf',content:'config system global\n set hostname "SERVER-FW"\nend\n',mime:'text/plain;charset=utf-8'},
+    {path:'changes/patches/sw1.diff',content:'--- observed\n+++ desired\n',mime:'text/x-diff;charset=utf-8'},
+    {path:'reports/private-production-gate.md',content:'# Gate privado\n\nREVIEW\n',mime:'text/markdown;charset=utf-8'}
+  ]
+};
+const privatePkg=Bundle.buildPrivateDeploymentPackage(project,privateResult,{schema:fakeSchema});
+assert.strictEqual(privatePkg.ok,true);
+assert.strictEqual(privatePkg.source,'private-server');
+assert.strictEqual(privatePkg.manifest.source,'private-server');
+assert.strictEqual(privatePkg.manifest.productionStatus,'review');
+assert.strictEqual(privatePkg.manifest.productionReady,false);
+assert.strictEqual(privatePkg.manifest.counts.configurations,2);
+assert.ok(privatePkg.files.some(file=>file.path==='configs/01-sw1.cfg'&&/SERVER-SW/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='configs/02-fw1.conf'&&/SERVER-FW/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='deployment/runbook.md'&&/Runbook privado/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='deployment/rollback-checklist.md'&&/Rollback privado/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='reports/private-generation.json'&&/review-required/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='manifest.json'));
+assert.ok(Buffer.from(Bundle.encodeZip(privatePkg)).includes(Buffer.from('SERVER-SW')));
+assert.match(Bundle.summarize(privatePkg),/Private Engine server-side/);
+assert.match(Bundle.summarize(privatePkg),/2 configuraciones/);
+assert.strictEqual(Bundle.validPrivateDeploymentResult(privateResult),true);
+
+const blockedPrivate=JSON.parse(JSON.stringify(privateResult));
+blockedPrivate.productionStatus='blocked';
+blockedPrivate.productionGate.status='blocked';
+blockedPrivate.productionGate.canExport=false;
+blockedPrivate.productionGate.issues=[{code:'NW-BLOCK',severity:'error',blocking:true,message:'Bloqueado'}];
+const blockedPrivatePkg=Bundle.buildPrivateDeploymentPackage(project,blockedPrivate,{schema:fakeSchema});
+assert.strictEqual(blockedPrivatePkg.ok,false);
+assert.strictEqual(blockedPrivatePkg.blocked,true);
+assert.strictEqual(blockedPrivatePkg.issues[0].code,'NW-BLOCK');
+
+const tamperedPrivate=JSON.parse(JSON.stringify(privateResult));
+tamperedPrivate.artifacts.push({path:'../secret.txt',content:'bad'});
+const tamperedPrivatePkg=Bundle.buildPrivateDeploymentPackage(project,tamperedPrivate,{schema:fakeSchema});
+assert.strictEqual(tamperedPrivatePkg.ok,false);
+assert.strictEqual(tamperedPrivatePkg.issues[0].code,'NW-BUNDLE-104');
+
 console.log('✓ Deployment Bundle bloquea errores y genera un ZIP determinista con artefactos completos');

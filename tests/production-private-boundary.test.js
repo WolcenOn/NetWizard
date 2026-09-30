@@ -105,13 +105,18 @@ assert.ok(
   'La UX server-side no debe reintroducir generación Cisco en el navegador productivo'
 );
 assert.ok(
-  netwizardSource.includes('Generación local desactivada en el navegador SaaS'),
-  'Las exportaciones locales deben quedar bloqueadas cuando el generador source-only no existe'
+  netwizardSource.includes('function privateExportEntries()')&&
+  netwizardSource.includes("typeof api.deviceConfig==='function'")&&
+  netwizardSource.includes('La generación server-side está obsoleta'),
+  'Las exportaciones productivas deben consumir únicamente artefactos Private Engine vigentes'
 );
 const bundleSource=fs.readFileSync(path.join(root,'js/netwizard-deployment-bundle.js'),'utf8');
 assert.ok(
+  bundleSource.includes('function buildPrivateDeploymentPackage(')&&
+  bundleSource.includes("source:'private-server'")&&
+  bundleSource.includes('Todavía no existe una generación server-side vigente')&&
   bundleSource.includes("missing.push('LocalConfigGenerator')"),
-  'El ZIP local debe bloquearse en browser productivo sin generador local'
+  'El ZIP productivo debe usar Private Engine; el builder local conserva su bloqueo sin generador source-only'
 );
 const observedSource=fs.readFileSync(path.join(root,'js/netwizard-observed-config-ui.js'),'utf8');
 assert.ok(
