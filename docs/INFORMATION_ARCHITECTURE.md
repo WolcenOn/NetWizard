@@ -15,12 +15,15 @@ Las pantallas de dominio siguen siendo la autoridad de edición:
 - Inventario físico
 - Puertos & Interfaces
 - Enlaces
+- Circuitos WAN dentro de Enlaces
 - VLANs & Subnets
 - Hosts & IP Map
 - IoT & Gateways
 - Firewall & Seguridad
 
 Los datos se corrigen en estas pantallas o en el editor específico de su dominio. Los paneles derivados no crean una segunda autoridad.
+
+**Circuitos WAN** se editan en Enlaces porque representan conectividad externa terminada en un dispositivo/puerto. La tarjeta WAN de Validación es únicamente una lectura derivada de `wanCircuits` y sus incidencias.
 
 En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente ligadas a las VLANs: DHCP por VLAN, Router-on-a-Stick y VTP Cisco. Estas opciones alimentan la generación posterior y por tanto deben completarse antes de Validación/Despliegue; no son artefactos de exportación.
 
@@ -49,6 +52,11 @@ No se mantienen varias visualizaciones globales que representen lo mismo con otr
 - estado observado, drift y candidato incremental.
 
 Estos paneles son análisis, no colecciones paralelas ni una nueva fuente de verdad.
+
+Estado funcional actual:
+- WAN ya tiene editor canónico en Enlaces.
+- capacidad de tráfico, servicios internos, Wi-Fi planning, IPv6/VRF y escenarios de fallo siguen siendo análisis de datos existentes/importados; permanecen condicionales hasta disponer de un editor conectado a su dominio natural.
+- resiliencia/HA valida estructuras existentes y no debe presentarse como asistente de configuración mientras no exista un editor canónico.
 
 Si un análisis necesita edición real en el futuro, debe recibir una superficie de edición en su dominio natural antes de promocionarse a flujo principal.
 

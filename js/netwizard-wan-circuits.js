@@ -13,6 +13,7 @@ if(!clean(c.provider))issues.push({...base,code:'NW-WAN-001',severity:'warning',
 if(!down||down<=0||!up||up<=0)issues.push({...base,code:'NW-WAN-002',severity:'error',blocking:true,message:`${label}: ancho de banda de bajada/subida inválido.`});
 if(c.deviceId&&!circuitDevice(project,c))issues.push({...base,code:'NW-WAN-003',severity:'error',blocking:true,message:`${label}: dispositivo de terminación inexistente (${c.deviceId}).`});
 if(c.portId&&!circuitPort(project,c))issues.push({...base,code:'NW-WAN-004',severity:'error',blocking:true,message:`${label}: interfaz WAN inexistente (${c.portId}).`});
+const port=c.portId?circuitPort(project,c):null;if(c.deviceId&&port&&port.deviceId!==c.deviceId)issues.push({...base,code:'NW-WAN-013',severity:'error',blocking:true,message:`${label}: la interfaz ${c.portId} no pertenece al dispositivo de terminación ${c.deviceId}.`});
 if(lat!=null&&(lat<0||lat>1000))issues.push({...base,code:'NW-WAN-005',severity:'warning',blocking:false,message:`${label}: objetivo de latencia anómalo (${lat} ms).`});
 if(loss!=null&&(loss<0||loss>100))issues.push({...base,code:'NW-WAN-006',severity:'error',blocking:true,message:`${label}: pérdida objetivo inválida (${loss}%).`});
 if(sla!=null&&(sla<0||sla>100))issues.push({...base,code:'NW-WAN-007',severity:'error',blocking:true,message:`${label}: disponibilidad SLA inválida (${sla}%).`});

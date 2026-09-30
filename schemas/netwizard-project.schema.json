@@ -1233,6 +1233,29 @@
         "expectedPeakMbps": {
           "type": "number",
           "minimum": 0
+        },
+        "siteRef": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "physicalPath": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "latencyTargetMs": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "lossTargetPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "slaAvailability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
         }
       }
     },
