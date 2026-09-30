@@ -290,22 +290,22 @@ function render(){
   if(mode==='self-hosted'&&!localState.authenticated){
     const authRow=el('div',{className:'row'});
     const tokenCol=el('div');
-    tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},'Token de operador self-hosted'));
-    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'off',spellcheck:'false',placeholder:'Token configurado en el servidor'});
+    tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},'Autorizar este navegador'));
+    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'off',spellcheck:'false',placeholder:'Token de operador (solo alta inicial)'});
     tokenCol.appendChild(tokenInput);
     const actionCol=el('div');
-    actionCol.append(el('label',{className:'fl'},'Sesión privada'));
-    const unlock=el('button',{type:'button',className:'btn bp',id:'nwSelfHostedPrivateLogin'},'🔓 Desbloquear Private Engine');
+    actionCol.append(el('label',{className:'fl'},'Navegador de confianza'));
+    const unlock=el('button',{type:'button',className:'btn bp',id:'nwSelfHostedPrivateLogin'},'🔓 Autorizar y continuar');
     actionCol.appendChild(unlock);
     authRow.append(tokenCol,actionCol);
     card.appendChild(authRow);
     const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'},
-      'El token solo se usa para abrir una sesión HttpOnly en este servidor; no se guarda en el proyecto.');
+      'El token se usa una sola vez para autorizar este navegador. La confianza queda en una cookie HttpOnly firmada, sobrevive a redeploys y no guarda el token en el proyecto ni en JavaScript.');
     card.appendChild(status);
     unlock.onclick=async()=>{
       if(!selfHosted||typeof selfHosted.login!=='function')return setStatus('Cliente self-hosted no disponible.','error');
       unlock.disabled=true;
-      setStatus('Abriendo sesión privada local…','info');
+      setStatus('Autorizando este navegador para Private Engine…','info');
       try{
         await selfHosted.login(tokenInput.value);
         tokenInput.value='';
@@ -319,7 +319,7 @@ function render(){
       }catch(err){
         pendingGenerateAfterLogin=false;
         tokenInput.value='';
-        setStatus('No se pudo abrir la sesión privada: '+(err&&err.message||'error desconocido')+'.','error');
+        setStatus('No se pudo autorizar el navegador: '+(err&&err.message||'error desconocido')+'.','error');
         unlock.disabled=false;
       }
     };
@@ -342,7 +342,7 @@ function render(){
     : !(selfHosted&&typeof selfHosted.generateDeploymentPlan==='function'&&localState.authenticated);
   actionCol.appendChild(generate);
   if(mode==='self-hosted'){
-    const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Bloquear sesión');
+    const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Revocar este navegador');
     actionCol.appendChild(lock);
     lock.onclick=async()=>{
       pendingGenerateAfterLogin=false;
@@ -359,7 +359,7 @@ function render(){
   const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'});
   status.textContent=mode==='remote'
     ? (ctx?('Listo para generar desde la revisión remota '+ctx.currentVersion+'.'):'Abre un proyecto SaaS para activar el deployment privado.')
-    : ('Sesión privada self-hosted activa'+(localState.expiresAt?' hasta '+localState.expiresAt:'')+'.');
+    : ('Navegador autorizado para Private Engine'+(localState.expiresAt?' hasta '+localState.expiresAt:'')+'.');
   card.appendChild(status);
 
   const selectorRow=el('div',{className:'row'});
