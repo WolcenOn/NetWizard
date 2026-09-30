@@ -222,6 +222,26 @@ function deviceConfig(deviceId){
   if(!lastResult||lastResultStale)return null;
   return configArtifactForDevice(lastResult,deviceId);
 }
+function currentResult(){
+  if(!lastResult||lastResultStale)return null;
+  if(lastResultMode==='remote'){
+    const remote=root.NetWizardRemoteProject;
+    if(!resultMatchesContext(remote))return null;
+  }
+  return JSON.parse(JSON.stringify(lastResult));
+}
+function exportState(){
+  const result=currentResult();
+  return{
+    available:!!result,
+    stale:!!lastResultStale,
+    mode:lastResultMode,
+    generatedAt:clean(lastResult&&lastResult.generatedAt),
+    productionStatus:clean(lastResult&&lastResult.productionStatus),
+    productionReady:lastResult&&lastResult.productionReady===true,
+    result
+  };
+}
 function renderResult(result){
   const select=root.document&&root.document.getElementById('nwPrivateDeploymentView');
   const output=root.document&&root.document.getElementById('nwPrivateDeploymentOutput');
@@ -483,7 +503,7 @@ function install(){
   return true;
 }
 
-const api={version:'netwizard-private-deployment-ui-v3',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,bindPrimaryGenerateAction,render,install,clearResult};
+const api={version:'netwizard-private-deployment-ui-v4',viewsFor,generationDiagnosticsMarkdown,configArtifactForDevice,deviceStatusFromResult,deviceStatus,deviceConfig,currentResult,exportState,bindPrimaryGenerateAction,render,install,clearResult};
 root.NetWizardPrivateDeploymentUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();
