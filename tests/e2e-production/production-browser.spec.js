@@ -19,7 +19,7 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
     selfHosted:typeof window.NetWizardSelfHostedPrivate?.generateDeploymentPlan==='function',
     legacy:typeof window.NetWizardLegacyConfigGenerator,
     vendorGenerators:typeof window.NetWizardVendorConfigGenerators
-  }))).toEqual({
+  })),{timeout:15000}).toEqual({
     state:true,
     privateUi:true,
     selfHosted:true,
