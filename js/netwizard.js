@@ -1921,12 +1921,63 @@ function renderVlanMatrix(){
   $('matrixAcl').value=genVlanMatrixAcl();
 }
 // Hardening
-$('secTplL').onclick=()=>{Object.assign(S.security,{bpdu:'no',ps:'no',ds:'no',dai:'no',ipsg:'no'});save();refresh();alert('✓ Perfil mínimo aplicado.');};
-$('secTplM').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'no',ipsg:'no'});save();refresh();alert('✓ Perfil medio aplicado.');};
-$('secTplH').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'yes',ipsg:'yes'});save();refresh();alert('✓ Perfil alto aplicado.');};
-['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{$(id).onchange=()=>{const k=id.replace('sec','').toLowerCase();S.security[k]=$(id).value;save();};});
-$('secDsV').onblur=()=>{S.security.dsV=($('secDsV').value||'').trim();save();};
-$('secQV').onchange=()=>{S.security.qV=$('secQV').value||'';save();};
+function accessSecurityUiState(){
+  const a=S.accessSecurity&&typeof S.accessSecurity==='object'?S.accessSecurity:{};
+  const legacy=S.security&&typeof S.security==='object'?S.security:{};
+  const own=(k)=>Object.prototype.hasOwnProperty.call(a,k);
+  const bool=(key,legacyKey,fallback)=>own(key)?a[key]!==false:(legacy[legacyKey]!=null?legacy[legacyKey]==='yes':fallback);
+  return{
+    bpdu:bool('bpduGuard','bpdu',true),
+    ps:bool('portSecurity','ps',true),
+    ds:bool('dhcpSnooping','ds',true),
+    dai:bool('arpInspection','dai',true),
+    ipsg:bool('ipSourceGuard','ipsg',false),
+    dsV:Array.isArray(a.protectedVlanIds)&&a.protectedVlanIds.length?a.protectedVlanIds.join(','):(legacy.dsV||''),
+    qV:a.quarantineVlanRef||legacy.qV||''
+  };
+}
+function setAccessHardeningFlag(key,on){
+  if(!S.accessSecurity||typeof S.accessSecurity!=='object')S.accessSecurity={};
+  const map={
+    bpdu:['bpduGuard','bpdu'],ps:['portSecurity','ps'],ds:['dhcpSnooping','ds'],
+    dai:['arpInspection','dai'],ipsg:['ipSourceGuard','ipsg']
+  };
+  const pair=map[key];if(!pair)return;
+  S.accessSecurity[pair[0]]=!!on;
+  if(key==='bpdu')S.accessSecurity.portFast=!!on;
+  if(key==='ps'&&!Number.isFinite(Number(S.accessSecurity.maxMac)))S.accessSecurity.maxMac=2;
+  S.security[pair[1]]=on?'yes':'no';
+}
+function applyAccessHardeningPreset(values){
+  for(const [key,on] of Object.entries(values))setAccessHardeningFlag(key,on);
+  save({source:'hardening-preset'});refresh();
+}
+function parseHardeningVlans(raw){
+  const text=String(raw||'').trim();if(!text)return[];
+  const ids=text.split(',').map(v=>Number(v.trim()));
+  if(ids.some(v=>!Number.isInteger(v)||v<1||v>4094))throw new Error('Usa IDs VLAN 1-4094 separados por comas.');
+  return[...new Set(ids)].sort((a,b)=>a-b);
+}
+$('secTplL').onclick=()=>{applyAccessHardeningPreset({bpdu:false,ps:false,ds:false,dai:false,ipsg:false});alert('✓ Perfil mínimo aplicado.');};
+$('secTplM').onclick=()=>{applyAccessHardeningPreset({bpdu:true,ps:true,ds:true,dai:false,ipsg:false});alert('✓ Perfil medio aplicado.');};
+$('secTplH').onclick=()=>{applyAccessHardeningPreset({bpdu:true,ps:true,ds:true,dai:true,ipsg:true});alert('✓ Perfil alto aplicado.');};
+const hardeningMap={secBpdu:'bpdu',secPs:'ps',secDs:'ds',secDai:'dai',secIpsg:'ipsg'};
+Object.entries(hardeningMap).forEach(([id,key])=>{$(id).onchange=()=>{setAccessHardeningFlag(key,$(id).value==='yes');save({source:'hardening-control'});};});
+$('secDsV').onblur=()=>{
+  try{
+    const ids=parseHardeningVlans($('secDsV').value);
+    S.accessSecurity.protectedVlanIds=ids;
+    S.security.dsV=ids.join(',');
+    $('secDsV').value=ids.join(',');
+    save({source:'hardening-vlans'});
+  }catch(error){alert(error.message);refresh();}
+};
+$('secQV').onchange=()=>{
+  const value=$('secQV').value||'';
+  S.accessSecurity.quarantineVlanRef=value||null;
+  S.security.qV=value;
+  save({source:'hardening-quarantine'});
+};
 
 // ─────────────────── CFG / EXPORT ───────────────────
 
@@ -2848,9 +2899,10 @@ function refresh(){
   renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostManagedDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
   fillSwDevSels();fillLinkPickers();renderVisPorts();renderLinks();
   renderFwRules();renderVlanMatrix();
-  ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
-  $('secBpdu').value=S.security.bpdu||'yes';$('secPs').value=S.security.ps||'yes';$('secDs').value=S.security.ds||'yes';$('secDai').value=S.security.dai||'yes';
-  $('secDsV').value=S.security.dsV||'';
+  const hardening=accessSecurityUiState();
+  $('secBpdu').value=hardening.bpdu?'yes':'no';$('secPs').value=hardening.ps?'yes':'no';$('secDs').value=hardening.ds?'yes':'no';$('secDai').value=hardening.dai?'yes':'no';$('secIpsg').value=hardening.ipsg?'yes':'no';
+  $('secDsV').value=hardening.dsV||'';
+  if($('secQV'))$('secQV').value=hardening.qV||'';
   fillRoasSels();renderDhcp();renderDevPickCfg();renderVtp();
   if(S.step==='graphs'){drawTopo();resizeV5();renderV5Panel();}
   if(S.step==='cfg'){if(selDevCfg)selectDevCfg(selDevCfg);}
