@@ -76,7 +76,7 @@ Se retiran del entrypoint normal:
 - `netwizard-unified-config-map.js`;
 - botones `Vista IoT-ready` y `Grafo unificado`.
 
-Los archivos pueden conservarse temporalmente como referencia histórica mientras no formen parte del loader normal. Una limpieza posterior puede eliminarlos físicamente cuando sus dependencias y valor residual sean cero.
+Los tres prototipos retirados ya no forman parte del repositorio ejecutable. La documentación histórica puede conservar referencias a ellos, pero no deben reaparecer como módulos cargables ni como dependencias de V5.
 
 ## Regla para módulos nuevos
 
