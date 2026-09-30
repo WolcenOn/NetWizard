@@ -15,6 +15,10 @@ assert.ok(html.includes('id="pg-validate"'),'Debe existir una sección canónica
 assert.ok(html.includes('data-step="validate"'),'Validación debe formar parte de la navegación principal');
 assert.ok(main.includes("'fw','validate','cfg'"),'Validación debe preceder a Despliegue en el flujo');
 assert.ok(html.includes('🚀 Despliegue & Exportación'),'Config debe presentarse como fase de despliegue, no como cajón genérico');
+const linksIndex=html.indexOf('id="pg-links"');
+const wanEditorIndex=html.indexOf('id="nwWanCircuitsEditorMount"');
+const firewallIndex=html.indexOf('id="pg-fw"');
+assert.ok(linksIndex>=0&&wanEditorIndex>linksIndex&&wanEditorIndex<firewallIndex,'El editor WAN debe vivir dentro de Enlaces');
 
 assert.ok(!html.includes('graphs-unified'),'La auditoría unificada experimental no debe seguir como vista gráfica');
 assert.ok(!html.includes('nwuGraphSlot'),'El slot del mapa unificado experimental debe retirarse de la UX');
