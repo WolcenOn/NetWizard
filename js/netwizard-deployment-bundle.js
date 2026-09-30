@@ -212,6 +212,71 @@
     return {ok:true,blocked:false,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,filename,report,changeSet,incrementalPlan,deploymentPlan,manifest,issues:arr(report.issues).concat(arr(changeSet.issues),arr(incrementalPlan.issues)),files};
   }
 
+  function buildPrivateDeploymentPackage(project,result,options){
+    const opts=obj(options),privateResult=obj(result),generatedAt=isoDate(privateResult.generatedAt),source=clone(project||{});
+    if(privateResult.contractVersion!=='netwizard-private-deployment-plan-v2'){
+      return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,issues:[gateIssue('NW-BUNDLE-PRIVATE-001','Resultado privado ausente o con contrato no compatible.')],files:[]};
+    }
+    const report=obj(privateResult.productionGate);
+    if(privateResult.productionGateContract!=='netwizard-private-production-gate-v1'||!report.status){
+      return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,issues:[gateIssue('NW-BUNDLE-PRIVATE-002','Production Gate privada ausente o incompatible.')],files:[]};
+    }
+    if(report.canExport!==true){
+      const issues=arr(report.issues).length?arr(report.issues):arr(privateResult.issues);
+      return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(privateResult.projectName||source.projName,160),report,issues:issues.length?issues:[gateIssue('NW-BUNDLE-PRIVATE-003','La Production Gate privada no permite exportar un paquete de despliegue.')],files:[]};
+    }
+    const schema=dependency(opts,'schema','NetWizardProjectSchema');
+    let exported=source;
+    try{
+      exported=schema&&typeof schema.prepareExport==='function'?schema.prepareExport(source,opts.schemaOptions||{}):source;
+    }catch(error){
+      return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(source.projName,160),report,issues:[gateIssue('NW-BUNDLE-PRIVATE-004',`No se pudo preparar el snapshot del paquete: ${error&&error.message||error}`)],files:[]};
+    }
+    const files=[];
+    try{
+      for(const artifact of arr(privateResult.artifacts)){
+        if(!artifact||typeof artifact.content!=='string'||!clean(artifact.path,300))continue;
+        addFile(files,artifact.path,artifact.content,artifact.mime||'text/plain;charset=utf-8');
+      }
+      const synthetic=[
+        ['project/netwizard-project.json',JSON.stringify(exported,null,2)+'\n','application/json'],
+        ['reports/private-deployment-result.json',JSON.stringify(privateResult,null,2)+'\n','application/json'],
+        ['reports/private-production-gate.json',JSON.stringify(report,null,2)+'\n','application/json'],
+        ['deployment/plan.json',privateResult.deploymentPlan?JSON.stringify(privateResult.deploymentPlan,null,2)+'\n':'','application/json'],
+        ['deployment/runbook.md',privateResult.runbookMarkdown,'text/markdown;charset=utf-8'],
+        ['deployment/rollback-checklist.md',privateResult.rollbackMarkdown,'text/markdown;charset=utf-8'],
+        ['changes/change-set.json',privateResult.changeSet?JSON.stringify(privateResult.changeSet,null,2)+'\n':'','application/json'],
+        ['changes/summary.md',privateResult.changeSummaryMarkdown,'text/markdown;charset=utf-8'],
+        ['incremental/plan.json',privateResult.incrementalPlan?JSON.stringify(privateResult.incrementalPlan,null,2)+'\n':'','application/json'],
+        ['incremental/summary.md',privateResult.incrementalSummaryMarkdown,'text/markdown;charset=utf-8'],
+        ['evidence/post-change-checklist.md',privateResult.postChangeChecklistMarkdown,'text/markdown;charset=utf-8']
+      ];
+      for(const [path,content,mime] of synthetic){
+        if(!content)continue;
+        const safe=safePath(path);
+        if(files.some(file=>file.path===safe))continue;
+        addFile(files,path,content,mime);
+      }
+    }catch(error){
+      return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(source.projName,160),report,issues:[gateIssue('NW-BUNDLE-PRIVATE-005',`No se pudieron empaquetar artefactos privados: ${error&&error.message||error}`)],files:[]};
+    }
+    const payloadBytes=files.reduce((sum,file)=>sum+file.bytes,0);
+    if(payloadBytes>MAX_PACKAGE_BYTES)return{ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(source.projName,160),report,issues:[gateIssue('NW-BUNDLE-021',`El paquete supera el límite de ${MAX_PACKAGE_BYTES} bytes.`)],files:[]};
+    const configCount=Object.keys(obj(privateResult.configPaths)).length;
+    const manifest={
+      format:FORMAT,version:VERSION,source:'private-engine',schemaVersion:'3.50.0',
+      generatedAt,projectName:clean(privateResult.projectName||source.projName,160),
+      productionStatus:clean(privateResult.productionStatus,40)||clean(report.status,40),
+      counts:{devices:configCount,files:files.length+1,warnings:arr(privateResult.issues).filter(x=>x&&x.severity==='warning').length,errors:arr(privateResult.issues).filter(x=>x&&x.severity==='error').length},
+      privateConfigContract:clean(privateResult.privateConfigContract,120),
+      files:files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}))
+    };
+    try{addFile(files,'manifest.json',JSON.stringify(manifest,null,2)+'\n','application/json');}
+    catch(error){return{ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:manifest.projectName,report,issues:[gateIssue('NW-BUNDLE-022',`No se pudo crear el manifiesto: ${error&&error.message||error}`)],files:[]};}
+    const filename=`${safeName(manifest.projectName,'netwizard')}-private-deployment-${generatedAt.slice(0,10)}.zip`;
+    return{ok:true,blocked:false,format:FORMAT,version:VERSION,source:'private-engine',generatedAt,projectName:manifest.projectName,filename,report,manifest,issues:arr(privateResult.issues),files};
+  }
+
   function dosDateTime(value){
     const d=new Date(value); const year=Math.max(1980,Math.min(2107,d.getUTCFullYear()));
     return {date:((year-1980)<<9)|((d.getUTCMonth()+1)<<5)|d.getUTCDate(),time:(d.getUTCHours()<<11)|(d.getUTCMinutes()<<5)|(d.getUTCSeconds()>>1)};
@@ -253,15 +318,25 @@
     if(!button||!output||!root.NetWizardState){if((attempt||0)<40&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),100);return;}
     button.onclick=()=>{
       const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
-      const pkg=buildDeploymentPackage(root.NetWizardState.getSnapshot(),{locale}); root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg);
+      const project=root.NetWizardState.getSnapshot();
+      const privateUi=root.NetWizardPrivateDeploymentUi;
+      const privateResult=privateUi&&typeof privateUi.currentResult==='function'?privateUi.currentResult():null;
+      const pkg=privateResult
+        ? buildPrivateDeploymentPackage(project,privateResult,{locale})
+        : buildDeploymentPackage(project,{locale});
+      root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg);
       const gateOut=root.document.getElementById('productionGateOut'); if(gateOut&&pkg.report&&root.NetWizardProductionGate&&root.NetWizardProductionGate.summarizeGate) gateOut.textContent=root.NetWizardProductionGate.summarizeGate(pkg.report,{limit:80});
-      if(!pkg.ok){root.alert&&root.alert('Paquete bloqueado: corrige los errores de producción indicados.');return;}
+      if(!pkg.ok){
+        const stale=privateUi&&typeof privateUi.exportState==='function'&&privateUi.exportState().stale;
+        root.alert&&root.alert(stale?'Paquete obsoleto: regenera en servidor antes de exportar.':'Paquete bloqueado: corrige los errores de producción indicados.');
+        return;
+      }
       try{download(pkg);}catch(error){output.textContent=`⛔ No se pudo descargar el ZIP: ${error&&error.message||error}`;root.alert&&root.alert('No se pudo descargar el paquete ZIP.');return;}
-      try{root.document.dispatchEvent(new CustomEvent('nw:deployment:bundle',{detail:{filename:pkg.filename,status:pkg.report.status}}));}catch(_error){}
+      try{root.document.dispatchEvent(new CustomEvent('nw:deployment:bundle',{detail:{filename:pkg.filename,status:pkg.report.status,source:pkg.source||'local'}}));}catch(_error){}
     };
   }
 
-  const api={version:'netwizard-deployment-bundle-v3.50',format:FORMAT,buildDeploymentPackage,encodeZip,download,summarize,crc32,safeName,configExtension};
+  const api={version:'netwizard-deployment-bundle-v3.50',format:FORMAT,buildDeploymentPackage,buildPrivateDeploymentPackage,encodeZip,download,summarize,crc32,safeName,configExtension};
   root.NetWizardDeploymentBundle=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>bindBrowserUi(0));else bindBrowserUi(0);}
