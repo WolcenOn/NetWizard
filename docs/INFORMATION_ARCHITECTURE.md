@@ -25,6 +25,8 @@ Los datos se corrigen en estas pantallas o en el editor específico de su domini
 
 **Circuitos WAN** se editan en Enlaces porque representan conectividad externa terminada en un dispositivo/puerto. La tarjeta WAN de Validación es únicamente una lectura derivada de `wanCircuits` y sus incidencias.
 
+**HA / routing services por dispositivo** se editan en Dispositivos sobre `highAvailability.devices[deviceId]`. La intención incluye DHCP relay, rutas por defecto, tracking/IP-SLA y grupos HSRP/VRRP, y alimenta directamente el Private Engine sin crear otra autoridad.
+
 En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente ligadas a las VLANs: DHCP por VLAN, Router-on-a-Stick y VTP Cisco. Estas opciones alimentan la generación posterior y por tanto deben completarse antes de Validación/Despliegue; no son artefactos de exportación.
 
 ### Visualizar
@@ -55,8 +57,9 @@ Estos paneles son análisis, no colecciones paralelas ni una nueva fuente de ver
 
 Estado funcional actual:
 - WAN ya tiene editor canónico en Enlaces.
+- HA/routing services por dispositivo ya tiene editor canónico en Dispositivos sobre `highAvailability.devices[deviceId]`.
 - capacidad de tráfico, servicios internos, Wi-Fi planning, IPv6/VRF y escenarios de fallo siguen siendo análisis de datos existentes/importados; permanecen condicionales hasta disponer de un editor conectado a su dominio natural.
-- resiliencia/HA valida estructuras existentes y no debe presentarse como asistente de configuración mientras no exista un editor canónico.
+- la topología de resiliencia (`stacks`, `mlagDomains`, `haGroups`, `diversityPolicies`) sigue siendo validación condicional y no debe presentarse como asistente de configuración.
 
 Si un análisis necesita edición real en el futuro, debe recibir una superficie de edición en su dominio natural antes de promocionarse a flujo principal.
 
