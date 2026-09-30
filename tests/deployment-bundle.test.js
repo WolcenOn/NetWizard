@@ -84,6 +84,7 @@ assert.ok(privatePkg.files.some(file=>file.path==='deployment/runbook.md'));
 assert.ok(privatePkg.files.some(file=>file.path==='reports/private-deployment-result.json'));
 assert.ok(privatePkg.files.some(file=>file.path==='manifest.json'));
 assert.ok(!privatePkg.files.some(file=>/deployment-test/.test(file.content)),'el ZIP privado no debe regenerar configs con el generador local');
+assert.match(Bundle.summarize(privatePkg),/Private Engine/);
 const privateBlocked=Bundle.buildPrivateDeploymentPackage(project,Object.assign({},privateResult,{
   productionReady:false,
   productionStatus:'review',
