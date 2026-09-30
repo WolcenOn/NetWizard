@@ -978,6 +978,39 @@
         },
         "sticky": {
           "type": "boolean"
+        },
+        "bpduGuard": {
+          "type": "boolean"
+        },
+        "portFast": {
+          "type": "boolean"
+        },
+        "ipSourceGuard": {
+          "type": "boolean"
+        },
+        "protectedVlanIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4094
+          },
+          "uniqueItems": true
+        },
+        "quarantineVlanRef": {
+          "$ref": "#/$defs/idNullable"
+        },
+        "violation": {
+          "type": "string",
+          "enum": [
+            "protect",
+            "restrict",
+            "shutdown"
+          ]
+        },
+        "dhcpRateLimit": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
