@@ -30,6 +30,7 @@ type Config struct {
 	PrivateDeploymentWorker string
 	SelfHostedPrivate bool
 	SelfHostedPrivateToken string
+	SelfHostedPrivateSessionTTL time.Duration
 	AdminSubjects []string
 }
 
@@ -67,6 +68,16 @@ func (c Config) SelfHostedPrivateConfigured() bool {
 		strings.TrimSpace(c.PrivateDeploymentWorker) != ""
 }
 
+func (c Config) SelfHostedPrivateSessionDuration() time.Duration {
+	if c.SelfHostedPrivateSessionTTL > 0 {
+		return c.SelfHostedPrivateSessionTTL
+	}
+	if c.SessionTTL > 0 {
+		return c.SessionTTL
+	}
+	return 30 * 24 * time.Hour
+}
+
 func (c Config) Validate() error {
 	if c.PrivateServicesConfigured() && len([]byte(c.PrivateServiceKey)) < 32 {
 		return fmt.Errorf("NETWIZARD_PRIVATE_SERVICE_KEY must be at least 32 bytes")
@@ -87,8 +98,8 @@ func (c Config) Validate() error {
 		if strings.TrimSpace(c.PrivateDeploymentWorker) == "" {
 			return fmt.Errorf("self-hosted private generation requires NETWIZARD_PRIVATE_DEPLOYMENT_WORKER")
 		}
-		if c.SessionTTL <= 0 {
-			return fmt.Errorf("session TTL must be positive")
+		if c.SelfHostedPrivateSessionDuration() <= 0 {
+			return fmt.Errorf("self-hosted private session TTL must be positive")
 		}
 		return nil
 	}
@@ -158,6 +169,12 @@ func FromEnv() Config {
 	privateRoutingWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_ROUTING_WORKER"))
 	privateDeploymentWorker := strings.TrimSpace(os.Getenv("NETWIZARD_PRIVATE_DEPLOYMENT_WORKER"))
 	selfHostedPrivateToken := strings.TrimSpace(os.Getenv("NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN"))
+	selfHostedPrivateSessionTTL := 30 * 24 * time.Hour
+	if raw := strings.TrimSpace(os.Getenv("NETWIZARD_SELF_HOSTED_PRIVATE_SESSION_TTL")); raw != "" {
+		if parsed, err := time.ParseDuration(raw); err == nil && parsed > 0 {
+			selfHostedPrivateSessionTTL = parsed
+		}
+	}
 	selfHostedPrivate := false
 	if raw := strings.TrimSpace(os.Getenv("NETWIZARD_SELF_HOSTED_PRIVATE")); raw != "" {
 		if parsed, err := strconv.ParseBool(raw); err == nil {
@@ -218,6 +235,7 @@ func FromEnv() Config {
 		PrivateDeploymentWorker: privateDeploymentWorker,
 		SelfHostedPrivate: selfHostedPrivate,
 		SelfHostedPrivateToken: selfHostedPrivateToken,
+		SelfHostedPrivateSessionTTL: selfHostedPrivateSessionTTL,
 		AdminSubjects: adminSubjects,
 	}
 }

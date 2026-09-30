@@ -72,7 +72,7 @@ Las verificaciones principales son:
 
 En SaaS, los endpoints privados no deben aceptar un snapshot cliente como autoridad; deben cargar la revisión almacenada correspondiente a `expectedVersion`.
 
-El modo self-hosted es una frontera diferente y explícita: no usa PostgreSQL/OIDC, acepta únicamente el snapshot 3.50 actual y exige token de operador, sesión HttpOnly, CSRF, same-origin, límite de tamaño y rate limit. La service key nunca se entrega al navegador.
+El modo self-hosted es una frontera diferente y explícita: no usa PostgreSQL/OIDC, acepta únicamente el snapshot 3.50 actual y exige una autorización inicial con token de operador, cookie HttpOnly firmada, CSRF, same-origin, límite de tamaño y rate limit. La service key nunca se entrega al navegador. La cookie firmada se verifica sin estado de sesión en memoria, por lo que sigue siendo válida tras redeploys/restarts mientras no expire ni roten los secretos.
 
 ## Publicación
 
@@ -102,8 +102,9 @@ Para recuperar generación server-side en una instalación Docker local/controla
 - genera una `NETWIZARD_PRIVATE_SERVICE_KEY` aleatoria de 32 bytes o más;
 - genera un `NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN` distinto, también de 32 bytes o más;
 - usa HTTPS y `NETWIZARD_COOKIE_SECURE=true` cuando la instancia sea accesible fuera de localhost/LAN controlada;
-- no publiques el token de operador en imágenes, repositorios ni variables del frontend.
+- no publiques el token de operador en imágenes, repositorios ni variables del frontend;
+- opcionalmente ajusta `NETWIZARD_SELF_HOSTED_PRIVATE_SESSION_TTL` (por defecto `720h`, 30 días).
 
-El operador introduce el token en la tarjeta **Private Engine self-hosted**. Tras autenticarse, el token se descarta del formulario y se trabaja con una sesión HttpOnly efímera. Reiniciar el servidor invalida esas sesiones.
+El operador introduce el token una sola vez para **autorizar ese navegador**. El token se descarta del formulario y no se guarda en JavaScript ni en el proyecto. El servidor emite una cookie HttpOnly, SameSite=Strict y firmada con material derivado de la service key y el token de operador. La autorización sobrevive a reinicios/redeploys; rotar cualquiera de esos secretos invalida automáticamente las cookies existentes.
 
 Este modo protege la lógica propietaria y autentica la generación, pero no sustituye un control de acceso perimetral para una instancia expuesta a Internet. Si se publica externamente, debe usarse HTTPS y una capa de acceso controlada; para multiusuario/autoridad compartida se recomienda el modo SaaS OIDC/PostgreSQL.

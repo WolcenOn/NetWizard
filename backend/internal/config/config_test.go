@@ -164,11 +164,15 @@ func TestValidateRejectsWeakOrAmbiguousSelfHostedPrivateMode(t *testing.T) {
 func TestFromEnvReadsSelfHostedPrivateSettings(t *testing.T) {
 	t.Setenv("NETWIZARD_SELF_HOSTED_PRIVATE", "true")
 	t.Setenv("NETWIZARD_SELF_HOSTED_PRIVATE_TOKEN", "abcdefghijklmnopqrstuvwxyz123456")
+	t.Setenv("NETWIZARD_SELF_HOSTED_PRIVATE_SESSION_TTL", "720h")
 	cfg := FromEnv()
 	if !cfg.SelfHostedPrivate {
 		t.Fatal("expected self-hosted private env flag")
 	}
 	if cfg.SelfHostedPrivateToken != "abcdefghijklmnopqrstuvwxyz123456" {
 		t.Fatalf("unexpected self-hosted token: %q", cfg.SelfHostedPrivateToken)
+	}
+	if cfg.SelfHostedPrivateSessionDuration() != 720*time.Hour {
+		t.Fatalf("expected 720h self-hosted session, got %s", cfg.SelfHostedPrivateSessionDuration())
 	}
 }

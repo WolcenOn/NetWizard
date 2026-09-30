@@ -180,6 +180,65 @@ func TestSelfHostedPrivateGenerationRequiresExplicitSessionAndCSRF(t *testing.T)
 	}
 }
 
+func TestSelfHostedPrivateSessionSurvivesServerRestart(t *testing.T) {
+	server1, _ := newSelfHostedPrivateTestServer(t)
+	cookie, csrf := loginSelfHostedPrivate(t, server1)
+
+	server2, runner2 := newSelfHostedPrivateTestServer(t)
+	status := httptest.NewRequest(http.MethodGet, "/api/private/self-hosted/session", nil)
+	status.AddCookie(cookie)
+	statusRec := httptest.NewRecorder()
+	server2.Handler().ServeHTTP(statusRec, status)
+	if statusRec.Code != http.StatusOK {
+		t.Fatalf("signed private session should survive restart, got %d: %s", statusRec.Code, statusRec.Body.String())
+	}
+	if !strings.Contains(statusRec.Body.String(), csrf) {
+		t.Fatalf("restored session must preserve CSRF contract, got %s", statusRec.Body.String())
+	}
+
+	snapshot := `{"_schemaVersion":"3.50.0","projName":"Restart","devices":[{"id":"r1","name":"R1","type":"router","kind":"router","vendorOs":"cisco_ios"}],"ports":[],"vlans":[],"subnets":[],"hosts":[],"links":[],"fwRules":[]}`
+	req := selfHostedBrowserRequest(http.MethodPost, "/api/private/self-hosted/deployment-plan", `{"snapshot":`+snapshot+`}`)
+	req.AddCookie(cookie)
+	req.Header.Set("X-NetWizard-CSRF", csrf)
+	rec := httptest.NewRecorder()
+	server2.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("generation with restored signed session expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if string(runner2.project) != snapshot {
+		t.Fatalf("restarted worker must receive snapshot, got %s", string(runner2.project))
+	}
+}
+
+func TestSelfHostedPrivateSessionRejectsTamperingAndSecretRotation(t *testing.T) {
+	server, _ := newSelfHostedPrivateTestServer(t)
+	cookie, _ := loginSelfHostedPrivate(t, server)
+
+	tampered := *cookie
+	if strings.HasSuffix(tampered.Value, "A") {
+		tampered.Value = tampered.Value[:len(tampered.Value)-1] + "B"
+	} else {
+		tampered.Value = tampered.Value[:len(tampered.Value)-1] + "A"
+	}
+	status := httptest.NewRequest(http.MethodGet, "/api/private/self-hosted/session", nil)
+	status.AddCookie(&tampered)
+	statusRec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(statusRec, status)
+	if statusRec.Code != http.StatusUnauthorized {
+		t.Fatalf("tampered signed cookie expected 401, got %d", statusRec.Code)
+	}
+
+	rotated, _ := newSelfHostedPrivateTestServer(t)
+	rotated.cfg.SelfHostedPrivateToken = "rotated-operator-token-1234567890"
+	rotatedStatus := httptest.NewRequest(http.MethodGet, "/api/private/self-hosted/session", nil)
+	rotatedStatus.AddCookie(cookie)
+	rotatedRec := httptest.NewRecorder()
+	rotated.Handler().ServeHTTP(rotatedRec, rotatedStatus)
+	if rotatedRec.Code != http.StatusUnauthorized {
+		t.Fatalf("secret rotation must invalidate old private cookie, got %d", rotatedRec.Code)
+	}
+}
+
 func TestSelfHostedPrivateGenerationRejectsInjectedOrInvalidSnapshot(t *testing.T) {
 	server, _ := newSelfHostedPrivateTestServer(t)
 	cookie, csrf := loginSelfHostedPrivate(t, server)
@@ -205,7 +264,7 @@ func TestSelfHostedPrivateGenerationRejectsInjectedOrInvalidSnapshot(t *testing.
 	}
 }
 
-func TestSelfHostedPrivateLogoutInvalidatesMemorySession(t *testing.T) {
+func TestSelfHostedPrivateLogoutInvalidatesCurrentBrowserSession(t *testing.T) {
 	server, _ := newSelfHostedPrivateTestServer(t)
 	cookie, csrf := loginSelfHostedPrivate(t, server)
 

@@ -48,7 +48,7 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   const token=process.env.NETWIZARD_TEST_SELF_HOSTED_TOKEN||'';
   expect(token.length).toBeGreaterThanOrEqual(32);
   await expect(page.locator('#nwPrivateDeploymentCard')).toBeVisible();
-  await expect(page.locator('#cfgGenerateServer')).toHaveText(/Desbloquear y generar/);
+  await expect(page.locator('#cfgGenerateServer')).toHaveText(/Autorizar y generar/);
   await page.locator('#cfgGenerateServer').click();
   await expect(page.locator('#nwSelfHostedPrivateToken')).toBeFocused();
   await page.locator('#nwSelfHostedPrivateToken').fill(token);
