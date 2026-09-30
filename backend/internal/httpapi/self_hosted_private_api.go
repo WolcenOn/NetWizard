@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -30,6 +31,15 @@ const (
 type selfHostedPrivateSession struct {
 	CSRF      string
 	ExpiresAt time.Time
+	ID        string
+}
+
+type selfHostedPrivateCookiePayload struct {
+	Version   int    `json:"v"`
+	CSRF      string `json:"c"`
+	ExpiresAt int64  `json:"e"`
+	IssuedAt  int64  `json:"i"`
+	ID        string `json:"j"`
 }
 
 type selfHostedPrivateRate struct {
@@ -39,14 +49,14 @@ type selfHostedPrivateRate struct {
 
 type selfHostedPrivateAuthState struct {
 	mu        sync.Mutex
-	sessions  map[string]selfHostedPrivateSession
+	revoked   map[string]time.Time
 	loginRate map[string]selfHostedPrivateRate
 	runRate   map[string]selfHostedPrivateRate
 }
 
 func newSelfHostedPrivateAuthState() *selfHostedPrivateAuthState {
 	return &selfHostedPrivateAuthState{
-		sessions:  map[string]selfHostedPrivateSession{},
+		revoked:   map[string]time.Time{},
 		loginRate: map[string]selfHostedPrivateRate{},
 		runRate:   map[string]selfHostedPrivateRate{},
 	}
@@ -71,53 +81,112 @@ func privateSecretEqual(left, right string) bool {
 	return subtle.ConstantTimeCompare(leftHash[:], rightHash[:]) == 1
 }
 
-func (a *selfHostedPrivateAuthState) create(ttl time.Duration, now time.Time) (string, selfHostedPrivateSession, error) {
-	if ttl <= 0 {
-		ttl = 12 * time.Hour
-	}
-	raw, err := randomPrivateToken()
-	if err != nil {
-		return "", selfHostedPrivateSession{}, err
-	}
+func (s *Server) selfHostedPrivateSigningKey() []byte {
+	material := "netwizard:self-hosted-private-session:v1\x00" +
+		strings.TrimSpace(s.cfg.PrivateServiceKey) + "\x00" +
+		strings.TrimSpace(s.cfg.SelfHostedPrivateToken)
+	sum := sha256.Sum256([]byte(material))
+	return sum[:]
+}
+
+func (s *Server) signSelfHostedPrivatePayload(encoded string) string {
+	mac := hmac.New(sha256.New, s.selfHostedPrivateSigningKey())
+	_, _ = mac.Write([]byte(encoded))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+}
+
+func (s *Server) issueSelfHostedPrivateSession(now time.Time) (string, selfHostedPrivateSession, error) {
 	csrf, err := randomPrivateToken()
 	if err != nil {
 		return "", selfHostedPrivateSession{}, err
 	}
-	session := selfHostedPrivateSession{CSRF: csrf, ExpiresAt: now.Add(ttl).UTC()}
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.pruneLocked(now)
-	a.sessions[privateSessionKey(raw)] = session
-	return raw, session, nil
+	id, err := randomPrivateToken()
+	if err != nil {
+		return "", selfHostedPrivateSession{}, err
+	}
+	expires := now.Add(s.cfg.SelfHostedPrivateSessionDuration()).UTC()
+	payload := selfHostedPrivateCookiePayload{
+		Version: 1,
+		CSRF: csrf,
+		ExpiresAt: expires.Unix(),
+		IssuedAt: now.UTC().Unix(),
+		ID: id,
+	}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", selfHostedPrivateSession{}, err
+	}
+	encoded := base64.RawURLEncoding.EncodeToString(rawPayload)
+	raw := encoded + "." + s.signSelfHostedPrivatePayload(encoded)
+	return raw, selfHostedPrivateSession{CSRF: csrf, ExpiresAt: expires, ID: id}, nil
 }
 
-func (a *selfHostedPrivateAuthState) get(raw string, now time.Time) (selfHostedPrivateSession, bool) {
-	if a == nil || strings.TrimSpace(raw) == "" {
+func (s *Server) verifySelfHostedPrivateSession(raw string, now time.Time) (selfHostedPrivateSession, bool) {
+	if s == nil || s.selfHostedPrivateAuth == nil || len(raw) == 0 || len(raw) > 4096 {
 		return selfHostedPrivateSession{}, false
 	}
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.pruneLocked(now)
-	session, ok := a.sessions[privateSessionKey(raw)]
-	if !ok || !session.ExpiresAt.After(now) {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return selfHostedPrivateSession{}, false
 	}
-	return session, true
+	providedSig, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return selfHostedPrivateSession{}, false
+	}
+	expectedMac := hmac.New(sha256.New, s.selfHostedPrivateSigningKey())
+	_, _ = expectedMac.Write([]byte(parts[0]))
+	if !hmac.Equal(providedSig, expectedMac.Sum(nil)) {
+		return selfHostedPrivateSession{}, false
+	}
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return selfHostedPrivateSession{}, false
+	}
+	var payload selfHostedPrivateCookiePayload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return selfHostedPrivateSession{}, false
+	}
+	if payload.Version != 1 || payload.CSRF == "" || payload.ID == "" || payload.ExpiresAt <= now.Unix() {
+		return selfHostedPrivateSession{}, false
+	}
+	if payload.IssuedAt > now.Add(5*time.Minute).Unix() {
+		return selfHostedPrivateSession{}, false
+	}
+	if s.selfHostedPrivateAuth.isRevoked(raw, now) {
+		return selfHostedPrivateSession{}, false
+	}
+	return selfHostedPrivateSession{
+		CSRF: payload.CSRF,
+		ExpiresAt: time.Unix(payload.ExpiresAt, 0).UTC(),
+		ID: payload.ID,
+	}, true
 }
 
-func (a *selfHostedPrivateAuthState) remove(raw string) {
+func (a *selfHostedPrivateAuthState) revoke(raw string, expires time.Time, now time.Time) {
 	if a == nil || strings.TrimSpace(raw) == "" {
 		return
 	}
 	a.mu.Lock()
-	delete(a.sessions, privateSessionKey(raw))
-	a.mu.Unlock()
+	defer a.mu.Unlock()
+	a.pruneLocked(now)
+	a.revoked[privateSessionKey(raw)] = expires.UTC()
+}
+
+func (a *selfHostedPrivateAuthState) isRevoked(raw string, now time.Time) bool {
+	if a == nil || strings.TrimSpace(raw) == "" {
+		return false
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.pruneLocked(now)
+	_, ok := a.revoked[privateSessionKey(raw)]
+	return ok
 }
 
 func (a *selfHostedPrivateAuthState) pruneLocked(now time.Time) {
-	for key, session := range a.sessions {
-		if !session.ExpiresAt.After(now) {
-			delete(a.sessions, key)
+	for key, expires := range a.revoked {
+		if !expires.After(now) {
+			delete(a.revoked, key)
 		}
 	}
 	for key, rate := range a.loginRate {
@@ -233,7 +302,7 @@ func (s *Server) selfHostedPrivateSessionFromRequest(r *http.Request) (string, s
 		return "", selfHostedPrivateSession{}, false
 	}
 	raw := strings.TrimSpace(cookie.Value)
-	session, ok := s.selfHostedPrivateAuth.get(raw, time.Now().UTC())
+	session, ok := s.verifySelfHostedPrivateSession(raw, time.Now().UTC())
 	return raw, session, ok
 }
 
@@ -336,7 +405,7 @@ func (s *Server) handleSelfHostedPrivateLogin(w http.ResponseWriter, r *http.Req
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	raw, session, err := s.selfHostedPrivateAuth.create(s.cfg.SessionTTL, now)
+	raw, session, err := s.issueSelfHostedPrivateSession(now)
 	if err != nil {
 		s.internalError(w, "create self-hosted private session", err)
 		return
@@ -358,11 +427,11 @@ func (s *Server) handleSelfHostedPrivateLogout(w http.ResponseWriter, r *http.Re
 	if !s.requireSelfHostedPrivateBrowserRequest(w, r) {
 		return
 	}
-	raw, _, ok := s.requireSelfHostedPrivateSession(w, r, true)
+	raw, session, ok := s.requireSelfHostedPrivateSession(w, r, true)
 	if !ok {
 		return
 	}
-	s.selfHostedPrivateAuth.remove(raw)
+	s.selfHostedPrivateAuth.revoke(raw, session.ExpiresAt, time.Now().UTC())
 	s.clearSelfHostedPrivateCookie(w)
 	noStore(w)
 	w.WriteHeader(http.StatusNoContent)
