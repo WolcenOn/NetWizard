@@ -310,6 +310,9 @@
       issues.slice(0,12).filter(issue=>issue.severity!=='info').forEach(issue=>lines.push(`• [${issue.code||'NW-BUNDLE'}] ${issue.message||''}`));
       return lines.join('\n');
     }
+    if(pkg.source==='private-engine'){
+      return `✅ Paquete privado preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status||pkg.manifest.productionStatus||'unknown').toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.counts.files} archivos · ${pkg.manifest.counts.warnings} avisos · origen: Private Engine.`;
+    }
     return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · cambio ${pkg.manifest.changeSet.executionMode} · candidatos seguros ${pkg.manifest.incremental.candidateReady} · revisión manual ${pkg.manifest.incremental.manualReview} · ${pkg.manifest.counts.warnings} avisos.`;
   }
 
