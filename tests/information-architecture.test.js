@@ -26,8 +26,15 @@ for(const retired of [
   'js/netwizard-graph-viewer.js',
   'js/netwizard-unified-config-map.js'
 ]){
+  assert.ok(!fs.existsSync(path.join(root,retired)),'El experimento retirado debe eliminarse físicamente: '+retired);
   assert.ok(!html.includes('./'+retired),'El entrypoint no debe cargar el experimento retirado '+retired);
   assert.ok(!manifest.includes('"path":"'+retired+'"'),'El manifiesto no debe cargar el experimento retirado '+retired);
+}
+const v5Layout=read('js/netwizard-v5-layout-manager.js');
+const v5Iot=read('js/netwizard-v5-iot-extension.js');
+for(const forbidden of ['NetWizardUnifiedConfigMap','renderUnifiedManaged','graphs-unified','nwuConfigCanvas']){
+  assert.ok(!v5Layout.includes(forbidden),'V5 layout no debe conservar código del grafo retirado: '+forbidden);
+  assert.ok(!v5Iot.includes(forbidden),'V5 IoT no debe conservar hooks del grafo retirado: '+forbidden);
 }
 assert.ok(html.includes('./js/netwizard-bridge.js'),'El contrato Bridge interno puede mantenerse para IoT/compatibilidad');
 
