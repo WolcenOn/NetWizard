@@ -392,6 +392,50 @@
       <div class="card"><div class="card-h"><div class="card-t">🌐 Subnets</div></div><div id="snList"></div></div>
     </div>
   </div>
+
+  <div class="ph" style="margin-top:18px;"><h2>🧩 Servicios VLAN y gateway</h2><p>Estas opciones forman parte del diseño deseado y alimentan la generación posterior. Configúralas antes de validar y desplegar.</p></div>
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">🌐 Router-on-a-Stick (RoaS)</div>
+        <div class="hint" style="margin-bottom:8px;">Define qué gateway enruta las VLANs y qué interfaz actúa como trunk LAN. Al aplicar, NetWizard actualiza ese puerto con todas las VLANs actuales.</div>
+        <div class="row">
+          <div><label class="fl">Gateway</label><select id="roasDev"></select></div>
+          <div><label class="fl">Interfaz LAN (trunk)</label><select id="roasLanIf"></select></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">VLAN nativa</label><select id="roasNatV"></select></div>
+          <div><label class="fl">WAN IP/CIDR</label><input id="wanCidr" placeholder="203.0.113.2/30"/></div>
+        </div>
+        <label class="fl">Next-hop ISP</label><input id="wanNh" placeholder="203.0.113.1"/>
+        <div class="brow"><button class="btn bg" id="btnRoas">✔ Aplicar RoaS</button></div>
+      </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:9px;">📡 DHCP por VLAN</div>
+        <div class="hint" style="margin-bottom:8px;">Pools, DNS y lease se definen por VLAN sobre la subnet canónica existente.</div>
+        <div id="dhcpView"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
+        <div class="hint" style="margin-bottom:8px;">Opcional y específico de Cisco IOS. Define dominio, versión y rol únicamente para switches Cisco; los enlaces entre switches deben ser trunk.</div>
+        <div class="row">
+          <div><label class="fl">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
+          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" placeholder="cisco"/></div>
+        </div>
+        <div class="row">
+          <div><label class="fl">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+          <div><label class="fl">Pruning</label><select id="vtpPruning"><option value="no">No</option><option value="yes">Sí</option></select></div>
+        </div>
+        <div id="vtpSwitchRoles"></div>
+        <div class="brow"><button class="btn bg" id="btnSaveVtp">✔ Guardar VTP</button></div>
+      </div>
+      <div class="co co-ac">
+        <b>Orden recomendado:</b> VLAN/subnet → DHCP/RoaS/VTP → Validación → Generar en servidor. Cualquier cambio aquí invalida una configuración privada anterior.
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ HOSTS ═══════════ -->
@@ -739,25 +783,6 @@
   <div class="g2">
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">🌐 Router-on-a-Stick (RoaS)</div>
-        <div class="row">
-          <div><label class="fl">Gateway</label><select id="roasDev"></select></div>
-          <div><label class="fl">Interfaz LAN (trunk)</label><select id="roasLanIf"></select></div>
-        </div>
-        <div class="row">
-          <div><label class="fl">VLAN nativa</label><select id="roasNatV"></select></div>
-          <div><label class="fl">WAN IP/CIDR</label><input id="wanCidr" placeholder="203.0.113.2/30"/></div>
-        </div>
-        <label class="fl">Next-hop ISP</label><input id="wanNh" placeholder="203.0.113.1"/>
-        <div class="brow"><button class="btn bg" id="btnRoas">✔ Aplicar RoaS</button></div>
-      </div>
-      <div class="card">
-        <div class="card-t" style="margin-bottom:9px;">📡 DHCP por VLAN</div>
-        <div id="dhcpView"></div>
-      </div>
-    </div>
-    <div>
-      <div class="card">
         <div class="card-h">
           <div class="card-t">👁 Config por dispositivo</div>
           <button class="btn bp bsm" id="cfgGenerateServer" type="button">☁ Generar en servidor</button>
@@ -778,20 +803,8 @@
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
-        <div class="hint" style="margin-bottom:8px;">Parámetros importantes: dominio, contraseña, versión y rol por switch. Para VTP, los enlaces entre switches deben ir en trunk.</div>
-        <div class="row">
-          <div><label class="fl">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
-          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" placeholder="cisco"/></div>
-        </div>
-        <div class="row">
-          <div><label class="fl">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-          <div><label class="fl">Pruning</label><select id="vtpPruning"><option value="no">No</option><option value="yes">Sí</option></select></div>
-        </div>
-        <div id="vtpSwitchRoles"></div>
-        <div class="brow"><button class="btn bg" id="btnSaveVtp">✔ Guardar VTP</button></div>
-      </div>
+    </div>
+    <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">📤 Exportar</div>
         <div class="brow">
