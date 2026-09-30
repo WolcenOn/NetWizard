@@ -10,15 +10,30 @@
   function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function yes(v){ return v === true || ['yes','true','enabled','on'].includes(clean(v).toLowerCase()); }
-  function isSwitch(d){ return /switch/i.test(clean(d && d.type)); }
+  function hasOwn(value,key){ return !!value && Object.prototype.hasOwnProperty.call(value,key); }
+  function isSwitch(d){ return /switch/i.test(clean(d && (d.kind||d.type))); }
   function vlanId(project, ref){ const v=arr(project && project.vlans).find(x=>x.id===ref); return v && Number(v.vlanId) || null; }
 
   function securityDefaults(project){
-    const s=obj(project && project.accessSecurity);
+    const s=obj(project && project.accessSecurity),legacy=obj(project && project.security);
+    const inherited=(key,legacyKey,fallback)=>{
+      if(hasOwn(s,key))return s[key]!==false;
+      if(hasOwn(legacy,legacyKey))return yes(legacy[legacyKey]);
+      return fallback;
+    };
+    let protectedVlanIds=arr(s.protectedVlanIds).map(Number).filter(Number.isFinite);
+    if(!protectedVlanIds.length&&clean(legacy.dsV)){
+      protectedVlanIds=clean(legacy.dsV).split(',').map(v=>Number(v.trim())).filter(Number.isFinite);
+    }
     return {
-      dhcpSnooping:s.dhcpSnooping !== false,
-      arpInspection:s.arpInspection !== false,
-      portSecurity:s.portSecurity !== false,
+      dhcpSnooping:inherited('dhcpSnooping','ds',true),
+      arpInspection:inherited('arpInspection','dai',true),
+      portSecurity:inherited('portSecurity','ps',true),
+      bpduGuard:inherited('bpduGuard','bpdu',true),
+      portFast:inherited('portFast','bpdu',true),
+      ipSourceGuard:inherited('ipSourceGuard','ipsg',false),
+      protectedVlanIds:[...new Set(protectedVlanIds)].sort((a,b)=>a-b),
+      quarantineVlanRef:clean(s.quarantineVlanRef||legacy.qV),
       maxMac:Number(s.maxMac || 2),
       violation:clean(s.violation || 'restrict').toLowerCase(),
       sticky:s.sticky !== false,
@@ -67,18 +82,27 @@
         maxMac:Number(p.maxMac || defaults.maxMac),
         sticky:p.sticky === false ? false : defaults.sticky,
         violation:clean(p.violation || defaults.violation),
-        dhcpRateLimit:Number(p.dhcpRateLimit || defaults.rateLimit)
+        dhcpRateLimit:Number(p.dhcpRateLimit || defaults.rateLimit),
+        portFast:p.portFast === false ? false : defaults.portFast,
+        bpduGuard:p.bpduGuard === false ? false : defaults.bpduGuard,
+        ipSourceGuard:p.ipSourceGuard === false ? false : defaults.ipSourceGuard
       };
       if(entry.trusted) trusted.push(entry);
       else if(mode === 'access') access.push(entry);
     }
-    const protectedVlans=arr(project && project.vlans).map(v=>Number(v.vlanId)).filter(Boolean).sort((a,b)=>a-b);
+    const allVlans=arr(project && project.vlans).map(v=>Number(v.vlanId)).filter(Boolean).sort((a,b)=>a-b);
+    const protectedVlans=defaults.protectedVlanIds.length
+      ? defaults.protectedVlanIds.filter(id=>allVlans.includes(id))
+      : allVlans;
     return {
       deviceId:device.id,
       deviceName:clean(device.name || device.id),
       vendorOs:clean(device.vendorOs),
       dhcpSnooping:defaults.dhcpSnooping,
       arpInspection:defaults.arpInspection,
+      bpduGuard:defaults.bpduGuard,
+      portFast:defaults.portFast,
+      ipSourceGuard:defaults.ipSourceGuard,
       protectedVlans,
       trustedPorts:trusted,
       accessPorts:access,
@@ -94,6 +118,7 @@
     for(const plan of devices){
       if(plan.dhcpSnooping && !plan.protectedVlans.length) warnings.push(`${plan.deviceName}: DHCP snooping habilitado sin VLANs.`);
       if(plan.arpInspection && !plan.dhcpSnooping) warnings.push(`${plan.deviceName}: DAI requiere una fuente fiable de bindings, normalmente DHCP snooping.`);
+      if(plan.ipSourceGuard && !plan.dhcpSnooping) warnings.push(`${plan.deviceName}: IP Source Guard requiere bindings fiables, normalmente DHCP snooping.`);
       plan.warnings.push(...warnings.filter(x=>x.startsWith(plan.deviceName+':')).map(x=>x.slice(plan.deviceName.length+2)));
     }
     return {version:'netwizard-access-security-plan-v1',ok:devices.every(d=>!d.warnings.length),devices,warnings};
