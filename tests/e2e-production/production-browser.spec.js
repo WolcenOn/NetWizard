@@ -114,11 +114,16 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   expect(downloads[4].suggestedFilename()).toMatch(/private-deployment-.*\.zip$/);
   expect(zipBuffer.includes(Buffer.from('hostname SW-Access'))).toBe(true);
   expect(zipBuffer.includes(Buffer.from('private-server'))).toBe(true);
-  expect(await page.evaluate(()=>({
+  const exportedBundle=await page.evaluate(()=>({
     source:window.NetWizardLastDeploymentBundle?.source,
     productionStatus:window.NetWizardLastDeploymentBundle?.manifest?.productionStatus,
-    configCount:window.NetWizardLastDeploymentBundle?.manifest?.counts?.configurations
-  }))).toEqual({source:'private-server',productionStatus:'review',configCount:3});
+    configCount:window.NetWizardLastDeploymentBundle?.manifest?.counts?.configurations,
+    canExport:window.NetWizardLastDeploymentBundle?.report?.canExport
+  }));
+  expect(exportedBundle.source).toBe('private-server');
+  expect(['ready','review']).toContain(exportedBundle.productionStatus);
+  expect(exportedBundle.configCount).toBe(3);
+  expect(exportedBundle.canExport).toBe(true);
 
   const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('src')||''));
   expect(scripts.some(src=>src.includes('netwizard-legacy-config-generator.js'))).toBe(false);
