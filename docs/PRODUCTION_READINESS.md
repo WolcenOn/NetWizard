@@ -48,6 +48,10 @@ Además, la puerta privada verifica integridad de los artefactos derivados: conf
 
 La aplicabilidad de un artefacto se informa por dispositivo mediante `configReadiness`: `apply-ready`, `review-required` o `procedure-only`. Esta clasificación **no sustituye** a la Production Gate global. Un artefacto puede ser `apply-ready` y, aun así, el deployment permanecer bloqueado por arquitectura, cableado, capacidad, seguridad u otra validación global.
 
+En el navegador productivo, las exportaciones de configuración y el paquete ZIP deben consumir el **último resultado Private Engine vigente**. No se permite regenerar configuraciones vendor localmente como parte de la exportación. Si el proyecto cambia después de generar, esos artefactos quedan obsoletos y la exportación se bloquea hasta una nueva generación server-side.
+
+El ZIP privado incluye un informe `reports/private-generation.json` con rutas, readiness, capacidades e incidencias por dispositivo, además de los artefactos exactos recibidos del servidor.
+
 ## Frontera de publicación
 
 La frontera declarativa vive en `js/netwizard-browser-modules.js`.
