@@ -12,6 +12,8 @@ Fue un prototipo de solo lectura para validar el contrato `NetWizardBridge` y de
 - Topología física cubre cableado, puertos y enlaces.
 - No se expone un tercer grafo global de auditoría en la navegación.
 - `NetWizardBridge` puede mantenerse como API interna mientras siga siendo útil para IoT/compatibilidad.
-- `netwizard-graph-viewer.js`, `netwizard-bridge-ui.js` y `netwizard-unified-config-map.js` no se cargan en el browser normal.
+- `netwizard-graph-viewer.js`, `netwizard-bridge-ui.js` y `netwizard-unified-config-map.js` se han eliminado físicamente del código ejecutable.
+- `netwizard-v5-layout-manager.js` ya no contiene layouts, estado local ni listeners para la antigua Auditoría Unificada.
+- `netwizard-v5-iot-extension.js` ya no intenta redibujar el mapa retirado.
 
-Los archivos se conservan temporalmente como referencia histórica. Pueden eliminarse físicamente en una limpieza posterior cuando no tengan consumidores ni valor de compatibilidad.
+La historia del experimento queda únicamente en documentación/changelog; reintroducirlo requeriría una decisión de producto nueva, no reactivar código residual.
