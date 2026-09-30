@@ -95,6 +95,27 @@ cleanRouterProject.ports=project.ports.filter(x=>x.deviceId==='r1');
 const cleanRouter=Engine.generateAll(cleanRouterProject);
 assert.strictEqual(cleanRouter.configReadiness.r1.status,'apply-ready');
 
+const haRouterProject=JSON.parse(JSON.stringify(cleanRouterProject));
+haRouterProject.highAvailability={
+  devices:{
+    r1:{
+      dhcpRelayServers:['10.0.0.10'],
+      defaultRoutes:[{nextHop:'192.0.2.1',distance:10,trackId:'1',description:'ISP principal'}],
+      tracking:[{id:'1',target:'1.1.1.1',sourceInterface:'GigabitEthernet0/0',frequency:5,timeout:1000}],
+      firstHopGroups:[{protocol:'hsrp',group:10,interfaceName:'GigabitEthernet0/1.10',virtualIp:'10.10.10.254',priority:110,preempt:true,trackInterface:'GigabitEthernet0/0',decrement:20}]
+    }
+  }
+};
+const haRouter=Engine.generateAll(haRouterProject);
+assert.strictEqual(haRouter.ok,true);
+assert.match(haRouter.configs.r1,/ip sla 1/);
+assert.match(haRouter.configs.r1,/icmp-echo 1\.1\.1\.1 source-interface GigabitEthernet0\/0/);
+assert.match(haRouter.configs.r1,/ip route 0\.0\.0\.0 0\.0\.0\.0 192\.0\.2\.1 10 track 1/);
+assert.match(haRouter.configs.r1,/standby 10 ip 10\.10\.10\.254/);
+assert.match(haRouter.configs.r1,/standby 10 priority 110/);
+assert.match(haRouter.configs.r1,/standby 10 preempt/);
+assert.match(haRouter.configs.r1,/standby 10 track GigabitEthernet0\/0 decrement 20/);
+
 const vtpProject=JSON.parse(JSON.stringify(project));
 vtpProject.devices=[JSON.parse(JSON.stringify(project.devices.find(x=>x.id==='sw1')))];
 vtpProject.ports=project.ports.filter(x=>x.deviceId==='sw1');
