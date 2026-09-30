@@ -75,7 +75,7 @@ function renderInto(container,input){
 }
 function eligibleDevices(input){
   return arr(input&&input.devices)
-    .filter(d=>['router','firewall'].includes(clean(d.kind||d.type).toLowerCase()))
+    .filter(d=>['router','firewall','switch'].includes(clean(d.kind||d.type).toLowerCase()))
     .sort((a,b)=>clean(a.name||a.id).localeCompare(clean(b.name||b.id),'es',{numeric:true,sensitivity:'base'}));
 }
 function portsForDevice(input,deviceId){
@@ -114,7 +114,7 @@ function circuitPayload(input,form,existing){
   const name=clean(form.name.value),provider=clean(form.provider.value),deviceId=clean(form.device.value),portId=clean(form.port.value);
   const down=num(form.down.value),up=num(form.up.value);
   if(!name)throw new Error('Indica un nombre para el circuito WAN.');
-  if(!deviceId)throw new Error('Selecciona el router/firewall donde termina el circuito.');
+  if(!deviceId)throw new Error('Selecciona el equipo de red donde termina el circuito.');
   if(!portId)throw new Error('Selecciona el puerto WAN del dispositivo.');
   if(!portsForDevice(input,deviceId).some(p=>p.id===portId))throw new Error('El puerto WAN no pertenece al dispositivo seleccionado.');
   if(!(down>0)||!(up>0))throw new Error('La capacidad de bajada y subida debe ser mayor que 0 Mbps.');
@@ -172,7 +172,7 @@ function renderEditor(){
   form.path=inputEl('nwWanPath','text','Demarcación / recorrido físico diferente');
 
   const devices=eligibleDevices(p);
-  form.device.appendChild(option('','— router/firewall —'));
+  form.device.appendChild(option('','— equipo de terminación —'));
   for(const d of devices)form.device.appendChild(option(d.id,`${d.name||d.id} · ${d.vendorOs||d.kind||d.type||'—'}`));
 
   function refillPorts(preferred){
@@ -220,14 +220,14 @@ function renderEditor(){
 
   save.addEventListener('click',()=>{
     try{
-      const snap=project(),old=currentCircuit(snap),payload=circuitPayload(snap,form,old);
+      const snap=project(),old=currentCircuit(snap),payload=circuitPayload(snap,form,old),wasEditing=!!old;
+      editingId='';
       updateProject(current=>{
         const list=arr(current.wanCircuits).slice();
         const at=list.findIndex(x=>x.id===payload.id);
         if(at>=0)list[at]=payload;else list.push(payload);
         return{wanCircuits:list};
-      },old?'wan-circuit-update':'wan-circuit-add');
-      editingId='';
+      },wasEditing?'wan-circuit-update':'wan-circuit-add');
     }catch(error){
       status.className='co co-rd';status.textContent=error&&error.message||String(error);
     }
