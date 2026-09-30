@@ -31,5 +31,24 @@ test('Junos genera switching access/trunk y RSTP edge',()=>{const out=G.render(p
 test('Huawei genera RSTP, trunk limitado y protección BPDU',()=>{const out=G.render(project('huawei_vrp'),'sw1');assert.ok(out.includes('stp mode rstp'));assert.ok(out.includes('port trunk allow-pass vlan 10 20 999'));assert.ok(out.includes('port default vlan 10'));assert.ok(out.includes('stp bpdu-protection'));});
 test('MikroTik genera bridge vlan-filtering y entradas tagged/untagged',()=>{const out=G.render(project('mikrotik_routeros'),'sw1');assert.ok(out.includes('vlan-filtering=yes protocol-mode=rstp'));assert.ok(out.includes('pvid=10 edge=yes bpdu-guard=yes'));assert.ok(out.includes('vlan-ids=10'));assert.ok(out.includes('tagged=bridge-lan,Gi1/0/48'));});
 test('Aruba genera VLANs, tagged/untagged y edge protection',()=>{const out=G.render(project('aruba_aoss'),'sw1');assert.ok(out.includes('spanning-tree'));assert.ok(out.includes('tagged vlan 10,20,999'));assert.ok(out.includes('untagged vlan 10'));assert.ok(out.includes('bpdu-protection'));});
+test('Hardening canónico desactiva edge/BPDU cuando el usuario lo desactiva',()=>{
+  const p=project('cisco_ios');
+  p.accessSecurity={bpduGuard:false,portFast:false,portSecurity:false,dhcpSnooping:false,arpInspection:false};
+  const out=G.render(p,'sw1');
+  assert.ok(!out.includes('spanning-tree portfast'));
+  assert.ok(!out.includes('spanning-tree bpduguard'));
+});
+
+test('VLAN quarantine sustituye la VLAN solo en puertos access sin conexión',()=>{
+  const p=project('cisco_ios');
+  p.accessSecurity={quarantineVlanRef:'v999'};
+  let out=G.render(p,'sw1');
+  assert.ok(out.includes('switchport access vlan 999'));
+  p.hosts=[{id:'h1',name:'PC',portRef:'p1'}];
+  out=G.render(p,'sw1');
+  assert.ok(out.includes('switchport access vlan 10'));
+  assert.ok(!out.includes('switchport access vlan 999'));
+});
+
 test('No genera bloque switching para routers',()=>{const p=project('cisco_ios');p.devices[0].type='router';assert.strictEqual(G.render(p,'sw1'),'');});
 console.log('\nTests switching generator completados.');
