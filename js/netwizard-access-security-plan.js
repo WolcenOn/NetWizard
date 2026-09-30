@@ -66,6 +66,9 @@
 
   function buildDevicePlan(project, device){
     const defaults=securityDefaults(project);
+    const connectedPortIds=new Set();
+    for(const link of arr(project&&project.links)){if(link&&link.aPortId)connectedPortIds.add(link.aPortId);if(link&&link.bPortId)connectedPortIds.add(link.bPortId);}
+    for(const host of arr(project&&project.hosts)){if(host&&host.portRef)connectedPortIds.add(host.portRef);}
     const ports=arr(project && project.ports).filter(p=>p.deviceId===device.id);
     const trusted=[];
     const access=[];
@@ -85,7 +88,8 @@
         dhcpRateLimit:Number(p.dhcpRateLimit || defaults.rateLimit),
         portFast:p.portFast === false ? false : defaults.portFast,
         bpduGuard:p.bpduGuard === false ? false : defaults.bpduGuard,
-        ipSourceGuard:p.ipSourceGuard === false ? false : defaults.ipSourceGuard
+        ipSourceGuard:p.ipSourceGuard === false ? false : defaults.ipSourceGuard,
+        unused:!connectedPortIds.has(p.id)
       };
       if(entry.trusted) trusted.push(entry);
       else if(mode === 'access') access.push(entry);
@@ -103,6 +107,8 @@
       bpduGuard:defaults.bpduGuard,
       portFast:defaults.portFast,
       ipSourceGuard:defaults.ipSourceGuard,
+      quarantineVlanRef:defaults.quarantineVlanRef,
+      quarantineVlanId:vlanId(project,defaults.quarantineVlanRef),
       protectedVlans,
       trustedPorts:trusted,
       accessPorts:access,
