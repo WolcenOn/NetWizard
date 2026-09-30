@@ -46,6 +46,53 @@ const fakeIncremental={
 function generateConfig(id,vendor){return `! ${vendor}\nhostname ${id}\ninterface ethernet1\n description deployment-test\n`;}
 function build(extra){return Bundle.buildDeploymentPackage(project,Object.assign({generatedAt,gate:fakeGate,schema:fakeSchema,documentation:fakeDocs,runbook:fakeRunbook,changeSet:fakeChangeSet,incremental:fakeIncremental,generateConfig},extra||{}));}
 
+const privateResult={
+  contractVersion:'netwizard-private-deployment-plan-v2',
+  generatedAt,
+  ok:true,
+  projectName:project.projName,
+  productionReady:true,
+  productionStatus:'ready',
+  productionGateContract:'netwizard-private-production-gate-v1',
+  productionGate:{contractVersion:'netwizard-private-production-gate-v1',status:'ready',ready:true,canExport:true,issues:[]},
+  privateConfigContract:'netwizard-private-vendor-config-v1',
+  configPaths:{fw1:'configs/01-fw1.conf',sw1:'configs/02-sw1.cfg'},
+  configReadiness:{fw1:{status:'review-required'},sw1:{status:'apply-ready'}},
+  artifacts:[
+    {path:'configs/01-fw1.conf',content:'config system global\n set hostname FW-EDGE\nend\n',mime:'text/plain;charset=utf-8'},
+    {path:'configs/02-sw1.cfg',content:'configure terminal\nhostname SW-CORE\nend\nwrite memory\n',mime:'text/plain;charset=utf-8'},
+    {path:'changes/patches/sw1.diff',content:'@@ private diff @@\n',mime:'text/x-diff;charset=utf-8'}
+  ],
+  changeSet:{format:'netwizard-change-set',ok:true},
+  incrementalPlan:{format:'netwizard-incremental-plan',ok:true},
+  deploymentPlan:{format:'netwizard-deployment-plan',ok:true,steps:[]},
+  runbookMarkdown:'# Private runbook\n',
+  rollbackMarkdown:'# Private rollback\n',
+  changeSummaryMarkdown:'# Private change\n',
+  incrementalSummaryMarkdown:'# Private incremental\n',
+  postChangeChecklistMarkdown:'# Private post-change\n',
+  issues:[]
+};
+const privatePkg=Bundle.buildPrivateDeploymentPackage(project,privateResult,{schema:fakeSchema});
+assert.strictEqual(privatePkg.ok,true);
+assert.strictEqual(privatePkg.source,'private-engine');
+assert.strictEqual(privatePkg.manifest.source,'private-engine');
+assert.strictEqual(privatePkg.manifest.counts.devices,2);
+assert.ok(privatePkg.files.some(file=>file.path==='configs/01-fw1.conf'&&/FW-EDGE/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='configs/02-sw1.cfg'&&/SW-CORE/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='deployment/runbook.md'));
+assert.ok(privatePkg.files.some(file=>file.path==='reports/private-deployment-result.json'));
+assert.ok(privatePkg.files.some(file=>file.path==='manifest.json'));
+assert.ok(!privatePkg.files.some(file=>/deployment-test/.test(file.content)),'el ZIP privado no debe regenerar configs con el generador local');
+const privateBlocked=Bundle.buildPrivateDeploymentPackage(project,Object.assign({},privateResult,{
+  productionReady:false,
+  productionStatus:'review',
+  productionGate:{contractVersion:'netwizard-private-production-gate-v1',status:'review',ready:false,canExport:false,issues:[{code:'NW-GATE-X',severity:'error',blocking:true,message:'bloqueado'}]}
+}),{schema:fakeSchema});
+assert.strictEqual(privateBlocked.ok,false);
+assert.strictEqual(privateBlocked.blocked,true);
+assert.strictEqual(privateBlocked.issues[0].code,'NW-GATE-X');
+
 const pkg=build();
 assert.strictEqual(pkg.ok,true);
 assert.strictEqual(pkg.blocked,false);
