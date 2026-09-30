@@ -388,8 +388,14 @@
 
   function bindBrowserUi(attempt){
     if(!root.document)return; const button=root.document.getElementById('expDeploymentPackage'); const output=root.document.getElementById('deploymentPackageStatus');
-    if(!button||!output||!root.NetWizardState){if((attempt||0)<40&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),100);return;}
+    if(!button||!output){if((attempt||0)<120&&root.setTimeout)root.setTimeout(()=>bindBrowserUi((attempt||0)+1),100);return;}
+    if(button.dataset.nwDeploymentBundleBound==='1')return;
+    button.dataset.nwDeploymentBundleBound='1';
     button.onclick=()=>{
+      if(!root.NetWizardState||typeof root.NetWizardState.getSnapshot!=='function'){
+        output.textContent='⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.';
+        return;
+      }
       const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
       const privateUi=root.NetWizardPrivateDeploymentUi;
       const privateState=privateUi&&typeof privateUi.exportState==='function'?privateUi.exportState():null;
