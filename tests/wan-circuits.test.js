@@ -7,4 +7,5 @@ test('WAN coherente pasa validación',()=>{const r=Wan.validateProject(base);ass
 test('Demanda superior a capacidad bloquea',()=>{const p=JSON.parse(JSON.stringify(base));p.wanCircuits[0].expectedPeakMbps=250;const r=Wan.validateProject(p);assert(r.issues.some(i=>i.code==='NW-WAN-008'&&i.blocking));});
 test('Redundancia con mismo proveedor avisa',()=>{const p=JSON.parse(JSON.stringify(base));p.wanCircuits[1].provider='ISP-A';const r=Wan.validateProject(p);assert(r.issues.some(i=>i.code==='NW-WAN-010'&&!i.blocking));});
 test('Referencia WAN inexistente bloquea',()=>{const p=JSON.parse(JSON.stringify(base));p.wanCircuits[0].portId='missing';const r=Wan.validateProject(p);assert(r.issues.some(i=>i.code==='NW-WAN-004'));});
+test('Puerto WAN debe pertenecer al dispositivo de terminación',()=>{const p=JSON.parse(JSON.stringify(base));p.wanCircuits[0].portId='wan2';const r=Wan.validateProject(p);assert(r.issues.some(i=>i.code==='NW-WAN-013'&&i.blocking));});
 console.log('\nTests WAN circuits completados.');
