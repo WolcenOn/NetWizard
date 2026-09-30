@@ -2084,13 +2084,42 @@ $('btnSaveVtp').onclick=()=>{
 
 // EXPORT
 const dl=(fn,txt)=>{const b=new Blob([txt],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);};
+function privateExportState(){
+  const api=window.NetWizardPrivateDeploymentUi;
+  return api&&typeof api.exportState==='function'?api.exportState():null;
+}
+function privateExportEntries(){
+  const state=privateExportState();
+  if(!state)return{ok:false,message:'Private Engine no disponible en esta sesión.',entries:[]};
+  if(state.stale)return{ok:false,message:'La generación server-side está obsoleta. Regenera antes de exportar.',entries:[]};
+  if(!state.available||!state.result)return{ok:false,message:'Primero genera las configuraciones en servidor.',entries:[]};
+  const gate=state.result.productionGate||{};
+  if(gate.canExport!==true||state.result.productionStatus==='blocked'){
+    return{ok:false,message:'La Production Gate privada bloquea la exportación. Revisa Validación y el diagnóstico de generación.',entries:[]};
+  }
+  const api=window.NetWizardPrivateDeploymentUi;
+  const entries=[],missing=[];
+  for(const device of S.devices.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''))){
+    const artifact=api&&typeof api.deviceConfig==='function'?api.deviceConfig(device.id):null;
+    if(!artifact){missing.push(device.name||device.id);continue;}
+    const path=String(artifact.path||'').trim();
+    const fileName=(path.split('/').filter(Boolean).pop()||((device.name||device.id||'device')+'.txt')).replace(/[\\/:*?"<>|]+/g,'-');
+    entries.push({device,artifact,fileName});
+  }
+  if(missing.length)return{ok:false,message:'Faltan artefactos privados vigentes para: '+missing.join(', ')+'. Regenera y revisa el diagnóstico.',entries:[]};
+  return{ok:true,message:'',entries,state};
+}
 function requireConfigExportReady(){
   if(!localConfigGenerationAvailable()){
-    const msg='Generación local desactivada en el navegador SaaS. Usa Private Deployment Plan para obtener configuraciones y artefactos server-side.';
-    if($('cfgOut'))$('cfgOut').value=msg;
-    const status=$('deploymentPackageStatus');if(status)status.textContent=msg;
-    alert(msg);
-    return false;
+    const privateState=privateExportEntries();
+    if(!privateState.ok){
+      const msg=privateState.message;
+      if($('cfgOut'))$('cfgOut').value=msg;
+      const status=$('deploymentPackageStatus');if(status)status.textContent=msg;
+      alert(msg);
+      return false;
+    }
+    return true;
   }
   if(!(window.NetWizardAudit&&window.NetWizardAudit.isProduction&&window.NetWizardAudit.isProduction()))return true;
   if(window.NetWizardProductionGate&&window.NetWizardProductionGate.runProductionGate){
@@ -2116,8 +2145,31 @@ function requireConfigExportReady(){
   }
   return true;
 }
-$('expAll').onclick=()=>{if(!requireConfigExportReady())return;for(const d of S.devices){const ext=d.vendorOs==='juniper_junos'?'set.txt':'cfg';dl(`${d.name}.${ext}`,genConfig(d.id));}};
-$('expBundle').onclick=()=>{if(!requireConfigExportReady())return;let out='';for(const d of S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){out+=`\n${'#'.repeat(50)}\n# ${d.name} (${d.vendorOs||'—'})\n${'#'.repeat(50)}\n\n`+genConfig(d.id)+'\n';}dl('configs_bundle.txt',out);$('cfgOut').value=out;};
+$('expAll').onclick=()=>{
+  if(!requireConfigExportReady())return;
+  if(!localConfigGenerationAvailable()){
+    const privateState=privateExportEntries();if(!privateState.ok)return alert(privateState.message);
+    for(const entry of privateState.entries)dl(entry.fileName,entry.artifact.content);
+    return;
+  }
+  for(const d of S.devices){const ext=d.vendorOs==='juniper_junos'?'set.txt':'cfg';dl(`${d.name}.${ext}`,genConfig(d.id));}
+};
+$('expBundle').onclick=()=>{
+  if(!requireConfigExportReady())return;
+  let out='';
+  if(!localConfigGenerationAvailable()){
+    const privateState=privateExportEntries();if(!privateState.ok)return alert(privateState.message);
+    for(const entry of privateState.entries){
+      const d=entry.device;
+      out+=`\n${'#'.repeat(50)}\n# ${d.name} (${d.vendorOs||'—'}) · server-side\n# ${entry.artifact.path}\n${'#'.repeat(50)}\n\n${entry.artifact.content}\n`;
+    }
+  }else{
+    for(const d of S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name))){
+      out+=`\n${'#'.repeat(50)}\n# ${d.name} (${d.vendorOs||'—'})\n${'#'.repeat(50)}\n\n`+genConfig(d.id)+'\n';
+    }
+  }
+  dl('configs_bundle.txt',out);$('cfgOut').value=out;
+};
 $('expCsv').onclick=()=>dl('hosts.csv',genHostCsv());
 $('expJson').onclick=()=>{
   const snap=window.NetWizardState.getSnapshot();
