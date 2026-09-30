@@ -26,6 +26,9 @@ No se considera cerrado un bloque si falla Playwright source, el smoke Playwrigh
 - [ ] Los workers privados se empaquetan en `/app/private` y no como assets públicos.
 - [ ] La generación vendor y la Production Gate privada no forman parte del entrypoint browser.
 - [ ] Source/Pages/offline mantienen los módulos source-only necesarios para compatibilidad local.
+- [ ] En navegador productivo, **Por dispositivo**, **Bundle TXT** y **Paquete de despliegue ZIP** exportan el último resultado Private Engine vigente y no vuelven a ejecutar generadores locales.
+- [ ] Si el proyecto cambia después de generar, la exportación privada queda obsoleta y exige regeneración server-side.
+- [ ] El ZIP privado contiene `reports/private-generation.json` con readiness/capacidades/rutas/incidencias por dispositivo.
 - [ ] `tests/e2e-production/production-browser.spec.js` confirma en la imagen real que los generadores source-only no existen en `window`, abre una sesión self-hosted y recibe la configuración del dispositivo desde el Private Engine server-side.
 
 ## Seguridad y autoridad de servidor
