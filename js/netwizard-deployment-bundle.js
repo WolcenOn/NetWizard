@@ -165,6 +165,7 @@
         if(!artifact||typeof artifact.content!=='string')continue;
         const path=clean(artifact.path,512);
         if(!path)throw new Error('Artefacto privado sin ruta.');
+        if(safePath(path)!==path)throw new Error('Ruta privada no canónica o insegura: '+path);
         addFile(files,path,artifact.content,clean(artifact.mime,120)||'text/plain;charset=utf-8');
       }
       addDerived('project/netwizard-project.json',JSON.stringify(exported,null,2)+'\n','application/json');
