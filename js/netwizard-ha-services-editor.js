@@ -53,6 +53,22 @@ function setSelectOptions(select,items,placeholder){
   if(current&&Array.from(select.options).some(o=>o.value===current))select.value=current;
 }
 function selectedValues(select){return Array.from(select&&select.selectedOptions||[]).map(o=>o.value).filter(Boolean);}
+function field(id,label,placeholder){
+  const w=el('div');
+  w.append(el('label',{className:'fl',htmlFor:id},label),el('input',{id,placeholder:placeholder||''}));
+  return w;
+}
+function numberField(id,label,placeholder){
+  const w=el('div');
+  w.append(el('label',{className:'fl',htmlFor:id},label),el('input',{id,type:'number',min:'0',step:'0.1',placeholder:placeholder||''}));
+  return w;
+}
+function selectField(id,label,items){
+  const w=el('div'),s=el('select',{id});
+  items.forEach(([v,l])=>s.appendChild(option(v,l)));
+  w.append(el('label',{className:'fl',htmlFor:id},label),s);
+  return w;
+}
 
 // ---------------- HA services ----------------
 function haCard(){
