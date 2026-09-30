@@ -227,6 +227,8 @@ assert.ok(privatePkg.files.some(file=>file.path==='deployment/rollback-checklist
 assert.ok(privatePkg.files.some(file=>file.path==='reports/private-generation.json'&&/review-required/.test(file.content)));
 assert.ok(privatePkg.files.some(file=>file.path==='manifest.json'));
 assert.ok(Buffer.from(Bundle.encodeZip(privatePkg)).includes(Buffer.from('SERVER-SW')));
+assert.match(Bundle.summarize(privatePkg),/Private Engine server-side/);
+assert.match(Bundle.summarize(privatePkg),/2 configuraciones/);
 assert.strictEqual(Bundle.validPrivateDeploymentResult(privateResult),true);
 
 const blockedPrivate=JSON.parse(JSON.stringify(privateResult));
