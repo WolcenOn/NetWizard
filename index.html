@@ -419,10 +419,10 @@
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
-        <div class="hint" style="margin-bottom:8px;">Opcional y específico de Cisco IOS. Define dominio, versión y rol únicamente para switches Cisco; los enlaces entre switches deben ser trunk.</div>
+        <div class="hint" style="margin-bottom:8px;">Opcional y específico de Cisco IOS. Define dominio, versión y rol únicamente para switches Cisco; los enlaces entre switches deben ser trunk. En Private Engine, una contraseña configurada se sustituye por <code>${SECRET:VTP_PASSWORD}</code> y exige resolución/revisión antes de aplicar.</div>
         <div class="row">
           <div><label class="fl">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
-          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" placeholder="cisco"/></div>
+          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" type="password" autocomplete="new-password" spellcheck="false" placeholder="secreto / contraseña"/></div>
         </div>
         <div class="row">
           <div><label class="fl">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
