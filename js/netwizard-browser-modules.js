@@ -96,6 +96,7 @@ const modules=[
   {"path":"js/netwizard-wan-circuits.js","requiredGlobal":"NetWizardWanCircuits"},
   {"path":"js/netwizard-wan-circuits-ui.js","requiredGlobal":"NetWizardWanCircuitsUi"},
   {"path":"js/netwizard-ha-services-editor.js","dependsOn":["js/netwizard.js"],"requiredGlobal":"NetWizardHaServicesEditor"},
+  {"path":"js/netwizard-vtp-production-verification.js","dependsOn":["js/netwizard.js"],"requiredGlobal":"NetWizardVtpProductionVerification"},
   {"path":"js/netwizard-traffic-capacity.js","requiredGlobal":"NetWizardTrafficCapacity"},
   {"path":"js/netwizard-traffic-capacity-ui.js","requiredGlobal":"NetWizardTrafficCapacityUi"},
   {"path":"js/netwizard-internal-services.js","requiredGlobal":"NetWizardInternalServices"},
