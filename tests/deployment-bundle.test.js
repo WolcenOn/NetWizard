@@ -224,6 +224,7 @@ assert.ok(privatePkg.files.some(file=>file.path==='configs/01-sw1.cfg'&&/SERVER-
 assert.ok(privatePkg.files.some(file=>file.path==='configs/02-fw1.conf'&&/SERVER-FW/.test(file.content)));
 assert.ok(privatePkg.files.some(file=>file.path==='deployment/runbook.md'&&/Runbook privado/.test(file.content)));
 assert.ok(privatePkg.files.some(file=>file.path==='deployment/rollback-checklist.md'&&/Rollback privado/.test(file.content)));
+assert.ok(privatePkg.files.some(file=>file.path==='reports/private-generation.json'&&/review-required/.test(file.content)));
 assert.ok(privatePkg.files.some(file=>file.path==='manifest.json'));
 assert.ok(Buffer.from(Bundle.encodeZip(privatePkg)).includes(Buffer.from('SERVER-SW')));
 assert.strictEqual(Bundle.validPrivateDeploymentResult(privateResult),true);
