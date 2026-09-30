@@ -12,7 +12,7 @@
   function vlan(project,ref){ return arr(project&&project.vlans).find(v=>v.id===ref)||null; }
   function vids(list){ return arr(list).map(Number).filter(Number.isFinite).sort((a,b)=>a-b); }
   function allowed(project,p){ const explicit=vids(p.allowedVlans); return explicit.length?explicit:arr(project&&project.vlans).map(v=>Number(v.vlanId)).filter(Number.isFinite).sort((a,b)=>a-b); }
-  function effectiveAccessVid(project,p,secPlan){ const v=vlan(project,p.accessVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.accessVlan||1); }
+  function accessVid(project,p){ const v=vlan(project,p.accessVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.accessVlan||1); }
   function nativeVid(project,p){ const v=vlan(project,p.nativeVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.nativeVlan||999); }
   function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
   function accessPlan(){ try{return root.NetWizardAccessSecurityPlan || (typeof require==='function'&&require('./netwizard-access-security-plan.js'));}catch{return null;} }
