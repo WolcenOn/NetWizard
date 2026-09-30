@@ -22,6 +22,8 @@ Las pantallas de dominio siguen siendo la autoridad de edición:
 
 Los datos se corrigen en estas pantallas o en el editor específico de su dominio. Los paneles derivados no crean una segunda autoridad.
 
+En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente ligadas a las VLANs: DHCP por VLAN, Router-on-a-Stick y VTP Cisco. Estas opciones alimentan la generación posterior y por tanto deben completarse antes de Validación/Despliegue; no son artefactos de exportación.
+
 ### Visualizar
 
 **V5 principal** es el mapa operativo/editable de Red + IoT.

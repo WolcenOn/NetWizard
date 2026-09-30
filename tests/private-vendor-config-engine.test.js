@@ -95,6 +95,28 @@ cleanRouterProject.ports=project.ports.filter(x=>x.deviceId==='r1');
 const cleanRouter=Engine.generateAll(cleanRouterProject);
 assert.strictEqual(cleanRouter.configReadiness.r1.status,'apply-ready');
 
+const vtpProject=JSON.parse(JSON.stringify(project));
+vtpProject.devices=[JSON.parse(JSON.stringify(project.devices.find(x=>x.id==='sw1')))];
+vtpProject.ports=project.ports.filter(x=>x.deviceId==='sw1');
+vtpProject.hosts=[];
+vtpProject.fwRules=[];
+vtpProject.vtp={domain:'EMPRESA',password:'legacy-secret-value',version:'3',pruning:'yes',roles:{sw1:'client'}};
+const vtpResult=Engine.generateAll(vtpProject);
+assert.strictEqual(vtpResult.ok,true);
+assert.strictEqual(vtpResult.configReadiness.sw1.status,'review-required');
+assert.ok(vtpResult.configReadiness.sw1.reasons.some(x=>/VTP client está activo/.test(x)));
+assert.ok(vtpResult.configReadiness.sw1.reasons.some(x=>/alias de secretos/.test(x)));
+assert.match(vtpResult.configs.sw1,/vtp domain EMPRESA/);
+assert.match(vtpResult.configs.sw1,/vtp password \$\{SECRET:VTP_PASSWORD\}/);
+assert.match(vtpResult.configs.sw1,/vtp mode client/);
+assert.match(vtpResult.configs.sw1,/vtp version 3/);
+assert.match(vtpResult.configs.sw1,/vtp pruning/);
+assert.doesNotMatch(vtpResult.configs.sw1,/legacy-secret-value/);
+assert.doesNotMatch(vtpResult.configs.sw1,/^vlan 10$/m);
+assert.strictEqual((vtpResult.configs.sw1.match(/^configure terminal$/gm)||[]).length,1);
+assert.strictEqual((vtpResult.configs.sw1.match(/^end$/gm)||[]).length,1);
+assert.strictEqual((vtpResult.configs.sw1.match(/^write memory$/gm)||[]).length,1);
+
 const inferred=JSON.parse(JSON.stringify(project));
 inferred.devices=[{id:'r1',name:'EDGE-INFERRED',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'yes'}];
 inferred.ports=project.ports.filter(x=>x.deviceId==='r1');

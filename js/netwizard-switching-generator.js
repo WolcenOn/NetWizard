@@ -16,11 +16,40 @@
   function nativeVid(project,p){ const v=vlan(project,p.nativeVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.nativeVlan||999); }
   function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
   function isSwitch(d){ const model=deviceModel(); return !!d && (model ? model.isSwitching(d) : /switch/i.test(clean(d.kind||d.type))); }
+  function ciscoVtp(project,d){
+    const raw=project&&project.vtp&&typeof project.vtp==='object'?project.vtp:{};
+    const roles=raw.roles&&typeof raw.roles==='object'?raw.roles:{};
+    const role=clean(roles[d.id]||'off').toLowerCase();
+    const supported=['server','client','transparent'].includes(role)?role:'off';
+    const version=['1','2','3'].includes(String(raw.version||''))?String(raw.version):'';
+    return{role:supported,domain:clean(raw.domain),passwordRequired:!!clean(raw.password),version,pruning:raw.pruning==='yes'};
+  }
   function cisco(project,d){
     const L=['!','! NetWizard switching profesional','configure terminal',`hostname ${token(d.name,'switch')}`,'spanning-tree mode rapid-pvst','spanning-tree portfast default','spanning-tree bpduguard default','no ip http server','ip ssh version 2'];
-    arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>L.push(`vlan ${v.vlanId}`,` name ${token(v.name,'VLAN'+v.vlanId)}`,' exit'));
-    ports(project,d.id).forEach(p=>{ L.push(`interface ${clean(p.name||p.id)}`); if(p.desc)L.push(` description ${clean(p.desc)}`); if(p.mode==='trunk'){L.push(' switchport mode trunk',` switchport trunk native vlan ${nativeVid(project,p)}`,` switchport trunk allowed vlan ${allowed(project,p).join(',')}`,' spanning-tree guard root');} else if(p.mode==='access'){L.push(' switchport mode access',` switchport access vlan ${accessVid(project,p)}`,' spanning-tree portfast',' spanning-tree bpduguard enable',' storm-control broadcast level 1.00 0.50',' storm-control multicast level 1.00 0.50');} L.push(' no shutdown',' exit'); });
-    L.push('end','write memory','!'); return L.join('\n')+'\n';
+    const vtp=ciscoVtp(project,d);
+    if(vtp.role!=='off'){
+      L.push('!','! VTP — revisión obligatoria antes de producción');
+      if(vtp.domain)L.push(`vtp domain ${token(vtp.domain,'VTP_DOMAIN')}`);
+      if(vtp.passwordRequired)L.push('vtp password ${SECRET:VTP_PASSWORD}');
+      L.push(`vtp mode ${vtp.role}`);
+      if(vtp.version)L.push(`vtp version ${vtp.version}`);
+      if(vtp.pruning)L.push('vtp pruning');
+    }
+    if(vtp.role!=='client'){
+      arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>L.push(`vlan ${v.vlanId}`,` name ${token(v.name,'VLAN'+v.vlanId)}`,' exit'));
+    }
+    ports(project,d.id).forEach(p=>{
+      L.push(`interface ${clean(p.name||p.id)}`);
+      if(p.desc)L.push(` description ${clean(p.desc)}`);
+      if(p.mode==='trunk'){
+        L.push(' switchport mode trunk',` switchport trunk native vlan ${nativeVid(project,p)}`,` switchport trunk allowed vlan ${allowed(project,p).join(',')}`,' spanning-tree guard root');
+      }else if(p.mode==='access'){
+        L.push(' switchport mode access',` switchport access vlan ${accessVid(project,p)}`,' spanning-tree portfast',' spanning-tree bpduguard enable',' storm-control broadcast level 1.00 0.50',' storm-control multicast level 1.00 0.50');
+      }
+      L.push(' no shutdown',' exit');
+    });
+    L.push('end','write memory','!');
+    return L.join('\n')+'\n';
   }
   function junos(project,d){
     const L=['# NetWizard switching profesional',`set system host-name ${token(d.name,'switch')}`,'set protocols rstp interface all'];
@@ -41,5 +70,5 @@
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); if(p.mode==='trunk')L.push(`interface ${n}`,` tagged vlan ${allowed(project,p).join(',')}`,` untagged vlan ${nativeVid(project,p)}`,' spanning-tree root-guard',' exit'); else if(p.mode==='access')L.push(`interface ${n}`,` untagged vlan ${accessVid(project,p)}`,' spanning-tree admin-edge-port',' spanning-tree bpdu-protection',' exit'); }); return L.join('\n')+'\n';
   }
   function render(project,deviceId,vendor){ const d=device(project,deviceId); if(!isSwitch(d))return ''; const v=clean(vendor||d.vendorOs); if(v==='cisco_ios')return cisco(project,d); if(v==='juniper_junos')return junos(project,d); if(v==='huawei_vrp')return huawei(project,d); if(v==='mikrotik_routeros')return mikrotik(project,d); if(v==='aruba_aoss')return aruba(project,d); return ''; }
-  const api={version:'netwizard-switching-generator-v1',render,cisco,junos,huawei,mikrotik,aruba}; root.NetWizardSwitchingGenerator=api; if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={version:'netwizard-switching-generator-v1',render,cisco,ciscoVtp,junos,huawei,mikrotik,aruba}; root.NetWizardSwitchingGenerator=api; if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
