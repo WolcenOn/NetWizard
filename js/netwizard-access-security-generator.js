@@ -21,6 +21,7 @@
       L.push(`interface ${p.name}`);
       if(plan.dhcpSnooping)L.push(` ip dhcp snooping limit rate ${p.dhcpRateLimit}`);
       if(p.portSecurity){L.push(' switchport port-security',` switchport port-security maximum ${p.maxMac}`,` switchport port-security violation ${p.violation}`);if(p.sticky)L.push(' switchport port-security mac-address sticky');}
+      if(p.ipSourceGuard)L.push(' ip verify source');
       L.push(' exit');
     }
     for(const g of arr(plan.aggregates)){
@@ -47,6 +48,7 @@
     for(const p of arr(plan.trustedPorts))L.push(`set ethernet-switching-options secure-access-port interface ${p.name} dhcp-trusted`);
     for(const p of arr(plan.accessPorts))if(p.portSecurity)L.push(`set ethernet-switching-options secure-access-port interface ${p.name} mac-limit ${p.maxMac} action drop`);
     L.push('# DAI y DHCP security varían entre EX classic y ELS; validar sintaxis según Junos/modelo.');
+    if(plan.ipSourceGuard)L.push('# IP Source Guard requiere validar DHCP security / source filtering según familia Junos.');
     return L.join('\n');
   }
 
@@ -67,6 +69,7 @@
       for(const name of g.memberPortNames)L.push(`interface ${name}`,` eth-trunk ${g.number}`,'quit');
     }
     if(plan.arpInspection)L.push('# Habilitar ARP anti-attack/DAI según versión VRP y tabla de bindings disponible.');
+    if(plan.ipSourceGuard)L.push('# Validar source guard/IPSG según familia y versión VRP.');
     return L.join('\n');
   }
 
@@ -77,6 +80,7 @@
     if(plan.dhcpSnooping)L.push('/interface/bridge/set [find name="bridge-lan"] dhcp-snooping=yes add-dhcp-option82=no');
     for(const p of arr(plan.trustedPorts))L.push(`/interface/bridge/port/set [find interface="${p.name}"] trusted=yes`);
     L.push('# Port-security MAC-limit no es equivalente directo; usar bridge host learning, ACL/switch rules o 802.1X según hardware.');
+    if(plan.ipSourceGuard)L.push('# No hay equivalente universal de IP Source Guard; revisar bridge/firewall según hardware.');
     return L.join('\n');
   }
 
@@ -87,6 +91,7 @@
     for(const g of arr(plan.aggregates))L.push(`trunk ${g.memberPortNames.join(',')} trk${g.number} lacp`);
     for(const p of arr(plan.accessPorts))if(p.portSecurity)L.push(`port-security ${p.name} learn-mode limited-continuous address-limit ${p.maxMac} action send-disable`);
     if(plan.arpInspection)L.push('; Dynamic ARP protection depende de familia ArubaOS-Switch/Aruba CX; validar plataforma.');
+    if(plan.ipSourceGuard)L.push('; IP source guard depende de familia/plataforma; validar antes de aplicar.');
     L.push('write memory');
     return L.join('\n');
   }
