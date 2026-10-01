@@ -13,6 +13,10 @@ function routingUtils(){return root.NetWizardRoutingUtils||(typeof require==='fu
 function networkUtils(){return root.NetWizardNetworkUtils||(typeof require==='function'?tryRequire('./netwizard-network-utils.js'):null);}
 
 function deviceById(project,id){return arr(project&&project.devices).find(d=>d&&d.id===id)||null;}
+function isRoutingDevice(device){
+  const type=clean(device&&(device.type||device.kind)).toLowerCase(),vendor=clean(device&&device.vendorOs).toLowerCase();
+  return ['router','firewall','l3switch','switch_l3'].includes(type)||['fortinet','pfsense','cisco_asa'].includes(vendor)||clean(device&&device.l3Capable).toLowerCase()==='yes';
+}
 function portById(project,id){return arr(project&&project.ports).find(p=>p&&p.id===id)||null;}
 function ipOnly(value){return clean(value).split('/')[0].trim();}
 function ipv4Int(value){
@@ -117,7 +121,7 @@ function expectedNeighbors(project){
   const p=project||{},routing=obj(p.routing);
   const strategy=clean(routing.protocol||routing.strategy||routing.mode).toLowerCase();
   if(strategy!=='ospf')return[];
-  const deviceIds=arr(p.devices).map(d=>d.id),plans=new Map(deviceIds.map(id=>[id,buildDeviceIntent(p,id)]));
+  const deviceIds=arr(p.devices).filter(isRoutingDevice).map(d=>d.id),plans=new Map(deviceIds.map(id=>[id,buildDeviceIntent(p,id)]));
   const out=[],seen=new Set();
   for(const [deviceId,plan] of plans){
     for(const iface of plan.interfaces.filter(x=>x.enabled&&!x.passive)){
@@ -157,7 +161,7 @@ function compareObserved(project,deviceId){
 }
 function validateProject(project){
   const p=project||{},routing=obj(p.routing),strategy=clean(routing.protocol||routing.strategy||routing.mode).toLowerCase();
-  const plans=arr(p.devices).map(d=>buildDeviceIntent(p,d.id)),issues=[];
+  const plans=arr(p.devices).filter(isRoutingDevice).map(d=>buildDeviceIntent(p,d.id)),issues=[];
   if(strategy!=='ospf')return{version:'netwizard-ospf-project-v1',ok:true,active:false,plans:[],neighbors:[],issues:[],counts:{blocking:0,warnings:0}};
   const routerIds=new Map();
   for(const plan of plans){
@@ -223,7 +227,7 @@ function adjacencyPath(project,fromDeviceId,toDeviceId,options){
 
 const api={
   version:'netwizard-ospf-v1',deviceConfig,interfaceConfig,buildDeviceIntent,validateProject,
-  expectedNeighbors,observedNeighbors,compareObserved,adjacencyPath,normalizeArea,validRouterId,routedPorts
+  expectedNeighbors,observedNeighbors,compareObserved,adjacencyPath,normalizeArea,validRouterId,routedPorts,isRoutingDevice
 };
 root.NetWizardOspf=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
