@@ -6,7 +6,7 @@ function test(name,fn){try{fn();console.log(`✓ ${name}`);}catch(e){console.err
 function project(vendorOs){return {
   accessSecurity:{dhcpSnooping:true,arpInspection:true,portSecurity:true,maxMac:3,sticky:true},
   devices:[{id:'sw1',name:'SW-ACCESS',type:'switch',vendorOs}],
-  vlans:[{id:'v10',vlanId:10,name:'Users'},{id:'v20',vlanId:20,name:'Voice'}],
+  vlans:[{id:'v10',vlanId:10,name:'Users'},{id:'v20',vlanId:20,name:'Voice'},{id:'v30',vlanId:30,name:'Otra sede'}],
   ports:[
     {id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10'},
     {id:'p47',deviceId:'sw1',name:'Gi1/0/47',mode:'trunk',uplink:'yes'},
@@ -21,6 +21,7 @@ test('Plan neutral clasifica uplinks confiables y puertos access',()=>{
   assert.strictEqual(plan.accessPorts.length,1);
   assert.strictEqual(plan.aggregates[0].memberPortNames.length,2);
   assert.deepStrictEqual(plan.protectedVlans,[10,20]);
+  assert.ok(!plan.protectedVlans.includes(30));
 });
 
 test('Cisco genera DHCP snooping, DAI, port-security y LACP',()=>{
