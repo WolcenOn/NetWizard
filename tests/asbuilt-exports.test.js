@@ -6,6 +6,7 @@ global.NetWizardRackModel=require('../js/netwizard-rack-model.js');
 global.NetWizardPhysicalInterventionPlan=require('../js/netwizard-physical-intervention-plan.js');
 global.NetWizardFieldInterventionPackage=require('../js/netwizard-field-intervention-package.js');
 global.NetWizardXlsxWriter=require('../js/netwizard-xlsx-writer.js');
+global.NetWizardBudget=require('../js/netwizard-budget.js');
 const Exports=require('../js/netwizard-asbuilt-exports.js');
 
 const project={
@@ -56,6 +57,7 @@ assert.ok(tables.racks.some(r=>r.rack==='RACK-01'&&r.startUnit===18));
 assert.ok(tables.bom.some(r=>r.kind==='Rack'));
 assert.ok(tables.bom.some(r=>r.kind==='Patch panel'));
 assert.strictEqual(tables.differentialBom.length,0,'Un As-Built sin baseline de intervención no debe inventar BOM diferencial');
+assert.ok(tables.budget.some(r=>r.resourceRef==='device:sw1'&&r.priced==='no'),'El presupuesto debe derivar recursos aunque falten precios');
 
 const pack=Exports.buildCsvPack(project);
 assert.strictEqual(pack.version,'netwizard-asbuilt-export-pack-v1');
@@ -67,6 +69,7 @@ assert.ok(pack.files['ports.csv'].includes('Gi1/0/1'));
 assert.ok(pack.files['cables.csv'].includes('C-001'));
 assert.ok(pack.files['power.csv'].includes('PDU-A'));
 assert.ok(pack.files['manifest.json'].includes('netwizard-asbuilt-export-pack-v1'));
+assert.ok(pack.files['budget.csv'].includes('device:sw1'));
 
 const xlsx=Exports.buildXlsx(project);
 assert.ok(xlsx instanceof Uint8Array);
@@ -79,6 +82,7 @@ assert.ok(xlsxRaw.includes('Cableado'));
 assert.ok(xlsxRaw.includes('Alimentacion'));
 assert.ok(xlsxRaw.includes('SW-01'));
 assert.ok(xlsxRaw.includes('PDU-A'));
+assert.ok(xlsxRaw.includes('Presupuesto'));
 
 const md=Exports.markdown(project);
 assert.ok(md.includes('# As-Built Export Pack — Sede export'));

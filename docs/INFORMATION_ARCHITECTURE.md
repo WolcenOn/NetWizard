@@ -39,6 +39,8 @@ En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente lig
 
 **Ejecución de intervención** no modifica el To-Be. La evidencia de campo se persiste en `workflow.interventionExecution`: técnico, estado por acción, timestamps, notas, referencias de evidencia y criterios de aceptación. El cierre a As-Built exige que todas las acciones estén completadas, que exista una captura `observedState.observedAt` posterior, que no haya drift bloqueante y que los criterios de aceptación estén confirmados. Al cerrar, la ejecución activa desaparece y solo queda un resumen trazable en `workflow.updatedFrom`.
 
+**BOM & presupuesto** mantiene separada la realidad técnica de la económica. La BOM se deriva de `devices`, racks/PDU, patching, `cableRuns`, ópticas/transceivers, DAC y `wanCircuits`; no se persiste una copia de materiales. `budget.resourcePricing[resourceRef]` añade economía a un recurso canónico concreto y `budget.modelPricing[modelKey]` permite reutilizar precios de referencia por modelo sin duplicar el catálogo. `budget.serviceLines[]` se reserva para conceptos que no existen como inventario — licencias, suscripciones, mano de obra, desplazamientos y servicios — y puede enlazarlos opcionalmente a un `resourceRef`. CAPEX/OPEX, coste/venta, recurrencia, margen e impuestos son cálculo comercial derivado.
+
 ### Visualizar
 
 **V5 principal** es el mapa operativo/editable de Red + IoT.

@@ -390,6 +390,9 @@
         },
         "designRequirements": {
           "$ref": "#/$defs/designRequirements"
+        },
+        "budget": {
+          "$ref": "#/$defs/budget"
         }
       }
     },
@@ -2651,6 +2654,205 @@
         },
         "acceptance": {
           "$ref": "#/$defs/interventionAcceptance"
+        }
+      }
+    },
+    "budgetPricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unitCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unitPrice": {
+          "type": "number",
+          "minimum": 0
+        },
+        "targetMarginPct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 99.99
+        },
+        "chargeType": {
+          "type": "string",
+          "enum": [
+            "one-time",
+            "recurring"
+          ]
+        },
+        "capexOpex": {
+          "type": "string",
+          "enum": [
+            "capex",
+            "opex"
+          ]
+        },
+        "billingPeriodMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "supplier": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "quoteRef": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "validUntil": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "budgetServiceLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "quantity",
+        "unit",
+        "unitCost",
+        "unitPrice",
+        "chargeType",
+        "billingPeriodMonths",
+        "capexOpex"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "quantity": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "unitCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unitPrice": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chargeType": {
+          "type": "string",
+          "enum": [
+            "one-time",
+            "recurring"
+          ]
+        },
+        "billingPeriodMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "capexOpex": {
+          "type": "string",
+          "enum": [
+            "capex",
+            "opex"
+          ]
+        },
+        "resourceRef": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "supplier": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "quoteRef": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "validUntil": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "currency",
+        "taxRatePct",
+        "defaultMarginPct",
+        "scope",
+        "resourcePricing",
+        "modelPricing",
+        "serviceLines"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "netwizard-budget-v1"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "taxRatePct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "defaultMarginPct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 99.99
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "full",
+            "intervention"
+          ]
+        },
+        "resourcePricing": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/budgetPricing"
+          }
+        },
+        "modelPricing": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/budgetPricing"
+          }
+        },
+        "serviceLines": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": {
+            "$ref": "#/$defs/budgetServiceLine"
+          }
         }
       }
     }

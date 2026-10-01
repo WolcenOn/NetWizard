@@ -76,6 +76,23 @@ for(const [key,def] of Object.entries(expected)){
   assert.ok(external.$defs[def],def+' debe existir en $defs');
 }
 assert.strictEqual(external.$defs.subnet.properties.gatewayDeviceRef.$ref,'#/$defs/idNullable');
+assert.strictEqual(projectProps.budget.$ref,'#/$defs/budget');
+assert.strictEqual(external.$defs.budget.properties.version.const,'netwizard-budget-v1');
+check({
+  version:'netwizard-budget-v1',
+  currency:'EUR',
+  taxRatePct:21,
+  defaultMarginPct:20,
+  scope:'full',
+  resourcePricing:{'device:sw1':{unitCost:1000,unitPrice:1500,chargeType:'one-time',capexOpex:'capex',billingPeriodMonths:1}},
+  modelPricing:{},
+  serviceLines:[{
+    id:'labor1',category:'Mano de obra',description:'Instalación',quantity:4,unit:'h',
+    unitCost:25,unitPrice:50,chargeType:'one-time',billingPeriodMonths:1,capexOpex:'capex',
+    resourceRef:'device:sw1'
+  }]
+},external.$defs.budget,'budget');
+
 
 const payload=Sample.buildPayload();
 assert.strictEqual(payload.schemaVersion,'3.50.0');

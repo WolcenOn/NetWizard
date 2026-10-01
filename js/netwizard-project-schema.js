@@ -26,7 +26,7 @@ Mantenimiento:
     'vrfs','wanCircuits','trafficProfiles','internalServices','wifiControllers','wifiAccessPoints','wifiSsids',
     'ipv6Networks','failureScenarios','stacks','mlagDomains','haGroups','diversityPolicies','linkAggregations'
   ];
-  const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy','deployment'];
+  const ADVANCED_OBJECT_KEYS = ['routing','highAvailability','accessSecurity','management','driftPolicy','deployment','budget'];
   const WORKFLOW_MODES = Object.freeze(['inventory','design']);
   const DESIGN_DISPOSITIONS = Object.freeze(['keep','retire','replace','add']);
 
@@ -236,6 +236,62 @@ Mantenimiento:
     };
   }
 
+  function sanitizeBudgetPricing(raw){
+    const source=asObject(raw),out={};
+    for(const [rawKey,rawValue] of Object.entries(source).slice(0,10000)){
+      const key=cleanText(rawKey,240);if(!key)continue;
+      const x=asObject(rawValue),entry={};
+      for(const field of ['unitCost','unitPrice','targetMarginPct']){
+        if(x[field]==null||x[field]==='')continue;
+        const value=Number(x[field]);if(Number.isFinite(value)&&value>=0)entry[field]=Math.round(value*100)/100;
+      }
+      entry.chargeType=['one-time','recurring'].includes(cleanText(x.chargeType,20))?cleanText(x.chargeType,20):'one-time';
+      entry.capexOpex=['capex','opex'].includes(cleanText(x.capexOpex,20))?cleanText(x.capexOpex,20):'capex';
+      entry.billingPeriodMonths=Math.max(1,Math.min(120,Math.round(Number(x.billingPeriodMonths)||1)));
+      entry.supplier=cleanText(x.supplier||'',160);
+      entry.quoteRef=cleanText(x.quoteRef||'',160);
+      entry.validUntil=cleanText(x.validUntil||'',80);
+      entry.note=cleanText(x.note||'',1000);
+      out[key]=entry;
+    }
+    return out;
+  }
+
+  function sanitizeBudget(raw){
+    const source=asObject(raw),serviceLines=[];
+    for(const [idx,rawLine] of asArray(source.serviceLines).slice(0,5000).entries()){
+      const x=asObject(rawLine),quantity=Number(x.quantity),unitCost=Number(x.unitCost),unitPrice=Number(x.unitPrice);
+      serviceLines.push({
+        id:cleanId(x.id,`budget_service_${idx+1}`),
+        category:cleanText(x.category||'Servicio',80),
+        description:cleanText(x.description||'',240),
+        quantity:Number.isFinite(quantity)&&quantity>0?Math.round(quantity*100)/100:1,
+        unit:cleanText(x.unit||'ud',40),
+        unitCost:Number.isFinite(unitCost)&&unitCost>=0?Math.round(unitCost*100)/100:0,
+        unitPrice:Number.isFinite(unitPrice)&&unitPrice>=0?Math.round(unitPrice*100)/100:0,
+        chargeType:['one-time','recurring'].includes(cleanText(x.chargeType,20))?cleanText(x.chargeType,20):'one-time',
+        billingPeriodMonths:Math.max(1,Math.min(120,Math.round(Number(x.billingPeriodMonths)||1))),
+        capexOpex:['capex','opex'].includes(cleanText(x.capexOpex,20))?cleanText(x.capexOpex,20):'opex',
+        resourceRef:cleanText(x.resourceRef||'',240),
+        supplier:cleanText(x.supplier||'',160),
+        quoteRef:cleanText(x.quoteRef||'',160),
+        validUntil:cleanText(x.validUntil||'',80),
+        note:cleanText(x.note||'',1000)
+      });
+    }
+    const tax=Number(source.taxRatePct),margin=Number(source.defaultMarginPct);
+    return{
+      version:'netwizard-budget-v1',
+      currency:(cleanText(source.currency||'EUR',3)||'EUR').toUpperCase(),
+      taxRatePct:Number.isFinite(tax)?Math.max(0,Math.min(100,Math.round(tax*100)/100)):0,
+      defaultMarginPct:Number.isFinite(margin)?Math.max(0,Math.min(99.99,Math.round(margin*100)/100)):0,
+      scope:['full','intervention'].includes(cleanText(source.scope,20))?cleanText(source.scope,20):'full',
+      resourcePricing:sanitizeBudgetPricing(source.resourcePricing),
+      modelPricing:sanitizeBudgetPricing(source.modelPricing),
+      serviceLines
+    };
+  }
+
   function sanitizeCustomDeviceModel(raw, idx){
     const x=sanitizeObjectStrings(raw, 1000);
     x.id=cleanId(x.id,`custom_model_${idx+1}`);
@@ -432,6 +488,9 @@ Mantenimiento:
       if(p.workflow.designPhase != null) p.workflow.designPhase = cleanText(p.workflow.designPhase, 40);
     }
     p.dhcp = sanitizeDhcpMap(p.dhcp);
+    const budgetSource=asObject(p.budget);
+    if(Object.keys(budgetSource).length)p.budget=sanitizeBudget(budgetSource);
+    else delete p.budget;
     p.customDeviceModels = p.customDeviceModels.map(sanitizeCustomDeviceModel);
 
     p.devices = p.devices.map((d, idx) => {
@@ -776,7 +835,10 @@ Mantenimiento:
         return item;
       });
     }
-    for(const key of ADVANCED_OBJECT_KEYS) p[key] = sanitizeLooseValue(p[key], 1000);
+    for(const key of ADVANCED_OBJECT_KEYS){
+      const value=sanitizeLooseValue(p[key],1000);
+      if(value===undefined)delete p[key];else p[key]=value;
+    }
     p.observedState = sanitizeObservedState(p.observedState);
 
     return { project: p, warnings: workflowWarnings };
@@ -860,6 +922,24 @@ Mantenimiento:
     for(const [actionId,evidence] of Object.entries(asObject(interventionExecution.actions))){
       if(!actionId) errors.push('workflow.interventionExecution contiene actionId vacío.');
       if(!['pending','done','blocked'].includes(cleanText(asObject(evidence).status||'pending',20).toLowerCase())) errors.push(`workflow.interventionExecution ${actionId}: status inválido.`);
+    }
+
+    const budgetContract=asObject(p.budget);
+    if(Object.keys(budgetContract).length){
+      if(budgetContract.version!=='netwizard-budget-v1') errors.push('budget.version no soportada.');
+      if(!/^[A-Z]{3}$/.test(cleanText(budgetContract.currency||'',3))) errors.push('budget.currency debe ser un código de 3 letras.');
+      if(!['full','intervention'].includes(cleanText(budgetContract.scope||'',20))) errors.push('budget.scope debe ser full o intervention.');
+      const tax=Number(budgetContract.taxRatePct),margin=Number(budgetContract.defaultMarginPct);
+      if(!Number.isFinite(tax)||tax<0||tax>100) errors.push('budget.taxRatePct debe estar entre 0 y 100.');
+      if(!Number.isFinite(margin)||margin<0||margin>=100) errors.push('budget.defaultMarginPct debe estar entre 0 y 99,99.');
+      const serviceIds=new Set();
+      for(const line of asArray(budgetContract.serviceLines)){
+        if(serviceIds.has(line.id)) errors.push(`budget.serviceLines: id duplicado \${line.id}.`);
+        serviceIds.add(line.id);
+        if(!(Number(line.quantity)>0)) errors.push(`budget.serviceLines \${line.id}: quantity debe ser > 0.`);
+        if(!['one-time','recurring'].includes(cleanText(line.chargeType||'',20))) errors.push(`budget.serviceLines \${line.id}: chargeType inválido.`);
+        if(!['capex','opex'].includes(cleanText(line.capexOpex||'',20))) errors.push(`budget.serviceLines \${line.id}: capexOpex inválido.`);
+      }
     }
 
     const devIds = new Set(p.devices.map(x=>x.id));
@@ -1031,6 +1111,7 @@ Mantenimiento:
       designRequirementsVersion:'netwizard-design-requirements-v1',
       physicalInterventionBaselineVersion:'netwizard-physical-intervention-baseline-v1',
       interventionExecutionVersion:'netwizard-intervention-execution-v1',
+      budgetVersion:'netwizard-budget-v1',
       interventionCloseoutVersion:'netwizard-intervention-closeout-v1'
     },
     normalizeDeviceKind,

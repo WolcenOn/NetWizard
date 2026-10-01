@@ -11,6 +11,7 @@ const docs=()=>root.NetWizardDocumentationUtils||(typeof require==='function'?re
 const racks=()=>root.NetWizardRackModel||(typeof require==='function'?require('./netwizard-rack-model.js'):null);
 const fieldPkg=()=>root.NetWizardFieldInterventionPackage||(typeof require==='function'?require('./netwizard-field-intervention-package.js'):null);
 const xlsx=()=>root.NetWizardXlsxWriter||(typeof require==='function'?require('./netwizard-xlsx-writer.js'):null);
+const budget=()=>root.NetWizardBudget||(typeof require==='function'?require('./netwizard-budget.js'):null);
 
 function locationPath(project,locationId){
   const locations=new Map(arr(project&&project.physicalLocations).filter(Boolean).map(x=>[x.id,x]));
@@ -115,6 +116,10 @@ function differentialBomRows(project){
   });
   return out;
 }
+function budgetRows(project){
+  const B=budget();if(!B||typeof B.toRows!=='function')return[];
+  return B.toRows(project);
+}
 function buildTables(project){
   const p=clone(project||{});
   return{
@@ -125,7 +130,8 @@ function buildTables(project){
     power:powerRows(p),
     racks:rackRows(p),
     bom:bomRows(p),
-    differentialBom:differentialBomRows(p)
+    differentialBom:differentialBomRows(p),
+    budget:budgetRows(p)
   };
 }
 function manifest(project,tables){
@@ -153,7 +159,7 @@ function buildCsvPack(project){
 function buildXlsx(project){
   const X=xlsx();if(!X||typeof X.buildWorkbook!=='function')throw new Error('NetWizardXlsxWriter no está disponible.');
   const tables=buildTables(project);
-  const labels={devices:'Equipos',ports:'Puertos',cables:'Cableado',pdus:'PDU',power:'Alimentacion',racks:'Racks',bom:'BOM',differentialBom:'BOM diferencial'};
+  const labels={devices:'Equipos',ports:'Puertos',cables:'Cableado',pdus:'PDU',power:'Alimentacion',racks:'Racks',bom:'BOM',differentialBom:'BOM diferencial',budget:'Presupuesto'};
   return X.buildWorkbook(Object.entries(tables).map(([key,rows])=>({name:labels[key]||key,rows})));
 }
 function markdown(project){
@@ -163,7 +169,7 @@ function markdown(project){
   if(pack.tables.differentialBom.length){lines.push('','## BOM diferencial','',...pack.tables.differentialBom.map(x=>`- ${x.action}: ${x.quantity} × ${x.kind} — ${x.description}`));}
   return lines.join('\n')+'\n';
 }
-const api={version:'netwizard-asbuilt-export-pack-v2',locationPath,deviceRows,portRows,cableRows,pduRows,powerRows,rackRows,bomRows,differentialBomRows,buildTables,buildCsvPack,buildXlsx,manifest,markdown,toCsv};
+const api={version:'netwizard-asbuilt-export-pack-v3',locationPath,deviceRows,portRows,cableRows,pduRows,powerRows,rackRows,bomRows,differentialBomRows,budgetRows,buildTables,buildCsvPack,buildXlsx,manifest,markdown,toCsv};
 root.NetWizardAsBuiltExports=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
