@@ -74,6 +74,8 @@ function normalizeTunnel(project,raw,index){
     id:clean(t.id||('vpn-'+String((index||0)+1))),
     name:clean(t.name||t.id||('VPN '+String((index||0)+1))),
     enabled:t.enabled!==false,
+    role:clean(t.role||'primary').toLowerCase(),
+    priority:Number(t.priority==null||t.priority===''?((index||0)+1)*10:t.priority),
     localDeviceId:clean(t.localDeviceId),
     remoteDeviceId:clean(t.remoteDeviceId),
     localCircuitRef:clean(t.localCircuitRef),
@@ -135,6 +137,8 @@ function validateTunnel(project,raw,index){
   if(plan.pfsGroup!==14)issues.push(issue('NW-VPN-026',plan.name+': PFS no soportado; usa grupo 14.',true,id));
   if(!Number.isInteger(plan.ikeLifetimeSeconds)||plan.ikeLifetimeSeconds<300||plan.ikeLifetimeSeconds>86400)issues.push(issue('NW-VPN-027',plan.name+': lifetime IKE debe estar entre 300 y 86400 segundos.',true,id));
   if(!Number.isInteger(plan.ipsecLifetimeSeconds)||plan.ipsecLifetimeSeconds<300||plan.ipsecLifetimeSeconds>86400)issues.push(issue('NW-VPN-028',plan.name+': lifetime IPsec debe estar entre 300 y 86400 segundos.',true,id));
+  if(!['primary','backup'].includes(plan.role))issues.push(issue('NW-VPN-033',plan.name+': role debe ser primary o backup.',true,id));
+  if(!Number.isInteger(plan.priority)||plan.priority<1||plan.priority>65535)issues.push(issue('NW-VPN-034',plan.name+': priority debe ser un entero entre 1 y 65535.',true,id));
 
   const observed=plan.observed;
   if(Object.keys(observed).length){
@@ -176,15 +180,16 @@ function buildDevicePlan(project,deviceId){
   const validation=validateProject(project),oriented=[];
   validation.plans.forEach((plan,index)=>{
     const side=orient(plan,deviceId);
-    if(side)oriented.push(Object.assign({sequence:(index+1)*10},side));
+    if(side)oriented.push(Object.assign({sequence:Number(plan.priority||((index+1)*10))},side));
   });
+  oriented.sort((a,b)=>Number(a.priority||a.sequence||100)-Number(b.priority||b.sequence||100));
   const ids=new Set(oriented.map(x=>x.id));
   const issues=validation.issues.filter(x=>ids.has(x.tunnelId));
   return{version:'netwizard-site-to-site-vpn-device-plan-v1',deviceId,tunnels:oriented,issues,ok:!issues.some(x=>x.blocking)};
 }
 function selectorCovers(selectors,cidr){return arr(selectors).some(selector=>cidrContains(selector,cidr));}
 function findOverlay(project,fromDeviceId,toDeviceId,sourceCidr,targetCidr){
-  const validation=validateProject(project);
+  const validation=validateProject(project),matches=[];
   for(const plan of validation.plans){
     if(!plan.enabled)continue;
     const side=orient(plan,fromDeviceId);
@@ -192,15 +197,20 @@ function findOverlay(project,fromDeviceId,toDeviceId,sourceCidr,targetCidr){
     if(!selectorCovers(side.localPrefixes,sourceCidr)||!selectorCovers(side.remotePrefixes,targetCidr))continue;
     const tunnelIssues=validation.issues.filter(x=>x.tunnelId===plan.id);
     const observed=observedFor(project,plan.id),status=clean(observed.status||'unknown').toLowerCase()||'unknown';
-    return{
-      matched:true,available:!tunnelIssues.some(x=>x.blocking)&&status!=='down',
-      plan:side,issues:tunnelIssues,observed,status,
-      reason:tunnelIssues.some(x=>x.blocking)?tunnelIssues.filter(x=>x.blocking).map(x=>x.message).join(' '):
+    const blocking=tunnelIssues.some(x=>x.blocking),available=!blocking&&status!=='down';
+    matches.push({
+      matched:true,available,plan:side,issues:tunnelIssues,observed,status,
+      reason:blocking?tunnelIssues.filter(x=>x.blocking).map(x=>x.message).join(' '):
         status==='down'?'El túnel figura DOWN en estado observado.':
         status==='up'?'El túnel figura UP en estado observado.':'El túnel es válido en To-Be; no hay evidencia Observed UP.'
-    };
+    });
   }
-  return{matched:false,available:false,plan:null,issues:[],observed:{},status:'unknown',reason:'No existe VPN site-to-site que cubra ambos prefijos.'};
+  matches.sort((a,b)=>Number(a.plan.priority||100)-Number(b.plan.priority||100)||
+    (a.plan.role==='primary'?-1:1)-(b.plan.role==='primary'?-1:1));
+  const available=matches.find(x=>x.available);
+  if(available)return Object.assign({},available,{alternatives:matches});
+  if(matches.length)return Object.assign({},matches[0],{available:false,alternatives:matches,reason:matches.map(x=>(x.plan.name||x.plan.id)+': '+x.reason).join(' | ')});
+  return{matched:false,available:false,plan:null,issues:[],observed:{},status:'unknown',reason:'No existe VPN site-to-site que cubra ambos prefijos.',alternatives:[]};
 }
 
 const api={
