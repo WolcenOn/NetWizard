@@ -91,9 +91,13 @@
         return owner?owner===d.id:(explicitRoaS||legacySingleRouter);
       });
       const needsRoaS=routedVlans.length>0;
+      const ownedRoaS=needsRoaS&&!!lanIf&&routedVlans.every(v=>{
+        const sn=subnetByVlan(p,v.id),owner=clean(sn&&(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef));
+        return !!owner&&owner===d.id;
+      });
       const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
-      if(needsRoaS&&!explicitRoaS){
-        L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
+      if(needsRoaS&&!explicitRoaS&&!ownedRoaS){
+        L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin ownership/trunk LAN inequívocos.','! Revisa gatewayDeviceRef y la interfaz trunk LAN antes de aplicar.');
       }
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
       const ports=portsByDev(p,d.id).sort((a,b)=>clean(a.name).localeCompare(clean(b.name),'es',{numeric:true}));
