@@ -12,6 +12,7 @@
   const ip4s = NWU.ip4s;
 
   function arr(v){ return Array.isArray(v) ? v : []; }
+  function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function deviceById(project, id){ return arr(project && project.devices).find(d => d.id === id) || null; }
   function portById(project, id){ return arr(project && project.ports).find(p => p.id === id) || null; }
@@ -85,6 +86,21 @@
     }).sort((a,b)=>a.cidr.localeCompare(b.cidr));
   }
 
+  function ipv4Int(value){
+    const parts=clean(value).split('.');
+    if(parts.length!==4)return null;
+    let n=0;
+    for(const part of parts){
+      if(!/^\d{1,3}$/.test(part))return null;
+      const oct=Number(part);if(oct<0||oct>255)return null;
+      n=(n<<8)|oct;
+    }
+    return n>>>0;
+  }
+  function cidrContainsIp(cidr,ip){
+    const ci=parseCidr?parseCidr(cidr):null,addr=ipv4Int(ip);
+    return !!(ci&&addr!=null&&(((addr&ci.mask)>>>0)===(ci.net>>>0)));
+  }
   function maskFor(cidr){ const ci = parseCidr ? parseCidr(cidr) : null; return ci && ip4s ? ip4s(ci.mask) : ''; }
   function networkFor(cidr){ const ci = parseCidr ? parseCidr(cidr) : null; return ci && ip4s ? ip4s(ci.net) : ''; }
   function prefixFor(cidr){ const ci = parseCidr ? parseCidr(cidr) : null; return ci ? ci.pfx : null; }
@@ -130,13 +146,51 @@
     return routes.sort((a,b)=>a.destination.localeCompare(b.destination) || a.nextHop.localeCompare(b.nextHop));
   }
 
+  function explicitStaticRoutes(project,deviceId){
+    const p=project||{},routing=obj(p.routing),byDevice=obj(routing.staticRoutesByDevice),raw=arr(byDevice[deviceId]);
+    const localSet=new Set(collectLocalNetworks(p,deviceId,{includeTransit:true}).map(x=>x.cidr));
+    const interfaces=deviceL3Interfaces(p,deviceId),routes=[],issues=[],claimedDestinations=new Set(),seen=new Set();
+    raw.forEach((item,index)=>{
+      const route=obj(item),routeId=clean(route.id)||('route-'+String(index+1)),rawDestination=clean(route.destination||route.cidr||route.prefix);
+      const destination=normCidr(rawDestination),nextHop=clean(route.nextHop),distanceRaw=route.distance==null||route.distance===''?1:Number(route.distance);
+      if(destination)claimedDestinations.add(destination);
+      if(!destination){issues.push({routeId,code:'NW-ROUTE-STATIC-001',message:'Destino CIDR inválido o ausente.'});return;}
+      if(destination==='0.0.0.0/0'){issues.push({routeId,code:'NW-ROUTE-STATIC-002',message:'La ruta por defecto debe declararse en HA/routing services, no como ruta remota estática.'});return;}
+      if(localSet.has(destination)){issues.push({routeId,code:'NW-ROUTE-STATIC-003',message:`El destino ${destination} ya es una red local/conectada del dispositivo.`});return;}
+      if(seen.has(destination)){issues.push({routeId,code:'NW-ROUTE-STATIC-004',message:`El destino ${destination} está duplicado en las rutas estáticas explícitas.`});return;}
+      if(ipv4Int(nextHop)==null){issues.push({routeId,code:'NW-ROUTE-STATIC-005',message:'Next-hop IPv4 inválido o ausente.'});return;}
+      const out=interfaces.find(iface=>cidrContainsIp(iface.cidr,nextHop));
+      if(!out){issues.push({routeId,code:'NW-ROUTE-STATIC-006',message:`El next-hop ${nextHop} no pertenece a ninguna red routed directamente conectada del dispositivo.`});return;}
+      if(!Number.isInteger(distanceRaw)||distanceRaw<1||distanceRaw>255){issues.push({routeId,code:'NW-ROUTE-STATIC-007',message:'La distancia administrativa debe ser un entero entre 1 y 255.'});return;}
+      seen.add(destination);
+      routes.push({
+        id:routeId,destination,network:networkFor(destination),mask:maskFor(destination),prefix:prefixFor(destination),
+        nextHop,distance:distanceRaw,outPortId:out.portId,outPortName:out.portName||'',description:clean(route.description),
+        source:'explicit'
+      });
+    });
+    return{routes,issues,claimedDestinations:Array.from(claimedDestinations)};
+  }
+
+  function resolveStaticRoutes(project,deviceId){
+    const explicit=explicitStaticRoutes(project,deviceId),claimed=new Set(explicit.claimedDestinations),routes=explicit.routes.slice();
+    const keys=new Set(routes.map(r=>r.destination));
+    for(const route of inferStaticRoutes(project,deviceId)){
+      if(claimed.has(route.destination)||keys.has(route.destination))continue;
+      routes.push(Object.assign({source:'inferred'},route));
+      keys.add(route.destination);
+    }
+    routes.sort((a,b)=>a.destination.localeCompare(b.destination)||a.nextHop.localeCompare(b.nextHop));
+    return{routes,issues:explicit.issues,explicitCount:explicit.routes.length,inferredCount:routes.filter(r=>r.source==='inferred').length};
+  }
+
   function summarizeRoutes(routes){
     const rs = arr(routes);
     if(!rs.length) return 'No se han inferido rutas estáticas básicas para este dispositivo.';
     return rs.map(r => `${r.destination} vía ${r.nextHop}${r.peerDeviceName ? ' ('+r.peerDeviceName+')' : ''}`).join('\n');
   }
 
-  const api = { version:'netwizard-routing-utils-v2', collectLocalNetworks, inferStaticRoutes, summarizeRoutes, maskFor, networkFor, prefixFor, subnetOwnerRef };
+  const api = { version:'netwizard-routing-utils-v3', collectLocalNetworks, inferStaticRoutes, explicitStaticRoutes, resolveStaticRoutes, cidrContainsIp, summarizeRoutes, maskFor, networkFor, prefixFor, subnetOwnerRef };
   root.NetWizardRoutingUtils = api;
   if(typeof module!=='undefined' && module.exports) module.exports = api;
 })(typeof window!=='undefined'?window:globalThis);
