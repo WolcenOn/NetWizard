@@ -63,9 +63,10 @@ function render(project){
   card.append(el('p','hint','La BOM se deriva del inventario. Los precios solo referencian recursos/modelos existentes; las líneas manuales se reservan para licencias, suscripciones, mano de obra, desplazamientos y servicios.'));
 
   const settings=el('div','g2'),currency=input('text','EUR'),tax=input('number','0'),margin=input('number','0'),scope=select([['full','Proyecto completo'],['intervention','Intervención / diferencial']]);
+  currency.id='budgetCurrency';tax.id='budgetTax';margin.id='budgetMargin';scope.id='budgetScope';
   currency.value=cfg.currency;currency.maxLength=3;tax.value=cfg.taxRatePct;margin.value=cfg.defaultMarginPct;scope.value=cfg.scope;
   settings.append(field('Moneda',currency),field('Impuesto %',tax),field('Margen objetivo %',margin),field('Alcance',scope));
-  const saveSettings=el('button','btn bs','💾 Guardar parámetros');saveSettings.type='button';
+  const saveSettings=el('button','btn bs','💾 Guardar parámetros');saveSettings.id='budgetSaveSettings';saveSettings.type='button';
   saveSettings.onclick=()=>persist(b=>{
     b.currency=clean(currency.value).toUpperCase()||'EUR';
     b.taxRatePct=Math.max(0,Math.min(100,Number(tax.value)||0));
@@ -91,11 +92,13 @@ function render(project){
   }
 
   const pricing=el('div','card');pricing.style.marginTop='12px';pricing.append(el('div','card-t','Precios por recurso / modelo'));
-  const lineSelect=select(report.lines.map(x=>[x.resourceRef,(x.priced?'✓ ':'○ ')+x.category+' · '+x.description+' · '+x.resourceRef]));
+  const lineSelect=select(report.lines.map(x=>[x.resourceRef,(x.priced?'✓ ':'○ ')+x.category+' · '+x.description+' · '+x.resourceRef]));lineSelect.id='budgetLineSelect';
   if(!report.lines.length){const o=el('option','','Sin recursos presupuestables');o.value='';lineSelect.append(o);}
-  const priceScope=select([['resource','Solo este recurso'],['model','Mismo modelo']]);
+  const priceScope=select([['resource','Solo este recurso'],['model','Mismo modelo']]);priceScope.id='budgetPriceScope';
   const unitCost=input('number','0.00'),unitPrice=input('number','0.00'),charge=select([['one-time','One-time'],['recurring','Recurrente']]),period=input('number','1'),classif=select([['capex','CAPEX'],['opex','OPEX']]);
   const supplier=input('text','Proveedor'),quote=input('text','Oferta / referencia'),valid=input('date'),note=input('text','Nota');
+  unitCost.id='budgetUnitCost';unitPrice.id='budgetUnitPrice';charge.id='budgetChargeType';period.id='budgetBillingPeriod';classif.id='budgetCapexOpex';
+  supplier.id='budgetSupplier';quote.id='budgetQuoteRef';valid.id='budgetValidUntil';note.id='budgetPriceNote';
   const grid=el('div','g2');
   grid.append(field('Recurso',lineSelect),field('Aplicar precio a',priceScope),field('Coste unitario',unitCost),field('Venta unitaria',unitPrice),field('Tipo de cargo',charge),field('Periodo meses',period),field('Clasificación',classif),field('Proveedor',supplier),field('Oferta / referencia',quote),field('Válido hasta',valid),field('Nota',note));
   pricing.append(grid);
@@ -114,7 +117,7 @@ function render(project){
   }
   lineSelect.onchange=loadSelected;priceScope.onchange=loadSelected;loadSelected();
   const row=el('div','brow'),savePrice=el('button','btn bp','💾 Guardar precio'),clearPrice=el('button','btn bs','🗑 Quitar precio');
-  savePrice.type=clearPrice.type='button';
+  savePrice.id='budgetSavePrice';clearPrice.id='budgetClearPrice';savePrice.type=clearPrice.type='button';
   savePrice.onclick=()=>{
     const line=selectedLine();if(!line)return;
     const payload={
@@ -141,14 +144,16 @@ function render(project){
   row.append(savePrice,clearPrice);pricing.append(row);card.append(pricing);
 
   const services=el('div','card');services.style.marginTop='12px';services.append(el('div','card-t','Licencias, servicios, mano de obra y desplazamientos'));
-  const sCategory=select([['Licencia','Licencia'],['Suscripción','Suscripción'],['Mano de obra','Mano de obra'],['Desplazamiento','Desplazamiento'],['Servicio','Servicio'],['Otro','Otro']]);
+  const sCategory=select([['Licencia','Licencia'],['Suscripción','Suscripción'],['Mano de obra','Mano de obra'],['Desplazamiento','Desplazamiento'],['Servicio','Servicio'],['Otro','Otro']]);sCategory.id='budgetServiceCategory';
   const sDesc=input('text','Descripción'),sQty=input('number','1'),sUnit=input('text','h / ud / día / año'),sCost=input('number','0'),sPrice=input('number','0');
+  sDesc.id='budgetServiceDescription';sQty.id='budgetServiceQuantity';sUnit.id='budgetServiceUnit';sCost.id='budgetServiceCost';sPrice.id='budgetServicePrice';
   const sCharge=select([['one-time','One-time'],['recurring','Recurrente']]),sPeriod=input('number','1'),sClass=select([['capex','CAPEX'],['opex','OPEX']]);
   const sRef=select([['','— sin vínculo —'],...report.lines.filter(x=>x.resourceKind!=='service').map(x=>[x.resourceRef,x.description+' · '+x.resourceRef])]);
+  sCharge.id='budgetServiceChargeType';sPeriod.id='budgetServicePeriod';sClass.id='budgetServiceCapexOpex';sRef.id='budgetServiceResourceRef';
   const sGrid=el('div','g2');sQty.value='1';sPeriod.value='1';sClass.value='opex';
   sGrid.append(field('Categoría',sCategory),field('Descripción',sDesc),field('Cantidad',sQty),field('Unidad',sUnit),field('Coste unitario',sCost),field('Venta unitaria',sPrice),field('Tipo de cargo',sCharge),field('Periodo meses',sPeriod),field('CAPEX/OPEX',sClass),field('Vincular a recurso',sRef));
   services.append(sGrid);
-  const addService=el('button','btn bp','＋ Añadir línea');addService.type='button';
+  const addService=el('button','btn bp','＋ Añadir línea');addService.id='budgetAddService';addService.type='button';
   addService.onclick=()=>{
     if(!clean(sDesc.value))return root.alert&&root.alert('Describe la línea de servicio.');
     persist(b=>{
