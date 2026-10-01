@@ -138,6 +138,29 @@ assert.strictEqual((vtpResult.configs.sw1.match(/^configure terminal$/gm)||[]).l
 assert.strictEqual((vtpResult.configs.sw1.match(/^end$/gm)||[]).length,1);
 assert.strictEqual((vtpResult.configs.sw1.match(/^write memory$/gm)||[]).length,1);
 
+
+const verifiedVtp=JSON.parse(JSON.stringify(vtpProject));
+verifiedVtp.vtp={domain:'EMPRESA',password:'',version:'3',pruning:'yes',roles:{sw1:'server'}};
+verifiedVtp.observedState={
+  observedAt:'2026-09-30T12:00:00.000Z',
+  vtpDevices:{
+    sw1:{
+      domain:'EMPRESA',version:'3',mode:'server',revision:42,
+      primary:true,primaryId:'0011.2233.4455',primaryConflict:false,
+      digestErrors:0,revisionErrors:0,observedAt:'2026-09-30T12:00:00.000Z'
+    }
+  }
+};
+const verifiedVtpResult=Engine.generateAll(verifiedVtp);
+assert.strictEqual(verifiedVtpResult.ok,true);
+assert.strictEqual(verifiedVtpResult.configReadiness.sw1.status,'apply-ready');
+
+const mismatchedVtp=JSON.parse(JSON.stringify(verifiedVtp));
+mismatchedVtp.observedState.vtpDevices.sw1.domain='OTRO-DOMINIO';
+const mismatchedVtpResult=Engine.generateAll(mismatchedVtp);
+assert.strictEqual(mismatchedVtpResult.configReadiness.sw1.status,'review-required');
+assert.ok(mismatchedVtpResult.configReadiness.sw1.reasons.some(x=>/Dominio VTP observado/.test(x)));
+
 const inferred=JSON.parse(JSON.stringify(project));
 inferred.devices=[{id:'r1',name:'EDGE-INFERRED',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'yes'}];
 inferred.ports=project.ports.filter(x=>x.deviceId==='r1');

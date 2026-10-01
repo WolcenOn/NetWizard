@@ -13,6 +13,7 @@ const Legacy=require('./legacy-vendor-generators.js');
 const Policy=require('../js/netwizard-policy-utils.js');
 const Network=require('../js/netwizard-network-utils.js');
 const Capabilities=require('./vendor-config-capabilities.js');
+const VtpVerification=require('../js/netwizard-vtp-production-verification.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -127,12 +128,8 @@ function configReadiness(project,device,output){
   }
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(isSwitch(d)){
-    const vtp=obj(p.vtp),roles=obj(vtp.roles),role=clean(roles[d.id],20).toLowerCase();
-    if(['server','client','transparent'].includes(role)){
-      reasons.push(`VTP ${role} está activo; revisa dominio, versión, rol y revision number/estado del dominio antes de aplicar en producción.`);
-      if(!clean(vtp.domain,64))reasons.push('VTP está activo sin dominio explícito.');
-      if(role==='server'&&String(vtp.version||'')==='3')reasons.push('VTPv3 server requiere validar/establecer el primary server de forma controlada antes del cambio.');
-    }
+    const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
+    if(vtpCheck&&!vtpCheck.ok)reasons.push(...arr(vtpCheck.reasons));
   }
   if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
   if(/NEXT_HOP|TODO|REVISAR|VALIDAR/i.test(text))reasons.push('La configuración contiene placeholders o instrucciones de revisión manual.');
