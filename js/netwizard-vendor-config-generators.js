@@ -129,7 +129,7 @@
       if(d.internetEdge==='yes' && wanIf && wanCidr) L.push('!','! WAN',`interface ${cliText(wanIf,80)}`,` ip address ${cidrIp(wanCidr)} ${mask(wanCidr)}`,' ip nat outside',' no shutdown',' exit');
       if(d.internetEdge==='yes' && nh) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${nh}`);
       if(d.internetEdge==='yes' && wanIf) L.push('!','! NAT overload','access-list 100 permit ip any any',`ip nat inside source list 100 interface ${cliText(wanIf,80)} overload`);
-      const acl=getFwAcl(); if(acl) L.push('',acl);
+      const acl=getFwAcl(d.id); if(acl) L.push('',acl);
       L.push('end','write memory','!');
       return L.join('\n')+'\n';
     }
