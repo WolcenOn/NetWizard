@@ -38,6 +38,11 @@ function normalizeArea(value){
   }
   const n=ipv4Int(raw);return n==null?'':raw;
 }
+function participatingDeviceIds(project){
+  const p=project||{},routing=obj(p.routing),devicesCfg=obj(obj(routing.ospf).devices),explicitIds=Object.keys(devicesCfg);
+  if(explicitIds.length)return explicitIds.filter(id=>isRoutingDevice(deviceById(p,id)));
+  return arr(p.devices).filter(isRoutingDevice).map(d=>d.id);
+}
 function routedPorts(project,deviceId){
   return arr(project&&project.ports).filter(p=>p&&p.deviceId===deviceId&&clean(p.mode||p.role).toLowerCase()==='routed'&&clean(p.l3Cidr||p.routedCidr));
 }
@@ -121,7 +126,7 @@ function expectedNeighbors(project){
   const p=project||{},routing=obj(p.routing);
   const strategy=clean(routing.protocol||routing.strategy||routing.mode).toLowerCase();
   if(strategy!=='ospf')return[];
-  const deviceIds=arr(p.devices).filter(isRoutingDevice).map(d=>d.id),plans=new Map(deviceIds.map(id=>[id,buildDeviceIntent(p,id)]));
+  const deviceIds=participatingDeviceIds(p),plans=new Map(deviceIds.map(id=>[id,buildDeviceIntent(p,id)]));
   const out=[],seen=new Set();
   for(const [deviceId,plan] of plans){
     for(const iface of plan.interfaces.filter(x=>x.enabled&&!x.passive)){
@@ -161,7 +166,7 @@ function compareObserved(project,deviceId){
 }
 function validateProject(project){
   const p=project||{},routing=obj(p.routing),strategy=clean(routing.protocol||routing.strategy||routing.mode).toLowerCase();
-  const plans=arr(p.devices).filter(isRoutingDevice).map(d=>buildDeviceIntent(p,d.id)),issues=[];
+  const plans=participatingDeviceIds(p).map(id=>buildDeviceIntent(p,id)),issues=[];
   if(strategy!=='ospf')return{version:'netwizard-ospf-project-v1',ok:true,active:false,plans:[],neighbors:[],issues:[],counts:{blocking:0,warnings:0}};
   const routerIds=new Map();
   for(const plan of plans){
@@ -227,7 +232,7 @@ function adjacencyPath(project,fromDeviceId,toDeviceId,options){
 
 const api={
   version:'netwizard-ospf-v1',deviceConfig,interfaceConfig,buildDeviceIntent,validateProject,
-  expectedNeighbors,observedNeighbors,compareObserved,adjacencyPath,normalizeArea,validRouterId,routedPorts,isRoutingDevice
+  expectedNeighbors,observedNeighbors,compareObserved,adjacencyPath,normalizeArea,validRouterId,routedPorts,isRoutingDevice,participatingDeviceIds
 };
 root.NetWizardOspf=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
