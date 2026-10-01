@@ -38,7 +38,7 @@ function inject(){
   const load=root.document.createElement('button');
   load.id='btnGoldenPathEnterprise';load.type='button';load.className='btn bp';
   load.textContent='⭐ Cargar Golden Path completo';
-  load.title='Demo integral HQ + sucursal: routing, VPN, resiliencia, físico, Observed, workflow y presupuesto';
+  load.title='Demo production-clean de 4 sedes: anillo OSPF, ACLs inter-VLAN, seguridad L2, Wi-Fi, físico y presupuesto';
   load.onclick=async()=>{
     if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el Golden Path Enterprise completo?'))return;
     try{await loadIntoProject();}
