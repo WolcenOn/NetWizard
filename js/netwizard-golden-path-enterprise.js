@@ -2,10 +2,10 @@
 (function initNetWizardGoldenPathEnterprise(root){
 'use strict';
 
-const URL='./samples/golden-path-enterprise-complete.json';
+const SAMPLE_URL='./samples/golden-path-enterprise-complete.json';
 
 async function fetchPayload(){
-  const response=await root.fetch(URL,{cache:'no-store'});
+  const response=await root.fetch(SAMPLE_URL,{cache:'no-store'});
   if(!response.ok)throw new Error('No se pudo cargar Golden Path ('+response.status+').');
   return response.json();
 }
@@ -25,11 +25,10 @@ async function loadIntoProject(){
   return project;
 }
 async function download(){
-  const payload=await fetchPayload();
-  const blob=new Blob([JSON.stringify(payload,null,2)+'\n'],{type:'application/json;charset=utf-8'});
-  const url=URL.createObjectURL(blob),a=root.document.createElement('a');
-  a.href=url;a.download='netwizard-golden-path-enterprise-complete.json';
-  root.document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  const a=root.document.createElement('a');
+  a.href=SAMPLE_URL;
+  a.download='netwizard-golden-path-enterprise-complete.json';
+  root.document.body.appendChild(a);a.click();a.remove();
   return true;
 }
 function inject(){
@@ -51,7 +50,7 @@ function inject(){
   anchor.insertAdjacentElement('afterend',dl);
   anchor.insertAdjacentElement('afterend',load);
 }
-const api={version:'netwizard-golden-path-enterprise-v1',url:URL,fetchPayload,preparedProject,loadIntoProject,download,inject};
+const api={version:'netwizard-golden-path-enterprise-v1',url:SAMPLE_URL,fetchPayload,preparedProject,loadIntoProject,download,inject};
 root.NetWizardGoldenPathEnterprise=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
