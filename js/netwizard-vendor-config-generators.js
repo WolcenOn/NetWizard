@@ -91,8 +91,12 @@
         return owner?owner===d.id:(explicitRoaS||legacySingleRouter);
       });
       const needsRoaS=routedVlans.length>0;
+      const hasUnownedRoutedVlan=routedVlans.some(v=>{
+        const sn=subnetByVlan(p,v.id);
+        return !clean(sn&&(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef));
+      });
       const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
-      if(needsRoaS&&!explicitRoaS){
+      if(needsRoaS&&!explicitRoaS&&hasUnownedRoutedVlan){
         L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
       }
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
