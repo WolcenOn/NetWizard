@@ -29,7 +29,8 @@
     const lines = [];
     for(const route of arr(plan && plan.staticRoutes)){
       if(!clean(route.network) || !clean(route.mask) || !clean(route.nextHop)) continue;
-      lines.push(`ip route ${route.network} ${route.mask} ${route.nextHop}`);
+      const distance=Number(route.distance),suffix=route.source==='explicit'&&Number.isInteger(distance)?` ${distance}`:'';
+      lines.push(`ip route ${route.network} ${route.mask} ${route.nextHop}${suffix}`);
     }
     return lines;
   }
