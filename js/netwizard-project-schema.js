@@ -262,7 +262,7 @@ Mantenimiento:
     for(const [idx,rawLine] of asArray(source.serviceLines).slice(0,5000).entries()){
       const x=asObject(rawLine),quantity=Number(x.quantity),unitCost=Number(x.unitCost),unitPrice=Number(x.unitPrice);
       serviceLines.push({
-        id:cleanId(x.id,`budget_service_\${idx+1}`),
+        id:cleanId(x.id,`budget_service_${idx+1}`),
         category:cleanText(x.category||'Servicio',80),
         description:cleanText(x.description||'',240),
         quantity:Number.isFinite(quantity)&&quantity>0?Math.round(quantity*100)/100:1,
