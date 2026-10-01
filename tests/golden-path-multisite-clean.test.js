@@ -86,7 +86,8 @@ const degraded=JSON.parse(JSON.stringify(p));
 degraded.links=degraded.links.filter(x=>x.id!=='link_hq_north');
 const alternate=Reach.analyze(degraded,'hq_sn_users','north_sn_users','icmp');
 assert.strictEqual(alternate.reachable,true,'HQ y Norte deben seguir comunicando tras perder un lado del anillo');
-assert.ok(alternate.forward.devices.includes('south_rtr')||alternate.forward.devices.includes('east_rtr'),'La ruta alternativa debe rodear el anillo');
+const alternateDevices=alternate.forward.hops.filter(x=>x.kind==='device').map(x=>x.deviceId);
+assert.ok(alternateDevices.includes('south_rtr')&&alternateDevices.includes('east_rtr'),'La ruta alternativa debe rodear el anillo por Sur y Levante');
 
 const allowed=Connectivity.simulate(p,'host:hq_user','host:south_server','https');
 assert.strictEqual(allowed.ok,true,allowed.steps.map(x=>x.msg).join(' | '));
