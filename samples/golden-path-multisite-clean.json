@@ -19,7 +19,8 @@
         "locationId": "room_hq",
         "physicalLocation": "CPD Central",
         "mgmtIp": "10.10.60.1",
-        "powerDrawWatts": 120
+        "powerDrawWatts": 120,
+        "lanIf": "GigabitEthernet0/1"
       },
       {
         "id": "hq_core",
@@ -62,7 +63,8 @@
         "locationId": "room_north",
         "physicalLocation": "CPD Norte",
         "mgmtIp": "10.20.60.1",
-        "powerDrawWatts": 120
+        "powerDrawWatts": 120,
+        "lanIf": "GigabitEthernet0/1"
       },
       {
         "id": "north_core",
@@ -105,7 +107,8 @@
         "locationId": "room_east",
         "physicalLocation": "CPD Levante",
         "mgmtIp": "10.30.60.1",
-        "powerDrawWatts": 120
+        "powerDrawWatts": 120,
+        "lanIf": "GigabitEthernet0/1"
       },
       {
         "id": "east_core",
@@ -148,7 +151,8 @@
         "locationId": "room_south",
         "physicalLocation": "CPD Sur",
         "mgmtIp": "10.40.60.1",
-        "powerDrawWatts": 120
+        "powerDrawWatts": 120,
+        "lanIf": "GigabitEthernet0/1"
       },
       {
         "id": "south_core",
