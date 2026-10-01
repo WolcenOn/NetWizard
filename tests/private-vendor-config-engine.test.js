@@ -84,7 +84,7 @@ assert.deepStrictEqual(
 );
 assert.deepStrictEqual(
   result.pipeline.stages.map(x=>x.id),
-  ['routing.cisco','routing.multivendor','security.access','management.baseline','ha.services']
+  ['routing.cisco','routing.multivendor','vpn.site-to-site','security.access','management.baseline','ha.services']
 );
 assert.deepStrictEqual(result.issues,[]);
 
@@ -160,6 +160,54 @@ invalidInterSite.routing.staticRoutesByDevice.r2[0].nextHop='192.0.2.1';
 const invalidInterSiteResult=Engine.generateAll(invalidInterSite);
 assert.strictEqual(invalidInterSiteResult.configReadiness.r2.status,'review-required');
 assert.ok(invalidInterSiteResult.configReadiness.r2.reasons.some(x=>/next-hop .* directamente conectada/.test(x)));
+
+const vpnProject={
+  _schemaVersion:'3.50.0',
+  projName:'Private VPN generation',
+  devices:[
+    {id:'vpn-r1',name:'VPN-HQ',type:'router',kind:'router',vendorOs:'cisco_ios'},
+    {id:'vpn-r2',name:'VPN-BRANCH',type:'router',kind:'router',vendorOs:'cisco_ios'}
+  ],
+  ports:[
+    {id:'vpn-r1-wan',deviceId:'vpn-r1',name:'GigabitEthernet0/0',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.2/30'},
+    {id:'vpn-r1-lan',deviceId:'vpn-r1',name:'GigabitEthernet0/1',mode:'routed',role:'lan',l3Ip:'10.10.0.1',l3Cidr:'10.10.0.0/24'},
+    {id:'vpn-r2-wan',deviceId:'vpn-r2',name:'GigabitEthernet0/0',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.2/30'},
+    {id:'vpn-r2-lan',deviceId:'vpn-r2',name:'GigabitEthernet0/1',mode:'routed',role:'lan',l3Ip:'10.20.0.1',l3Cidr:'10.20.0.0/24'}
+  ],
+  wanCircuits:[
+    {id:'vpn-c1',name:'HQ Internet',deviceId:'vpn-r1',portId:'vpn-r1-wan',provider:'ISP-A',role:'primary',enabled:true,bandwidthDownMbps:500,bandwidthUpMbps:200},
+    {id:'vpn-c2',name:'Branch Internet',deviceId:'vpn-r2',portId:'vpn-r2-wan',provider:'ISP-B',role:'primary',enabled:true,bandwidthDownMbps:300,bandwidthUpMbps:100}
+  ],
+  vlans:[],
+  subnets:[
+    {id:'vpn-s1',cidr:'10.10.0.0/24',gateway:'10.10.0.1',gatewayDeviceRef:'vpn-r1'},
+    {id:'vpn-s2',cidr:'10.20.0.0/24',gateway:'10.20.0.1',gatewayDeviceRef:'vpn-r2'}
+  ],
+  hosts:[],links:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},
+  routing:{
+    strategy:'static',
+    siteToSiteVpns:[{
+      id:'vpn-hq-branch',name:'HQ-BRANCH',enabled:true,
+      localDeviceId:'vpn-r1',remoteDeviceId:'vpn-r2',
+      localCircuitRef:'vpn-c1',remoteCircuitRef:'vpn-c2',
+      localPrefixes:['10.10.0.0/24'],remotePrefixes:['10.20.0.0/24'],
+      secretAlias:'VPN_HQ_BRANCH_PSK',ikeVersion:'2',encryption:'aes256',integrity:'sha256',
+      dhGroup:14,pfsGroup:14,ikeLifetimeSeconds:28800,ipsecLifetimeSeconds:3600
+    }]
+  },
+  management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
+};
+const vpnResult=Engine.generateAll(vpnProject);
+assert.strictEqual(vpnResult.ok,true);
+for(const id of ['vpn-r1','vpn-r2']){
+  assert.strictEqual(vpnResult.configReadiness[id].status,'review-required');
+  assert.ok(vpnResult.configReadiness[id].reasons.some(x=>/alias de secretos/.test(x)));
+  assert.match(vpnResult.configs[id],/VPN site-to-site generada desde plan neutral/);
+  assert.match(vpnResult.configs[id],/\$\{SECRET:VPN_HQ_BRANCH_PSK\}/);
+  assert.strictEqual((vpnResult.configs[id].match(/^configure terminal$/gm)||[]).length,1);
+  assert.strictEqual((vpnResult.configs[id].match(/^end$/gm)||[]).length,1);
+  assert.strictEqual((vpnResult.configs[id].match(/^write memory$/gm)||[]).length,1);
+}
 
 const vtpProject=JSON.parse(JSON.stringify(project));
 vtpProject.devices=[JSON.parse(JSON.stringify(project.devices.find(x=>x.id==='sw1')))];
