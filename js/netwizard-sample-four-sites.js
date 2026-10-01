@@ -14,7 +14,7 @@ function emptyProject(){return{
  _schemaVersion:'3.50.0',step:'dash',projName:'Empresa 4 sedes - golden production VLSM',
  devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},vlanMatrix:{},wanCircuits:[],
  security:{bpdu:'yes',ps:'yes',ds:'yes',dsV:'999',dai:'yes',ipsg:'yes',qV:'999'},roas:{},
- vtp:{domain:'CORP-GLOBAL',password:'',version:'3',pruning:'yes',roles:{}},topo:{pos:{}},
+ vtp:{domain:'CORP-GLOBAL',password:'',version:'3',pruning:'yes',roles:{}},observedState:{observedAt:'2026-10-01T00:00:00.000Z',vtpDevices:{}},topo:{pos:{}},
  physicalLocations:[],hostPhysicalLocations:[],uiSort:{},racks:[],rackItems:[],patchPanels:[],
  telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],pdus:[],powerConnections:[],
  iot:{accessNodes:[],devices:[],map:{show:{network:true,port:false,access:true,iot:true,wifi:true,lora:true,zigbee:true,thread:true,mqtt:true},scale:1,panX:0,panY:0}},
@@ -109,7 +109,10 @@ function addSite(p,s){
   {id:`${s.id}_pwr_voice_a`,deviceId:voiceSrv,powerSupplyIndex:0,pduId:pduA,outlet:3,feed:'A'},{id:`${s.id}_pwr_voice_b`,deviceId:voiceSrv,powerSupplyIndex:1,pduId:pduB,outlet:2,feed:'B'},
   {id:`${s.id}_pwr_inet_a`,deviceId:inetSrv,powerSupplyIndex:0,pduId:pduA,outlet:4,feed:'A'},{id:`${s.id}_pwr_inet_b`,deviceId:inetSrv,powerSupplyIndex:1,pduId:pduB,outlet:3,feed:'B'}
  );
- p.vtp.roles[core]='server';p.vtp.roles[access]='client';
+ p.vtp.roles[core]='transparent';p.vtp.roles[access]='transparent';
+ const observedAt=p.observedState.observedAt;
+ p.observedState.vtpDevices[core]={domain:p.vtp.domain,version:p.vtp.version,mode:'transparent',revision:0,primary:false,primaryId:'',primaryConflict:false,digestErrors:0,revisionErrors:0,observedAt};
+ p.observedState.vtpDevices[access]={domain:p.vtp.domain,version:p.vtp.version,mode:'transparent',revision:0,primary:false,primaryId:'',primaryConflict:false,digestErrors:0,revisionErrors:0,observedAt};
 }
 function buildProject(){const p=emptyProject();p.fwRules=[
  {id:'fw_dns',name:'Permitir DNS corporativo',src:'10.64.0.0/16',dst:'any',proto:'udp',port:'53',action:'allow',dir:'out',prio:10,reviewed:true,source:'manual'},
@@ -122,7 +125,7 @@ function json(pretty){return JSON.stringify(buildPayload(),null,pretty===false?0
 function download(){if(!root.document)return null;const blob=new Blob([json(true)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=root.document.createElement('a');a.href=url;a.download='netwizard-empresa-4-sedes-production.json';root.document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);return true;}
 function loadIntoProject(){if(!root.NetWizardState)return false;root.NetWizardState.replaceProject(buildProject(),{source:'sample-four-sites'});return true;}
 function inject(){if(!root.document||root.document.getElementById('btnFourSitesSample'))return;const anchor=root.document.getElementById('impJsonFile')||root.document.getElementById('impJson');if(!anchor)return;const load=root.document.createElement('button');load.id='btnFourSitesSample';load.type='button';load.className='btn bs';load.textContent='🏢 Cargar ejemplo 4 sedes';load.onclick=()=>{if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el ejemplo completo de cuatro sedes?'))return;loadIntoProject();};const dl=root.document.createElement('button');dl.id='btnFourSitesSampleDownload';dl.type='button';dl.className='btn bs';dl.textContent='⬇ JSON 4 sedes';dl.onclick=download;anchor.insertAdjacentElement('afterend',dl);anchor.insertAdjacentElement('afterend',load);}
-const api={version:'netwizard-four-sites-sample-v2',siteDefs:clone(siteDefs),buildProject,buildPayload,json,download,loadIntoProject,inject};
+const api={version:'netwizard-four-sites-sample-v3',siteDefs:clone(siteDefs),buildProject,buildPayload,json,download,loadIntoProject,inject};
 root.NetWizardFourSitesSample=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));else setTimeout(inject,0);}
 })(typeof window!=='undefined'?window:globalThis);

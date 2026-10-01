@@ -37,7 +37,7 @@ Actualizar/crear un ejemplo de referencia que pueda completar todo el flujo:
 
 Design → Validation → Private Engine → Production Gate LISTO.
 
-El ejemplo debe evitar warnings artificiales y documentar qué evidencia observada se supone validada.
+El ejemplo debe evitar warnings artificiales y documentar qué evidencia observada se supone validada. Mientras todavía no exista transporte L3 inter-sede canónico, las VLANs permanecen locales por sede y el sample usa VTP transparent con evidencia observada coherente; no simula un dominio L2 extendido entre sedes.
 
 ## Fase 1 — Fundamentos de conectividad inter-sede
 
