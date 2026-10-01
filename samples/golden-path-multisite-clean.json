@@ -1,0 +1,3780 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-01T20:05:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path Multisede Seguro · 4 sedes",
+    "devices": [
+      {
+        "id": "hq_rtr",
+        "name": "RTR-HQ-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "ISR 4331",
+        "modelSource": "manual",
+        "locationId": "room_hq",
+        "physicalLocation": "CPD Central",
+        "mgmtIp": "10.10.60.1",
+        "powerDrawWatts": 120
+      },
+      {
+        "id": "hq_core",
+        "name": "SW-CORE-HQ-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300",
+        "modelSource": "manual",
+        "locationId": "room_hq",
+        "physicalLocation": "CPD Central",
+        "mgmtIp": "10.10.60.10",
+        "powerDrawWatts": 110
+      },
+      {
+        "id": "hq_access",
+        "name": "SW-ACCESS-HQ-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9200L 48P PoE+",
+        "modelSource": "manual",
+        "locationId": "room_hq",
+        "physicalLocation": "CPD Central",
+        "mgmtIp": "10.10.60.11",
+        "powerDrawWatts": 95,
+        "poeBudgetW": 740
+      },
+      {
+        "id": "north_rtr",
+        "name": "RTR-N-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "ISR 4331",
+        "modelSource": "manual",
+        "locationId": "room_north",
+        "physicalLocation": "CPD Norte",
+        "mgmtIp": "10.20.60.1",
+        "powerDrawWatts": 120
+      },
+      {
+        "id": "north_core",
+        "name": "SW-CORE-N-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300",
+        "modelSource": "manual",
+        "locationId": "room_north",
+        "physicalLocation": "CPD Norte",
+        "mgmtIp": "10.20.60.10",
+        "powerDrawWatts": 110
+      },
+      {
+        "id": "north_access",
+        "name": "SW-ACCESS-N-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9200L 48P PoE+",
+        "modelSource": "manual",
+        "locationId": "room_north",
+        "physicalLocation": "CPD Norte",
+        "mgmtIp": "10.20.60.11",
+        "powerDrawWatts": 95,
+        "poeBudgetW": 740
+      },
+      {
+        "id": "east_rtr",
+        "name": "RTR-E-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "ISR 4331",
+        "modelSource": "manual",
+        "locationId": "room_east",
+        "physicalLocation": "CPD Levante",
+        "mgmtIp": "10.30.60.1",
+        "powerDrawWatts": 120
+      },
+      {
+        "id": "east_core",
+        "name": "SW-CORE-E-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300",
+        "modelSource": "manual",
+        "locationId": "room_east",
+        "physicalLocation": "CPD Levante",
+        "mgmtIp": "10.30.60.10",
+        "powerDrawWatts": 110
+      },
+      {
+        "id": "east_access",
+        "name": "SW-ACCESS-E-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9200L 48P PoE+",
+        "modelSource": "manual",
+        "locationId": "room_east",
+        "physicalLocation": "CPD Levante",
+        "mgmtIp": "10.30.60.11",
+        "powerDrawWatts": 95,
+        "poeBudgetW": 740
+      },
+      {
+        "id": "south_rtr",
+        "name": "RTR-S-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "ISR 4331",
+        "modelSource": "manual",
+        "locationId": "room_south",
+        "physicalLocation": "CPD Sur",
+        "mgmtIp": "10.40.60.1",
+        "powerDrawWatts": 120
+      },
+      {
+        "id": "south_core",
+        "name": "SW-CORE-S-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300",
+        "modelSource": "manual",
+        "locationId": "room_south",
+        "physicalLocation": "CPD Sur",
+        "mgmtIp": "10.40.60.10",
+        "powerDrawWatts": 110
+      },
+      {
+        "id": "south_access",
+        "name": "SW-ACCESS-S-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9200L 48P PoE+",
+        "modelSource": "manual",
+        "locationId": "room_south",
+        "physicalLocation": "CPD Sur",
+        "mgmtIp": "10.40.60.11",
+        "powerDrawWatts": 95,
+        "poeBudgetW": 740
+      }
+    ],
+    "ports": [
+      {
+        "id": "hq_lan",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "LAN trunk HQ"
+      },
+      {
+        "id": "hq_loop0",
+        "deviceId": "hq_rtr",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.1",
+        "l3Cidr": "10.255.255.1/32",
+        "desc": "OSPF router-id"
+      },
+      {
+        "id": "hq_core_rtr",
+        "deviceId": "hq_core",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-HQ-01"
+      },
+      {
+        "id": "hq_core_acc_1",
+        "deviceId": "hq_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "hq_acc_core_1",
+        "deviceId": "hq_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "hq_core_acc_2",
+        "deviceId": "hq_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "hq_acc_core_2",
+        "deviceId": "hq_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "hq_acc_user",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v110",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "USER-HQ-01"
+      },
+      {
+        "id": "hq_acc_server",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SRV-HQ-01"
+      },
+      {
+        "id": "hq_acc_phone",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v130",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "PHONE-HQ-01"
+      },
+      {
+        "id": "hq_acc_camera",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "CAM-HQ-01"
+      },
+      {
+        "id": "hq_acc_guest",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v150",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "GUEST-HQ-01"
+      },
+      {
+        "id": "hq_acc_ap1",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "hq_v160",
+        "allowedVlans": [
+          110,
+          150,
+          160
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 1"
+      },
+      {
+        "id": "hq_acc_ap2",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "hq_v160",
+        "allowedVlans": [
+          110,
+          150,
+          160
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 2"
+      },
+      {
+        "id": "north_lan",
+        "deviceId": "north_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "LAN trunk N"
+      },
+      {
+        "id": "north_loop0",
+        "deviceId": "north_rtr",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.2",
+        "l3Cidr": "10.255.255.2/32",
+        "desc": "OSPF router-id"
+      },
+      {
+        "id": "north_core_rtr",
+        "deviceId": "north_core",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-N-01"
+      },
+      {
+        "id": "north_core_acc_1",
+        "deviceId": "north_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-N-01"
+      },
+      {
+        "id": "north_acc_core_1",
+        "deviceId": "north_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-N-01"
+      },
+      {
+        "id": "north_core_acc_2",
+        "deviceId": "north_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-N-01"
+      },
+      {
+        "id": "north_acc_core_2",
+        "deviceId": "north_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "north_v299",
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-N-01"
+      },
+      {
+        "id": "north_acc_user",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v210",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "USER-N-01"
+      },
+      {
+        "id": "north_acc_server",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v220",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SRV-N-01"
+      },
+      {
+        "id": "north_acc_phone",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v230",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "PHONE-N-01"
+      },
+      {
+        "id": "north_acc_camera",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v240",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "CAM-N-01"
+      },
+      {
+        "id": "north_acc_guest",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v250",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "GUEST-N-01"
+      },
+      {
+        "id": "north_acc_ap1",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "north_v260",
+        "allowedVlans": [
+          210,
+          250,
+          260
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 1"
+      },
+      {
+        "id": "north_acc_ap2",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "north_v260",
+        "allowedVlans": [
+          210,
+          250,
+          260
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 2"
+      },
+      {
+        "id": "east_lan",
+        "deviceId": "east_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "LAN trunk E"
+      },
+      {
+        "id": "east_loop0",
+        "deviceId": "east_rtr",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.3",
+        "l3Cidr": "10.255.255.3/32",
+        "desc": "OSPF router-id"
+      },
+      {
+        "id": "east_core_rtr",
+        "deviceId": "east_core",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-E-01"
+      },
+      {
+        "id": "east_core_acc_1",
+        "deviceId": "east_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-E-01"
+      },
+      {
+        "id": "east_acc_core_1",
+        "deviceId": "east_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-E-01"
+      },
+      {
+        "id": "east_core_acc_2",
+        "deviceId": "east_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-E-01"
+      },
+      {
+        "id": "east_acc_core_2",
+        "deviceId": "east_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "east_v399",
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-E-01"
+      },
+      {
+        "id": "east_acc_user",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v310",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "USER-E-01"
+      },
+      {
+        "id": "east_acc_server",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v320",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SRV-E-01"
+      },
+      {
+        "id": "east_acc_phone",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v330",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "PHONE-E-01"
+      },
+      {
+        "id": "east_acc_camera",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v340",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "CAM-E-01"
+      },
+      {
+        "id": "east_acc_guest",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v350",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "GUEST-E-01"
+      },
+      {
+        "id": "east_acc_ap1",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "east_v360",
+        "allowedVlans": [
+          310,
+          350,
+          360
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 1"
+      },
+      {
+        "id": "east_acc_ap2",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "east_v360",
+        "allowedVlans": [
+          310,
+          350,
+          360
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 2"
+      },
+      {
+        "id": "south_lan",
+        "deviceId": "south_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "LAN trunk S"
+      },
+      {
+        "id": "south_loop0",
+        "deviceId": "south_rtr",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.4",
+        "l3Cidr": "10.255.255.4/32",
+        "desc": "OSPF router-id"
+      },
+      {
+        "id": "south_core_rtr",
+        "deviceId": "south_core",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-S-01"
+      },
+      {
+        "id": "south_core_acc_1",
+        "deviceId": "south_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-S-01"
+      },
+      {
+        "id": "south_acc_core_1",
+        "deviceId": "south_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-S-01"
+      },
+      {
+        "id": "south_core_acc_2",
+        "deviceId": "south_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-S-01"
+      },
+      {
+        "id": "south_acc_core_2",
+        "deviceId": "south_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "south_v499",
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-S-01"
+      },
+      {
+        "id": "south_acc_user",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v410",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "USER-S-01"
+      },
+      {
+        "id": "south_acc_server",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v420",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SRV-S-01"
+      },
+      {
+        "id": "south_acc_phone",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v430",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "PHONE-S-01"
+      },
+      {
+        "id": "south_acc_camera",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v440",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "CAM-S-01"
+      },
+      {
+        "id": "south_acc_guest",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v450",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "GUEST-S-01"
+      },
+      {
+        "id": "south_acc_ap1",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "south_v460",
+        "allowedVlans": [
+          410,
+          450,
+          460
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 1"
+      },
+      {
+        "id": "south_acc_ap2",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "south_v460",
+        "allowedVlans": [
+          410,
+          450,
+          460
+        ],
+        "uplink": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 2"
+      },
+      {
+        "id": "hq_north_a",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.1",
+        "l3Cidr": "10.255.0.0/30",
+        "desc": "WAN privada a north"
+      },
+      {
+        "id": "hq_north_b",
+        "deviceId": "north_rtr",
+        "name": "GigabitEthernet0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.2",
+        "l3Cidr": "10.255.0.0/30",
+        "desc": "WAN privada a hq"
+      },
+      {
+        "id": "north_east_a",
+        "deviceId": "north_rtr",
+        "name": "GigabitEthernet0/3",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.5",
+        "l3Cidr": "10.255.0.4/30",
+        "desc": "WAN privada a east"
+      },
+      {
+        "id": "north_east_b",
+        "deviceId": "east_rtr",
+        "name": "GigabitEthernet0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.6",
+        "l3Cidr": "10.255.0.4/30",
+        "desc": "WAN privada a north"
+      },
+      {
+        "id": "east_south_a",
+        "deviceId": "east_rtr",
+        "name": "GigabitEthernet0/3",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.9",
+        "l3Cidr": "10.255.0.8/30",
+        "desc": "WAN privada a south"
+      },
+      {
+        "id": "east_south_b",
+        "deviceId": "south_rtr",
+        "name": "GigabitEthernet0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.10",
+        "l3Cidr": "10.255.0.8/30",
+        "desc": "WAN privada a east"
+      },
+      {
+        "id": "south_hq_a",
+        "deviceId": "south_rtr",
+        "name": "GigabitEthernet0/3",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.13",
+        "l3Cidr": "10.255.0.12/30",
+        "desc": "WAN privada a hq"
+      },
+      {
+        "id": "south_hq_b",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/3",
+        "mode": "routed",
+        "role": "transit",
+        "media": "fiber",
+        "transceiver": "SFP-1G-LX",
+        "speedMaxMbps": 1000,
+        "l3Ip": "10.255.0.14",
+        "l3Cidr": "10.255.0.12/30",
+        "desc": "WAN privada a south"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "hq_v110",
+        "vlanId": 110,
+        "name": "HQ-Usuarios",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v120",
+        "vlanId": 120,
+        "name": "HQ-Servicios",
+        "intent": {
+          "type": "servers",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "hq_v130",
+        "vlanId": 130,
+        "name": "HQ-Voz",
+        "intent": {
+          "type": "voice",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v140",
+        "vlanId": 140,
+        "name": "HQ-Camaras",
+        "intent": {
+          "type": "cameras",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v150",
+        "vlanId": 150,
+        "name": "HQ-Invitados",
+        "intent": {
+          "type": "guests",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "hq_v160",
+        "vlanId": 160,
+        "name": "HQ-Gestion",
+        "intent": {
+          "type": "management",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "hq_v199",
+        "vlanId": 199,
+        "name": "HQ-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "north_v210",
+        "vlanId": 210,
+        "name": "N-Usuarios",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "north_v220",
+        "vlanId": 220,
+        "name": "N-Servicios",
+        "intent": {
+          "type": "servers",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "north_v230",
+        "vlanId": 230,
+        "name": "N-Voz",
+        "intent": {
+          "type": "voice",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "north_v240",
+        "vlanId": 240,
+        "name": "N-Camaras",
+        "intent": {
+          "type": "cameras",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "north_v250",
+        "vlanId": 250,
+        "name": "N-Invitados",
+        "intent": {
+          "type": "guests",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "north_v260",
+        "vlanId": 260,
+        "name": "N-Gestion",
+        "intent": {
+          "type": "management",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "north_v299",
+        "vlanId": 299,
+        "name": "N-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "east_v310",
+        "vlanId": 310,
+        "name": "E-Usuarios",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "east_v320",
+        "vlanId": 320,
+        "name": "E-Servicios",
+        "intent": {
+          "type": "servers",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "east_v330",
+        "vlanId": 330,
+        "name": "E-Voz",
+        "intent": {
+          "type": "voice",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "east_v340",
+        "vlanId": 340,
+        "name": "E-Camaras",
+        "intent": {
+          "type": "cameras",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "east_v350",
+        "vlanId": 350,
+        "name": "E-Invitados",
+        "intent": {
+          "type": "guests",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "east_v360",
+        "vlanId": 360,
+        "name": "E-Gestion",
+        "intent": {
+          "type": "management",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "east_v399",
+        "vlanId": 399,
+        "name": "E-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "south_v410",
+        "vlanId": 410,
+        "name": "S-Usuarios",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "south_v420",
+        "vlanId": 420,
+        "name": "S-Servicios",
+        "intent": {
+          "type": "servers",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "south_v430",
+        "vlanId": 430,
+        "name": "S-Voz",
+        "intent": {
+          "type": "voice",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "south_v440",
+        "vlanId": 440,
+        "name": "S-Camaras",
+        "intent": {
+          "type": "cameras",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "south_v450",
+        "vlanId": 450,
+        "name": "S-Invitados",
+        "intent": {
+          "type": "guests",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "south_v460",
+        "vlanId": 460,
+        "name": "S-Gestion",
+        "intent": {
+          "type": "management",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "south_v499",
+        "vlanId": 499,
+        "name": "S-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "hq_sn_users",
+        "vlanRef": "hq_v110",
+        "cidr": "10.10.10.0/24",
+        "gateway": "10.10.10.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_servers",
+        "vlanRef": "hq_v120",
+        "cidr": "10.10.20.0/24",
+        "gateway": "10.10.20.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_voice",
+        "vlanRef": "hq_v130",
+        "cidr": "10.10.30.0/24",
+        "gateway": "10.10.30.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_cameras",
+        "vlanRef": "hq_v140",
+        "cidr": "10.10.40.0/24",
+        "gateway": "10.10.40.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_guest",
+        "vlanRef": "hq_v150",
+        "cidr": "10.10.50.0/24",
+        "gateway": "10.10.50.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_mgmt",
+        "vlanRef": "hq_v160",
+        "cidr": "10.10.60.0/24",
+        "gateway": "10.10.60.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "north_sn_users",
+        "vlanRef": "north_v210",
+        "cidr": "10.20.10.0/24",
+        "gateway": "10.20.10.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "north_sn_servers",
+        "vlanRef": "north_v220",
+        "cidr": "10.20.20.0/24",
+        "gateway": "10.20.20.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "north_sn_voice",
+        "vlanRef": "north_v230",
+        "cidr": "10.20.30.0/24",
+        "gateway": "10.20.30.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "north_sn_cameras",
+        "vlanRef": "north_v240",
+        "cidr": "10.20.40.0/24",
+        "gateway": "10.20.40.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "north_sn_guest",
+        "vlanRef": "north_v250",
+        "cidr": "10.20.50.0/24",
+        "gateway": "10.20.50.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "north_sn_mgmt",
+        "vlanRef": "north_v260",
+        "cidr": "10.20.60.0/24",
+        "gateway": "10.20.60.1",
+        "gatewayDeviceRef": "north_rtr"
+      },
+      {
+        "id": "east_sn_users",
+        "vlanRef": "east_v310",
+        "cidr": "10.30.10.0/24",
+        "gateway": "10.30.10.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "east_sn_servers",
+        "vlanRef": "east_v320",
+        "cidr": "10.30.20.0/24",
+        "gateway": "10.30.20.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "east_sn_voice",
+        "vlanRef": "east_v330",
+        "cidr": "10.30.30.0/24",
+        "gateway": "10.30.30.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "east_sn_cameras",
+        "vlanRef": "east_v340",
+        "cidr": "10.30.40.0/24",
+        "gateway": "10.30.40.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "east_sn_guest",
+        "vlanRef": "east_v350",
+        "cidr": "10.30.50.0/24",
+        "gateway": "10.30.50.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "east_sn_mgmt",
+        "vlanRef": "east_v360",
+        "cidr": "10.30.60.0/24",
+        "gateway": "10.30.60.1",
+        "gatewayDeviceRef": "east_rtr"
+      },
+      {
+        "id": "south_sn_users",
+        "vlanRef": "south_v410",
+        "cidr": "10.40.10.0/24",
+        "gateway": "10.40.10.1",
+        "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "south_sn_servers",
+        "vlanRef": "south_v420",
+        "cidr": "10.40.20.0/24",
+        "gateway": "10.40.20.1",
+        "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "south_sn_voice",
+        "vlanRef": "south_v430",
+        "cidr": "10.40.30.0/24",
+        "gateway": "10.40.30.1",
+        "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "south_sn_cameras",
+        "vlanRef": "south_v440",
+        "cidr": "10.40.40.0/24",
+        "gateway": "10.40.40.1",
+        "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "south_sn_guest",
+        "vlanRef": "south_v450",
+        "cidr": "10.40.50.0/24",
+        "gateway": "10.40.50.1",
+        "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "south_sn_mgmt",
+        "vlanRef": "south_v460",
+        "cidr": "10.40.60.0/24",
+        "gateway": "10.40.60.1",
+        "gatewayDeviceRef": "south_rtr"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "hq_user",
+        "name": "USER-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v110",
+        "portRef": "hq_acc_user",
+        "ipMode": "static",
+        "staticIp": "10.10.10.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central"
+      },
+      {
+        "id": "hq_server",
+        "name": "SRV-HQ-01",
+        "type": "server",
+        "vlanRef": "hq_v120",
+        "portRef": "hq_acc_server",
+        "ipMode": "static",
+        "staticIp": "10.10.20.10",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central"
+      },
+      {
+        "id": "hq_phone",
+        "name": "PHONE-HQ-01",
+        "type": "phone",
+        "vlanRef": "hq_v130",
+        "portRef": "hq_acc_phone",
+        "ipMode": "static",
+        "staticIp": "10.10.30.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "hq_camera",
+        "name": "CAM-HQ-01",
+        "type": "camera",
+        "vlanRef": "hq_v140",
+        "portRef": "hq_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.10.40.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "hq_guest",
+        "name": "GUEST-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v150",
+        "portRef": "hq_acc_guest",
+        "ipMode": "static",
+        "staticIp": "10.10.50.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central"
+      },
+      {
+        "id": "north_user",
+        "name": "USER-N-01",
+        "type": "pc",
+        "vlanRef": "north_v210",
+        "portRef": "north_acc_user",
+        "ipMode": "static",
+        "staticIp": "10.20.10.20",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte"
+      },
+      {
+        "id": "north_server",
+        "name": "SRV-N-01",
+        "type": "server",
+        "vlanRef": "north_v220",
+        "portRef": "north_acc_server",
+        "ipMode": "static",
+        "staticIp": "10.20.20.10",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte"
+      },
+      {
+        "id": "north_phone",
+        "name": "PHONE-N-01",
+        "type": "phone",
+        "vlanRef": "north_v230",
+        "portRef": "north_acc_phone",
+        "ipMode": "static",
+        "staticIp": "10.20.30.20",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "north_camera",
+        "name": "CAM-N-01",
+        "type": "camera",
+        "vlanRef": "north_v240",
+        "portRef": "north_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.20.40.20",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "north_guest",
+        "name": "GUEST-N-01",
+        "type": "pc",
+        "vlanRef": "north_v250",
+        "portRef": "north_acc_guest",
+        "ipMode": "static",
+        "staticIp": "10.20.50.20",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte"
+      },
+      {
+        "id": "east_user",
+        "name": "USER-E-01",
+        "type": "pc",
+        "vlanRef": "east_v310",
+        "portRef": "east_acc_user",
+        "ipMode": "static",
+        "staticIp": "10.30.10.20",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante"
+      },
+      {
+        "id": "east_server",
+        "name": "SRV-E-01",
+        "type": "server",
+        "vlanRef": "east_v320",
+        "portRef": "east_acc_server",
+        "ipMode": "static",
+        "staticIp": "10.30.20.10",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante"
+      },
+      {
+        "id": "east_phone",
+        "name": "PHONE-E-01",
+        "type": "phone",
+        "vlanRef": "east_v330",
+        "portRef": "east_acc_phone",
+        "ipMode": "static",
+        "staticIp": "10.30.30.20",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "east_camera",
+        "name": "CAM-E-01",
+        "type": "camera",
+        "vlanRef": "east_v340",
+        "portRef": "east_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.30.40.20",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "east_guest",
+        "name": "GUEST-E-01",
+        "type": "pc",
+        "vlanRef": "east_v350",
+        "portRef": "east_acc_guest",
+        "ipMode": "static",
+        "staticIp": "10.30.50.20",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante"
+      },
+      {
+        "id": "south_user",
+        "name": "USER-S-01",
+        "type": "pc",
+        "vlanRef": "south_v410",
+        "portRef": "south_acc_user",
+        "ipMode": "static",
+        "staticIp": "10.40.10.20",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur"
+      },
+      {
+        "id": "south_server",
+        "name": "SRV-S-01",
+        "type": "server",
+        "vlanRef": "south_v420",
+        "portRef": "south_acc_server",
+        "ipMode": "static",
+        "staticIp": "10.40.20.10",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur"
+      },
+      {
+        "id": "south_phone",
+        "name": "PHONE-S-01",
+        "type": "phone",
+        "vlanRef": "south_v430",
+        "portRef": "south_acc_phone",
+        "ipMode": "static",
+        "staticIp": "10.40.30.20",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "south_camera",
+        "name": "CAM-S-01",
+        "type": "camera",
+        "vlanRef": "south_v440",
+        "portRef": "south_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.40.40.20",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "south_guest",
+        "name": "GUEST-S-01",
+        "type": "pc",
+        "vlanRef": "south_v450",
+        "portRef": "south_acc_guest",
+        "ipMode": "static",
+        "staticIp": "10.40.50.20",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur"
+      }
+    ],
+    "links": [
+      {
+        "id": "hq_link_rtr_core",
+        "name": "HQ router-core",
+        "aPortId": "hq_lan",
+        "bPortId": "hq_core_rtr",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "hq_lag_link_1",
+        "name": "HQ LAG member 1",
+        "aPortId": "hq_core_acc_1",
+        "bPortId": "hq_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "hq_lag_link_2",
+        "name": "HQ LAG member 2",
+        "aPortId": "hq_core_acc_2",
+        "bPortId": "hq_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "north_link_rtr_core",
+        "name": "N router-core",
+        "aPortId": "north_lan",
+        "bPortId": "north_core_rtr",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "north_lag_link_1",
+        "name": "N LAG member 1",
+        "aPortId": "north_core_acc_1",
+        "bPortId": "north_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "north_lag_link_2",
+        "name": "N LAG member 2",
+        "aPortId": "north_core_acc_2",
+        "bPortId": "north_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "east_link_rtr_core",
+        "name": "E router-core",
+        "aPortId": "east_lan",
+        "bPortId": "east_core_rtr",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "east_lag_link_1",
+        "name": "E LAG member 1",
+        "aPortId": "east_core_acc_1",
+        "bPortId": "east_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "east_lag_link_2",
+        "name": "E LAG member 2",
+        "aPortId": "east_core_acc_2",
+        "bPortId": "east_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "south_link_rtr_core",
+        "name": "S router-core",
+        "aPortId": "south_lan",
+        "bPortId": "south_core_rtr",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "south_lag_link_1",
+        "name": "S LAG member 1",
+        "aPortId": "south_core_acc_1",
+        "bPortId": "south_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "south_lag_link_2",
+        "name": "S LAG member 2",
+        "aPortId": "south_core_acc_2",
+        "bPortId": "south_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "link_hq_north",
+        "name": "Transito HQ ↔ NORTH",
+        "aPortId": "hq_north_a",
+        "bPortId": "hq_north_b",
+        "medium": "fiber",
+        "cableType": "os2",
+        "lengthM": 1000,
+        "speed": "1G",
+        "capacityMbps": 1000,
+        "physicalPath": "Red privada del operador"
+      },
+      {
+        "id": "link_north_east",
+        "name": "Transito NORTH ↔ EAST",
+        "aPortId": "north_east_a",
+        "bPortId": "north_east_b",
+        "medium": "fiber",
+        "cableType": "os2",
+        "lengthM": 1000,
+        "speed": "1G",
+        "capacityMbps": 1000,
+        "physicalPath": "Red privada del operador"
+      },
+      {
+        "id": "link_east_south",
+        "name": "Transito EAST ↔ SOUTH",
+        "aPortId": "east_south_a",
+        "bPortId": "east_south_b",
+        "medium": "fiber",
+        "cableType": "os2",
+        "lengthM": 1000,
+        "speed": "1G",
+        "capacityMbps": 1000,
+        "physicalPath": "Red privada del operador"
+      },
+      {
+        "id": "link_south_hq",
+        "name": "Transito SOUTH ↔ HQ",
+        "aPortId": "south_hq_a",
+        "bPortId": "south_hq_b",
+        "medium": "fiber",
+        "cableType": "os2",
+        "lengthM": 1000,
+        "speed": "1G",
+        "capacityMbps": 1000,
+        "physicalPath": "Red privada del operador"
+      }
+    ],
+    "fwRules": [],
+    "dhcp": {
+      "110": {
+        "enabled": true,
+        "start": "10.10.10.50",
+        "end": "10.10.10.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "130": {
+        "enabled": true,
+        "start": "10.10.30.50",
+        "end": "10.10.30.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "140": {
+        "enabled": true,
+        "start": "10.10.40.50",
+        "end": "10.10.40.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "150": {
+        "enabled": true,
+        "start": "10.10.50.50",
+        "end": "10.10.50.199",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "guest.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "210": {
+        "enabled": true,
+        "start": "10.20.10.50",
+        "end": "10.20.10.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "230": {
+        "enabled": true,
+        "start": "10.20.30.50",
+        "end": "10.20.30.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "240": {
+        "enabled": true,
+        "start": "10.20.40.50",
+        "end": "10.20.40.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "250": {
+        "enabled": true,
+        "start": "10.20.50.50",
+        "end": "10.20.50.199",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "guest.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "310": {
+        "enabled": true,
+        "start": "10.30.10.50",
+        "end": "10.30.10.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "330": {
+        "enabled": true,
+        "start": "10.30.30.50",
+        "end": "10.30.30.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "340": {
+        "enabled": true,
+        "start": "10.30.40.50",
+        "end": "10.30.40.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "350": {
+        "enabled": true,
+        "start": "10.30.50.50",
+        "end": "10.30.50.199",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "guest.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "410": {
+        "enabled": true,
+        "start": "10.40.10.50",
+        "end": "10.40.10.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "430": {
+        "enabled": true,
+        "start": "10.40.30.50",
+        "end": "10.40.30.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "440": {
+        "enabled": true,
+        "start": "10.40.40.50",
+        "end": "10.40.40.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "450": {
+        "enabled": true,
+        "start": "10.40.50.50",
+        "end": "10.40.50.199",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "guest.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "vlanMatrix": {
+      "hq_v150_hq_v110": false,
+      "hq_v110_hq_v150": false,
+      "hq_v150_hq_v120": false,
+      "hq_v120_hq_v150": false,
+      "hq_v150_hq_v130": false,
+      "hq_v130_hq_v150": false,
+      "hq_v150_hq_v140": false,
+      "hq_v140_hq_v150": false,
+      "hq_v150_hq_v160": false,
+      "hq_v160_hq_v150": false,
+      "hq_v150_north_v210": false,
+      "north_v210_hq_v150": false,
+      "hq_v150_north_v220": false,
+      "north_v220_hq_v150": false,
+      "hq_v150_north_v230": false,
+      "north_v230_hq_v150": false,
+      "hq_v150_north_v240": false,
+      "north_v240_hq_v150": false,
+      "hq_v150_north_v260": false,
+      "north_v260_hq_v150": false,
+      "hq_v150_east_v310": false,
+      "east_v310_hq_v150": false,
+      "hq_v150_east_v320": false,
+      "east_v320_hq_v150": false,
+      "hq_v150_east_v330": false,
+      "east_v330_hq_v150": false,
+      "hq_v150_east_v340": false,
+      "east_v340_hq_v150": false,
+      "hq_v150_east_v360": false,
+      "east_v360_hq_v150": false,
+      "hq_v150_south_v410": false,
+      "south_v410_hq_v150": false,
+      "hq_v150_south_v420": false,
+      "south_v420_hq_v150": false,
+      "hq_v150_south_v430": false,
+      "south_v430_hq_v150": false,
+      "hq_v150_south_v440": false,
+      "south_v440_hq_v150": false,
+      "hq_v150_south_v460": false,
+      "south_v460_hq_v150": false,
+      "hq_v150_north_v250": false,
+      "north_v250_hq_v150": false,
+      "hq_v150_east_v350": false,
+      "east_v350_hq_v150": false,
+      "hq_v150_south_v450": false,
+      "south_v450_hq_v150": false,
+      "north_v250_hq_v110": false,
+      "hq_v110_north_v250": false,
+      "north_v250_hq_v120": false,
+      "hq_v120_north_v250": false,
+      "north_v250_hq_v130": false,
+      "hq_v130_north_v250": false,
+      "north_v250_hq_v140": false,
+      "hq_v140_north_v250": false,
+      "north_v250_hq_v160": false,
+      "hq_v160_north_v250": false,
+      "north_v250_north_v210": false,
+      "north_v210_north_v250": false,
+      "north_v250_north_v220": false,
+      "north_v220_north_v250": false,
+      "north_v250_north_v230": false,
+      "north_v230_north_v250": false,
+      "north_v250_north_v240": false,
+      "north_v240_north_v250": false,
+      "north_v250_north_v260": false,
+      "north_v260_north_v250": false,
+      "north_v250_east_v310": false,
+      "east_v310_north_v250": false,
+      "north_v250_east_v320": false,
+      "east_v320_north_v250": false,
+      "north_v250_east_v330": false,
+      "east_v330_north_v250": false,
+      "north_v250_east_v340": false,
+      "east_v340_north_v250": false,
+      "north_v250_east_v360": false,
+      "east_v360_north_v250": false,
+      "north_v250_south_v410": false,
+      "south_v410_north_v250": false,
+      "north_v250_south_v420": false,
+      "south_v420_north_v250": false,
+      "north_v250_south_v430": false,
+      "south_v430_north_v250": false,
+      "north_v250_south_v440": false,
+      "south_v440_north_v250": false,
+      "north_v250_south_v460": false,
+      "south_v460_north_v250": false,
+      "north_v250_east_v350": false,
+      "east_v350_north_v250": false,
+      "north_v250_south_v450": false,
+      "south_v450_north_v250": false,
+      "east_v350_hq_v110": false,
+      "hq_v110_east_v350": false,
+      "east_v350_hq_v120": false,
+      "hq_v120_east_v350": false,
+      "east_v350_hq_v130": false,
+      "hq_v130_east_v350": false,
+      "east_v350_hq_v140": false,
+      "hq_v140_east_v350": false,
+      "east_v350_hq_v160": false,
+      "hq_v160_east_v350": false,
+      "east_v350_north_v210": false,
+      "north_v210_east_v350": false,
+      "east_v350_north_v220": false,
+      "north_v220_east_v350": false,
+      "east_v350_north_v230": false,
+      "north_v230_east_v350": false,
+      "east_v350_north_v240": false,
+      "north_v240_east_v350": false,
+      "east_v350_north_v260": false,
+      "north_v260_east_v350": false,
+      "east_v350_east_v310": false,
+      "east_v310_east_v350": false,
+      "east_v350_east_v320": false,
+      "east_v320_east_v350": false,
+      "east_v350_east_v330": false,
+      "east_v330_east_v350": false,
+      "east_v350_east_v340": false,
+      "east_v340_east_v350": false,
+      "east_v350_east_v360": false,
+      "east_v360_east_v350": false,
+      "east_v350_south_v410": false,
+      "south_v410_east_v350": false,
+      "east_v350_south_v420": false,
+      "south_v420_east_v350": false,
+      "east_v350_south_v430": false,
+      "south_v430_east_v350": false,
+      "east_v350_south_v440": false,
+      "south_v440_east_v350": false,
+      "east_v350_south_v460": false,
+      "south_v460_east_v350": false,
+      "east_v350_south_v450": false,
+      "south_v450_east_v350": false,
+      "south_v450_hq_v110": false,
+      "hq_v110_south_v450": false,
+      "south_v450_hq_v120": false,
+      "hq_v120_south_v450": false,
+      "south_v450_hq_v130": false,
+      "hq_v130_south_v450": false,
+      "south_v450_hq_v140": false,
+      "hq_v140_south_v450": false,
+      "south_v450_hq_v160": false,
+      "hq_v160_south_v450": false,
+      "south_v450_north_v210": false,
+      "north_v210_south_v450": false,
+      "south_v450_north_v220": false,
+      "north_v220_south_v450": false,
+      "south_v450_north_v230": false,
+      "north_v230_south_v450": false,
+      "south_v450_north_v240": false,
+      "north_v240_south_v450": false,
+      "south_v450_north_v260": false,
+      "north_v260_south_v450": false,
+      "south_v450_east_v310": false,
+      "east_v310_south_v450": false,
+      "south_v450_east_v320": false,
+      "east_v320_south_v450": false,
+      "south_v450_east_v330": false,
+      "east_v330_south_v450": false,
+      "south_v450_east_v340": false,
+      "east_v340_south_v450": false,
+      "south_v450_east_v360": false,
+      "east_v360_south_v450": false,
+      "south_v450_south_v410": false,
+      "south_v410_south_v450": false,
+      "south_v450_south_v420": false,
+      "south_v420_south_v450": false,
+      "south_v450_south_v430": false,
+      "south_v430_south_v450": false,
+      "south_v450_south_v440": false,
+      "south_v440_south_v450": false,
+      "south_v450_south_v460": false,
+      "south_v460_south_v450": false,
+      "hq_v140_hq_v110": false,
+      "hq_v140_north_v210": false,
+      "hq_v140_east_v310": false,
+      "hq_v140_south_v410": false,
+      "hq_v140_hq_v130": false,
+      "hq_v140_north_v230": false,
+      "hq_v140_east_v330": false,
+      "hq_v140_south_v430": false,
+      "hq_v140_hq_v160": false,
+      "hq_v140_north_v260": false,
+      "hq_v140_east_v360": false,
+      "hq_v140_south_v460": false,
+      "north_v240_hq_v110": false,
+      "north_v240_north_v210": false,
+      "north_v240_east_v310": false,
+      "north_v240_south_v410": false,
+      "north_v240_hq_v130": false,
+      "north_v240_north_v230": false,
+      "north_v240_east_v330": false,
+      "north_v240_south_v430": false,
+      "north_v240_hq_v160": false,
+      "north_v240_north_v260": false,
+      "north_v240_east_v360": false,
+      "north_v240_south_v460": false,
+      "east_v340_hq_v110": false,
+      "east_v340_north_v210": false,
+      "east_v340_east_v310": false,
+      "east_v340_south_v410": false,
+      "east_v340_hq_v130": false,
+      "east_v340_north_v230": false,
+      "east_v340_east_v330": false,
+      "east_v340_south_v430": false,
+      "east_v340_hq_v160": false,
+      "east_v340_north_v260": false,
+      "east_v340_east_v360": false,
+      "east_v340_south_v460": false,
+      "south_v440_hq_v110": false,
+      "south_v440_north_v210": false,
+      "south_v440_east_v310": false,
+      "south_v440_south_v410": false,
+      "south_v440_hq_v130": false,
+      "south_v440_north_v230": false,
+      "south_v440_east_v330": false,
+      "south_v440_south_v430": false,
+      "south_v440_hq_v160": false,
+      "south_v440_north_v260": false,
+      "south_v440_east_v360": false,
+      "south_v440_south_v460": false,
+      "hq_v110_hq_v160": false,
+      "hq_v110_north_v260": false,
+      "hq_v110_east_v360": false,
+      "hq_v110_south_v460": false,
+      "north_v210_hq_v160": false,
+      "north_v210_north_v260": false,
+      "north_v210_east_v360": false,
+      "north_v210_south_v460": false,
+      "east_v310_hq_v160": false,
+      "east_v310_north_v260": false,
+      "east_v310_east_v360": false,
+      "east_v310_south_v460": false,
+      "south_v410_hq_v160": false,
+      "south_v410_north_v260": false,
+      "south_v410_east_v360": false,
+      "south_v410_south_v460": false,
+      "hq_v130_hq_v160": false,
+      "hq_v130_north_v260": false,
+      "hq_v130_east_v360": false,
+      "hq_v130_south_v460": false,
+      "north_v230_hq_v160": false,
+      "north_v230_north_v260": false,
+      "north_v230_east_v360": false,
+      "north_v230_south_v460": false,
+      "east_v330_hq_v160": false,
+      "east_v330_north_v260": false,
+      "east_v330_east_v360": false,
+      "east_v330_south_v460": false,
+      "south_v430_hq_v160": false,
+      "south_v430_north_v260": false,
+      "south_v430_east_v360": false,
+      "south_v430_south_v460": false,
+      "hq_v140_hq_v120": true,
+      "hq_v140_north_v220": true,
+      "hq_v140_east_v320": true,
+      "hq_v140_south_v420": true,
+      "north_v240_hq_v120": true,
+      "north_v240_north_v220": true,
+      "north_v240_east_v320": true,
+      "north_v240_south_v420": true,
+      "east_v340_hq_v120": true,
+      "east_v340_north_v220": true,
+      "east_v340_east_v320": true,
+      "east_v340_south_v420": true,
+      "south_v440_hq_v120": true,
+      "south_v440_north_v220": true,
+      "south_v440_east_v320": true,
+      "south_v440_south_v420": true
+    },
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "998",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "997"
+    },
+    "accessSecurity": {
+      "dhcpSnooping": true,
+      "arpInspection": true,
+      "portSecurity": true,
+      "maxMac": 2,
+      "violation": "restrict",
+      "sticky": true,
+      "dhcpRateLimit": 15
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-CORP",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "hq_core": "transparent",
+        "hq_access": "transparent",
+        "north_core": "transparent",
+        "north_access": "transparent",
+        "east_core": "transparent",
+        "east_access": "transparent",
+        "south_core": "transparent",
+        "south_access": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-01T20:00:00.000Z",
+      "vtpDevices": {
+        "hq_core": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "hq_access": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "north_core": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "north_access": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "east_core": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "east_access": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "south_core": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        },
+        "south_access": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-01T20:00:00.000Z"
+        }
+      },
+      "ospfNeighbors": {
+        "hq_rtr": [
+          {
+            "localPortId": "hq_north_a",
+            "peerDeviceId": "north_rtr",
+            "peerRouterId": "10.255.255.2",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          },
+          {
+            "localPortId": "south_hq_b",
+            "peerDeviceId": "south_rtr",
+            "peerRouterId": "10.255.255.4",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          }
+        ],
+        "north_rtr": [
+          {
+            "localPortId": "hq_north_b",
+            "peerDeviceId": "hq_rtr",
+            "peerRouterId": "10.255.255.1",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          },
+          {
+            "localPortId": "north_east_a",
+            "peerDeviceId": "east_rtr",
+            "peerRouterId": "10.255.255.3",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          }
+        ],
+        "east_rtr": [
+          {
+            "localPortId": "north_east_b",
+            "peerDeviceId": "north_rtr",
+            "peerRouterId": "10.255.255.2",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          },
+          {
+            "localPortId": "east_south_a",
+            "peerDeviceId": "south_rtr",
+            "peerRouterId": "10.255.255.4",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          }
+        ],
+        "south_rtr": [
+          {
+            "localPortId": "east_south_b",
+            "peerDeviceId": "east_rtr",
+            "peerRouterId": "10.255.255.3",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          },
+          {
+            "localPortId": "south_hq_a",
+            "peerDeviceId": "hq_rtr",
+            "peerRouterId": "10.255.255.1",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-01T20:00:00.000Z"
+          }
+        ]
+      }
+    },
+    "routing": {
+      "strategy": "ospf",
+      "protocol": "ospf",
+      "ospf": {
+        "processId": 10,
+        "defaultArea": "0",
+        "passiveDefault": true,
+        "devices": {
+          "hq_rtr": {
+            "processId": 10,
+            "routerId": "10.255.255.1",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "hq_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "hq_north_a": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "south_hq_b": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "north_rtr": {
+            "processId": 10,
+            "routerId": "10.255.255.2",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "north_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "hq_north_b": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "north_east_a": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "east_rtr": {
+            "processId": 10,
+            "routerId": "10.255.255.3",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "east_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "north_east_b": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "east_south_a": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "south_rtr": {
+            "processId": 10,
+            "routerId": "10.255.255.4",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "south_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "east_south_b": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "south_hq_a": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          }
+        }
+      }
+    },
+    "management": {
+      "domain": "corp.example",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.10.60.0/24",
+        "10.20.60.0/24",
+        "10.30.60.0/24",
+        "10.40.60.0/24"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.10.20.10",
+        "10.20.20.10"
+      ],
+      "ntpServers": [
+        "10.10.20.10",
+        "10.20.20.10"
+      ],
+      "dnsServers": [
+        "10.10.20.10",
+        "10.20.20.10"
+      ],
+      "banner": "Acceso exclusivo a personal autorizado. Actividad monitorizada.",
+      "backup": false
+    },
+    "wanCircuits": [],
+    "linkAggregations": [
+      {
+        "id": "hq_lag_core_access",
+        "name": "HQ Core-Access LACP",
+        "number": 1,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "hq_core_acc_1",
+          "hq_core_acc_2",
+          "hq_acc_core_1",
+          "hq_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 199,
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          199
+        ]
+      },
+      {
+        "id": "north_lag_core_access",
+        "name": "N Core-Access LACP",
+        "number": 2,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "north_core_acc_1",
+          "north_core_acc_2",
+          "north_acc_core_1",
+          "north_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 299,
+        "allowedVlans": [
+          210,
+          220,
+          230,
+          240,
+          250,
+          260,
+          299
+        ]
+      },
+      {
+        "id": "east_lag_core_access",
+        "name": "E Core-Access LACP",
+        "number": 3,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "east_core_acc_1",
+          "east_core_acc_2",
+          "east_acc_core_1",
+          "east_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 399,
+        "allowedVlans": [
+          310,
+          320,
+          330,
+          340,
+          350,
+          360,
+          399
+        ]
+      },
+      {
+        "id": "south_lag_core_access",
+        "name": "S Core-Access LACP",
+        "number": 4,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "south_core_acc_1",
+          "south_core_acc_2",
+          "south_acc_core_1",
+          "south_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 499,
+        "allowedVlans": [
+          410,
+          420,
+          430,
+          440,
+          450,
+          460,
+          499
+        ]
+      }
+    ],
+    "trafficProfiles": [
+      {
+        "id": "traffic_hq_north",
+        "name": "Carga hq-north",
+        "linkRef": "link_hq_north",
+        "averageMbps": 120,
+        "peakMbps": 300,
+        "criticalMbps": 180,
+        "latencyMaxMs": 40,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.3
+      },
+      {
+        "id": "traffic_north_east",
+        "name": "Carga north-east",
+        "linkRef": "link_north_east",
+        "averageMbps": 120,
+        "peakMbps": 300,
+        "criticalMbps": 180,
+        "latencyMaxMs": 40,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.3
+      },
+      {
+        "id": "traffic_east_south",
+        "name": "Carga east-south",
+        "linkRef": "link_east_south",
+        "averageMbps": 120,
+        "peakMbps": 300,
+        "criticalMbps": 180,
+        "latencyMaxMs": 40,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.3
+      },
+      {
+        "id": "traffic_south_hq",
+        "name": "Carga south-hq",
+        "linkRef": "link_south_hq",
+        "averageMbps": 120,
+        "peakMbps": 300,
+        "criticalMbps": 180,
+        "latencyMaxMs": 40,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.3
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS corporativo",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "dns-hq.corp.example"
+          },
+          {
+            "ip": "10.20.20.10",
+            "hostname": "dns-north.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "radius",
+        "name": "RADIUS 802.1X",
+        "type": "radius",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "radius-hq.corp.example"
+          },
+          {
+            "ip": "10.20.20.10",
+            "hostname": "radius-north.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP corporativo",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "ntp-hq.corp.example"
+          },
+          {
+            "ip": "10.20.20.10",
+            "hostname": "ntp-north.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Syslog central",
+        "type": "syslog",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "syslog-hq.corp.example"
+          },
+          {
+            "ip": "10.20.20.10",
+            "hostname": "syslog-north.corp.example"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [
+      {
+        "id": "wlc-a",
+        "name": "WLC Corporativo A",
+        "critical": true,
+        "peerControllerRefs": [
+          "wlc-b"
+        ]
+      },
+      {
+        "id": "wlc-b",
+        "name": "WLC Corporativo B",
+        "critical": true,
+        "peerControllerRefs": [
+          "wlc-a"
+        ]
+      }
+    ],
+    "wifiAccessPoints": [
+      {
+        "id": "ap_hq_1",
+        "name": "AP-HQ-01",
+        "uplinkPortRef": "hq_acc_ap1",
+        "controllerRef": "wlc-b",
+        "poeWatts": 20,
+        "locationRef": "room_hq",
+        "ssidRefs": [
+          "ssid_hq_corp",
+          "ssid_hq_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_hq_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_hq_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_hq_2",
+        "name": "AP-HQ-02",
+        "uplinkPortRef": "hq_acc_ap2",
+        "controllerRef": "wlc-a",
+        "poeWatts": 20,
+        "locationRef": "room_hq",
+        "ssidRefs": [
+          "ssid_hq_corp",
+          "ssid_hq_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_hq_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_hq_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_north_1",
+        "name": "AP-N-01",
+        "uplinkPortRef": "north_acc_ap1",
+        "controllerRef": "wlc-a",
+        "poeWatts": 20,
+        "locationRef": "room_north",
+        "ssidRefs": [
+          "ssid_north_corp",
+          "ssid_north_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_north_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_north_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_north_2",
+        "name": "AP-N-02",
+        "uplinkPortRef": "north_acc_ap2",
+        "controllerRef": "wlc-b",
+        "poeWatts": 20,
+        "locationRef": "room_north",
+        "ssidRefs": [
+          "ssid_north_corp",
+          "ssid_north_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_north_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_north_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_east_1",
+        "name": "AP-E-01",
+        "uplinkPortRef": "east_acc_ap1",
+        "controllerRef": "wlc-b",
+        "poeWatts": 20,
+        "locationRef": "room_east",
+        "ssidRefs": [
+          "ssid_east_corp",
+          "ssid_east_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_east_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_east_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_east_2",
+        "name": "AP-E-02",
+        "uplinkPortRef": "east_acc_ap2",
+        "controllerRef": "wlc-a",
+        "poeWatts": 20,
+        "locationRef": "room_east",
+        "ssidRefs": [
+          "ssid_east_corp",
+          "ssid_east_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_east_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_east_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_south_1",
+        "name": "AP-S-01",
+        "uplinkPortRef": "south_acc_ap1",
+        "controllerRef": "wlc-a",
+        "poeWatts": 20,
+        "locationRef": "room_south",
+        "ssidRefs": [
+          "ssid_south_corp",
+          "ssid_south_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_south_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_south_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_south_2",
+        "name": "AP-S-02",
+        "uplinkPortRef": "south_acc_ap2",
+        "controllerRef": "wlc-b",
+        "poeWatts": 20,
+        "locationRef": "room_south",
+        "ssidRefs": [
+          "ssid_south_corp",
+          "ssid_south_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_south_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 14,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_south_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 17,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      }
+    ],
+    "wifiSsids": [
+      {
+        "id": "ssid_hq_corp",
+        "name": "CORP-HQ",
+        "vlanRef": "hq_v110",
+        "security": "wpa2-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_hq_guest",
+        "name": "GUEST-HQ",
+        "vlanRef": "hq_v150",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      },
+      {
+        "id": "ssid_north_corp",
+        "name": "CORP-N",
+        "vlanRef": "north_v210",
+        "security": "wpa2-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_north_guest",
+        "name": "GUEST-N",
+        "vlanRef": "north_v250",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      },
+      {
+        "id": "ssid_east_corp",
+        "name": "CORP-E",
+        "vlanRef": "east_v310",
+        "security": "wpa2-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_east_guest",
+        "name": "GUEST-E",
+        "vlanRef": "east_v350",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      },
+      {
+        "id": "ssid_south_corp",
+        "name": "CORP-S",
+        "vlanRef": "south_v410",
+        "security": "wpa2-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_south_guest",
+        "name": "GUEST-S",
+        "vlanRef": "south_v450",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      }
+    ],
+    "vrfs": [],
+    "ipv6Networks": [],
+    "failureScenarios": [
+      {
+        "id": "fail_hq_north",
+        "name": "Fallo enlace hq-north",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "link_hq_north"
+          }
+        ],
+        "mustSurvive": [],
+        "requireWan": false
+      },
+      {
+        "id": "fail_north_east",
+        "name": "Fallo enlace north-east",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "link_north_east"
+          }
+        ],
+        "mustSurvive": [],
+        "requireWan": false
+      },
+      {
+        "id": "fail_east_south",
+        "name": "Fallo enlace east-south",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "link_east_south"
+          }
+        ],
+        "mustSurvive": [],
+        "requireWan": false
+      },
+      {
+        "id": "fail_south_hq",
+        "name": "Fallo enlace south-hq",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "link_south_hq"
+          }
+        ],
+        "mustSurvive": [],
+        "requireWan": false
+      }
+    ],
+    "physicalLocations": [
+      {
+        "id": "loc_hq",
+        "name": "Sede Central",
+        "type": "site"
+      },
+      {
+        "id": "room_hq",
+        "name": "CPD Central",
+        "type": "room",
+        "parentId": "loc_hq"
+      },
+      {
+        "id": "loc_north",
+        "name": "Sede Norte",
+        "type": "site"
+      },
+      {
+        "id": "room_north",
+        "name": "CPD Norte",
+        "type": "room",
+        "parentId": "loc_north"
+      },
+      {
+        "id": "loc_east",
+        "name": "Sede Levante",
+        "type": "site"
+      },
+      {
+        "id": "room_east",
+        "name": "CPD Levante",
+        "type": "room",
+        "parentId": "loc_east"
+      },
+      {
+        "id": "loc_south",
+        "name": "Sede Sur",
+        "type": "site"
+      },
+      {
+        "id": "room_south",
+        "name": "CPD Sur",
+        "type": "room",
+        "parentId": "loc_south"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [],
+    "rackItems": [],
+    "pdus": [],
+    "powerConnections": [],
+    "patchPanels": [],
+    "telecomOutlets": [],
+    "cableRuns": [],
+    "patchConnections": [],
+    "hostOutletConnections": [],
+    "customDeviceModels": [],
+    "topo": {
+      "pos": {
+        "hq_rtr": {
+          "x": 200,
+          "y": 180
+        },
+        "hq_core": {
+          "x": 330,
+          "y": 180
+        },
+        "hq_access": {
+          "x": 460,
+          "y": 180
+        },
+        "north_rtr": {
+          "x": 860,
+          "y": 180
+        },
+        "north_core": {
+          "x": 990,
+          "y": 180
+        },
+        "north_access": {
+          "x": 1120,
+          "y": 180
+        },
+        "east_rtr": {
+          "x": 860,
+          "y": 680
+        },
+        "east_core": {
+          "x": 990,
+          "y": 680
+        },
+        "east_access": {
+          "x": 1120,
+          "y": 680
+        },
+        "south_rtr": {
+          "x": 200,
+          "y": 680
+        },
+        "south_core": {
+          "x": 330,
+          "y": 680
+        },
+        "south_access": {
+          "x": 460,
+          "y": 680
+        }
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_hq",
+          "name": "Sede Central",
+          "color": "#10233c",
+          "x": 160,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "loc_hq"
+        },
+        {
+          "id": "vloc_north",
+          "name": "Sede Norte",
+          "color": "#10233c",
+          "x": 820,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "loc_north"
+        },
+        {
+          "id": "vloc_east",
+          "name": "Sede Levante",
+          "color": "#10233c",
+          "x": 820,
+          "y": 620,
+          "type": "site",
+          "physicalLocationId": "loc_east"
+        },
+        {
+          "id": "vloc_south",
+          "name": "Sede Sur",
+          "color": "#10233c",
+          "x": 160,
+          "y": 620,
+          "type": "site",
+          "physicalLocationId": "loc_south"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "hq_access": "vloc_hq",
+          "hq_core": "vloc_hq",
+          "hq_rtr": "vloc_hq",
+          "north_access": "vloc_north",
+          "north_core": "vloc_north",
+          "north_rtr": "vloc_north",
+          "east_access": "vloc_east",
+          "east_core": "vloc_east",
+          "east_rtr": "vloc_east",
+          "south_access": "vloc_south",
+          "south_core": "vloc_south",
+          "south_rtr": "vloc_south"
+        },
+        "hosts": {
+          "hq_user": "vloc_hq",
+          "hq_server": "vloc_hq",
+          "hq_phone": "vloc_hq",
+          "hq_camera": "vloc_hq",
+          "hq_guest": "vloc_hq",
+          "north_user": "vloc_north",
+          "north_server": "vloc_north",
+          "north_phone": "vloc_north",
+          "north_camera": "vloc_north",
+          "north_guest": "vloc_north",
+          "east_user": "vloc_east",
+          "east_server": "vloc_east",
+          "east_phone": "vloc_east",
+          "east_camera": "vloc_east",
+          "east_guest": "vloc_east",
+          "south_user": "vloc_south",
+          "south_server": "vloc_south",
+          "south_phone": "vloc_south",
+          "south_camera": "vloc_south",
+          "south_guest": "vloc_south"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": true,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    }
+  }
+}
