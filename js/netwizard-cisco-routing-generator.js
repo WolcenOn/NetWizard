@@ -54,6 +54,10 @@
     }
     for(const portName of activePorts) lines.push(` no passive-interface ${portName}`);
     lines.push(' exit');
+    for(const iface of arr(ospf.interfaces)){
+      if(!iface.enabled||!clean(iface.portName)||!Number.isInteger(Number(iface.cost))) continue;
+      lines.push(`interface ${clean(iface.portName)}`,` ip ospf cost ${Number(iface.cost)}`,' exit');
+    }
     return lines;
   }
 
