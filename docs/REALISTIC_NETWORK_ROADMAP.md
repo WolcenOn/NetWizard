@@ -120,6 +120,8 @@ Empezar por OSPF y ampliar solo con casos reales.
 
 BGP, VRF y SD-WAN se incorporarán posteriormente si existe una autoridad canónica clara y suficiente demanda.
 
+Implementación OSPF inicial: `routing.ospf.devices[deviceId]` define proceso, router-id, área por defecto e intención por interfaz, incluyendo passive y coste. Los vecinos esperados se derivan de la topología L3 y se comparan con `observedState.ospfNeighbors[deviceId]`. Private Engine conserva la traducción Cisco/Junos/Huawei/MikroTik y Reachability puede recorrer adyacencias OSPF multi-hop/multiárea, distinguiendo camino planificado de camino confirmado por Observed FULL.
+
 ## Fase 6 — Resiliencia WAN
 
 - doble circuito;
