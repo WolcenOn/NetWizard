@@ -26,7 +26,7 @@ function renderCisco(project,deviceId){
   const lines=['!','! VPN site-to-site generada desde plan neutral'];
   const boundInterfaces=new Set();
   tunnels.forEach((t,index)=>{
-    const n=token(t.name||t.id,'VPN'+String(index+1)),seq=(index+1)*10;
+    const n=token(t.name||t.id,'VPN'+String(index+1)),seq=Number.isInteger(Number(t.sequence||t.priority))?Number(t.sequence||t.priority):(index+1)*10;
     const proposal='NW_IKE2_PROP_'+n,policy='NW_IKE2_POL_'+n,keyring='NW_IKE2_KR_'+n,profile='NW_IKE2_PROF_'+n,transform='NW_IPSEC_TS_'+n,acl='NW_VPN_ACL_'+n;
     lines.push(
       '!','! '+clean(t.name||t.id)+' · '+t.localEndpoint+' ↔ '+t.remoteEndpoint,

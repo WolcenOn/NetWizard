@@ -101,7 +101,7 @@ function render(){
   card.append(head,el('div',{className:'hint'},'Overlay IKEv2/IPsec sobre circuitos WAN existentes. Guarda solo alias de secretos; nunca una PSK real. Los prefijos deben pertenecer a subnets de cada edge.'));
 
   const form={
-    name:input('nwVpnName','HQ ↔ Norte'),
+    name:input('nwVpnName','HQ ↔ Norte'),role:select('nwVpnRole'),priority:input('nwVpnPriority','10','number'),
     localDevice:select('nwVpnLocalDevice'),localCircuit:select('nwVpnLocalCircuit'),
     remoteDevice:select('nwVpnRemoteDevice'),remoteCircuit:select('nwVpnRemoteCircuit'),
     localPrefixes:input('nwVpnLocalPrefixes','10.10.0.0/24, 10.10.1.0/24'),
@@ -111,7 +111,8 @@ function render(){
     ipsecLifetime:input('nwVpnIpsecLifetime','3600','number'),
     description:input('nwVpnDescription','VPN corporativa sobre Internet')
   };
-  form.ikeLifetime.value='28800';form.ipsecLifetime.value='3600';
+  form.role.append(option('primary','Principal'),option('backup','Backup'));
+  form.role.value='primary';form.priority.value='10';form.ikeLifetime.value='28800';form.ipsecLifetime.value='3600';
 
   const devices=eligibleDevices(p).map(d=>({value:d.id,label:deviceLabel(d)}));
   setOptions(form.localDevice,devices,'','— edge local —');
@@ -133,7 +134,7 @@ function render(){
 
   const existing=current(p);
   if(existing){
-    form.name.value=existing.name||'';
+    form.name.value=existing.name||'';form.role.value=existing.role||'primary';form.priority.value=existing.priority||10;
     form.localDevice.value=existing.localDeviceId||'';
     form.remoteDevice.value=existing.remoteDeviceId||'';
     refillCircuit('local',existing.localCircuitRef||'');
@@ -148,7 +149,7 @@ function render(){
     refillCircuit('local','');refillCircuit('remote','');
   }
 
-  const g1=el('div',{className:'g2'});g1.append(field('Nombre',form.name),field('Alias de PSK',form.secretAlias));
+  const g1=el('div',{className:'g4'});g1.append(field('Nombre',form.name),field('Rol',form.role),field('Prioridad',form.priority),field('Alias de PSK',form.secretAlias));
   const g2=el('div',{className:'g2'});g2.append(field('Edge local',form.localDevice),field('Circuito local',form.localCircuit));
   const g3=el('div',{className:'g2'});g3.append(field('Edge remoto',form.remoteDevice),field('Circuito remoto',form.remoteCircuit));
   const g4=el('div',{className:'g2'});g4.append(field('Prefijos locales',form.localPrefixes),field('Prefijos remotos',form.remotePrefixes));
@@ -166,7 +167,7 @@ function render(){
     try{
       const snap=state(),old=current(snap);
       const payload={
-        id:old&&old.id||uid(),name:clean(form.name.value)||'VPN site-to-site',enabled:true,
+        id:old&&old.id||uid(),name:clean(form.name.value)||'VPN site-to-site',enabled:true,role:clean(form.role.value)||'primary',priority:Number(form.priority.value||10),
         localDeviceId:clean(form.localDevice.value),remoteDeviceId:clean(form.remoteDevice.value),
         localCircuitRef:clean(form.localCircuit.value),remoteCircuitRef:clean(form.remoteCircuit.value),
         localPrefixes:parsePrefixInput(form.localPrefixes.value),remotePrefixes:parsePrefixInput(form.remotePrefixes.value),
@@ -200,7 +201,7 @@ function render(){
     const info=el('div',{className:'hinfo'});
     info.append(
       el('div',{className:'hn'},plan.name+' · '+plan.localEndpoint+' ↔ '+plan.remoteEndpoint),
-      el('div',{className:'hm'},plan.localPrefixes.join(', ')+' ↔ '+plan.remotePrefixes.join(', ')),
+      el('div',{className:'hm'},plan.localPrefixes.join(', ')+' ↔ '+plan.remotePrefixes.join(', ')+' · '+String(plan.role||'primary').toUpperCase()+' · prio '+String(plan.priority||100)),
       el('div',{className:'hm'},'To-Be: '+(blocked?'BLOQUEADO':'válido')+' · Observed: '+obs.toUpperCase()+(issues.length?' · '+issues.map(x=>x.message).join(' '):''))
     );
     const buttons=el('div',{className:'brow',style:'margin:0;flex-wrap:wrap;'});

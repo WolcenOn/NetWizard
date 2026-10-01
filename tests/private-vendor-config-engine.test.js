@@ -203,6 +203,41 @@ const badOspfResult=Engine.generateAll(badOspf);
 assert.strictEqual(badOspfResult.configReadiness['ospf-r1'].status,'review-required');
 assert.ok(badOspfResult.configReadiness['ospf-r1'].reasons.some(x=>/OSPF: .*no tiene vecino esperado compatible/i.test(x)));
 
+const wanResilienceProject={
+  _schemaVersion:'3.50.0',
+  projName:'Private WAN resilience',
+  devices:[{id:'wr1',name:'WAN-EDGE',type:'router',kind:'router',vendorOs:'cisco_ios'}],
+  ports:[
+    {id:'wr1-a',deviceId:'wr1',name:'GigabitEthernet0/0',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.2/30'},
+    {id:'wr1-b',deviceId:'wr1',name:'GigabitEthernet0/1',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.2/30'}
+  ],
+  wanCircuits:[
+    {id:'wr-c1',name:'ISP-A',deviceId:'wr1',portId:'wr1-a',provider:'ISP-A',role:'primary',siteRef:'HQ',enabled:true,bandwidthDownMbps:500,bandwidthUpMbps:200},
+    {id:'wr-c2',name:'ISP-B',deviceId:'wr1',portId:'wr1-b',provider:'ISP-B',role:'backup',siteRef:'HQ',enabled:true,bandwidthDownMbps:300,bandwidthUpMbps:100}
+  ],
+  vlans:[],subnets:[],hosts:[],links:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},
+  routing:{strategy:'static'},
+  highAvailability:{devices:{wr1:{
+    defaultRoutes:[
+      {nextHop:'203.0.113.1',distance:1,trackId:'1',circuitRef:'wr-c1',description:'primary'},
+      {nextHop:'198.51.100.1',distance:20,circuitRef:'wr-c2',description:'floating backup'}
+    ],
+    tracking:[{id:'1',target:'1.1.1.1',sourceInterface:'GigabitEthernet0/0',circuitRef:'wr-c1',frequency:5,timeout:1000}]
+  }}},
+  management:{},accessSecurity:{},linkAggregations:[]
+};
+const wanResilienceResult=Engine.generateAll(wanResilienceProject);
+assert.strictEqual(wanResilienceResult.configReadiness.wr1.status,'apply-ready',JSON.stringify(wanResilienceResult.configReadiness.wr1.reasons));
+assert.match(wanResilienceResult.configs.wr1,/ip sla 1/);
+assert.match(wanResilienceResult.configs.wr1,/ip route 0\.0\.0\.0 0\.0\.0\.0 203\.0\.113\.1 1 track 1/);
+assert.match(wanResilienceResult.configs.wr1,/ip route 0\.0\.0\.0 0\.0\.0\.0 198\.51\.100\.1 20/);
+
+const badWanResilience=JSON.parse(JSON.stringify(wanResilienceProject));
+badWanResilience.highAvailability.devices.wr1.defaultRoutes[1].distance=1;
+const badWanResilienceResult=Engine.generateAll(badWanResilience);
+assert.strictEqual(badWanResilienceResult.configReadiness.wr1.status,'review-required');
+assert.ok(badWanResilienceResult.configReadiness.wr1.reasons.some(x=>/Resiliencia WAN: .*distancia mayor/i.test(x)));
+
 const vpnProject={
   _schemaVersion:'3.50.0',
   projName:'Private VPN generation',

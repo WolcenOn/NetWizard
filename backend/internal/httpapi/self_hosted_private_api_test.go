@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"crypto/hmac"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -215,11 +217,17 @@ func TestSelfHostedPrivateSessionRejectsTamperingAndSecretRotation(t *testing.T)
 	cookie, _ := loginSelfHostedPrivate(t, server)
 
 	tampered := *cookie
-	if strings.HasSuffix(tampered.Value, "A") {
-		tampered.Value = tampered.Value[:len(tampered.Value)-1] + "B"
-	} else {
-		tampered.Value = tampered.Value[:len(tampered.Value)-1] + "A"
+	parts := strings.Split(tampered.Value, ".")
+	if len(parts) != 2 || len(parts[1]) < 2 {
+		t.Fatalf("unexpected signed cookie format: %q", tampered.Value)
 	}
+	first := parts[1][0]
+	if first == 'A' {
+		parts[1] = "B" + parts[1][1:]
+	} else {
+		parts[1] = "A" + parts[1][1:]
+	}
+	tampered.Value = strings.Join(parts, ".")
 	status := httptest.NewRequest(http.MethodGet, "/api/private/self-hosted/session", nil)
 	status.AddCookie(&tampered)
 	statusRec := httptest.NewRecorder()
@@ -236,6 +244,44 @@ func TestSelfHostedPrivateSessionRejectsTamperingAndSecretRotation(t *testing.T)
 	rotated.Handler().ServeHTTP(rotatedRec, rotatedStatus)
 	if rotatedRec.Code != http.StatusUnauthorized {
 		t.Fatalf("secret rotation must invalidate old private cookie, got %d", rotatedRec.Code)
+	}
+}
+
+func TestSelfHostedPrivateSessionRejectsNonCanonicalSignatureEncoding(t *testing.T) {
+	server, _ := newSelfHostedPrivateTestServer(t)
+	cookie, _ := loginSelfHostedPrivate(t, server)
+
+	parts := strings.Split(cookie.Value, ".")
+	if len(parts) != 2 {
+		t.Fatalf("unexpected signed cookie format: %q", cookie.Value)
+	}
+	sig, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		t.Fatalf("decode canonical signature: %v", err)
+	}
+	canonical := base64.RawURLEncoding.EncodeToString(sig)
+	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+	idx := strings.IndexByte(alphabet, canonical[len(canonical)-1])
+	if idx < 0 || idx+1 >= len(alphabet) {
+		t.Fatalf("unexpected final base64url symbol: %q", canonical[len(canonical)-1])
+	}
+	nonCanonical := canonical[:len(canonical)-1] + string(alphabet[idx+1])
+	decoded, err := base64.RawURLEncoding.DecodeString(nonCanonical)
+	if err != nil {
+		t.Fatalf("decode non-canonical signature: %v", err)
+	}
+	if !hmac.Equal(decoded, sig) {
+		t.Fatalf("test fixture must preserve decoded HMAC bytes")
+	}
+
+	tampered := *cookie
+	tampered.Value = parts[0] + "." + nonCanonical
+	status := httptest.NewRequest(http.MethodGet, "/api/private/self-hosted/session", nil)
+	status.AddCookie(&tampered)
+	statusRec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(statusRec, status)
+	if statusRec.Code != http.StatusUnauthorized {
+		t.Fatalf("non-canonical signed cookie expected 401, got %d", statusRec.Code)
 	}
 }
 
