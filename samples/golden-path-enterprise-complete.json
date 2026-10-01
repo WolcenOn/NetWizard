@@ -239,10 +239,10 @@
       {
         "id": "hq_core_rtr",
         "deviceId": "hq_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "GE",
         "nativeVlanRef": "hq_v199",
         "allowedVlans": [
           110,
@@ -514,10 +514,10 @@
       {
         "id": "north_core_rtr",
         "deviceId": "north_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "GE",
         "nativeVlanRef": "north_v299",
         "allowedVlans": [
           210,
@@ -789,10 +789,10 @@
       {
         "id": "east_core_rtr",
         "deviceId": "east_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "GE",
         "nativeVlanRef": "east_v399",
         "allowedVlans": [
           310,
@@ -1064,10 +1064,10 @@
       {
         "id": "south_core_rtr",
         "deviceId": "south_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "GE",
         "nativeVlanRef": "south_v499",
         "allowedVlans": [
           410,
@@ -1323,11 +1323,12 @@
         "name": "GigabitEthernet0/2",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.1",
         "l3Cidr": "10.255.0.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia north"
+        "desc": "Transito OSPF hacia north",
+        "transitVlanRef": "tr_hq_north"
       },
       {
         "id": "hq_north_b",
@@ -1335,11 +1336,12 @@
         "name": "GigabitEthernet0/2",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.2",
         "l3Cidr": "10.255.0.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia hq"
+        "desc": "Transito OSPF hacia hq",
+        "transitVlanRef": "tr_hq_north"
       },
       {
         "id": "north_east_a",
@@ -1347,11 +1349,12 @@
         "name": "GigabitEthernet0/3",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.5",
         "l3Cidr": "10.255.0.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia east"
+        "desc": "Transito OSPF hacia east",
+        "transitVlanRef": "tr_north_east"
       },
       {
         "id": "north_east_b",
@@ -1359,11 +1362,12 @@
         "name": "GigabitEthernet0/2",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.6",
         "l3Cidr": "10.255.0.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia north"
+        "desc": "Transito OSPF hacia north",
+        "transitVlanRef": "tr_north_east"
       },
       {
         "id": "east_south_a",
@@ -1371,11 +1375,12 @@
         "name": "GigabitEthernet0/3",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.9",
         "l3Cidr": "10.255.0.8/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia south"
+        "desc": "Transito OSPF hacia south",
+        "transitVlanRef": "tr_east_south"
       },
       {
         "id": "east_south_b",
@@ -1383,11 +1388,12 @@
         "name": "GigabitEthernet0/2",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.10",
         "l3Cidr": "10.255.0.8/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia east"
+        "desc": "Transito OSPF hacia east",
+        "transitVlanRef": "tr_east_south"
       },
       {
         "id": "south_hq_a",
@@ -1395,11 +1401,12 @@
         "name": "GigabitEthernet0/3",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.13",
         "l3Cidr": "10.255.0.12/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia hq"
+        "desc": "Transito OSPF hacia hq",
+        "transitVlanRef": "tr_south_hq"
       },
       {
         "id": "south_hq_b",
@@ -1407,133 +1414,350 @@
         "name": "GigabitEthernet0/3",
         "mode": "routed",
         "role": "transit",
-        "media": "GE",
+        "media": "SFP",
         "l3Ip": "10.255.0.14",
         "l3Cidr": "10.255.0.12/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "Transito OSPF hacia south"
+        "desc": "Transito OSPF hacia south",
+        "transitVlanRef": "tr_south_hq"
       }
     ],
     "vlans": [
       {
         "id": "hq_v110",
         "vlanId": 110,
-        "name": "HQ-USERS"
+        "name": "HQ-USERS",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "hq_v120",
         "vlanId": 120,
-        "name": "HQ-WIFI-CORP"
+        "name": "HQ-WIFI-CORP",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "hq_v130",
         "vlanId": 130,
-        "name": "HQ-VOICE"
+        "name": "HQ-VOICE",
+        "intent": {
+          "type": "voice",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "hq_v140",
         "vlanId": 140,
-        "name": "HQ-SERVERS"
+        "name": "HQ-SERVERS",
+        "intent": {
+          "type": "servers",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "hq_v150",
         "vlanId": 150,
-        "name": "HQ-CCTV-IOT"
+        "name": "HQ-CCTV-IOT",
+        "intent": {
+          "type": "cameras",
+          "isolation": "isolated",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "hq_v199",
         "vlanId": 199,
-        "name": "HQ-MGMT"
+        "name": "HQ-MGMT",
+        "intent": {
+          "type": "management",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "north_v210",
         "vlanId": 210,
-        "name": "NORTE-USERS"
+        "name": "NORTE-USERS",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "north_v220",
         "vlanId": 220,
-        "name": "NORTE-WIFI-CORP"
+        "name": "NORTE-WIFI-CORP",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "north_v230",
         "vlanId": 230,
-        "name": "NORTE-VOICE"
+        "name": "NORTE-VOICE",
+        "intent": {
+          "type": "voice",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "north_v240",
         "vlanId": 240,
-        "name": "NORTE-SERVERS"
+        "name": "NORTE-SERVERS",
+        "intent": {
+          "type": "servers",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "north_v250",
         "vlanId": 250,
-        "name": "NORTE-CCTV-IOT"
+        "name": "NORTE-CCTV-IOT",
+        "intent": {
+          "type": "cameras",
+          "isolation": "isolated",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "north_v299",
         "vlanId": 299,
-        "name": "NORTE-MGMT"
+        "name": "NORTE-MGMT",
+        "intent": {
+          "type": "management",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "east_v310",
         "vlanId": 310,
-        "name": "LEVANTE-USERS"
+        "name": "LEVANTE-USERS",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "east_v320",
         "vlanId": 320,
-        "name": "LEVANTE-WIFI-CORP"
+        "name": "LEVANTE-WIFI-CORP",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "east_v330",
         "vlanId": 330,
-        "name": "LEVANTE-VOICE"
+        "name": "LEVANTE-VOICE",
+        "intent": {
+          "type": "voice",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "east_v340",
         "vlanId": 340,
-        "name": "LEVANTE-SERVERS"
+        "name": "LEVANTE-SERVERS",
+        "intent": {
+          "type": "servers",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "east_v350",
         "vlanId": 350,
-        "name": "LEVANTE-CCTV-IOT"
+        "name": "LEVANTE-CCTV-IOT",
+        "intent": {
+          "type": "cameras",
+          "isolation": "isolated",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "east_v399",
         "vlanId": 399,
-        "name": "LEVANTE-MGMT"
+        "name": "LEVANTE-MGMT",
+        "intent": {
+          "type": "management",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "south_v410",
         "vlanId": 410,
-        "name": "SUR-USERS"
+        "name": "SUR-USERS",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "south_v420",
         "vlanId": 420,
-        "name": "SUR-WIFI-CORP"
+        "name": "SUR-WIFI-CORP",
+        "intent": {
+          "type": "users",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "south_v430",
         "vlanId": 430,
-        "name": "SUR-VOICE"
+        "name": "SUR-VOICE",
+        "intent": {
+          "type": "voice",
+          "isolation": "standard",
+          "dhcp": true,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "south_v440",
         "vlanId": 440,
-        "name": "SUR-SERVERS"
+        "name": "SUR-SERVERS",
+        "intent": {
+          "type": "servers",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
       },
       {
         "id": "south_v450",
         "vlanId": 450,
-        "name": "SUR-CCTV-IOT"
+        "name": "SUR-CCTV-IOT",
+        "intent": {
+          "type": "cameras",
+          "isolation": "isolated",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "normal"
+        }
       },
       {
         "id": "south_v499",
         "vlanId": 499,
-        "name": "SUR-MGMT"
+        "name": "SUR-MGMT",
+        "intent": {
+          "type": "management",
+          "isolation": "restricted",
+          "dhcp": false,
+          "internet": false,
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "tr_hq_north",
+        "vlanId": 901,
+        "name": "TRANSIT-HQ-NORTE",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "tr_north_east",
+        "vlanId": 902,
+        "name": "TRANSIT-NORTE-LEVANTE",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "tr_east_south",
+        "vlanId": 903,
+        "name": "TRANSIT-LEVANTE-SUR",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "tr_south_hq",
+        "vlanId": 904,
+        "name": "TRANSIT-SUR-HQ",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
       }
     ],
     "subnets": [
@@ -1704,6 +1928,30 @@
         "cidr": "10.40.99.0/24",
         "gateway": "10.40.99.1",
         "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "sn_tr_hq_north",
+        "vlanRef": "tr_hq_north",
+        "cidr": "10.255.0.0/30",
+        "gateway": ""
+      },
+      {
+        "id": "sn_tr_north_east",
+        "vlanRef": "tr_north_east",
+        "cidr": "10.255.0.4/30",
+        "gateway": ""
+      },
+      {
+        "id": "sn_tr_east_south",
+        "vlanRef": "tr_east_south",
+        "cidr": "10.255.0.8/30",
+        "gateway": ""
+      },
+      {
+        "id": "sn_tr_south_hq",
+        "vlanRef": "tr_south_hq",
+        "cidr": "10.255.0.12/30",
+        "gateway": ""
       }
     ],
     "hosts": [
@@ -2147,11 +2395,12 @@
         "aPortId": "hq_north_a",
         "bPortId": "hq_north_b",
         "medium": "fiber",
-        "cableType": "SMF",
+        "cableType": "OS2",
         "lengthM": null,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada inter-sede"
+        "physicalPath": "Red privada inter-sede",
+        "transitVlanRef": "tr_hq_north"
       },
       {
         "id": "link_north_east",
@@ -2159,11 +2408,12 @@
         "aPortId": "north_east_a",
         "bPortId": "north_east_b",
         "medium": "fiber",
-        "cableType": "SMF",
+        "cableType": "OS2",
         "lengthM": null,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada inter-sede"
+        "physicalPath": "Red privada inter-sede",
+        "transitVlanRef": "tr_north_east"
       },
       {
         "id": "link_east_south",
@@ -2171,11 +2421,12 @@
         "aPortId": "east_south_a",
         "bPortId": "east_south_b",
         "medium": "fiber",
-        "cableType": "SMF",
+        "cableType": "OS2",
         "lengthM": null,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada inter-sede"
+        "physicalPath": "Red privada inter-sede",
+        "transitVlanRef": "tr_east_south"
       },
       {
         "id": "link_south_hq",
@@ -2183,11 +2434,12 @@
         "aPortId": "south_hq_a",
         "bPortId": "south_hq_b",
         "medium": "fiber",
-        "cableType": "SMF",
+        "cableType": "OS2",
         "lengthM": null,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada inter-sede"
+        "physicalPath": "Red privada inter-sede",
+        "transitVlanRef": "tr_south_hq"
       }
     ],
     "fwRules": [
