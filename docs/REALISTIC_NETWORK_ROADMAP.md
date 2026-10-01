@@ -52,6 +52,8 @@ Modelar una WAN corporativa real sin extender VLANs entre sedes.
 
 Criterio de salida: NetWizard puede representar físicamente cuatro sedes conectadas por equipos L3 y redes de tránsito.
 
+Implementación base: los tránsitos punto a punto se crean sobre las autoridades existentes `ports + links`, con ambos extremos en modo routed y direcciones dentro del mismo CIDR. No se introduce una colección paralela de enlaces inter-sede.
+
 ## Fase 2 — Routing estático inter-sede
 
 Primera implementación determinista de routing corporativo.
