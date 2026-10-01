@@ -169,6 +169,8 @@ Bloque posterior, construido sobre inventario y no como catálogo paralelo.
 
 La información económica deberá referenciar los objetos de inventario existentes para evitar duplicidades.
 
+Implementación: `NetWizardBudget` deriva la BOM completa desde el inventario canónico y soporta alcance completo o diferencial de intervención. `budget.resourcePricing` referencia objetos concretos; `budget.modelPricing` reutiliza referencia económica por modelo; `budget.serviceLines` cubre únicamente licencias, suscripciones, mano de obra, desplazamientos y otros servicios no inventariables. El cálculo separa one-time/recurrente y CAPEX/OPEX, normaliza recurrencia mensual/anual, calcula coste interno, precio cliente, beneficio/margen bruto, impuesto y total de año 1. La UI permite editar precios y exportar CSV/XLSX/Markdown; el As-Built Export Pack incorpora también la hoja de presupuesto. No se crea un catálogo paralelo ni se cambia schema 3.50.
+
 ## Orden de PRs propuesto
 
 1. VTP Production Verification.
