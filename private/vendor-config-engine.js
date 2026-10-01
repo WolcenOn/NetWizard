@@ -18,6 +18,7 @@ const RoutingPlan=require('../js/netwizard-routing-plan.js');
 const Ospf=require('../js/netwizard-ospf.js');
 const SiteVpn=require('../js/netwizard-site-to-site-vpn.js');
 const SiteVpnGenerator=require('./site-to-site-vpn-generator.js');
+const WanResilience=require('../js/netwizard-wan-resilience.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -128,13 +129,15 @@ function configReadiness(project,device,output){
   }
   const vpnPlan=SiteVpn.buildDevicePlan(p,d.id);
   const vpnBlocking=arr(vpnPlan&&vpnPlan.issues).filter(issue=>issue&&issue.blocking).map(issue=>'VPN site-to-site: '+clean(issue.message,300));
+  const resiliencePlan=WanResilience.validateDevice(p,d.id);
+  const resilienceBlocking=arr(resiliencePlan&&resiliencePlan.issues).filter(issue=>issue&&issue.blocking).map(issue=>'Resiliencia WAN: '+clean(issue.message,300));
   if(vendor!=='cisco_ios'){
     const family=clean(d.model,120),vendorReasons=[`Se generó CLI vendor-specific y se normalizó su cierre, pero ${vendor} requiere certificar familia/modelo${family?' '+family:''} y versión antes de marcarlo apply-ready.`];
     if(arr(vpnPlan&&vpnPlan.tunnels).length&&!['fortinet'].includes(vendor))vendorReasons.push('La VPN site-to-site todavía no tiene generador privado para '+vendor+'.');
-    vendorReasons.push(...vpnBlocking);
+    vendorReasons.push(...vpnBlocking,...resilienceBlocking);
     return{status:'review-required',reasons:vendorReasons};
   }
-  reasons.push(...vpnBlocking);
+  reasons.push(...vpnBlocking,...resilienceBlocking);
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(isSwitch(d)){
     const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
