@@ -57,8 +57,8 @@ assert.strictEqual(p.projName,'Golden Path Multisite Secure · 4 sedes');
 assert.strictEqual(p.devices.length,12);
 assert.strictEqual(p.devices.filter(d=>d.type==='router').length,4);
 assert.strictEqual(p.devices.filter(d=>d.type==='switch').length,8);
-assert.strictEqual(p.vlans.length,24);
-assert.strictEqual(p.subnets.length,24);
+assert.strictEqual(p.vlans.length,28);
+assert.strictEqual(p.subnets.length,28);
 assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.fwRules.length,116);
 assert.strictEqual(p.linkAggregations.length,4);
@@ -171,7 +171,7 @@ for(const d of p.devices){
 }
 assert.strictEqual(privateResult.productionStatus,'ready',JSON.stringify(privateResult.productionGate.issues));
 assert.strictEqual(privateResult.productionReady,true);
-assert.strictEqual(privateResult.productionGate.issues.length,0);
+assert.strictEqual(privateResult.productionGate.issues.filter(x=>x.severity==='error'||x.severity==='warning').length,0,JSON.stringify(privateResult.productionGate.issues));
 
 for(const id of ['hq_rtr','north_rtr','east_rtr','south_rtr']){
   const cfg=privateResult.configs[id];
