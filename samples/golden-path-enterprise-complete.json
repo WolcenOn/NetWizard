@@ -1824,7 +1824,8 @@
         "depthMm": 1000,
         "maxLoadKg": 900,
         "powerCapacityWatts": 7000,
-        "coolingCapacityWatts": 5000
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
       },
       {
         "id": "br_rack01",
@@ -1835,7 +1836,8 @@
         "depthMm": 1000,
         "maxLoadKg": 900,
         "powerCapacityWatts": 7000,
-        "coolingCapacityWatts": 5000
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
       }
     ],
     "rackItems": [
@@ -3642,13 +3644,15 @@
             "id": "hq_rack01",
             "name": "RACK-HQ-01",
             "locationId": "hq_cpd",
-            "rackUnits": 42
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
           },
           {
             "id": "br_rack01",
             "name": "RACK-BR-01",
             "locationId": "br_cpd",
-            "rackUnits": 42
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
           }
         ],
         "devices": [
