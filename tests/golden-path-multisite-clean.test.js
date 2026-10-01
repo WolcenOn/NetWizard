@@ -159,4 +159,15 @@ for(const d of p.devices){
   assert.strictEqual(privateResult.configReadiness[d.id].status,'apply-ready',d.id+': '+JSON.stringify(privateResult.configReadiness[d.id].reasons));
 }
 
+const hqConfigPath=privateResult.configPaths.hq_rtr;
+const hqConfigArtifact=privateResult.artifacts.find(x=>x.path===hqConfigPath);
+assert.ok(hqConfigArtifact&&hqConfigArtifact.content,'Debe existir configuración privada para HQ router');
+const hqConfig=hqConfigArtifact.content;
+assert.match(hqConfig,/ip access-list extended NW_SEG_V110/);
+assert.match(hqConfig,/deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.30\.60\.0 0\.0\.0\.255/);
+assert.match(hqConfig,/interface GigabitEthernet0\/1\.110[\s\S]*ip access-group NW_SEG_V110 in/);
+assert.match(hqConfig,/ip access-list standard NW_MGMT_SOURCES/);
+assert.match(hqConfig,/line vty 0 15[\s\S]*access-class NW_MGMT_SOURCES in[\s\S]*transport input ssh/);
+assert.doesNotMatch(hqConfig,/ip access-list extended FW_POLICY/,'No debe quedar una ACL de intención global sin binding');
+
 console.log('✓ Golden Path Multisede limpio: 4 routers en anillo, OSPF redundante, segmentación y Production Gate READY');
