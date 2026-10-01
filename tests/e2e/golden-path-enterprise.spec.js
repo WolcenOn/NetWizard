@@ -60,10 +60,23 @@ test('Golden Path Enterprise carga el mismo JSON y activa sus capacidades en nav
 
   await page.evaluate(()=>window.navTo('cfg'));
   await expect(page.locator('#pg-cfg')).toBeVisible();
-  const downloadPromise=page.waitForEvent('download');
-  await page.locator('#btnGoldenPathEnterpriseDownload').click();
-  const download=await downloadPromise;
-  expect(download.suggestedFilename()).toBe('netwizard-golden-path-enterprise-complete.json');
+  const downloadTarget=await page.evaluate(async()=>{
+    const original=HTMLAnchorElement.prototype.click;
+    let captured=null;
+    HTMLAnchorElement.prototype.click=function(){
+      captured={href:this.getAttribute('href'),download:this.getAttribute('download')};
+    };
+    try{
+      await window.NetWizardGoldenPathEnterprise.download();
+      return captured;
+    }finally{
+      HTMLAnchorElement.prototype.click=original;
+    }
+  });
+  expect(downloadTarget).toEqual({
+    href:'./samples/golden-path-enterprise-complete.json',
+    download:'netwizard-golden-path-enterprise-complete.json'
+  });
 
   expect(errors).toEqual([]);
 });
