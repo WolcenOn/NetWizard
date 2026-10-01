@@ -49,7 +49,7 @@ assert.strictEqual(p.devices.filter(x=>x.type==='router').length,4);
 assert.strictEqual(p.devices.filter(x=>x.type==='switch').length,8);
 assert.strictEqual(p.vlans.length,28);
 assert.strictEqual(p.subnets.length,24);
-assert.strictEqual(p.hosts.length,20);
+assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.links.length,16);
 assert.strictEqual(p.wifiAccessPoints.length,8);
 assert.strictEqual(p.failureScenarios.length,4);
@@ -100,10 +100,15 @@ const blockedCamera=Connectivity.simulate(p,'host:hq_camera','host:north_user','
 assert.strictEqual(blockedCamera.ok,false);
 assert.strictEqual(blockedCamera.blockage&&blockedCamera.blockage.kind,'policy');
 
-const blockedUserMgmt=Connectivity.simulate(p,'host:hq_user','host:east_server','https');
-assert.strictEqual(blockedUserMgmt.ok,true,'Usuarios deben poder consumir servicios publicados');
-const blockedMgmt=Connectivity.simulate(p,'host:hq_user','host:east_server','https');
-assert.strictEqual(blockedMgmt.ok,true);
+const allowedUserService=Connectivity.simulate(p,'host:hq_user','host:east_server','https');
+assert.strictEqual(allowedUserService.ok,true,'Usuarios deben poder consumir servicios publicados');
+
+const blockedUserMgmt=Connectivity.simulate(p,'host:hq_user','host:east_admin','https');
+assert.strictEqual(blockedUserMgmt.ok,false,'Usuarios no deben alcanzar la red de gestión');
+assert.strictEqual(blockedUserMgmt.blockage&&blockedUserMgmt.blockage.kind,'policy');
+
+const allowedMgmtService=Connectivity.simulate(p,'host:hq_admin','host:east_server','https');
+assert.strictEqual(allowedMgmtService.ok,true,'Gestión debe poder alcanzar servicios internos');
 
 const wifi=Wifi.validateProject(p);
 assert.strictEqual(wifi.ok,true,wifi.issues.map(x=>x.code+': '+x.message).join('\n'));
