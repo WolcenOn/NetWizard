@@ -15,6 +15,7 @@ const Network=require('../js/netwizard-network-utils.js');
 const Capabilities=require('./vendor-config-capabilities.js');
 const VtpVerification=require('../js/netwizard-vtp-production-verification.js');
 const RoutingPlan=require('../js/netwizard-routing-plan.js');
+const Ospf=require('../js/netwizard-ospf.js');
 const SiteVpn=require('../js/netwizard-site-to-site-vpn.js');
 const SiteVpnGenerator=require('./site-to-site-vpn-generator.js');
 
@@ -152,6 +153,12 @@ function configReadiness(project,device,output){
   if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='static'){
     const plan=RoutingPlan.build(p),devicePlan=arr(plan&&plan.devices).find(item=>item&&item.deviceId===d.id);
     for(const issue of arr(devicePlan&&devicePlan.staticRouteIssues))reasons.push('Routing estático: '+clean(issue&&issue.message,300));
+  }
+  if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='ospf'){
+    const validation=Ospf.validateProject(p);
+    for(const issue of arr(validation&&validation.issues).filter(item=>item&&item.deviceId===d.id)){
+      reasons.push('OSPF: '+clean(issue.message,300));
+    }
   }
   if((text.match(/^configure terminal$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente una entrada a config mode.');
   if((text.match(/^end$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un cierre de config mode.');

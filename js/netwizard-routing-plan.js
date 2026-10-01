@@ -11,6 +11,7 @@
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function tryRequire(p){ try { return require(p); } catch { return null; } }
   function routingUtils(){ return root.NetWizardRoutingUtils || (typeof require === 'function' ? tryRequire('./netwizard-routing-utils.js') : null); }
+  function ospfModel(){ return root.NetWizardOspf || (typeof require === 'function' ? tryRequire('./netwizard-ospf.js') : null); }
 
   function strategyFor(project){
     const r = obj(project && project.routing);
@@ -78,22 +79,37 @@
     }
 
     if(strategy === 'ospf'){
-      const routing = obj(project && project.routing);
-      const area = clean(routing.area || routing.ospfArea || '0');
-      const routerId = routerIdFor(project, device, interfaces);
-      base.ospf = {
-        processId:Number(routing.processId || 1),
-        area,
-        routerId,
-        passiveDefault:routing.passiveDefault !== false,
-        networks:localNetworks.map(network => ({
-          cidr:network.cidr,
+      const OSPF=ospfModel();
+      if(OSPF&&typeof OSPF.buildDeviceIntent==='function'){
+        const intent=OSPF.buildDeviceIntent(project,device.id);
+        base.ospf={
+          processId:intent.processId,
+          area:intent.defaultArea,
+          routerId:intent.routerId,
+          passiveDefault:intent.passiveDefault,
+          networks:arr(intent.networks),
+          interfaces:arr(intent.interfaces),
+          summaries:arr(intent.summaries)
+        };
+        arr(intent.issues).forEach(issue=>base.warnings.push(clean(issue&&issue.message)));
+      }else{
+        const routing = obj(project && project.routing);
+        const area = clean(routing.area || routing.ospfArea || '0');
+        const routerId = routerIdFor(project, device, interfaces);
+        base.ospf = {
+          processId:Number(routing.processId || 1),
           area,
-          passive:network.type === 'local-vlan',
-          source:network.source || network.type || ''
-        }))
-      };
-      if(!routerId) base.warnings.push('No se pudo determinar router-id; define routing.routerIds para este dispositivo.');
+          routerId,
+          passiveDefault:routing.passiveDefault !== false,
+          networks:localNetworks.map(network => ({
+            cidr:network.cidr,
+            area,
+            passive:network.type === 'local-vlan',
+            source:network.source || network.type || ''
+          }))
+        };
+      }
+      if(!base.ospf.routerId) base.warnings.push('No se pudo determinar router-id; define routing.ospf.devices para este dispositivo.');
       if(!base.ospf.networks.length) base.warnings.push('No hay redes conectadas que anunciar por OSPF.');
       return base;
     }
@@ -105,7 +121,9 @@
   function build(project){
     const p = project || {};
     const strategy = strategyFor(p);
-    const devices = arr(p.devices).filter(isRoutingDevice);
+    const OSPF=ospfModel();
+    const participantIds=strategy==='ospf'&&OSPF&&typeof OSPF.participatingDeviceIds==='function'?new Set(OSPF.participatingDeviceIds(p)):null;
+    const devices = arr(p.devices).filter(device=>isRoutingDevice(device)&&(!participantIds||participantIds.has(device.id)));
     const plans = devices.map(device => buildDevicePlan(p, device, strategy));
     const warnings = [];
     if(!['static','ospf'].includes(strategy)) warnings.push('Declara routing.strategy como "static" o routing.protocol como "ospf".');

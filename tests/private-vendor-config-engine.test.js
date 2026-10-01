@@ -161,6 +161,48 @@ const invalidInterSiteResult=Engine.generateAll(invalidInterSite);
 assert.strictEqual(invalidInterSiteResult.configReadiness.r2.status,'review-required');
 assert.ok(invalidInterSiteResult.configReadiness.r2.reasons.some(x=>/next-hop .* directamente conectada/.test(x)));
 
+const ospfProject={
+  _schemaVersion:'3.50.0',
+  projName:'Private OSPF generation',
+  devices:[
+    {id:'ospf-r1',name:'OSPF-HQ',type:'router',kind:'router',vendorOs:'cisco_ios'},
+    {id:'ospf-r2',name:'OSPF-BRANCH',type:'router',kind:'router',vendorOs:'cisco_ios'}
+  ],
+  ports:[
+    {id:'ospf-r1-wan',deviceId:'ospf-r1',name:'GigabitEthernet0/0',mode:'routed',role:'transit',l3Ip:'10.255.10.1',l3Cidr:'10.255.10.0/30'},
+    {id:'ospf-r1-lan',deviceId:'ospf-r1',name:'GigabitEthernet0/1',mode:'routed',role:'lan',l3Ip:'10.10.10.1',l3Cidr:'10.10.10.0/24'},
+    {id:'ospf-r2-wan',deviceId:'ospf-r2',name:'GigabitEthernet0/0',mode:'routed',role:'transit',l3Ip:'10.255.10.2',l3Cidr:'10.255.10.0/30'},
+    {id:'ospf-r2-lan',deviceId:'ospf-r2',name:'GigabitEthernet0/1',mode:'routed',role:'lan',l3Ip:'10.20.20.1',l3Cidr:'10.20.20.0/24'}
+  ],
+  links:[{id:'ospf-link',aPortId:'ospf-r1-wan',bPortId:'ospf-r2-wan'}],
+  vlans:[],subnets:[],hosts:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},
+  routing:{strategy:'ospf',protocol:'ospf',ospf:{devices:{
+    'ospf-r1':{processId:10,routerId:'1.1.1.1',defaultArea:'0',passiveDefault:true,interfaces:{
+      'ospf-r1-wan':{enabled:true,area:'0',passive:false,cost:10},
+      'ospf-r1-lan':{enabled:true,area:'0',passive:true,cost:10}
+    }},
+    'ospf-r2':{processId:10,routerId:'2.2.2.2',defaultArea:'0',passiveDefault:true,interfaces:{
+      'ospf-r2-wan':{enabled:true,area:'0',passive:false,cost:10},
+      'ospf-r2-lan':{enabled:true,area:'0',passive:true,cost:10}
+    }}
+  }}},
+  management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
+};
+const ospfResult=Engine.generateAll(ospfProject);
+assert.strictEqual(ospfResult.ok,true);
+assert.strictEqual(ospfResult.configReadiness['ospf-r1'].status,'apply-ready',JSON.stringify(ospfResult.configReadiness['ospf-r1'].reasons));
+assert.strictEqual(ospfResult.configReadiness['ospf-r2'].status,'apply-ready',JSON.stringify(ospfResult.configReadiness['ospf-r2'].reasons));
+assert.match(ospfResult.configs['ospf-r1'],/router ospf 10/);
+assert.match(ospfResult.configs['ospf-r1'],/router-id 1\.1\.1\.1/);
+assert.match(ospfResult.configs['ospf-r1'],/no passive-interface GigabitEthernet0\/0/);
+assert.match(ospfResult.configs['ospf-r1'],/ip ospf cost 10/);
+
+const badOspf=JSON.parse(JSON.stringify(ospfProject));
+badOspf.routing.ospf.devices['ospf-r2'].interfaces['ospf-r2-wan'].area='10';
+const badOspfResult=Engine.generateAll(badOspf);
+assert.strictEqual(badOspfResult.configReadiness['ospf-r1'].status,'review-required');
+assert.ok(badOspfResult.configReadiness['ospf-r1'].reasons.some(x=>/OSPF: .*no tiene vecino esperado compatible/i.test(x)));
+
 const vpnProject={
   _schemaVersion:'3.50.0',
   projName:'Private VPN generation',

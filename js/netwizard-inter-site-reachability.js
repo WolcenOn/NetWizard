@@ -10,6 +10,7 @@ function tryRequire(path){try{return require(path);}catch{return null;}}
 function routingUtils(){return root.NetWizardRoutingUtils||(typeof require==='function'?tryRequire('./netwizard-routing-utils.js'):null);}
 function connectivityModel(){return root.NetWizardConnectivityModel||(typeof require==='function'?tryRequire('./netwizard-connectivity-model.js'):null);}
 function siteVpn(){return root.NetWizardSiteToSiteVpn||(typeof require==='function'?tryRequire('./netwizard-site-to-site-vpn.js'):null);}
+function ospfModel(){return root.NetWizardOspf||(typeof require==='function'?tryRequire('./netwizard-ospf.js'):null);}
 function ipv4Int(value){const parts=clean(value).split('.');if(parts.length!==4)return null;let n=0;for(const part of parts){if(!/^\d{1,3}$/.test(part))return null;const oct=Number(part);if(oct<0||oct>255)return null;n=(n<<8)|oct;}return n>>>0;}
 function ip4(n){return[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');}
 function parseCidr(cidr){const m=clean(cidr).match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d|[12]\d|3[0-2])$/);if(!m)return null;const ip=ipv4Int(m[1]),prefix=Number(m[2]);if(ip==null)return null;const mask=prefix===0?0:(0xffffffff<<(32-prefix))>>>0;const network=(ip&mask)>>>0;return{cidr:ip4(network)+'/'+prefix,ip,network,mask,prefix};}
@@ -28,10 +29,37 @@ function traceDirection(project,sourceSubnet,targetSubnet){
   const strategy=clean(obj(project&&project.routing).protocol||obj(project&&project.routing).strategy||obj(project&&project.routing).mode).toLowerCase();
   const sourceOwner=subnetOwner(project,sourceSubnet),targetOwner=subnetOwner(project,targetSubnet);
   const result={ok:false,strategy,sourceSubnetId:sourceSubnet&&sourceSubnet.id||'',targetSubnetId:targetSubnet&&targetSubnet.id||'',sourceOwner,targetOwner,hops:[],reason:''};
-  if(strategy!=='static'){result.reason='El análisis inter-sede actual requiere routing.strategy="static".';return result;}
+  if(!['static','ospf'].includes(strategy)){result.reason='El análisis inter-sede requiere routing.strategy static u ospf.';return result;}
   if(!sourceOwner){result.reason='La subnet origen no tiene gatewayDeviceRef/owner de routing explícito.';return result;}
   if(!targetOwner){result.reason='La subnet destino no tiene gatewayDeviceRef/owner de routing explícito.';return result;}
   if(!parseCidr(sourceSubnet&&sourceSubnet.cidr)||!parseCidr(targetSubnet&&targetSubnet.cidr)){result.reason='Origen o destino no tiene un CIDR IPv4 válido.';return result;}
+  if(strategy==='ospf'){
+    const OSPF=ospfModel();
+    if(!OSPF){result.reason='Modelo OSPF no disponible.';return result;}
+    const validation=OSPF.validateProject(project);
+    const deviceIssues=arr(validation.issues).filter(x=>x&&x.blocking&&[sourceOwner,targetOwner].includes(x.deviceId));
+    if(deviceIssues.length){result.reason='Intención OSPF inválida: '+deviceIssues.map(x=>clean(x.message)).join(' ');return result;}
+    const targetPlan=arr(validation.plans).find(x=>x.deviceId===targetOwner);
+    if(!targetPlan||!arr(targetPlan.networks).some(n=>clean(n.cidr)===clean(targetSubnet.cidr))){
+      result.reason='El router destino no anuncia '+targetSubnet.cidr+' por OSPF.';return result;
+    }
+    const path=OSPF.adjacencyPath(project,sourceOwner,targetOwner,{useObserved:true});
+    if(!path){
+      const planned=OSPF.adjacencyPath(project,sourceOwner,targetOwner,{useObserved:false});
+      result.reason=planned?'El camino OSPF existe en To-Be, pero la evidencia Observed no confirma adyacencias FULL.':'No existe un camino de adyacencias OSPF compatible entre los routers.';
+      return result;
+    }
+    result.hops.push({kind:'device',deviceId:sourceOwner,label:labelDevice(project,sourceOwner)});
+    for(const edge of arr(path.edges)){
+      const n=edge.neighbor;
+      result.hops.push({kind:'ospf',deviceId:n.deviceId,peerDeviceId:n.peerDeviceId,localPortId:n.localPortId,area:n.area,state:edge.state,label:'OSPF área '+n.area+' · '+n.localPortName+' → '+labelDevice(project,n.peerDeviceId)});
+      result.hops.push({kind:'device',deviceId:n.peerDeviceId,label:labelDevice(project,n.peerDeviceId)});
+    }
+    result.ok=true;result.confidence=path.confidence;
+    result.reason=path.confidence==='observed'?'Camino OSPF confirmado por vecinos Observed FULL.':'Camino OSPF coherente con el To-Be; faltan evidencias Observed FULL en algún salto.';
+    return result;
+  }
+
   let current=sourceOwner;const visited=new Set();
   for(let depth=0;depth<16;depth++){
     if(visited.has(current)){result.reason='Se detectó un bucle de routing en '+labelDevice(project,current)+'.';return result;}

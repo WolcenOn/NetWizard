@@ -78,6 +78,30 @@ test('MikroTik RouterOS v7 genera instancia, área y templates OSPF', () => {
   assert.ok(out.includes('networks=172.16.1.0/30 passive=no'));
 });
 
+test('Junos conserva área y coste OSPF por interfaz', () => {
+  const p=project('ospf');
+  p.routing={
+    strategy:'ospf',protocol:'ospf',
+    ospf:{devices:{
+      r1:{processId:10,routerId:'1.1.1.1',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r1-wan':{enabled:true,area:'0',passive:false,cost:10}
+      }},
+      r2:{processId:10,routerId:'2.2.2.2',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r2-wan':{enabled:true,area:'0',passive:false,cost:40},
+        'r2-mtk':{enabled:true,area:'10',passive:false,cost:50}
+      }},
+      r3:{processId:10,routerId:'3.3.3.3',defaultArea:'10',passiveDefault:true,interfaces:{
+        'r3-wan':{enabled:true,area:'10',passive:false,cost:50}
+      }}
+    }}
+  };
+  const plan=RoutingPlan.build(p);
+  const out=Generator.render(p,'r2','juniper_junos',plan);
+  assert.ok(out.includes('set protocols ospf area 0 interface ge-0/0/0.0'));
+  assert.ok(out.includes('set protocols ospf area 0 interface ge-0/0/0.0 metric 40'));
+  assert.ok(out.includes('set protocols ospf area 10 interface ge-0/0/1.0 metric 50'));
+});
+
 test('La inserción multivendor es idempotente', () => {
   const p = project('static');
   const plan = RoutingPlan.build(p);
