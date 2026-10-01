@@ -174,7 +174,10 @@ assert.strictEqual(privateResult.productionReady,true);
 assert.strictEqual(privateResult.productionGate.issues.filter(x=>x.severity==='error'||x.severity==='warning').length,0,JSON.stringify(privateResult.productionGate.issues));
 
 for(const id of ['hq_rtr','north_rtr','east_rtr','south_rtr']){
-  const cfg=privateResult.configs[id];
+  const configPath=privateResult.configPaths[id];
+  const artifact=privateResult.artifacts.find(file=>file&&file.path===configPath);
+  assert.ok(artifact,'Falta artefacto privado de '+id+' en '+configPath);
+  const cfg=String(artifact.content||'');
   assert.match(cfg,/router ospf 10/);
   assert.match(cfg,/ip access-list extended NW_V/);
   assert.match(cfg,/ip access-group NW_V\d+_IN in/);
