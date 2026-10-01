@@ -151,7 +151,7 @@ function configReadiness(project,device,output){
     if(!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito.');
   }
   if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
-    reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
+    for(const issue of ciscoPolicyBindingIssues(p,d.id))reasons.push('Política Cisco: '+issue);
   }
   if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='static'){
     const plan=RoutingPlan.build(p),devicePlan=arr(plan&&plan.devices).find(item=>item&&item.deviceId===d.id);
@@ -170,28 +170,99 @@ function configReadiness(project,device,output){
   if(endAt<0||saveAt<0||saveAt<endAt)reasons.push('El cierre/guardado de Cisco IOS no está en orden aplicable.');
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
-function firewallAcl(project){
-  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
-  rules=Policy.enrichPolicyRules(project,rules);
-  if(!rules.length)return'';
-  const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
+function subnetForVlan(project,vlanRef){
+  return arr(project&&project.subnets).find(sn=>sn&&clean(sn.vlanRef,120)===clean(vlanRef,120))||null;
+}
+function vlanForRef(project,vlanRef){
+  return arr(project&&project.vlans).find(v=>v&&clean(v.id,120)===clean(vlanRef,120))||null;
+}
+function subnetOwner(subnet){
+  return clean(subnet&&(subnet.gatewayDeviceRef||subnet.gatewayDeviceId||subnet.ownerDeviceRef||subnet.routingDeviceRef),120);
+}
+function ciscoPolicyTrunk(project,deviceId){
+  const ports=arr(project&&project.ports).filter(pt=>pt&&pt.deviceId===deviceId&&clean(pt.mode,20).toLowerCase()==='trunk'&&!clean(pt.name,80).includes('.'));
+  return ports.find(pt=>clean(pt.role,40).toLowerCase()==='lan')||ports[0]||null;
+}
+function ciscoPolicyBindingIssues(project,deviceId){
+  const rules=arr(project&&project.fwRules).filter(rule=>rule&&rule.enabled!==false),issues=[];
+  if(!rules.length)return issues;
   for(const rule of rules){
-    const action=rule.action==='deny'?'deny':'permit';
-    const proto=rule.proto==='any'?'ip':(rule.proto==='tcp_udp'?null:rule.proto);
-    const src=rule.src==='any'?'any':String(rule.src||'').includes('/')?formatWild(rule.src):'host '+rule.src;
-    const dst=rule.dst==='any'?'any':String(rule.dst||'').includes('/')?formatWild(rule.dst):'host '+rule.dst;
-    const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
-    for(const portValue of ports){
-      const port=portValue?' eq '+portValue:'';
-      const label=clean(rule.name,80);
-      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':'')+' ! '+label);
-      else{
-        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
-        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
-      }
+    const ingress=clean(rule.ingressVlanRef,120);
+    if(!ingress){
+      issues.push('la regla '+clean(rule.name||rule.id,80)+' no declara ingressVlanRef.');
+      continue;
+    }
+    const vlan=vlanForRef(project,ingress),subnet=subnetForVlan(project,ingress);
+    if(!vlan||!subnet){
+      issues.push('la regla '+clean(rule.name||rule.id,80)+' referencia una VLAN/subnet de entrada inexistente ('+ingress+').');
+      continue;
+    }
+    const owner=subnetOwner(subnet);
+    if(!owner){
+      issues.push('la VLAN '+ingress+' no declara gatewayDeviceRef/owner de routing.');
+      continue;
+    }
+    if(owner!==deviceId)continue;
+    if(!ciscoPolicyTrunk(project,deviceId)){
+      issues.push('no existe una interfaz trunk LAN física para aplicar la ACL de VLAN '+vlan.vlanId+'.');
     }
   }
-  lines.push(' deny ip any any log ! Implicit deny');
+  return Array.from(new Set(issues));
+}
+function renderCiscoAclRule(rule){
+  const action=clean(rule.action,20).toLowerCase()==='deny'||clean(rule.action,20).toLowerCase()==='reject'?'deny':'permit';
+  const rawProto=clean(rule.proto||'any',20).toLowerCase(),proto=rawProto==='any'?'ip':(rawProto==='tcp_udp'?null:rawProto);
+  const src=clean(rule.src,120)==='any'?'any':String(rule.src||'').includes('/')?formatWild(rule.src):'host '+clean(rule.src,120);
+  const dst=clean(rule.dst,120)==='any'?'any':String(rule.dst||'').includes('/')?formatWild(rule.dst):'host '+clean(rule.dst,120);
+  const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''],lines=[],label=clean(rule.name||rule.id,80);
+  for(const portValue of ports){
+    const port=portValue?' eq '+portValue:'';
+    if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+' ! '+label);
+    else{
+      lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
+      lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+    }
+  }
+  return lines;
+}
+function firewallAcl(project,deviceId){
+  const p=obj(project);
+  let rules=arr(p.fwRules).filter(x=>x&&x.enabled!==false).sort((a,b)=>(Number(a.prio)||100)-(Number(b.prio)||100));
+  if(!rules.length)return'';
+  if(!deviceId||rules.some(rule=>!clean(rule.ingressVlanRef,120))){
+    let legacy=Policy.mergeWithManualRules(p).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
+    legacy=Policy.enrichPolicyRules(p,legacy);
+    if(!legacy.length)return'';
+    const lines=['!','! FW Policy ACL (legacy / review required)','ip access-list extended FW_POLICY'];
+    for(const rule of legacy)lines.push(...renderCiscoAclRule(rule));
+    lines.push(' deny ip any any log ! Implicit deny',' exit');
+    return lines.join('\n');
+  }
+  const owned=rules.filter(rule=>{
+    const subnet=subnetForVlan(p,rule.ingressVlanRef);
+    return subnet&&subnetOwner(subnet)===deviceId;
+  });
+  if(!owned.length)return'';
+  const trunk=ciscoPolicyTrunk(p,deviceId);if(!trunk)return'';
+  const grouped=new Map();
+  for(const rule of owned){
+    const key=clean(rule.ingressVlanRef,120);
+    if(!grouped.has(key))grouped.set(key,[]);
+    grouped.get(key).push(rule);
+  }
+  const lines=['!','! Bound inter-VLAN policy ACLs'];
+  for(const [vlanRef,group] of grouped){
+    const vlan=vlanForRef(p,vlanRef),subnet=subnetForVlan(p,vlanRef);
+    if(!vlan||!subnet)continue;
+    const aclName='NW_V'+String(vlan.vlanId)+'_IN',gateway=clean(subnet.gateway,80),source=clean(subnet.cidr,80);
+    lines.push('ip access-list extended '+aclName);
+    const dhcp=obj(p.dhcp)[String(vlan.vlanId)];
+    if(dhcp&&dhcp.enabled!==false)lines.push(' permit udp any any eq 67 ! DHCP to local router');
+    if(gateway&&source)lines.push(' permit icmp '+formatWild(source)+' host '+gateway+' ! Gateway diagnostics');
+    for(const rule of group)lines.push(...renderCiscoAclRule(rule));
+    lines.push(' deny ip any any log ! Implicit deny',' exit');
+    lines.push('interface '+clean(trunk.name,80)+'.'+String(vlan.vlanId),' ip access-group '+aclName+' in',' exit');
+  }
   return lines.join('\n');
 }
 function extension(vendor){
@@ -213,7 +284,7 @@ function create(project){
   const enhanced=Vendor.createEnhancedGenConfig({
     originalGenConfig:fallback,
     getProject:()=>p,
-    getFwAcl:()=>firewallAcl(p),
+    getFwAcl:(deviceId)=>firewallAcl(p,deviceId),
     netUtils:Network
   });
   pipeline.registerRenderer({
