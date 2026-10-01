@@ -151,6 +151,8 @@ Cerrar el ciclo de proyecto:
 - as-built;
 - aceptación/cierre.
 
+Implementación: `workflow.interventionExecution` convierte el progreso de campo en evidencia auditable dentro del proyecto: responsable, estado por acción, timestamps, notas y referencias de evidencia. El cierre As-Built deja de aceptar progreso incompleto y requiere conectividad/etiquetado/As-Built revisados, `Observed` posterior a la ejecución y ausencia de drift bloqueante. `workflow.updatedFrom` conserva un resumen de acciones completadas, evidencias, técnico, aceptación y snapshot observado. El antiguo progreso local puede migrarse, pero deja de ser autoridad de cierre.
+
 ## Fase 8 — BOM y presupuesto
 
 Bloque posterior, construido sobre inventario y no como catálogo paralelo.
