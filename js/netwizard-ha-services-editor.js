@@ -86,12 +86,12 @@ function haCard(){
   const g=el('div',{className:'g2'});
   const route=el('div');
   route.appendChild(el('div',{className:'card-t',style:'margin-top:10px;'},'Ruta por defecto'));
-  route.append(field('haRouteNextHop','Next-hop','203.0.113.1'),numberField('haRouteDistance','Distancia','1'),numberField('haRouteTrack','Track ID','1'),field('haRouteDesc','Descripción','ISP principal'));
+  route.append(field('haRouteNextHop','Next-hop','203.0.113.1'),numberField('haRouteDistance','Distancia','1'),numberField('haRouteTrack','Track ID','1'),selectField('haRouteCircuit','Circuito WAN',[]),field('haRouteDesc','Descripción','ISP principal'));
   route.appendChild(el('button',{className:'btn bs bsm',type:'button',id:'haAddRoute'},'➕ Añadir ruta'));
   route.appendChild(el('div',{id:'haRouteList',style:'margin-top:6px;'}));
   const probe=el('div');
   probe.appendChild(el('div',{className:'card-t',style:'margin-top:10px;'},'Tracking / probe'));
-  probe.append(field('haProbeTarget','Destino','1.1.1.1'),field('haProbeSource','Interfaz origen','GigabitEthernet0/0'),numberField('haProbeFrequency','Frecuencia s','5'),numberField('haProbeTimeout','Timeout ms','1000'));
+  probe.append(field('haProbeTarget','Destino','1.1.1.1'),field('haProbeSource','Interfaz origen','GigabitEthernet0/0'),selectField('haProbeCircuit','Circuito WAN',[]),numberField('haProbeFrequency','Frecuencia s','5'),numberField('haProbeTimeout','Timeout ms','1000'));
   probe.appendChild(el('button',{className:'btn bs bsm',type:'button',id:'haAddProbe'},'➕ Añadir probe'));
   probe.appendChild(el('div',{id:'haProbeList',style:'margin-top:6px;'}));
   g.append(route,probe);card.appendChild(g);
@@ -137,7 +137,7 @@ function addRoute(){
   const trackId=clean(root.document.getElementById('haRouteTrack').value);
   if(trackId&&!/^\d+$/.test(trackId))return root.alert&&root.alert('Track ID debe ser un entero positivo.');
   const distance=Math.max(1,Math.min(255,Math.trunc(num(root.document.getElementById('haRouteDistance').value,1)||1)));
-  const rec={nextHop,distance,trackId,description:clean(root.document.getElementById('haRouteDesc').value)};
+  const rec={nextHop,distance,trackId,circuitRef:clean(root.document.getElementById('haRouteCircuit').value),description:clean(root.document.getElementById('haRouteDesc').value)};
   mutateHaDevice(x=>{x.defaultRoutes=arr(x.defaultRoutes).concat(rec);},'ha-route-add');
 }
 function addProbe(){
@@ -145,7 +145,7 @@ function addProbe(){
   mutateHaDevice(x=>{
     const list=arr(x.tracking).slice();
     const maxId=list.reduce((max,item)=>Math.max(max,Number.parseInt(item&&item.id,10)||0),0);
-    const rec={id:String(maxId+1),target,sourceInterface:clean(root.document.getElementById('haProbeSource').value),frequency:num(root.document.getElementById('haProbeFrequency').value,5)||5,timeout:num(root.document.getElementById('haProbeTimeout').value,1000)||1000};
+    const rec={id:String(maxId+1),target,sourceInterface:clean(root.document.getElementById('haProbeSource').value),circuitRef:clean(root.document.getElementById('haProbeCircuit').value),frequency:num(root.document.getElementById('haProbeFrequency').value,5)||5,timeout:num(root.document.getElementById('haProbeTimeout').value,1000)||1000};
     x.tracking=list.concat(rec);
   },'ha-probe-add');
 }
@@ -178,9 +178,12 @@ function renderHa(){
   const sel=root.document.getElementById('haDevice'),prev=sel.value;setSelectOptions(sel,devices,'— selecciona dispositivo —');
   if(prev&&devices.some(x=>x.value===prev))sel.value=prev;else if(devices.length&&!sel.value)sel.value=devices[0].value;
   const deviceId=selectedHaDevice(),ha=obj(obj(p.highAvailability).devices),cfg=obj(ha[deviceId]);
+  const wanItems=arr(p.wanCircuits).filter(c=>c&&c.deviceId===deviceId&&c.enabled!==false).map(c=>({value:c.id,label:(c.name||c.id)+' · '+(c.provider||'sin proveedor')+' · '+(c.role||'—')}));
+  setSelectOptions(root.document.getElementById('haRouteCircuit'),wanItems,'— circuito WAN —');
+  setSelectOptions(root.document.getElementById('haProbeCircuit'),wanItems,'— circuito WAN —');
   root.document.getElementById('haRelayServers').value=arr(cfg.dhcpRelayServers).join(',');
-  renderMiniList('haRouteList',arr(cfg.defaultRoutes),'defaultRoutes',r=>`${r.nextHop||'—'} · dist ${r.distance||1}${r.trackId?' · track '+r.trackId:''}`);
-  renderMiniList('haProbeList',arr(cfg.tracking),'tracking',r=>`${r.target||'—'} · ${r.frequency||5}s${r.sourceInterface?' · '+r.sourceInterface:''}`);
+  renderMiniList('haRouteList',arr(cfg.defaultRoutes),'defaultRoutes',r=>`${r.nextHop||'—'} · dist ${r.distance||1}${r.trackId?' · track '+r.trackId:''}${r.circuitRef?' · '+r.circuitRef:''}`);
+  renderMiniList('haProbeList',arr(cfg.tracking),'tracking',r=>`${r.target||'—'} · ${r.frequency||5}s${r.sourceInterface?' · '+r.sourceInterface:''}${r.circuitRef?' · '+r.circuitRef:''}`);
   renderMiniList('haFhrpList',arr(cfg.firstHopGroups),'firstHopGroups',r=>`${String(r.protocol||'vrrp').toUpperCase()} ${r.group||1} · ${r.interfaceName||'—'} · VIP ${r.virtualIp||'—'} · prio ${r.priority||100}`);
 }
 function renderAll(){renderHa();}
