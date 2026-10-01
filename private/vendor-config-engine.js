@@ -19,6 +19,7 @@ const Ospf=require('../js/netwizard-ospf.js');
 const SiteVpn=require('../js/netwizard-site-to-site-vpn.js');
 const SiteVpnGenerator=require('./site-to-site-vpn-generator.js');
 const WanResilience=require('../js/netwizard-wan-resilience.js');
+const CiscoSegmentation=require('./cisco-vlan-segmentation.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -138,6 +139,10 @@ function configReadiness(project,device,output){
     return{status:'review-required',reasons:vendorReasons};
   }
   reasons.push(...vpnBlocking,...resilienceBlocking);
+  if(vendor==='cisco_ios'&&!isSwitch(d)){
+    const segmentation=CiscoSegmentation.validateDevice(p,d.id);
+    for(const issue of arr(segmentation&&segmentation.issues).filter(x=>x&&x.blocking))reasons.push('Segmentación inter-VLAN: '+clean(issue.message,300));
+  }
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(isSwitch(d)){
     const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
@@ -245,6 +250,11 @@ function create(project){
     id:'routing.multivendor',order:110,
     supports(ctx){return ['juniper_junos','huawei_vrp','mikrotik_routeros'].includes(ctx.vendor)&&!isSwitch(ctx.device);},
     apply(config,ctx){return MultiRouting.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}
+  });
+  pipeline.registerStage({
+    id:'segmentation.cisco',order:130,
+    supports(ctx){return ctx.vendor==='cisco_ios'&&!isSwitch(ctx.device);},
+    apply(config,ctx){return CiscoSegmentation.append(config,ctx.project,ctx.deviceId);}
   });
   pipeline.registerStage({
     id:'vpn.site-to-site',order:150,
