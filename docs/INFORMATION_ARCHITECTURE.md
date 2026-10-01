@@ -23,7 +23,7 @@ Las pantallas de dominio siguen siendo la autoridad de edición:
 
 Los datos se corrigen en estas pantallas o en el editor específico de su dominio. Los paneles derivados no crean una segunda autoridad.
 
-**Circuitos WAN** se editan en Enlaces porque representan conectividad externa terminada en un dispositivo/puerto. La tarjeta WAN de Validación es únicamente una lectura derivada de `wanCircuits` y sus incidencias.
+**Circuitos WAN** se editan en Enlaces porque representan conectividad externa terminada en un dispositivo/puerto. La tarjeta WAN de Validación es únicamente una lectura derivada de `wanCircuits` y sus incidencias. El tránsito L3 inter-sede no crea otra colección: se modela con dos `ports` routed unidos por un `link`; `wanCircuits` sigue describiendo el servicio/circuito WAN y `routing` decide cómo se alcanzan los prefijos remotos.
 
 **HA / routing services por dispositivo** se editan en Dispositivos sobre `highAvailability.devices[deviceId]`. La intención incluye DHCP relay, rutas por defecto, tracking/IP-SLA y grupos HSRP/VRRP, y alimenta directamente el Private Engine sin crear otra autoridad.
 
