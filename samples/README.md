@@ -12,16 +12,23 @@ Los cuatro proyectos JSON son contratos funcionales, no solo datos de demostraci
 La suite unitaria valida schema, referencias y criterios de salida. Playwright importa los mismos archivos en el navegador publicado, ejecuta la puerta real, genera la configuración de cada equipo y comprueba también la documentación.
 
 
-## Golden Path Enterprise completo
+## Golden Path Multisite Secure
 
-`golden-path-enterprise-complete.json` es el showcase funcional más amplio de NetWizard. Está pensado para tres usos simultáneos:
+`golden-path-enterprise-complete.json` es el golden principal de NetWizard y debe cargar **sin errores ni warnings arquitectónicos**. Modela cuatro sedes (Central, Norte, Levante y Sur) conectadas por cuatro routers Cisco IOS en un anillo OSPF con dos caminos posibles entre sedes.
 
-1. demo comercial/técnica importable desde la UI;
-2. referencia de cómo se relacionan las autoridades canónicas;
-3. regresión de producto mediante `tests/golden-path-enterprise.test.js`.
+El proyecto demuestra una red empresarial segmentada por servicio: USERS, Wi-Fi corporativa, VOICE, SERVERS, CCTV/IoT y MGMT. Cada VLAN tiene gateway propietario explícito, DHCP donde corresponde y políticas inter-VLAN con `ingressVlanRef`. El Private Engine genera una ACL Cisco por VLAN y la aplica `in` a la subinterfaz correcta; las reglas sin binding explícito continúan siendo `review-required`.
 
-Incluye dos sedes (HQ + sucursal), switching Cisco con LACP, VLAN/DHCP/VTP observado, gateways Cisco IOS, OSPF sobre transporte privado, doble Internet por sede, VPN IPsec primary/backup, tracking y rutas flotantes, seguridad de acceso, gestión, Wi-Fi, IPv6/VRF, servicios internos redundantes, perfiles de capacidad, escenarios de fallo, racks/PDU/PoE/cableado estructurado, un workflow de intervención con evidencias y aceptación, y BOM/presupuesto completo con CAPEX/OPEX.
+También incluye VTP transparent con evidencia Observed, LACP core-access, PortFast/BPDU Guard, DHCP Snooping, DAI, IP Source Guard, port-security sticky, gestión SSH restringida a redes MGMT, Wi-Fi corporativa con RADIUS, IPv6, servicios internos redundantes, capacidad de enlaces, racks/PDU/PoE/cableado y BOM/presupuesto completo.
 
-El proyecto es deliberadamente **seguro para demostración**: los túneles VPN contienen `secretAlias`, nunca PSK reales. Por ello el Private Production Gate debe mantener los routers en `review-required`/bloqueado hasta que esos alias se resuelvan fuera del proyecto. Los switches Cisco sí deben quedar `apply-ready`. El sample de cuatro sedes continúa siendo la referencia de Production Gate totalmente `READY`.
+El contrato automático exige:
+- Architecture Validator sin warnings;
+- OSPF válido y vecinos Observed FULL en los cuatro routers;
+- reachability inter-sede permitida para flujos autorizados;
+- USERS bloqueados hacia MGMT y CCTV;
+- continuidad HQ↔Norte al retirar uno de los enlaces del anillo;
+- VTP/Wi-Fi/IPv6/servicios/capacidad/seguridad/gestión sin warnings;
+- BOM sin líneas sin precio;
+- todos los routers y switches `apply-ready`;
+- Production Gate `READY`.
 
-En la pantalla de importación aparecen los botones **⭐ Cargar Golden Path completo** y **⬇ JSON Golden Path**, ambos usando exactamente este archivo.
+En la pantalla de importación aparecen **⭐ Cargar Golden Path completo** y **⬇ JSON Golden Path**, ambos usando exactamente este JSON.
