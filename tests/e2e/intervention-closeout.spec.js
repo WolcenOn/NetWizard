@@ -6,6 +6,35 @@ async function resetStorage(page){
   await page.reload();
 }
 
+async function completeInterventionEvidence(page){
+  await page.evaluate(()=>{
+    const M=window.NetWizardInterventionExecution;
+    let p=window.NetWizardState.getSnapshot();
+    p=M.patchRecord(p,{technician:'E2E Técnico',startedAt:'2026-10-01T10:00:00Z'});
+    for(const item of M.build(p).items){
+      p=M.setAction(p,item.actionId,{
+        status:'done',
+        completedAt:'2026-10-01T10:10:00Z',
+        completedBy:'E2E Técnico',
+        note:'Ejecutado según plan',
+        evidenceRefs:['foto-'+item.order,'test-'+item.order]
+      });
+    }
+    p=M.acceptedRecord(p,{
+      connectivityVerified:true,
+      labelsVerified:true,
+      asBuiltReviewed:true,
+      acceptedBy:'E2E Supervisor',
+      acceptedAt:'2026-10-01T10:20:00Z',
+      note:'Aceptación E2E'
+    });
+    p.observedState=Object.assign({},p.observedState||{},{observedAt:'2026-10-01T10:15:00Z'});
+    window.NetWizardState.replaceProject(p,{source:'e2e-complete-intervention-evidence'});
+    window.navTo('physical');
+  });
+  await expect(page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'})).toBeEnabled();
+}
+
 test('cierre de intervención convierte To-Be en As-Built trazable y guarda snapshot', async ({page})=>{
   await resetStorage(page);
   page.on('dialog', dialog => dialog.accept());
@@ -40,6 +69,7 @@ test('cierre de intervención convierte To-Be en As-Built trazable y guarda snap
     window.navTo('physical');
   });
 
+  await completeInterventionEvidence(page);
   const closeout=page.locator('#interventionCloseoutMount');
   await expect(closeout).toBeVisible();
   await expect(closeout).toContainText('Cierre de intervención');
@@ -134,6 +164,7 @@ test('la UI permite seleccionar el equipo sustituto para un replace', async ({pa
   expect(state.replacementDeviceRef).toBe('sw-new');
 
   await page.evaluate(()=>window.navTo('physical'));
+  await completeInterventionEvidence(page);
   const closeout=page.locator('#interventionCloseoutMount');
   await expect(closeout).toBeVisible();
   await expect(closeout).not.toContainText('replacementDeviceRef');
@@ -173,6 +204,8 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
     window.NetWizardState.replaceProject(p,{source:'e2e-cycle-1-change'});
     window.navTo('physical');
   });
+  await completeInterventionEvidence(page);
+  await completeInterventionEvidence(page);
   await page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'}).click();
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('inventory');
 
@@ -245,7 +278,7 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
 });
 
 
-test('modo ejecución de campo conserva progreso local sin mutar el To-Be', async ({page})=>{
+test('modo ejecución de campo persiste evidencia canónica sin mutar el To-Be físico', async ({page})=>{
   await resetStorage(page);
   page.on('dialog', dialog => dialog.accept());
 
@@ -279,24 +312,30 @@ test('modo ejecución de campo conserva progreso local sin mutar el To-Be', asyn
 
   const field=page.locator('#fieldExecutionMount');
   await expect(field).toBeVisible();
-  await expect(field).toContainText('Modo ejecución en campo');
-  const boxes=field.locator('input[data-field-execution-done]');
-  await expect(boxes).toHaveCount(1);
-  await boxes.first().evaluate(input=>{
-    input.checked=true;
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-  });
-  await expect(page.locator('#fieldExecutionMount')).toContainText('Checklist de campo completado');
-  await expect(page.locator('#fieldExecutionMount')).toContainText('No quedan acciones pendientes.');
+  await expect(field).toContainText('Ejecución de campo & aceptación');
+  await page.locator('#fieldExecutionTechnician').fill('Técnico E2E');
+  await page.locator('#fieldExecutionTechnician').press('Tab');
+  const row=field.locator('[data-execution-action-id]').first();
+  await expect(row).toBeVisible();
+  await row.locator('select').selectOption('done');
+  await expect(page.locator('#fieldExecutionMount')).toContainText('100%');
 
   const afterMark=await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
-    return {mode:p.workflow.mode,rackUnit:p.devices[0].rackUnit,startUnit:p.rackItems[0].startUnit};
+    const execution=p.workflow.interventionExecution;
+    return {
+      mode:p.workflow.mode,rackUnit:p.devices[0].rackUnit,startUnit:p.rackItems[0].startUnit,
+      technician:execution&&execution.technician,
+      statuses:Object.values(execution&&execution.actions||{}).map(x=>x.status)
+    };
   });
-  expect(afterMark).toEqual({mode:'design',rackUnit:20,startUnit:20});
+  expect(afterMark.mode).toBe('design');
+  expect(afterMark.rackUnit).toBe(20);
+  expect(afterMark.startUnit).toBe(20);
+  expect(afterMark.technician).toBe('Técnico E2E');
+  expect(afterMark.statuses).toEqual(['done']);
 
-  await page.evaluate(()=>window.navTo('dev'));
-  await page.evaluate(()=>window.navTo('physical'));
-  await expect(page.locator('#fieldExecutionMount')).toContainText('100%');
-  await expect(page.locator('#interventionCloseoutMount')).toContainText('Campo');
+  await completeInterventionEvidence(page);
+  await expect(page.locator('#fieldExecutionMount')).toContainText('Cierre preparado');
+  await expect(page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'})).toBeEnabled();
 });
