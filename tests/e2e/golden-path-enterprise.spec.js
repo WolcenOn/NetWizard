@@ -34,7 +34,7 @@ test('Golden Path Enterprise carga el mismo JSON y activa sus capacidades en nav
   expect(state.devices).toBe(12);
   expect(state.ports).toBeGreaterThan(60);
   expect(state.vlans).toBe(24);
-  expect(state.hosts).toBe(20);
+  expect(state.hosts).toBe(24);
   expect(state.wan).toBe(0);
   expect(state.ospf.ok).toBe(true);
   expect(state.wifi.ok).toBe(true);
