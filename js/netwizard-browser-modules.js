@@ -59,6 +59,8 @@ const modules=[
   {"path":"js/netwizard-production-gate.js","requiredGlobal":"NetWizardProductionGate"},
   {"path":"js/netwizard-connectivity-model.js"},
   {"path":"js/netwizard-connectivity-checker.js"},
+  {"path":"js/netwizard-inter-site-reachability.js","dependsOn":["js/netwizard-routing-utils.js","js/netwizard-connectivity-model.js"],"requiredGlobal":"NetWizardInterSiteReachability"},
+  {"path":"js/netwizard-inter-site-reachability-ui.js","dependsOn":["js/netwizard-inter-site-reachability.js"],"requiredGlobal":"NetWizardInterSiteReachabilityUi"},
   {"path":"js/netwizard-v5-connectivity-trace.js"},
   {"path":"js/netwizard-architecture-validator.js","requiredGlobal":"NetWizardArchitectureValidator"},
   {"path":"js/netwizard-routing-plan.js","production":false},
