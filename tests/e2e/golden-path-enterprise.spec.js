@@ -11,6 +11,8 @@ test('Golden Path Enterprise carga el mismo JSON y activa sus capacidades en nav
   page.on('dialog',dialog=>dialog.accept());
   await resetStorage(page);
 
+  await page.evaluate(()=>window.navTo('cfg'));
+  await expect(page.locator('#pg-cfg')).toBeVisible();
   await expect(page.locator('#btnGoldenPathEnterprise')).toBeVisible();
   await page.locator('#btnGoldenPathEnterprise').click();
 
