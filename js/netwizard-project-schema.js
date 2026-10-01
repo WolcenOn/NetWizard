@@ -489,7 +489,8 @@ Mantenimiento:
     }
     p.dhcp = sanitizeDhcpMap(p.dhcp);
     const budgetSource=asObject(p.budget);
-    p.budget=Object.keys(budgetSource).length?sanitizeBudget(budgetSource):{};
+    if(Object.keys(budgetSource).length)p.budget=sanitizeBudget(budgetSource);
+    else delete p.budget;
     p.customDeviceModels = p.customDeviceModels.map(sanitizeCustomDeviceModel);
 
     p.devices = p.devices.map((d, idx) => {
