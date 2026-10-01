@@ -121,7 +121,9 @@
   function build(project){
     const p = project || {};
     const strategy = strategyFor(p);
-    const devices = arr(p.devices).filter(isRoutingDevice);
+    const OSPF=ospfModel();
+    const participantIds=strategy==='ospf'&&OSPF&&typeof OSPF.participatingDeviceIds==='function'?new Set(OSPF.participatingDeviceIds(p)):null;
+    const devices = arr(p.devices).filter(device=>isRoutingDevice(device)&&(!participantIds||participantIds.has(device.id)));
     const plans = devices.map(device => buildDevicePlan(p, device, strategy));
     const warnings = [];
     if(!['static','ospf'].includes(strategy)) warnings.push('Declara routing.strategy como "static" o routing.protocol como "ospf".');
