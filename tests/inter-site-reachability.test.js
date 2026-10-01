@@ -59,4 +59,32 @@ assert.strictEqual(res.reachable,false);
 assert.match(res.reason,/POLÍTICA:/);
 assert.strictEqual(res.policy.matched.id,'deny1');
 
+
+p=fixture();
+p.ports.push(
+  {id:'r2-inet',deviceId:'r2',name:'Gi0/9',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.2/30'},
+  {id:'r3-inet',deviceId:'r3',name:'Gi0/9',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.2/30'}
+);
+p.wanCircuits=[
+  {id:'c2',deviceId:'r2',portId:'r2-inet',enabled:true},
+  {id:'c3',deviceId:'r3',portId:'r3-inet',enabled:true}
+];
+p.routing.staticRoutesByDevice={};
+p.routing.siteToSiteVpns=[{
+  id:'vpn-r2-r3',name:'NORTE-SUR',enabled:true,
+  localDeviceId:'r2',remoteDeviceId:'r3',localCircuitRef:'c2',remoteCircuitRef:'c3',
+  localPrefixes:['10.20.0.0/24'],remotePrefixes:['10.30.0.0/24'],
+  secretAlias:'VPN_NORTE_SUR_PSK',ikeVersion:'2',encryption:'aes256',integrity:'sha256',
+  dhGroup:14,pfsGroup:14,ikeLifetimeSeconds:28800,ipsecLifetimeSeconds:3600
+}];
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,true,res.reason);
+assert.ok(res.forward.hops.some(h=>h.kind==='vpn'&&h.tunnelId==='vpn-r2-r3'));
+assert.ok(res.reverse.hops.some(h=>h.kind==='vpn'&&h.tunnelId==='vpn-r2-r3'));
+
+p.observedState={siteToSiteVpns:{'vpn-r2-r3':{status:'down',localEndpoint:'203.0.113.2',remoteEndpoint:'198.51.100.2'}}};
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,false);
+assert.match(res.reason,/VPN .*DOWN|VPN .*figura DOWN/i);
+
 console.log('✓ Reachability inter-sede valida ida, retorno, camino multi-hop y política');
