@@ -45,6 +45,18 @@ test('Cisco IOS router sin RoaS explícito genera subinterfaces, DHCP, NAT y ACL
   assert.ok(cfg.includes('! FW ACL TEST'));
 });
 
+test('Cisco IOS router de tránsito puro no recibe RoaS de VLANs pertenecientes a otro router', () => {
+  const project=JSON.parse(JSON.stringify(baseProject));
+  project.devices.push({id:'r2',name:'RTR Transit',type:'router',kind:'router',vendorOs:'cisco_ios'});
+  project.ports.push({id:'r2-transit',deviceId:'r2',name:'GigabitEthernet0/0',mode:'routed',role:'transit',l3Ip:'10.255.0.2',l3Cidr:'10.255.0.0/30'});
+  project.subnets[0].gatewayDeviceRef='r1';
+  const cfg=genFor(project)('r2','cisco_ios');
+  assert.doesNotMatch(cfg,/gateway RoaS inferido automáticamente/);
+  assert.doesNotMatch(cfg,/interface GigabitEthernet0\/1\.10/);
+  assert.match(cfg,/interface GigabitEthernet0\/0/);
+  assert.match(cfg,/ip address 10\.255\.0\.2 255\.255\.255\.252/);
+});
+
 test('MikroTik RouterOS no cae en vendor desconocido y genera bridge VLAN filtering', () => {
   const project = JSON.parse(JSON.stringify(baseProject));
   project.devices[0].vendorOs = 'mikrotik_routeros';
