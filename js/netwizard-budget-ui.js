@@ -100,7 +100,7 @@ function render(project){
   unitCost.id='budgetUnitCost';unitPrice.id='budgetUnitPrice';charge.id='budgetChargeType';period.id='budgetBillingPeriod';classif.id='budgetCapexOpex';
   supplier.id='budgetSupplier';quote.id='budgetQuoteRef';valid.id='budgetValidUntil';note.id='budgetPriceNote';
   const grid=el('div','g2');
-  grid.append(field('Recurso',lineSelect),field('Aplicar precio a',priceScope),field('Coste unitario',unitCost),field('Venta unitaria',unitPrice),field('Tipo de cargo',charge),field('Periodo meses',period),field('Clasificación',classif),field('Proveedor',supplier),field('Oferta / referencia',quote),field('Válido hasta',valid),field('Nota',note));
+  grid.append(field('Recurso',lineSelect),field('Aplicar precio a',priceScope),field('Coste unitario',unitCost),field('Venta unitaria (vacío = margen objetivo)',unitPrice),field('Tipo de cargo',charge),field('Periodo meses',period),field('Clasificación',classif),field('Proveedor',supplier),field('Oferta / referencia',quote),field('Válido hasta',valid),field('Nota',note));
   pricing.append(grid);
   function selectedLine(){return report.lines.find(x=>x.resourceRef===lineSelect.value)||null;}
   function loadSelected(){
@@ -121,10 +121,11 @@ function render(project){
   savePrice.onclick=()=>{
     const line=selectedLine();if(!line)return;
     const payload={
-      unitCost:Math.max(0,Number(unitCost.value)||0),unitPrice:Math.max(0,Number(unitPrice.value)||0),
       chargeType:charge.value,billingPeriodMonths:Math.max(1,Math.round(Number(period.value)||1)),capexOpex:classif.value,
       supplier:clean(supplier.value),quoteRef:clean(quote.value),validUntil:clean(valid.value),note:clean(note.value)
     };
+    if(clean(unitCost.value)!=='')payload.unitCost=Math.max(0,Number(unitCost.value)||0);
+    if(clean(unitPrice.value)!=='')payload.unitPrice=Math.max(0,Number(unitPrice.value)||0);
     persist(b=>{
       b.resourcePricing=obj(b.resourcePricing);b.modelPricing=obj(b.modelPricing);
       if(priceScope.value==='model'&&line.modelKey){
