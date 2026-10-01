@@ -39,6 +39,17 @@ test('Cisco IOS traduce rutas estáticas del plan neutral', () => {
   assert.ok(cli.includes('ip route 10.20.20.0 255.255.255.0 172.16.0.2'));
 });
 
+test('Cisco IOS genera distancia administrativa para ruta estática explícita', () => {
+  const p = project('static');
+  p.routing.staticRoutesByDevice={
+    r1:[{id:'rt1',destination:'10.20.20.0/24',nextHop:'172.16.0.2',distance:7}]
+  };
+  const plan=RoutingPlan.build(p);
+  const cli=CiscoRouting.render(p,'r1',plan);
+  assert.ok(cli.includes('ip route 10.20.20.0 255.255.255.0 172.16.0.2 7'));
+  assert.strictEqual((cli.match(/ip route 10\.20\.20\.0/g)||[]).length,1);
+});
+
 test('Cisco IOS traduce OSPF con router-id, network y wildcard', () => {
   const p = project('ospf');
   const plan = RoutingPlan.build(p);
