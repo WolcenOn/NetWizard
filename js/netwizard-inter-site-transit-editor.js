@@ -113,7 +113,7 @@ function renderList(){
 function render(){fillDevices();renderList();}
 function install(){
   if(!root.document||root.document.getElementById('nwInterSiteTransitCard'))return;
-  const host=root.document.getElementById('pg-link');if(!host)return;
+  const host=root.document.getElementById('pg-links');if(!host)return;
   const card=el('div',{className:'card',id:'nwInterSiteTransitCard',style:'margin-top:12px;'});
   const head=el('div',{className:'card-h'});head.append(el('div',{className:'card-t'},'🌐 Tránsito L3 inter-sede'),el('span',{className:'b bac'},'ports + links'));
   card.append(head,el('div',{className:'hint',style:'margin-bottom:10px;'},'Crea un enlace routed punto a punto entre dos routers/firewalls usando las autoridades existentes de puertos y enlaces. Las VLAN permanecen locales a cada sede.'));
