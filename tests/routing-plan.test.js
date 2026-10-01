@@ -44,6 +44,30 @@ test('Routing plan estático devuelve planes neutrales y next-hop del vecino', (
   assert.ok(hq.staticRoutes.some(route => route.destination === '10.20.20.0/24' && route.nextHop === '172.16.0.2'));
 });
 
+test('Routing estático explícito tiene prioridad sobre la inferencia y conserva distancia', () => {
+  const p = project('static');
+  p.routing.staticRoutesByDevice={
+    r1:[{id:'rt-explicit',destination:'10.20.20.0/24',nextHop:'172.16.0.2',distance:5,description:'Branch explícita'}]
+  };
+  const plan=RoutingPlan.build(p),hq=plan.devices.find(item=>item.deviceId==='r1');
+  const routes=hq.staticRoutes.filter(route=>route.destination==='10.20.20.0/24');
+  assert.strictEqual(routes.length,1);
+  assert.strictEqual(routes[0].source,'explicit');
+  assert.strictEqual(routes[0].distance,5);
+  assert.strictEqual(routes[0].outPortName,'Gi0/0');
+  assert.deepStrictEqual(hq.staticRouteIssues,[]);
+});
+
+test('Routing estático explícito rechaza next-hop no directamente conectado', () => {
+  const p = project('static');
+  p.routing.staticRoutesByDevice={
+    r1:[{id:'rt-bad',destination:'10.99.0.0/24',nextHop:'203.0.113.1',distance:1}]
+  };
+  const plan=RoutingPlan.build(p),hq=plan.devices.find(item=>item.deviceId==='r1');
+  assert.ok(hq.staticRouteIssues.some(issue=>issue.code==='NW-ROUTE-STATIC-006'));
+  assert.strictEqual(hq.staticRoutes.some(route=>route.destination==='10.99.0.0/24'),false);
+});
+
 test('Routing plan OSPF conserva intención, router-id y redes neutrales', () => {
   const plan = RoutingPlan.build(project('ospf'));
   const hq = plan.devices.find(item => item.deviceId === 'r1');
