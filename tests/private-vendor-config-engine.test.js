@@ -286,6 +286,42 @@ for(const id of ['vpn-r1','vpn-r2']){
   assert.strictEqual((vpnResult.configs[id].match(/^write memory$/gm)||[]).length,1);
 }
 
+
+const boundPolicyProject={
+  _schemaVersion:'3.50.0',
+  projName:'Bound Cisco inter-VLAN policy',
+  devices:[{id:'acl-r1',name:'RTR-ACL',type:'router',kind:'router',vendorOs:'cisco_ios'}],
+  ports:[
+    {id:'acl-trunk',deviceId:'acl-r1',name:'GigabitEthernet0/1',mode:'trunk',role:'lan',allowedVlans:[110,140]},
+    {id:'acl-u',deviceId:'acl-r1',name:'GigabitEthernet0/1.110',mode:'routed',role:'lan',l3Ip:'10.10.10.1',l3Cidr:'10.10.10.0/24',vlanRef:'v110'},
+    {id:'acl-s',deviceId:'acl-r1',name:'GigabitEthernet0/1.140',mode:'routed',role:'lan',l3Ip:'10.10.40.1',l3Cidr:'10.10.40.0/24',vlanRef:'v140'}
+  ],
+  vlans:[{id:'v110',vlanId:110,name:'USERS'},{id:'v140',vlanId:140,name:'SERVERS'}],
+  subnets:[
+    {id:'sn110',vlanRef:'v110',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'acl-r1'},
+    {id:'sn140',vlanRef:'v140',cidr:'10.10.40.0/24',gateway:'10.10.40.1',gatewayDeviceRef:'acl-r1'}
+  ],
+  hosts:[],links:[],dhcp:{'110':{enabled:true,start:'10.10.10.50',end:'10.10.10.199',dns:'10.10.40.10',lease:7}},
+  fwRules:[
+    {id:'allow-web',name:'Users to application HTTPS',ingressVlanRef:'v110',src:'10.10.10.0/24',dst:'10.10.40.0/24',proto:'tcp',port:'443',action:'allow',prio:10,enabled:true},
+    {id:'deny-users',name:'Users default deny',ingressVlanRef:'v110',src:'10.10.10.0/24',dst:'any',proto:'any',port:'any',action:'deny',prio:900,enabled:true}
+  ],
+  roas:{},vtp:{roles:{}},routing:{strategy:'static'},management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
+};
+const boundPolicyResult=Engine.generateAll(boundPolicyProject);
+assert.strictEqual(boundPolicyResult.ok,true);
+assert.strictEqual(boundPolicyResult.configReadiness['acl-r1'].status,'apply-ready',JSON.stringify(boundPolicyResult.configReadiness['acl-r1'].reasons));
+assert.match(boundPolicyResult.configs['acl-r1'],/ip access-list extended NW_V110_IN/);
+assert.match(boundPolicyResult.configs['acl-r1'],/permit tcp 10\.10\.10\.0 0\.0\.0\.255 10\.10\.40\.0 0\.0\.0\.255 eq 443/);
+assert.match(boundPolicyResult.configs['acl-r1'],/interface GigabitEthernet0\/1\.110[\s\S]*ip access-group NW_V110_IN in/);
+
+const unboundPolicyProject=JSON.parse(JSON.stringify(boundPolicyProject));
+delete unboundPolicyProject.fwRules[0].ingressVlanRef;
+const unboundPolicyResult=Engine.generateAll(unboundPolicyProject);
+assert.strictEqual(unboundPolicyResult.configReadiness['acl-r1'].status,'review-required');
+assert.ok(unboundPolicyResult.configReadiness['acl-r1'].reasons.some(x=>/no declara ingressVlanRef/i.test(x)));
+
+
 const vtpProject=JSON.parse(JSON.stringify(project));
 vtpProject.devices=[JSON.parse(JSON.stringify(project.devices.find(x=>x.id==='sw1')))];
 vtpProject.ports=project.ports.filter(x=>x.deviceId==='sw1');
