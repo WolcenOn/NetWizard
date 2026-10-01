@@ -61,6 +61,25 @@ test('Cisco IOS traduce OSPF con router-id, network y wildcard', () => {
   assert.ok(cli.includes('passive-interface default'));
 });
 
+test('Cisco IOS aplica coste OSPF a la interfaz configurada', () => {
+  const p=project('ospf');
+  p.routing={
+    strategy:'ospf',protocol:'ospf',
+    ospf:{devices:{
+      r1:{processId:10,routerId:'1.1.1.1',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r1-wan':{enabled:true,area:'0',passive:false,cost:30}
+      }},
+      r2:{processId:10,routerId:'2.2.2.2',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r2-wan':{enabled:true,area:'0',passive:false,cost:30}
+      }}
+    }}
+  };
+  const plan=RoutingPlan.build(p),cli=CiscoRouting.render(p,'r1',plan);
+  assert.ok(cli.includes('no passive-interface GigabitEthernet0/0'));
+  assert.ok(cli.includes('interface GigabitEthernet0/0'));
+  assert.ok(cli.includes('ip ospf cost 30'));
+});
+
 test('Cisco IOS inserta routing antes de end sin duplicarlo', () => {
   const p = project('static');
   const once = CiscoRouting.appendToConfig('configure terminal\nend\n', p, 'r1');
