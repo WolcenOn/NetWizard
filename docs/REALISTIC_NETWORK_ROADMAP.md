@@ -135,6 +135,8 @@ Implementación OSPF inicial: `routing.ospf.devices[deviceId]` define proceso, r
 
 Criterio de salida: NetWizard puede explicar qué tráfico sobrevive a la pérdida de un enlace o equipo.
 
+Implementación: `wanCircuits` conserva grupos/roles primary-backup; `highAvailability.devices[deviceId].defaultRoutes[]` y `tracking[]` pueden enlazarse mediante `circuitRef`; las VPN redundantes usan `role/priority`. `NetWizardWanResilience` valida rutas flotantes y tracking, genera escenarios Derived de caída de circuito/proveedor/router/VPN, degrada una copia del proyecto y vuelve a ejecutar Reachability para medir tráfico superviviente/perdido y detectar single points of failure. Private Engine fuerza `review-required` cuando un failover declarado es incoherente. No se crea una colección persistida de resiliencia ni se cambia schema 3.50.
+
 ## Fase 7 — Flujo de instalador / as-built
 
 Cerrar el ciclo de proyecto:
