@@ -262,7 +262,7 @@ Mantenimiento:
     for(const [idx,rawLine] of asArray(source.serviceLines).slice(0,5000).entries()){
       const x=asObject(rawLine),quantity=Number(x.quantity),unitCost=Number(x.unitCost),unitPrice=Number(x.unitPrice);
       serviceLines.push({
-        id:cleanId(x.id,\`budget_service_\${idx+1}\`),
+        id:cleanId(x.id,`budget_service_\${idx+1}`),
         category:cleanText(x.category||'Servicio',80),
         description:cleanText(x.description||'',240),
         quantity:Number.isFinite(quantity)&&quantity>0?Math.round(quantity*100)/100:1,
@@ -934,11 +934,11 @@ Mantenimiento:
       if(!Number.isFinite(margin)||margin<0||margin>=100) errors.push('budget.defaultMarginPct debe estar entre 0 y 99,99.');
       const serviceIds=new Set();
       for(const line of asArray(budgetContract.serviceLines)){
-        if(serviceIds.has(line.id)) errors.push(\`budget.serviceLines: id duplicado \${line.id}.\`);
+        if(serviceIds.has(line.id)) errors.push(`budget.serviceLines: id duplicado \${line.id}.`);
         serviceIds.add(line.id);
-        if(!(Number(line.quantity)>0)) errors.push(\`budget.serviceLines \${line.id}: quantity debe ser > 0.\`);
-        if(!['one-time','recurring'].includes(cleanText(line.chargeType||'',20))) errors.push(\`budget.serviceLines \${line.id}: chargeType inválido.\`);
-        if(!['capex','opex'].includes(cleanText(line.capexOpex||'',20))) errors.push(\`budget.serviceLines \${line.id}: capexOpex inválido.\`);
+        if(!(Number(line.quantity)>0)) errors.push(`budget.serviceLines \${line.id}: quantity debe ser > 0.`);
+        if(!['one-time','recurring'].includes(cleanText(line.chargeType||'',20))) errors.push(`budget.serviceLines \${line.id}: chargeType inválido.`);
+        if(!['capex','opex'].includes(cleanText(line.capexOpex||'',20))) errors.push(`budget.serviceLines \${line.id}: capexOpex inválido.`);
       }
     }
 
