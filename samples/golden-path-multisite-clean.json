@@ -1240,6 +1240,62 @@
         "l3Ip": "10.255.0.14",
         "l3Cidr": "10.255.0.12/30",
         "desc": "WAN privada a south"
+      },
+      {
+        "id": "hq_acc_admin",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v160",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-HQ-01"
+      },
+      {
+        "id": "north_acc_admin",
+        "deviceId": "north_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "north_v260",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-N-01"
+      },
+      {
+        "id": "east_acc_admin",
+        "deviceId": "east_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "east_v360",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-E-01"
+      },
+      {
+        "id": "south_acc_admin",
+        "deviceId": "south_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "south_v460",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-S-01"
       }
     ],
     "vlans": [
@@ -1984,6 +2040,50 @@
         "portRef": "south_acc_guest",
         "ipMode": "static",
         "staticIp": "10.40.50.20",
+        "locationId": "room_south",
+        "physicalLocation": "Sede Sur"
+      },
+      {
+        "id": "hq_admin",
+        "name": "ADMIN-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v160",
+        "portRef": "hq_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.10.60.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Sede Central"
+      },
+      {
+        "id": "north_admin",
+        "name": "ADMIN-N-01",
+        "type": "pc",
+        "vlanRef": "north_v260",
+        "portRef": "north_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.20.60.20",
+        "locationId": "room_north",
+        "physicalLocation": "Sede Norte"
+      },
+      {
+        "id": "east_admin",
+        "name": "ADMIN-E-01",
+        "type": "pc",
+        "vlanRef": "east_v360",
+        "portRef": "east_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.30.60.20",
+        "locationId": "room_east",
+        "physicalLocation": "Sede Levante"
+      },
+      {
+        "id": "south_admin",
+        "name": "ADMIN-S-01",
+        "type": "pc",
+        "vlanRef": "south_v460",
+        "portRef": "south_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.40.60.20",
         "locationId": "room_south",
         "physicalLocation": "Sede Sur"
       }
@@ -3753,7 +3853,11 @@
           "south_server": "vloc_south",
           "south_phone": "vloc_south",
           "south_camera": "vloc_south",
-          "south_guest": "vloc_south"
+          "south_guest": "vloc_south",
+          "hq_admin": "vloc_hq",
+          "north_admin": "vloc_north",
+          "east_admin": "vloc_east",
+          "south_admin": "vloc_south"
         }
       },
       "pos": {},
