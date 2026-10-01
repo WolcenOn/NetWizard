@@ -117,6 +117,9 @@ function validateVpnRedundancy(project){
     if(sorted.length>1){
       const priorities=sorted.map(x=>Number(x.priority||100));
       if(new Set(priorities).size!==priorities.length)issues.push(issue('NW-RES-021','VPN redundante '+key+': las prioridades deben ser distintas para definir el orden de failover.',true,{vpnGroup:key}));
+      const primaries=sorted.filter(x=>clean(x.role).toLowerCase()==='primary'),backups=sorted.filter(x=>clean(x.role).toLowerCase()==='backup');
+      if(primaries.length!==1)issues.push(issue('NW-RES-022','VPN redundante '+key+': debe existir exactamente un túnel primary.',true,{vpnGroup:key}));
+      if(!backups.length)issues.push(issue('NW-RES-023','VPN redundante '+key+': falta al menos un túnel backup.',true,{vpnGroup:key}));
     }
     out.push({key,tunnels:sorted,redundant:sorted.length>1,circuitPairs:Array.from(circuitPairs)});
   }
