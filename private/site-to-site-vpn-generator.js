@@ -88,12 +88,14 @@ function renderFortinet(project,deviceId){
     lines.push(
       ' edit "'+n+'"',
       '  set interface "'+clean(t.localWanPortName)+'"',
+      '  set type static',
       '  set ike-version 2',
       '  set local-gw '+t.localEndpoint,
       '  set remote-gw '+t.remoteEndpoint,
       '  set proposal aes256-sha256',
       '  set dhgrp 14',
       '  set keylife '+t.ikeLifetimeSeconds,
+      '  set authmethod psk',
       '  set psksecret '+secret(t.secretAlias),
       ' next'
     );
@@ -114,6 +116,7 @@ function renderFortinet(project,deviceId){
           '  set proposal aes256-sha256',
           '  set pfs enable',
           '  set dhgrp 14',
+          '  set keylife-type seconds',
           '  set keylifeseconds '+t.ipsecLifetimeSeconds,
           '  set src-subnet '+ln+' '+lm,
           '  set dst-subnet '+rn+' '+rm,
