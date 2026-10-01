@@ -13,6 +13,8 @@ const Wan=require(path.join(root,'js','netwizard-wan-circuits.js'));
 const Vendor=require(path.join(root,'js','netwizard-vendor-hardening.js'));
 const Architecture=require(path.join(root,'js','netwizard-architecture-validator.js'));
 const Sample=require(path.join(root,'js','netwizard-sample-four-sites.js'));
+const VtpVerification=require(path.join(root,'js','netwizard-vtp-production-verification.js'));
+const PrivateWorker=require(path.join(root,'private','deployment-worker.js'));
 
 global.NetWizardProductionGate=Gate;
 global.NetWizardRackModel=Rack;
@@ -23,7 +25,7 @@ Integration.install();
 const defaults=()=>({
   _schemaVersion:'3.50.0',step:'dash',projName:'',
   devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
-  vlanMatrix:{},dhcp:{},security:{},roas:{},vtp:{roles:{}},topo:{pos:{}},
+  vlanMatrix:{},dhcp:{},security:{},roas:{},vtp:{roles:{}},observedState:null,topo:{pos:{}},
   visual:{locs:[],assign:{devices:{},hosts:{}},pos:{},view:{}},
   iot:{accessNodes:[],devices:[],map:{show:{}}},
   physicalLocations:[],hostPhysicalLocations:[],uiSort:{},
@@ -50,6 +52,10 @@ assert.strictEqual(p.telecomOutlets.length,32);
 assert.strictEqual(p.cableRuns.length,32);
 assert.strictEqual(p.pdus.length,8);
 assert.strictEqual(p.wanCircuits.length,4,'Cada sede debe declarar su entrada WAN/Internet');
+
+assert.ok(p.observedState&&p.observedState.vtpDevices,'El golden debe incluir evidencia VTP observada');
+assert.strictEqual(Object.keys(p.observedState.vtpDevices).length,8,'Debe existir evidencia para los ocho switches Cisco');
+assert.strictEqual(VtpVerification.evaluateProject(p).ok,true,'La evidencia VTP del golden debe ser coherente con el diseño');
 
 assert.strictEqual(p.visual.locs.length,8,'Debe haber exactamente CPD + oficina para cada una de las cuatro sedes');
 assert.ok(!p.visual.locs.some(x=>['Core / Perímetro','Acceso / Usuarios','Servicios'].includes(x.name)),'El ejemplo no debe caer en ubicaciones visuales genéricas');
@@ -122,4 +128,14 @@ const gate=Gate.runProductionGate(p,{productionMode:true,strict:true});
 assert.strictEqual(gate.canExport,true,gate.issues.map(x=>`[${x.severity}] [${x.code}] ${x.message}`).join('\n'));
 assert.strictEqual(gate.counts.blocking,0,Gate.summarizeGate(gate));
 
-console.log('✓ Golden JSON 4 sedes: VLSM, trunks, cableado, PoE, racks y alimentación equilibrada listos para producción');
+const privateResult=PrivateWorker.handle({project:p,generatedAt:'2026-10-01T00:00:00.000Z'});
+assert.strictEqual(privateResult.ok,true,'Private Engine debe completar el deployment del golden');
+assert.strictEqual(privateResult.productionStatus,'ready',privateResult.productionGateSummaryMarkdown);
+assert.strictEqual(privateResult.productionReady,true,privateResult.productionGateSummaryMarkdown);
+assert.strictEqual(privateResult.productionGate.canExport,true,privateResult.productionGateSummaryMarkdown);
+assert.strictEqual(privateResult.productionGate.counts.blocking,0,privateResult.productionGateSummaryMarkdown);
+for(const id of ['s1_core','s1_access','s2_core','s2_access','s3_core','s3_access','s4_core','s4_access']){
+  assert.strictEqual(privateResult.configReadiness[id].status,'apply-ready',id+' debe quedar apply-ready');
+}
+
+console.log('✓ Golden JSON 4 sedes: Production Gate privado LISTO con VLSM, VTP observado, trunks, cableado, PoE, racks y alimentación');
