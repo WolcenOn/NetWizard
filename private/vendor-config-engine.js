@@ -176,7 +176,7 @@ function configReadiness(project,device,output){
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
 function firewallAcl(project){
-  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
+  let rules=arr(obj(project).fwRules).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
   rules=Policy.enrichPolicyRules(project,rules);
   if(!rules.length)return'';
   const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
