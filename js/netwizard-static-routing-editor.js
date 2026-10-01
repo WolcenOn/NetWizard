@@ -108,14 +108,17 @@ function renderRoutes(){
   host.textContent='';
   const routes=arr(routeMap(p)[deviceId]);
   if(!deviceId){host.appendChild(el('div',{className:'hint'},'Selecciona un router/firewall.'));if(status)status.textContent='';renderSuggested(p,'');return;}
+  const RU=routingUtils(),check=RU&&typeof RU.explicitStaticRoutes==='function'?RU.explicitStaticRoutes(p,deviceId):{routes:[],issues:[]};
+  const validById=new Map(arr(check.routes).map(r=>[clean(r.id),r]));
   if(!routes.length)host.appendChild(el('div',{className:'hint'},'Sin rutas estáticas explícitas. El plan puede seguir mostrando inferencias de vecinos directos.'));
   routes.forEach(r=>{
-    const row=el('div',{className:'hrow'});
+    const row=el('div',{className:'hrow'}),resolved=validById.get(clean(r.id));
     const info=el('div',{className:'hinfo'});
-    info.append(el('div',{className:'hn mono'},clean(r.destination)+' → '+clean(r.nextHop)+' · AD '+String(r.distance==null?1:r.distance)),el('div',{className:'hm'},clean(r.description)||'Ruta remota explícita'));
+    const hop=clean(r.destination)+' → '+clean(r.nextHop)+' · AD '+String(r.distance==null?1:r.distance);
+    const path=resolved&&resolved.outPortName?('Camino inmediato: '+deviceLabel(p,deviceId)+' → '+resolved.outPortName+' → '+resolved.nextHop):(clean(r.description)||'Ruta remota explícita');
+    info.append(el('div',{className:'hn mono'},hop),el('div',{className:'hm'},path+(r.description?' · '+clean(r.description):'')));
     const del=el('button',{className:'btn bd bxs',type:'button'},'✕');del.onclick=()=>deleteRoute(clean(r.id));row.append(info,del);host.appendChild(row);
   });
-  const RU=routingUtils(),check=RU&&typeof RU.explicitStaticRoutes==='function'?RU.explicitStaticRoutes(p,deviceId):{issues:[]};
   if(status){
     const issues=arr(check.issues);
     status.className=issues.length?'co co-rd':'co co-gn';
