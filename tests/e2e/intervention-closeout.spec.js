@@ -205,7 +205,6 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
     window.navTo('physical');
   });
   await completeInterventionEvidence(page);
-  await completeInterventionEvidence(page);
   await page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'}).click();
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('inventory');
 
@@ -242,6 +241,7 @@ test('dos ciclos consecutivos de intervención mantienen un As-Built limpio y tr
     window.NetWizardState.replaceProject(p,{source:'e2e-cycle-2-change'});
     window.navTo('physical');
   });
+  await completeInterventionEvidence(page);
   await page.locator('#interventionCloseoutMount button',{hasText:'Cerrar intervención'}).click();
   await expect.poll(()=>page.evaluate(()=>window.NetWizardState.getSnapshot().workflow.mode)).toBe('inventory');
 
