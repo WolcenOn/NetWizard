@@ -22,7 +22,7 @@ function render(){
   const pack=E.buildCsvPack(p),stats=el('div','stats');
   for(const [name,count] of Object.entries(pack.manifest.sheets)){const s=el('div');s.append(el('b','',count),el('span','',name));stats.append(s);}box.append(stats);
   const row=el('div','brow'),base=safeBase(p);
-  const defs=[['devices','Equipos'],['ports','Puertos'],['cables','Cableado'],['power','Alimentación'],['racks','Racks'],['bom','BOM']];
+  const defs=[['devices','Equipos'],['ports','Puertos'],['cables','Cableado'],['power','Alimentación'],['racks','Racks'],['bom','BOM'],['budget','Presupuesto']];
   for(const [key,label] of defs){const b=el('button','btn bs',`⬇ ${label} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
   const xlsx=el('button','btn bp','⬇ Excel XLSX');xlsx.type='button';xlsx.onclick=()=>downloadBytes(`${base}_asbuilt.xlsx`,E.buildXlsx(p),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');row.append(xlsx);
   const all=el('button','btn bs','⬇ Índice Markdown');all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
