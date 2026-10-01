@@ -18,6 +18,7 @@ assert.strictEqual(prepared.ok, true);
 assert.deepStrictEqual(prepared.project.wanCircuits, []);
 assert.strictEqual(prepared.project.vrfs[0].name, 'Corp\nVRF');
 assert.strictEqual(prepared.project.routing.strategy, 'ospf');
+assert.deepStrictEqual(prepared.project.routing.siteToSiteVpns, []);
 assert.strictEqual(prepared.project.routing.bgp.neighbors[0].description, 'Peer externo');
 assert.strictEqual(prepared.project.management.syslog.servers[0], 'logs.example.test');
 assert.strictEqual(prepared.project.deployment.changeTicket, 'CHG-42');
@@ -65,6 +66,38 @@ assert.strictEqual(legacyDevices.project.devices[0].type, 'access_point');
 assert.strictEqual(legacyDevices.project.devices[1].kind, 'server');
 assert.strictEqual(legacyDevices.project.hosts[0].deviceRef, 'legacy-ap');
 assert.strictEqual(legacyDevices.ok, true);
+
+const vpnSchema = schema.prepareImport({
+  devices:[
+    {id:'r1',name:'R1',kind:'router',type:'router',vendorOs:'cisco_ios'},
+    {id:'r2',name:'R2',kind:'router',type:'router',vendorOs:'cisco_ios'}
+  ],
+  ports:[
+    {id:'p1',deviceId:'r1',name:'Gi0/0'},
+    {id:'p2',deviceId:'r2',name:'Gi0/0'}
+  ],
+  vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
+  wanCircuits:[
+    {id:'c1',deviceId:'r1',portId:'p1'},
+    {id:'c2',deviceId:'r2',portId:'p2'}
+  ],
+  routing:{siteToSiteVpns:[{
+    id:'vpn1',localDeviceId:'r1',remoteDeviceId:'r2',
+    localCircuitRef:'c1',remoteCircuitRef:'c2',
+    localPrefixes:['10.10.0.0/24'],remotePrefixes:['10.20.0.0/24'],
+    secretAlias:'VPN_TEST_PSK'
+  }]}
+});
+assert.strictEqual(vpnSchema.ok,true,vpnSchema.errors.join('\n'));
+assert.strictEqual(vpnSchema.project.routing.siteToSiteVpns.length,1);
+assert.strictEqual(vpnSchema.project.routing.siteToSiteVpns[0].secretAlias,'VPN_TEST_PSK');
+
+const vpnRawSecret = schema.prepareImport({
+  devices:[],ports:[],vlans:[],subnets:[],hosts:[],links:[],fwRules:[],
+  routing:{siteToSiteVpns:[{id:'vpn-secret',psk:'do-not-store'}]}
+});
+assert.strictEqual(vpnRawSecret.ok,false);
+assert.ok(vpnRawSecret.errors.some(message=>/no se permite persistir PSK\/password/.test(message)));
 
 const brokenDeviceRef = schema.prepareImport({
   devices:[],ports:[],vlans:[{id:'v1',vlanId:1,name:'LAN'}],subnets:[],
