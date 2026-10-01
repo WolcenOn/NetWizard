@@ -87,4 +87,34 @@ res=Reach.analyze(p,'s20','s30','icmp');
 assert.strictEqual(res.reachable,false);
 assert.match(res.reason,/VPN .*DOWN|VPN .*figura DOWN/i);
 
+
+p=fixture();
+p.routing={
+  strategy:'ospf',protocol:'ospf',
+  ospf:{devices:{
+    r1:{processId:10,routerId:'1.1.1.1',defaultArea:'0',passiveDefault:true,interfaces:{
+      'r1-n':{enabled:true,area:'0',passive:false,cost:10},
+      'r1-s':{enabled:true,area:'0',passive:false,cost:10}
+    }},
+    r2:{processId:10,routerId:'2.2.2.2',defaultArea:'0',passiveDefault:true,interfaces:{
+      'r2-w':{enabled:true,area:'0',passive:false,cost:10}
+    }},
+    r3:{processId:10,routerId:'3.3.3.3',defaultArea:'0',passiveDefault:true,interfaces:{
+      'r3-w':{enabled:true,area:'0',passive:false,cost:10}
+    }}
+  }}
+};
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,true,res.reason);
+assert.strictEqual(res.forward.confidence,'planned');
+assert.ok(res.forward.hops.some(h=>h.kind==='ospf'&&h.peerDeviceId==='r1'));
+assert.ok(res.forward.hops.some(h=>h.kind==='ospf'&&h.peerDeviceId==='r3'));
+
+p.observedState={ospfNeighbors:{
+  r2:[{localPortId:'r2-w',peerDeviceId:'r1',peerRouterId:'1.1.1.1',area:'0',state:'down'}]
+}};
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,false);
+assert.match(res.reason,/Observed|adyacencias OSPF/i);
+
 console.log('✓ Reachability inter-sede valida ida, retorno, camino multi-hop y política');
