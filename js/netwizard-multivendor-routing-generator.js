@@ -58,6 +58,7 @@
         const area = clean(network.area || plan.ospf.area || '0.0.0.0');
         lines.push(`set protocols ospf area ${area} interface ${iface}`);
         if(network.passive) lines.push(`set protocols ospf area ${area} interface ${iface} passive`);
+        const cost=Number(network.cost);if(Number.isInteger(cost)) lines.push(`set protocols ospf area ${area} interface ${iface} metric ${cost}`);
       });
     }
     return lines;
@@ -92,6 +93,10 @@
         if(iface) lines.push(` undo silent-interface ${iface}`);
       });
       lines.push('quit');
+      arr(plan.ospf.interfaces).forEach(iface=>{
+        const cost=Number(iface.cost);if(!iface.enabled||!clean(iface.portName)||!Number.isInteger(cost))return;
+        lines.push(`interface ${clean(iface.portName)}`,` ospf cost ${cost}`,'quit');
+      });
     }
     return lines;
   }
@@ -109,7 +114,8 @@
       lines.push(`/routing/ospf/area/add name=${area} instance=${instance} area-id=${clean(plan.ospf.area || '0.0.0.0')}`);
       arr(plan.ospf.networks).forEach(network => {
         if(!clean(network.cidr)) return;
-        lines.push(`/routing/ospf/interface-template/add area=${area} networks=${clean(network.cidr)} passive=${network.passive ? 'yes' : 'no'} comment="NetWizard neutral routing"`);
+        const cost=Number(network.cost),costArg=Number.isInteger(cost)?` cost=${cost}`:'';
+        lines.push(`/routing/ospf/interface-template/add area=${area} networks=${clean(network.cidr)} passive=${network.passive ? 'yes' : 'no'}${costArg} comment="NetWizard neutral routing"`);
       });
     }
     return lines;
