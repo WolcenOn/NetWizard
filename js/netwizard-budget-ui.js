@@ -104,10 +104,11 @@ function render(project){
   grid.append(field('Recurso',lineSelect),field('Aplicar precio a',priceScope),field('Coste unitario',unitCost),field('Venta unitaria (vacío = margen objetivo)',unitPrice),field('Tipo de cargo',charge),field('Periodo meses',period),field('Clasificación',classif),field('Proveedor',supplier),field('Oferta / referencia',quote),field('Válido hasta',valid),field('Nota',note));
   pricing.append(grid);
   function selectedLine(){return priceableLines.find(x=>x.resourceRef===lineSelect.value)||null;}
-  function loadSelected(){
+  function loadSelected(preserveScope){
     const line=selectedLine();if(!line)return;
     priceScope.disabled=!line.modelKey;
-    priceScope.value=line.pricingSource==='model'&&line.modelKey?'model':'resource';
+    if(!preserveScope)priceScope.value=line.pricingSource==='model'&&line.modelKey?'model':'resource';
+    if(priceScope.disabled)priceScope.value='resource';
     const raw=priceRaw(project,line,priceScope.value),resolved=B.pricingFor(project,line);
     unitCost.value=raw.unitCost!=null?raw.unitCost:resolved.unitCost||'';
     unitPrice.value=raw.unitPrice!=null?raw.unitPrice:resolved.unitPrice||'';
@@ -116,7 +117,7 @@ function render(project){
     classif.value=clean(raw.capexOpex)||resolved.capexOpex||line.defaultCapexOpex||'capex';
     supplier.value=clean(raw.supplier||resolved.supplier);quote.value=clean(raw.quoteRef||resolved.quoteRef);valid.value=clean(raw.validUntil||resolved.validUntil);note.value=clean(raw.note||resolved.note);
   }
-  lineSelect.onchange=loadSelected;priceScope.onchange=loadSelected;loadSelected();
+  lineSelect.onchange=()=>loadSelected(false);priceScope.onchange=()=>loadSelected(true);loadSelected(false);
   const row=el('div','brow'),savePrice=el('button','btn bp','💾 Guardar precio'),clearPrice=el('button','btn bs','🗑 Quitar precio');
   savePrice.id='budgetSavePrice';clearPrice.id='budgetClearPrice';savePrice.type=clearPrice.type='button';
   savePrice.onclick=()=>{
