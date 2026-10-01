@@ -169,7 +169,7 @@ assert.strictEqual(privateResult.ok,true,'El Private Engine debe generar todos l
 for(const d of p.devices){
   assert.strictEqual(privateResult.configReadiness[d.id].status,'apply-ready',d.id+': '+JSON.stringify(privateResult.configReadiness[d.id].reasons));
 }
-assert.strictEqual(privateResult.productionStatus,'ready');
+assert.strictEqual(privateResult.productionStatus,'ready',JSON.stringify(privateResult.productionGate.issues));
 assert.strictEqual(privateResult.productionReady,true);
 assert.strictEqual(privateResult.productionGate.issues.length,0);
 
