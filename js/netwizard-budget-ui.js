@@ -92,7 +92,8 @@ function render(project){
   }
 
   const pricing=el('div','card');pricing.style.marginTop='12px';pricing.append(el('div','card-t','Precios por recurso / modelo'));
-  const lineSelect=select(report.lines.map(x=>[x.resourceRef,(x.priced?'✓ ':'○ ')+x.category+' · '+x.description+' · '+x.resourceRef]));lineSelect.id='budgetLineSelect';
+  const priceableLines=report.lines.filter(x=>x.resourceKind!=='service');
+  const lineSelect=select(priceableLines.map(x=>[x.resourceRef,(x.priced?'✓ ':'○ ')+x.category+' · '+x.description+' · '+x.resourceRef]));lineSelect.id='budgetLineSelect';
   if(!report.lines.length){const o=el('option','','Sin recursos presupuestables');o.value='';lineSelect.append(o);}
   const priceScope=select([['resource','Solo este recurso'],['model','Mismo modelo']]);priceScope.id='budgetPriceScope';
   const unitCost=input('number','0.00'),unitPrice=input('number','0.00'),charge=select([['one-time','One-time'],['recurring','Recurrente']]),period=input('number','1'),classif=select([['capex','CAPEX'],['opex','OPEX']]);
@@ -102,7 +103,7 @@ function render(project){
   const grid=el('div','g2');
   grid.append(field('Recurso',lineSelect),field('Aplicar precio a',priceScope),field('Coste unitario',unitCost),field('Venta unitaria (vacío = margen objetivo)',unitPrice),field('Tipo de cargo',charge),field('Periodo meses',period),field('Clasificación',classif),field('Proveedor',supplier),field('Oferta / referencia',quote),field('Válido hasta',valid),field('Nota',note));
   pricing.append(grid);
-  function selectedLine(){return report.lines.find(x=>x.resourceRef===lineSelect.value)||null;}
+  function selectedLine(){return priceableLines.find(x=>x.resourceRef===lineSelect.value)||null;}
   function loadSelected(){
     const line=selectedLine();if(!line)return;
     priceScope.disabled=!line.modelKey;
