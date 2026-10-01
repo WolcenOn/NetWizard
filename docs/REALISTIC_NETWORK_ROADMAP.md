@@ -67,6 +67,8 @@ Primera implementación determinista de routing corporativo.
 
 Criterio de salida: los prefijos de una sede pueden alcanzar explícitamente los prefijos de otra mediante rutas configuradas.
 
+Implementación: `routing.staticRoutesByDevice[deviceId]` guarda rutas remotas explícitas; la UI valida CIDR, next-hop directamente conectado y distancia 1–255. El plan neutral prioriza esas rutas sobre la inferencia y Private Engine genera la CLI vendor. La vista del editor muestra el salto inmediato dispositivo → interfaz → next-hop; el trazado end-to-end entre VLANs pertenece a la fase de Reachability.
+
 ## Fase 3 — Reachability por VLAN/subnet y políticas
 
 Añadir un análisis Derived que responda a preguntas de intención:
