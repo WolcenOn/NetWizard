@@ -57,7 +57,7 @@ design.rackItems.push({id:'ri-new',rackId:'rack1',type:'device',deviceId:'sw-new
 design.powerConnections.push({id:'pw-new',deviceId:'sw-new',pduId:'pdu1',outlet:2,powerSupplyIndex:0,feed:'A'});
 design.patchConnections.push({id:'pc-new',patchPanelId:'pp1',patchPort:1,switchPortId:'p-new-1',patchCordLengthM:1});
 
-design.observedState={observedAt:'2026-09-27T09:50:00Z'};
+design.observedState=Object.assign({},design.observedState||{},{observedAt:'2026-09-27T09:50:00Z'});
 design=Execution.patchRecord(design,{technician:'Ana Instaladora',startedAt:'2026-09-27T09:10:00Z'});
 for(const item of Execution.build(design).items){
   design=Execution.setAction(design,item.actionId,{
