@@ -58,6 +58,8 @@ test('Golden Path Enterprise carga el mismo JSON y activa sus capacidades en nav
   await page.evaluate(()=>window.navTo('validate'));
   await expect(page.locator('#nwWanResiliencePanel')).toBeVisible();
 
+  await page.evaluate(()=>window.navTo('cfg'));
+  await expect(page.locator('#pg-cfg')).toBeVisible();
   const downloadPromise=page.waitForEvent('download');
   await page.locator('#btnGoldenPathEnterpriseDownload').click();
   const download=await downloadPromise;
