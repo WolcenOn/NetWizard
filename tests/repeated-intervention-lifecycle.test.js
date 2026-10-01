@@ -44,7 +44,7 @@ assert.strictEqual(cleared.ok,true);
 assert.strictEqual(cleared.project.devices.find(d=>d.id==='sw-a').replacementDeviceRef,'','Debe poder limpiarse una selección de reemplazo previa');
 
 firstReplace=Bridge.setDeviceDisposition(cleared.project,'sw-a','replace',{replacementDeviceRef:'sw-b',replacementNote:'Ciclo 1'});
-const closedB=Closeout.buildUpdatedAsBuilt(firstReplace.project,{designSnapshotId:'snap-design-a',closedAt:'2026-09-27T10:00:00Z'});
+const closedB=Closeout.buildUpdatedAsBuilt(firstReplace.project,{designSnapshotId:'snap-design-a',closedAt:'2026-09-27T10:00:00Z',allowIncompleteExecution:true});
 assert.strictEqual(closedB.ok,true,closedB.message);
 const asBuiltB=closedB.project;
 assert.deepStrictEqual(asBuiltB.devices.map(d=>d.id),['sw-b']);
@@ -78,7 +78,7 @@ cycle2.project.powerConnections.push({id:'pw-c',deviceId:'sw-c',pduId:'pdu1',out
 const secondReplace=Bridge.setDeviceDisposition(cycle2.project,'sw-b','replace',{replacementDeviceRef:'sw-c',replacementNote:'Ciclo 2'});
 assert.strictEqual(secondReplace.ok,true);
 
-const closedC=Closeout.buildUpdatedAsBuilt(secondReplace.project,{designSnapshotId:'snap-design-b',closedAt:'2026-09-27T12:00:00Z'});
+const closedC=Closeout.buildUpdatedAsBuilt(secondReplace.project,{designSnapshotId:'snap-design-b',closedAt:'2026-09-27T12:00:00Z',allowIncompleteExecution:true});
 assert.strictEqual(closedC.ok,true,closedC.message);
 const asBuiltC=closedC.project;
 assert.deepStrictEqual(asBuiltC.devices.map(d=>d.id),['sw-c']);
