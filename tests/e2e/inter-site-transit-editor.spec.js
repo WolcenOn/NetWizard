@@ -22,7 +22,7 @@ test('tránsito L3 inter-sede crea puertos routed y link canónicos', async ({pa
     window.NetWizardState.replaceProject(p,{source:'e2e-inter-site-transit'});
   });
 
-  await page.evaluate(()=>window.navTo('link'));
+  await page.evaluate(()=>window.navTo('links'));
   await expect(page.locator('#nwInterSiteTransitCard')).toBeVisible();
   await page.locator('#nwTransitDeviceA').selectOption('r1');
   await page.locator('#nwTransitDeviceB').selectOption('r2');
