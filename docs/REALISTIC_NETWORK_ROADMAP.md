@@ -86,6 +86,8 @@ Presentación prevista:
 
 Criterio de salida: el usuario puede demostrar si dos segmentos de sedes distintas se comunican o no y por qué.
 
+Implementación inicial: análisis Derived en Validación que recorre `routing` router a router, exige camino de ida y retorno, detecta ausencia de ruta, next-hop sin vecino, bucles y bloqueos firewall explícitos, y muestra cada router/ruta/enlace atravesado. No persiste un resultado de reachability ni crea una autoridad nueva.
+
 ## Fase 4 — VPN site-to-site
 
 Modelar overlays sobre circuitos Internet/WAN:
