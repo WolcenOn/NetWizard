@@ -48,6 +48,7 @@ No se mantienen varias visualizaciones globales que representen lo mismo con otr
 - compatibilidad/capacidades de plataforma;
 - resiliencia y HA;
 - circuitos WAN;
+- reachability inter-sede derivada (ruta estática de ida/vuelta y política);
 - capacidad de tráfico;
 - servicios internos;
 - planificación Wi-Fi;
