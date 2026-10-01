@@ -109,6 +109,9 @@ function interventionRefs(project){
     const media=clean(l.media||l.medium||l.cableType).toLowerCase();
     if(media.includes('dac'))set.add(refKey('link',l.id));
   }
+  for(const x of arr(project&&project.patchPanels))if(!clean(x.originRef))set.add(refKey('patchPanel',x.id));
+  for(const x of arr(project&&project.telecomOutlets))if(!clean(x.originRef))set.add(refKey('telecomOutlet',x.id));
+  for(const x of arr(project&&project.rackItems))if(x&&x.type!=='device'&&!x.patchPanelId&&!clean(x.originRef))set.add(refKey('rackItem',x.id));
   return set;
 }
 function serviceLines(project){
@@ -116,7 +119,7 @@ function serviceLines(project){
   return cfg.serviceLines.map((raw,index)=>{
     const x=obj(raw),id=clean(x.id)||'service-'+String(index+1),quantity=Math.max(0,n(x.quantity)==null?1:n(x.quantity));
     return Object.assign(line('service',id,clean(x.description)||'Servicio',quantity,clean(x.unit)||'ud',clean(x.category)||'Servicios',{
-      resourceRef:clean(x.resourceRef),source:'service',defaultChargeType:clean(x.chargeType)||'one-time',defaultCapexOpex:clean(x.capexOpex)||'opex'
+      linkedResourceRef:clean(x.resourceRef),source:'service',defaultChargeType:clean(x.chargeType)||'one-time',defaultCapexOpex:clean(x.capexOpex)||'opex'
     }),{service:x});
   });
 }
@@ -197,6 +200,7 @@ function validateProject(project){
     if(!(n(x.quantity)>0))issues.push({code:'NW-BUDGET-008',blocking:true,severity:'error',message:(x.description||id)+': cantidad debe ser mayor que 0.'});
     const p=normalizePrice(x,{defaultMarginPct:cfg.defaultMarginPct,chargeType:x.chargeType,capexOpex:x.capexOpex});
     if(p.unitPrice>0&&p.unitPrice<p.unitCost)issues.push({code:'NW-BUDGET-009',blocking:false,severity:'warning',message:(x.description||id)+': precio de venta inferior al coste.'});
+    if(clean(x.resourceRef)&&!known.has(clean(x.resourceRef)))issues.push({code:'NW-BUDGET-010',blocking:false,severity:'warning',resourceRef:clean(x.resourceRef),message:(x.description||id)+': vínculo a recurso inexistente '+clean(x.resourceRef)+'.'});
   }
   const report=build(project);
   return{
@@ -207,7 +211,7 @@ function validateProject(project){
 function toRows(project,options){
   const report=build(project,options);
   return report.lines.map(x=>({
-    category:x.category,description:x.description,resourceRef:x.resourceRef,modelKey:x.modelKey||'',
+    category:x.category,description:x.description,resourceRef:x.resourceRef,linkedResourceRef:x.linkedResourceRef||'',modelKey:x.modelKey||'',
     quantity:x.quantity,unit:x.unit,currency:report.currency,pricingSource:x.pricingSource,priced:x.priced?'yes':'no',
     unitCost:x.unitCost,unitPrice:x.unitPrice,chargeType:x.chargeType,billingPeriodMonths:x.billingPeriodMonths,
     capexOpex:x.capexOpex,totalCost:x.totalCost,totalPrice:x.totalPrice,
