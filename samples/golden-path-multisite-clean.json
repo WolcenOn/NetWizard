@@ -187,7 +187,7 @@
         "name": "GigabitEthernet0/1",
         "mode": "trunk",
         "role": "lan",
-        "media": "GE",
+        "media": "copper",
         "nativeVlanRef": "hq_v199",
         "allowedVlans": [
           110,
@@ -199,7 +199,8 @@
           199
         ],
         "uplink": true,
-        "desc": "LAN trunk HQ"
+        "desc": "LAN trunk HQ",
+        "speedMaxMbps": 1000
       },
       {
         "id": "hq_loop0",
@@ -215,10 +216,10 @@
       {
         "id": "hq_core_rtr",
         "deviceId": "hq_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "copper",
         "nativeVlanRef": "hq_v199",
         "allowedVlans": [
           110,
@@ -230,7 +231,8 @@
           199
         ],
         "uplink": true,
-        "desc": "Uplink a RTR-HQ-01"
+        "desc": "Uplink a RTR-HQ-01",
+        "speedMaxMbps": 1000
       },
       {
         "id": "hq_core_acc_1",
@@ -424,7 +426,7 @@
         "name": "GigabitEthernet0/1",
         "mode": "trunk",
         "role": "lan",
-        "media": "GE",
+        "media": "copper",
         "nativeVlanRef": "north_v299",
         "allowedVlans": [
           210,
@@ -436,7 +438,8 @@
           299
         ],
         "uplink": true,
-        "desc": "LAN trunk N"
+        "desc": "LAN trunk N",
+        "speedMaxMbps": 1000
       },
       {
         "id": "north_loop0",
@@ -452,10 +455,10 @@
       {
         "id": "north_core_rtr",
         "deviceId": "north_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "copper",
         "nativeVlanRef": "north_v299",
         "allowedVlans": [
           210,
@@ -467,7 +470,8 @@
           299
         ],
         "uplink": true,
-        "desc": "Uplink a RTR-N-01"
+        "desc": "Uplink a RTR-N-01",
+        "speedMaxMbps": 1000
       },
       {
         "id": "north_core_acc_1",
@@ -661,7 +665,7 @@
         "name": "GigabitEthernet0/1",
         "mode": "trunk",
         "role": "lan",
-        "media": "GE",
+        "media": "copper",
         "nativeVlanRef": "east_v399",
         "allowedVlans": [
           310,
@@ -673,7 +677,8 @@
           399
         ],
         "uplink": true,
-        "desc": "LAN trunk E"
+        "desc": "LAN trunk E",
+        "speedMaxMbps": 1000
       },
       {
         "id": "east_loop0",
@@ -689,10 +694,10 @@
       {
         "id": "east_core_rtr",
         "deviceId": "east_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "copper",
         "nativeVlanRef": "east_v399",
         "allowedVlans": [
           310,
@@ -704,7 +709,8 @@
           399
         ],
         "uplink": true,
-        "desc": "Uplink a RTR-E-01"
+        "desc": "Uplink a RTR-E-01",
+        "speedMaxMbps": 1000
       },
       {
         "id": "east_core_acc_1",
@@ -898,7 +904,7 @@
         "name": "GigabitEthernet0/1",
         "mode": "trunk",
         "role": "lan",
-        "media": "GE",
+        "media": "copper",
         "nativeVlanRef": "south_v499",
         "allowedVlans": [
           410,
@@ -910,7 +916,8 @@
           499
         ],
         "uplink": true,
-        "desc": "LAN trunk S"
+        "desc": "LAN trunk S",
+        "speedMaxMbps": 1000
       },
       {
         "id": "south_loop0",
@@ -926,10 +933,10 @@
       {
         "id": "south_core_rtr",
         "deviceId": "south_core",
-        "name": "TenGigabitEthernet1/1/1",
+        "name": "GigabitEthernet1/0/48",
         "mode": "trunk",
         "role": "uplink",
-        "media": "10GE",
+        "media": "copper",
         "nativeVlanRef": "south_v499",
         "allowedVlans": [
           410,
@@ -941,7 +948,8 @@
           499
         ],
         "uplink": true,
-        "desc": "Uplink a RTR-S-01"
+        "desc": "Uplink a RTR-S-01",
+        "speedMaxMbps": 1000
       },
       {
         "id": "south_core_acc_1",
@@ -1986,11 +1994,11 @@
         "name": "HQ router-core",
         "aPortId": "hq_lan",
         "bPortId": "hq_core_rtr",
-        "medium": "dac",
-        "cableType": "dac",
+        "medium": "copper",
+        "cableType": "cat6a",
         "lengthM": 3,
-        "speed": "10G",
-        "capacityMbps": 10000
+        "speed": "1G",
+        "capacityMbps": 1000
       },
       {
         "id": "hq_lag_link_1",
@@ -2019,11 +2027,11 @@
         "name": "N router-core",
         "aPortId": "north_lan",
         "bPortId": "north_core_rtr",
-        "medium": "dac",
-        "cableType": "dac",
+        "medium": "copper",
+        "cableType": "cat6a",
         "lengthM": 3,
-        "speed": "10G",
-        "capacityMbps": 10000
+        "speed": "1G",
+        "capacityMbps": 1000
       },
       {
         "id": "north_lag_link_1",
@@ -2052,11 +2060,11 @@
         "name": "E router-core",
         "aPortId": "east_lan",
         "bPortId": "east_core_rtr",
-        "medium": "dac",
-        "cableType": "dac",
+        "medium": "copper",
+        "cableType": "cat6a",
         "lengthM": 3,
-        "speed": "10G",
-        "capacityMbps": 10000
+        "speed": "1G",
+        "capacityMbps": 1000
       },
       {
         "id": "east_lag_link_1",
@@ -2085,11 +2093,11 @@
         "name": "S router-core",
         "aPortId": "south_lan",
         "bPortId": "south_core_rtr",
-        "medium": "dac",
-        "cableType": "dac",
+        "medium": "copper",
+        "cableType": "cat6a",
         "lengthM": 3,
-        "speed": "10G",
-        "capacityMbps": 10000
+        "speed": "1G",
+        "capacityMbps": 1000
       },
       {
         "id": "south_lag_link_1",
