@@ -63,13 +63,17 @@
       interfaces,
       localNetworks,
       staticRoutes:[],
+      staticRouteIssues:[],
       ospf:null,
       warnings:[]
     };
 
     if(strategy === 'static'){
-      base.staticRoutes = RU && RU.inferStaticRoutes ? RU.inferStaticRoutes(project, device.id) : [];
-      if(!base.staticRoutes.length && interfaces.length > 1) base.warnings.push('No se pudieron inferir rutas estáticas hacia redes remotas.');
+      const resolved=RU&&RU.resolveStaticRoutes?RU.resolveStaticRoutes(project,device.id):{routes:RU&&RU.inferStaticRoutes?RU.inferStaticRoutes(project,device.id):[],issues:[]};
+      base.staticRoutes=arr(resolved.routes);
+      base.staticRouteIssues=arr(resolved.issues);
+      base.staticRouteIssues.forEach(issue=>base.warnings.push(clean(issue&&issue.message)));
+      if(!base.staticRoutes.length && interfaces.length > 1 && !base.staticRouteIssues.length) base.warnings.push('No se pudieron inferir rutas estáticas hacia redes remotas.');
       return base;
     }
 

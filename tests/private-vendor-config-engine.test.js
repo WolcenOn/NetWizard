@@ -116,6 +116,51 @@ assert.match(haRouter.configs.r1,/standby 10 priority 110/);
 assert.match(haRouter.configs.r1,/standby 10 preempt/);
 assert.match(haRouter.configs.r1,/standby 10 track GigabitEthernet0\/0 decrement 20/);
 
+const interSiteProject={
+  _schemaVersion:'3.50.0',
+  projName:'Static inter-site routing',
+  devices:[
+    {id:'r1',name:'RTR-CENTRAL',type:'router',kind:'router',vendorOs:'cisco_ios'},
+    {id:'r2',name:'RTR-NORTE',type:'router',kind:'router',vendorOs:'cisco_ios'},
+    {id:'r3',name:'RTR-SUR',type:'router',kind:'router',vendorOs:'cisco_ios'}
+  ],
+  ports:[
+    {id:'r1-n',deviceId:'r1',name:'GigabitEthernet0/1',mode:'routed',role:'transit',l3Ip:'10.255.0.1',l3Cidr:'10.255.0.0/30'},
+    {id:'r2-w',deviceId:'r2',name:'GigabitEthernet0/1',mode:'routed',role:'transit',l3Ip:'10.255.0.2',l3Cidr:'10.255.0.0/30'},
+    {id:'r1-s',deviceId:'r1',name:'GigabitEthernet0/2',mode:'routed',role:'transit',l3Ip:'10.255.0.5',l3Cidr:'10.255.0.4/30'},
+    {id:'r3-w',deviceId:'r3',name:'GigabitEthernet0/1',mode:'routed',role:'transit',l3Ip:'10.255.0.6',l3Cidr:'10.255.0.4/30'},
+    {id:'r1-lan',deviceId:'r1',name:'GigabitEthernet0/0',mode:'routed',role:'lan',l3Ip:'10.10.0.1',l3Cidr:'10.10.0.0/24'},
+    {id:'r2-lan',deviceId:'r2',name:'GigabitEthernet0/0',mode:'routed',role:'lan',l3Ip:'10.20.0.1',l3Cidr:'10.20.0.0/24'},
+    {id:'r3-lan',deviceId:'r3',name:'GigabitEthernet0/0',mode:'routed',role:'lan',l3Ip:'10.30.0.1',l3Cidr:'10.30.0.0/24'}
+  ],
+  links:[
+    {id:'ln',aPortId:'r1-n',bPortId:'r2-w'},
+    {id:'ls',aPortId:'r1-s',bPortId:'r3-w'}
+  ],
+  vlans:[],subnets:[],hosts:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},
+  routing:{
+    strategy:'static',
+    staticRoutesByDevice:{
+      r2:[{id:'r2-sur',destination:'10.30.0.0/24',nextHop:'10.255.0.1',distance:5,description:'SUR vía CENTRAL'}],
+      r3:[{id:'r3-norte',destination:'10.20.0.0/24',nextHop:'10.255.0.5',distance:5,description:'NORTE vía CENTRAL'}]
+    }
+  },
+  management:{},highAvailability:{},accessSecurity:{},linkAggregations:[]
+};
+const interSiteResult=Engine.generateAll(interSiteProject);
+assert.strictEqual(interSiteResult.ok,true);
+assert.strictEqual(interSiteResult.configReadiness.r1.status,'apply-ready');
+assert.strictEqual(interSiteResult.configReadiness.r2.status,'apply-ready');
+assert.strictEqual(interSiteResult.configReadiness.r3.status,'apply-ready');
+assert.match(interSiteResult.configs.r2,/ip route 10\.30\.0\.0 255\.255\.255\.0 10\.255\.0\.1 5/);
+assert.match(interSiteResult.configs.r3,/ip route 10\.20\.0\.0 255\.255\.255\.0 10\.255\.0\.5 5/);
+
+const invalidInterSite=JSON.parse(JSON.stringify(interSiteProject));
+invalidInterSite.routing.staticRoutesByDevice.r2[0].nextHop='192.0.2.1';
+const invalidInterSiteResult=Engine.generateAll(invalidInterSite);
+assert.strictEqual(invalidInterSiteResult.configReadiness.r2.status,'review-required');
+assert.ok(invalidInterSiteResult.configReadiness.r2.reasons.some(x=>/next-hop .* directamente conectada/.test(x)));
+
 const vtpProject=JSON.parse(JSON.stringify(project));
 vtpProject.devices=[JSON.parse(JSON.stringify(project.devices.find(x=>x.id==='sw1')))];
 vtpProject.ports=project.ports.filter(x=>x.deviceId==='sw1');

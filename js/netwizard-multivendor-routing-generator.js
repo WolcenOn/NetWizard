@@ -45,7 +45,10 @@
     const lines = [];
     if(plan.strategy === 'static'){
       arr(plan.staticRoutes).forEach(route => {
-        if(clean(route.destination) && clean(route.nextHop)) lines.push(`set routing-options static route ${clean(route.destination)} next-hop ${clean(route.nextHop)}`);
+        if(clean(route.destination) && clean(route.nextHop)){
+          lines.push(`set routing-options static route ${clean(route.destination)} next-hop ${clean(route.nextHop)}`);
+          const distance=Number(route.distance);if(route.source==='explicit'&&Number.isInteger(distance))lines.push(`set routing-options static route ${clean(route.destination)} preference ${distance}`);
+        }
       });
     }else if(plan.strategy === 'ospf' && plan.ospf){
       if(clean(plan.ospf.routerId)) lines.push(`set routing-options router-id ${clean(plan.ospf.routerId)}`);
@@ -66,7 +69,7 @@
       arr(plan.staticRoutes).forEach(route => {
         const network = clean(route.network) || networkFor(route.destination);
         const mask = clean(route.mask) || maskFor(route.destination);
-        if(network && mask && clean(route.nextHop)) lines.push(`ip route-static ${network} ${mask} ${clean(route.nextHop)}`);
+        if(network && mask && clean(route.nextHop)){const distance=Number(route.distance),suffix=route.source==='explicit'&&Number.isInteger(distance)?` preference ${distance}`:'';lines.push(`ip route-static ${network} ${mask} ${clean(route.nextHop)}${suffix}`);}
       });
     }else if(plan.strategy === 'ospf' && plan.ospf){
       const processId = Number(plan.ospf.processId || 1);
@@ -97,7 +100,7 @@
     const lines = [];
     if(plan.strategy === 'static'){
       arr(plan.staticRoutes).forEach(route => {
-        if(clean(route.destination) && clean(route.nextHop)) lines.push(`/ip/route/add dst-address=${clean(route.destination)} gateway=${clean(route.nextHop)} comment="NetWizard neutral routing"`);
+        if(clean(route.destination) && clean(route.nextHop)){const distance=Number(route.distance),suffix=route.source==='explicit'&&Number.isInteger(distance)?` distance=${distance}`:'';lines.push(`/ip/route/add dst-address=${clean(route.destination)} gateway=${clean(route.nextHop)}${suffix} comment="NetWizard neutral routing"`);}
       });
     }else if(plan.strategy === 'ospf' && plan.ospf){
       const instance = `nw-ospf-${Number(plan.ospf.processId || 1)}`;

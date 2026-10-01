@@ -48,6 +48,16 @@ test('Junos genera ruta estática desde el plan neutral', () => {
   assert.ok(out.includes('set routing-options static route 10.10.10.0/24 next-hop 172.16.0.1'));
 });
 
+test('Multivendor conserva distancia de rutas explícitas', () => {
+  const p=project('static');
+  p.routing.staticRoutesByDevice={
+    r2:[{id:'rt-junos',destination:'10.10.10.0/24',nextHop:'172.16.0.1',distance:9}]
+  };
+  const plan=RoutingPlan.build(p);
+  const out=Generator.render(p,'r2','juniper_junos',plan);
+  assert.ok(out.includes('set routing-options static route 10.10.10.0/24 preference 9'));
+});
+
 test('Huawei genera rutas y OSPF con router-id y wildcard', () => {
   const p = project('ospf');
   const plan = RoutingPlan.build(p);

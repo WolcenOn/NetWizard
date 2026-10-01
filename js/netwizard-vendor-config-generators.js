@@ -84,9 +84,16 @@
       const p=project();
       const lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
       const explicitRoaS=!!(p.roas&&p.roas.gwId===d.id);
+      const legacySingleRouter=arr(p.devices).filter(isRouterLike).length===1;
+      const routedVlans=arr(p.vlans).filter(v=>{
+        const sn=subnetByVlan(p,v.id);if(!sn||!sn.gateway||!sn.cidr)return false;
+        const owner=clean(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef);
+        return owner?owner===d.id:(explicitRoaS||legacySingleRouter);
+      });
+      const needsRoaS=routedVlans.length>0;
       const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
-      if(!explicitRoaS){
-        L.push('! Aviso: gateway RoaS inferido automáticamente porque este router no estaba seleccionado en RoaS.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
+      if(needsRoaS&&!explicitRoaS){
+        L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
       }
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
       const ports=portsByDev(p,d.id).sort((a,b)=>clean(a.name).localeCompare(clean(b.name),'es',{numeric:true}));
@@ -99,15 +106,15 @@
           L.push(' no shutdown',' exit');
         });
       }
-      if(lanIf && arr(p.vlans).length){
+      if(lanIf && routedVlans.length){
         L.push('!','! RoaS — subinterfaces VLAN',`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
-        arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
+        routedVlans.slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
           const sn=subnetByVlan(p,v.id); if(!sn||!sn.gateway||!sn.cidr) return;
           L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}`,` description GW_VLAN${v.vlanId}_${vlanName(v)}`,` ip address ${cliText(sn.gateway,40)} ${mask(sn.cidr)}`,' ip nat inside',' no shutdown',' exit');
         });
       }
       const dh=[];
-      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
+      routedVlans.slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
         if(!enabledDhcp(p,v)) return;
         const sn=subnetByVlan(p,v.id); if(!sn||!sn.cidr) return;
         const c=parseC(sn.cidr); if(!c) return;
