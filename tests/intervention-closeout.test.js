@@ -7,6 +7,7 @@ const path=require('path');
 global.NetWizardPhysicalInterventionPlan=require('../js/netwizard-physical-intervention-plan.js');
 const Bridge=require('../js/netwizard-inventory-design-bridge.js');
 const Closeout=require('../js/netwizard-intervention-closeout.js');
+const Execution=require('../js/netwizard-intervention-execution.js');
 const Schema=require('../js/netwizard-project-schema.js');
 
 const source={
@@ -43,7 +44,7 @@ const source={
 const derived=Bridge.createDesignFromInventory(source,{snapshotId:'snap-origin',createdAt:'2026-09-27T09:00:00Z'});
 assert.strictEqual(derived.ok,true);
 
-const design=JSON.parse(JSON.stringify(derived.project));
+let design=JSON.parse(JSON.stringify(derived.project));
 design.devices[0].designDisposition='replace';
 design.devices[0].replacementDeviceRef='sw-new';
 design.devices[0].replacementNote='Renovación de switch de acceso';
@@ -55,6 +56,19 @@ design.ports.push({id:'p-new-1',deviceId:'sw-new',name:'Gi1/0/1',media:'copper',
 design.rackItems.push({id:'ri-new',rackId:'rack1',type:'device',deviceId:'sw-new',label:'SW-NEW',startUnit:20,heightUnits:1});
 design.powerConnections.push({id:'pw-new',deviceId:'sw-new',pduId:'pdu1',outlet:2,powerSupplyIndex:0,feed:'A'});
 design.patchConnections.push({id:'pc-new',patchPanelId:'pp1',patchPort:1,switchPortId:'p-new-1',patchCordLengthM:1});
+
+design.observedState={observedAt:'2026-09-27T09:50:00Z'};
+design=Execution.patchRecord(design,{technician:'Ana Instaladora',startedAt:'2026-09-27T09:10:00Z'});
+for(const item of Execution.build(design).items){
+  design=Execution.setAction(design,item.actionId,{
+    status:'done',completedAt:'2026-09-27T09:40:00Z',completedBy:'Ana Instaladora',
+    note:'Ejecutado',evidenceRefs:['foto-'+item.order]
+  });
+}
+design=Execution.acceptedRecord(design,{
+  connectivityVerified:true,labelsVerified:true,asBuiltReviewed:true,
+  acceptedBy:'Carlos Supervisor',acceptedAt:'2026-09-27T09:55:00Z'
+});
 
 const originalDesign=JSON.parse(JSON.stringify(design));
 const closed=Closeout.buildUpdatedAsBuilt(design,{
@@ -70,8 +84,14 @@ assert.strictEqual(finalProject.workflow.updatedFrom.type,'intervention-closeout
 assert.strictEqual(finalProject.workflow.updatedFrom.sourceInventorySnapshotId,'snap-origin');
 assert.strictEqual(finalProject.workflow.updatedFrom.designSnapshotId,'snap-design-final');
 assert.strictEqual(finalProject.workflow.updatedFrom.closedAt,'2026-09-27T10:00:00Z');
+assert.strictEqual(finalProject.workflow.updatedFrom.completedActionCount,closed.summary.interventionActionCount);
+assert.strictEqual(finalProject.workflow.updatedFrom.acceptedBy,'Carlos Supervisor');
+assert.strictEqual(finalProject.workflow.updatedFrom.technician,'Ana Instaladora');
+assert.strictEqual(finalProject.workflow.updatedFrom.observedAt,'2026-09-27T09:50:00Z');
+assert.ok(finalProject.workflow.updatedFrom.evidenceCount>=1);
 assert.ok(!('derivedFrom' in finalProject.workflow));
 assert.ok(!('interventionBaseline' in finalProject.workflow));
+assert.ok(!('interventionExecution' in finalProject.workflow));
 assert.ok(!('designPhase' in finalProject.workflow));
 assert.ok(finalProject.designRequirements);
 assert.deepStrictEqual(finalProject.designRequirements.locationPlans,[],'El As-Built no debe conservar demandas To-Be activas');
@@ -108,6 +128,7 @@ assert.strictEqual(prepared.project.workflow.updatedFrom.designSnapshotId,'snap-
 const exported=Schema.prepareExport(prepared.project);
 assert.strictEqual(exported.project.workflow.updatedFrom.closedAt,'2026-09-27T10:00:00Z');
 assert.deepStrictEqual(Schema.model.interventionCloseoutVersion,'netwizard-intervention-closeout-v1');
+assert.deepStrictEqual(Schema.model.interventionExecutionVersion,'netwizard-intervention-execution-v1');
 
 const bad=JSON.parse(JSON.stringify(derived.project));
 bad.devices[0].designDisposition='replace';
@@ -129,6 +150,7 @@ assert.ok(duplicateResult.errors.some(x=>x.code==='replacement_reused'));
 const external=JSON.parse(fs.readFileSync(path.join(__dirname,'..','schemas','netwizard-project.schema.json'),'utf8'));
 assert.strictEqual(external.$defs.interventionCloseoutProvenance.properties.type.const,'intervention-closeout');
 assert.strictEqual(external.$defs.project.properties.workflow.properties.updatedFrom.$ref,'#/$defs/interventionCloseoutProvenance');
+assert.strictEqual(external.$defs.project.properties.workflow.properties.interventionExecution.$ref,'#/$defs/interventionExecution');
 
 const derivedAgain=Bridge.createDesignFromInventory(finalProject,{snapshotId:'snap-origin-2',createdAt:'2026-09-27T11:00:00Z'});
 assert.strictEqual(derivedAgain.ok,true);
