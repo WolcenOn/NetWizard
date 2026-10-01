@@ -97,10 +97,12 @@ p.routing={
       'r1-s':{enabled:true,area:'0',passive:false,cost:10}
     }},
     r2:{processId:10,routerId:'2.2.2.2',defaultArea:'0',passiveDefault:true,interfaces:{
-      'r2-w':{enabled:true,area:'0',passive:false,cost:10}
+      'r2-w':{enabled:true,area:'0',passive:false,cost:10},
+      'r2-lan':{enabled:true,area:'0',passive:true,cost:10}
     }},
     r3:{processId:10,routerId:'3.3.3.3',defaultArea:'0',passiveDefault:true,interfaces:{
-      'r3-w':{enabled:true,area:'0',passive:false,cost:10}
+      'r3-w':{enabled:true,area:'0',passive:false,cost:10},
+      'r3-lan':{enabled:true,area:'0',passive:true,cost:10}
     }}
   }}
 };
