@@ -79,6 +79,29 @@ test('Routing plan OSPF conserva intención, router-id y redes neutrales', () =>
   assert.strictEqual(hq.ospf.networks.some(network => network.cidr === '10.20.20.0/24'), false);
 });
 
+test('Routing plan OSPF canónico conserva área, passive y coste por interfaz', () => {
+  const p=project('ospf');
+  p.routing={
+    strategy:'ospf',protocol:'ospf',
+    ospf:{devices:{
+      r1:{processId:20,routerId:'10.255.255.1',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r1-wan':{enabled:true,area:'0',passive:false,cost:25}
+      }},
+      r2:{processId:20,routerId:'10.255.255.2',defaultArea:'0',passiveDefault:true,interfaces:{
+        'r2-wan':{enabled:true,area:'0',passive:false,cost:25}
+      }}
+    }}
+  };
+  const plan=RoutingPlan.build(p),hq=plan.devices.find(item=>item.deviceId==='r1');
+  assert.strictEqual(hq.ospf.processId,20);
+  assert.strictEqual(hq.ospf.routerId,'10.255.255.1');
+  const transit=hq.ospf.networks.find(network=>network.portId==='r1-wan');
+  assert.ok(transit);
+  assert.strictEqual(transit.area,'0');
+  assert.strictEqual(transit.passive,false);
+  assert.strictEqual(transit.cost,25);
+});
+
 test('Routing plan no inventa estrategia cuando falta declaración', () => {
   const p = project('static');
   delete p.routing;
