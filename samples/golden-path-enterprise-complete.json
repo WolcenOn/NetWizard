@@ -2794,9 +2794,9 @@
         "id": "traffic_mpls",
         "name": "Tráfico corporativo MPLS",
         "linkRef": "link_mpls_hq_br",
-        "averageMbps": 220,
-        "peakMbps": 600,
-        "criticalMbps": 350,
+        "averageMbps": 120,
+        "peakMbps": 300,
+        "criticalMbps": 200,
         "latencyMaxMs": 50,
         "jitterMaxMs": 20,
         "lossMaxPercent": 0.5
