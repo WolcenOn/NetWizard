@@ -14,6 +14,7 @@ const Policy=require('../js/netwizard-policy-utils.js');
 const Network=require('../js/netwizard-network-utils.js');
 const Capabilities=require('./vendor-config-capabilities.js');
 const VtpVerification=require('../js/netwizard-vtp-production-verification.js');
+const RoutingPlan=require('../js/netwizard-routing-plan.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -140,6 +141,10 @@ function configReadiness(project,device,output){
   }
   if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
     reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
+  }
+  if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='static'){
+    const plan=RoutingPlan.build(p),devicePlan=arr(plan&&plan.devices).find(item=>item&&item.deviceId===d.id);
+    for(const issue of arr(devicePlan&&devicePlan.staticRouteIssues))reasons.push('Routing estático: '+clean(issue&&issue.message,300));
   }
   if((text.match(/^configure terminal$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente una entrada a config mode.');
   if((text.match(/^end$/gm)||[]).length!==1)reasons.push('La configuración no contiene exactamente un cierre de config mode.');
