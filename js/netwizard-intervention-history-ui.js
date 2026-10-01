@@ -31,7 +31,7 @@ function render(){
 
   const wrap=make('div','tw'),table=make('table');
   const thead=make('thead'),trh=make('tr');
-  ['Cierre','Origen As-Built','Diseño ejecutado','Acciones','Resultado'].forEach(x=>trh.append(make('th','',x)));
+  ['Cierre','Origen As-Built','Diseño ejecutado','Acciones','Aceptación','Resultado'].forEach(x=>trh.append(make('th','',x)));
   thead.append(trh);table.append(thead);
   const tbody=make('tbody');
   for(const e of arr(data.entries)){
@@ -39,7 +39,11 @@ function render(){
     const date=make('td','mono',formatDate(e.closedAt));tr.append(date);
     tr.append(make('td','',e.sourceProjectName||e.sourceInventorySnapshotId||'—'));
     tr.append(make('td','',e.designProjectName||e.designSnapshotId||'—'));
-    tr.append(make('td','',String(e.interventionActionCount||0)));
+    tr.append(make('td','',String(e.completedActionCount||e.interventionActionCount||0)+'/'+String(e.interventionActionCount||0)));
+    const acceptance=make('td');acceptance.append(make('b','',e.acceptedBy||'—'));
+    if(e.evidenceCount!=null)acceptance.append(make('div','hint','Evidencias: '+String(e.evidenceCount||0)));
+    if(e.observedAt)acceptance.append(make('div','hint','Observed '+formatDate(e.observedAt)));
+    tr.append(acceptance);
     const result=make('td');
     result.append(make('b','',e.resultingProjectName||'As-Built actualizado'));
     if(e.current)result.append(make('div','hint','Estado actual'));
@@ -63,7 +67,7 @@ function inject(){
   mount.textContent='';
   mount.append(render());
 }
-const api={version:'netwizard-intervention-history-ui-v1',render,inject};
+const api={version:'netwizard-intervention-history-ui-v2',render,inject};
 root.NetWizardInterventionHistoryUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){

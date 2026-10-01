@@ -15,6 +15,11 @@ function planner(){
   if(typeof require==='function'){try{return require('./netwizard-physical-intervention-plan.js');}catch(_e){}}
   return null;
 }
+function execution(){
+  if(root.NetWizardInterventionExecution)return root.NetWizardInterventionExecution;
+  if(typeof require==='function'){try{return require('./netwizard-intervention-execution.js');}catch(_e){}}
+  return null;
+}
 function isDerivedDesign(project){
   const w=obj(project&&project.workflow),from=obj(w.derivedFrom);
   return w.mode==='design'&&from.type==='inventory';
@@ -101,6 +106,16 @@ function buildUpdatedAsBuilt(project,options){
   if(replacementErrors.length){
     return{ok:false,code:'replacement_contract_invalid',message:'Hay reemplazos incompletos o ambiguos.',project:source,errors:replacementErrors};
   }
+  const E=execution(),acceptance=E&&typeof E.acceptanceChecks==='function'?E.acceptanceChecks(source):null;
+  if(!opts.allowIncompleteExecution&&(!acceptance||!acceptance.ready)){
+    return{
+      ok:false,code:'intervention_acceptance_not_ready',
+      message:'La ejecución de campo y los criterios de aceptación deben estar completos antes de crear el As-Built.',
+      project:source,
+      errors:arr(acceptance&&acceptance.issues).map(item=>({code:item.code||'acceptance',message:item.message||'Requisito de aceptación pendiente.'})),
+      acceptance
+    };
+  }
 
   const devices=arr(source.devices);
   const removedDeviceIds=new Set(
@@ -148,6 +163,9 @@ function buildUpdatedAsBuilt(project,options){
   const previousWorkflow=obj(source.workflow),derived=obj(previousWorkflow.derivedFrom);
   const plan=planner()&&planner().build?planner().build(source):null;
   const closedAt=clean(opts.closedAt)||nowIso();
+  const executionRecord=E&&E.record?E.record(source):obj(previousWorkflow.interventionExecution);
+  const acceptanceRecord=obj(executionRecord.acceptance),executionBuild=acceptance&&acceptance.execution?acceptance.execution:(E&&E.build?E.build(source):null);
+  const evidenceCount=arr(executionBuild&&executionBuild.items).reduce((sum,item)=>sum+arr(item&&item.evidenceRefs).length,0);
   next.workflow={
     mode:'inventory',
     updatedFrom:{
@@ -159,7 +177,14 @@ function buildUpdatedAsBuilt(project,options){
       designProjectName:clean(source.projName),
       baselineCapturedAt:clean(obj(previousWorkflow.interventionBaseline).capturedAt),
       closedAt,
-      interventionActionCount:plan&&plan.ok?Number(plan.counts&&plan.counts.total||0):0
+      interventionActionCount:plan&&plan.ok?Number(plan.counts&&plan.counts.total||0):0,
+      completedActionCount:Number(executionBuild&&executionBuild.counts&&executionBuild.counts.done||0),
+      evidenceCount,
+      technician:clean(executionRecord.technician),
+      acceptedBy:clean(acceptanceRecord.acceptedBy),
+      acceptedAt:clean(acceptanceRecord.acceptedAt||closedAt),
+      observedAt:clean(source.observedState&&source.observedState.observedAt),
+      acceptanceNote:clean(acceptanceRecord.note)
     }
   };
 
@@ -181,6 +206,10 @@ function buildUpdatedAsBuilt(project,options){
       keptPorts:keptPorts.length,
       removedPorts:removedPortIds.size,
       interventionActionCount:next.workflow.updatedFrom.interventionActionCount,
+      completedActionCount:next.workflow.updatedFrom.completedActionCount,
+      evidenceCount:next.workflow.updatedFrom.evidenceCount,
+      acceptedBy:next.workflow.updatedFrom.acceptedBy,
+      observedAt:next.workflow.updatedFrom.observedAt,
       closedAt
     }
   };

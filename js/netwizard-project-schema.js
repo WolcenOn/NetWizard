@@ -204,6 +204,38 @@ Mantenimiento:
     };
   }
 
+  function sanitizeInterventionExecution(raw){
+    const source=asObject(raw),actions={};
+    for(const [rawId,rawEntry] of Object.entries(asObject(source.actions)).slice(0,5000)){
+      const id=cleanId(rawId,'');if(!id)continue;
+      const x=asObject(rawEntry),status=cleanText(x.status||'pending',20).toLowerCase();
+      actions[id]={
+        status:['pending','done','blocked'].includes(status)?status:'pending',
+        completedAt:cleanText(x.completedAt||'',80),
+        completedBy:cleanText(x.completedBy||'',160),
+        note:cleanText(x.note||'',1000),
+        evidenceRefs:asArray(x.evidenceRefs).slice(0,20).map(v=>cleanText(v,240)).filter(Boolean)
+      };
+    }
+    const a=asObject(source.acceptance);
+    return{
+      version:'netwizard-intervention-execution-v1',
+      startedAt:cleanText(source.startedAt||'',80),
+      technician:cleanText(source.technician||'',160),
+      actions,
+      acceptance:{
+        connectivityVerified:a.connectivityVerified===true,
+        labelsVerified:a.labelsVerified===true,
+        asBuiltReviewed:a.asBuiltReviewed===true,
+        requireClientAcceptance:a.requireClientAcceptance===true,
+        clientAccepted:a.clientAccepted===true,
+        acceptedBy:cleanText(a.acceptedBy||'',160),
+        acceptedAt:cleanText(a.acceptedAt||'',80),
+        note:cleanText(a.note||'',1000)
+      }
+    };
+  }
+
   function sanitizeCustomDeviceModel(raw, idx){
     const x=sanitizeObjectStrings(raw, 1000);
     x.id=cleanId(x.id,`custom_model_${idx+1}`);
@@ -359,7 +391,14 @@ Mantenimiento:
         designProjectName:cleanText(updatedFromSource.designProjectName || '', 160),
         baselineCapturedAt:cleanText(updatedFromSource.baselineCapturedAt || '', 80),
         closedAt:cleanText(updatedFromSource.closedAt || '', 80),
-        interventionActionCount:Number.isFinite(Number(updatedFromSource.interventionActionCount)) ? Math.max(0,Math.round(Number(updatedFromSource.interventionActionCount))) : 0
+        interventionActionCount:Number.isFinite(Number(updatedFromSource.interventionActionCount)) ? Math.max(0,Math.round(Number(updatedFromSource.interventionActionCount))) : 0,
+        completedActionCount:Number.isFinite(Number(updatedFromSource.completedActionCount)) ? Math.max(0,Math.round(Number(updatedFromSource.completedActionCount))) : 0,
+        evidenceCount:Number.isFinite(Number(updatedFromSource.evidenceCount)) ? Math.max(0,Math.round(Number(updatedFromSource.evidenceCount))) : 0,
+        technician:cleanText(updatedFromSource.technician||'',160),
+        acceptedBy:cleanText(updatedFromSource.acceptedBy||'',160),
+        acceptedAt:cleanText(updatedFromSource.acceptedAt||'',80),
+        observedAt:cleanText(updatedFromSource.observedAt||'',80),
+        acceptanceNote:cleanText(updatedFromSource.acceptanceNote||'',1000)
       };
     }else{
       delete p.workflow.updatedFrom;
@@ -380,9 +419,16 @@ Mantenimiento:
       }else{
         delete p.workflow.interventionBaseline;
       }
+      const executionSource=asObject(p.workflow.interventionExecution);
+      if(Object.keys(executionSource).length){
+        p.workflow.interventionExecution=sanitizeInterventionExecution(executionSource);
+      }else{
+        delete p.workflow.interventionExecution;
+      }
     }else{
       delete p.workflow.derivedFrom;
       delete p.workflow.interventionBaseline;
+      delete p.workflow.interventionExecution;
       if(p.workflow.designPhase != null) p.workflow.designPhase = cleanText(p.workflow.designPhase, 40);
     }
     p.dhcp = sanitizeDhcpMap(p.dhcp);
@@ -804,6 +850,17 @@ Mantenimiento:
     if(Object.keys(interventionBaseline).length && asObject(workflowContract.derivedFrom).type!=='inventory'){
       errors.push('workflow.interventionBaseline solo es válido en diseños derivados de inventario.');
     }
+    const interventionExecution=asObject(workflowContract.interventionExecution);
+    if(Object.keys(interventionExecution).length && interventionExecution.version!=='netwizard-intervention-execution-v1'){
+      errors.push('workflow.interventionExecution.version no soportada.');
+    }
+    if(Object.keys(interventionExecution).length && asObject(workflowContract.derivedFrom).type!=='inventory'){
+      errors.push('workflow.interventionExecution solo es válido en diseños derivados de inventario.');
+    }
+    for(const [actionId,evidence] of Object.entries(asObject(interventionExecution.actions))){
+      if(!actionId) errors.push('workflow.interventionExecution contiene actionId vacío.');
+      if(!['pending','done','blocked'].includes(cleanText(asObject(evidence).status||'pending',20).toLowerCase())) errors.push(`workflow.interventionExecution ${actionId}: status inválido.`);
+    }
 
     const devIds = new Set(p.devices.map(x=>x.id));
     const customModelIds = new Set(p.customDeviceModels.map(x=>x.id));
@@ -973,6 +1030,7 @@ Mantenimiento:
       customDeviceModelVersion:'netwizard-custom-device-model-v1',
       designRequirementsVersion:'netwizard-design-requirements-v1',
       physicalInterventionBaselineVersion:'netwizard-physical-intervention-baseline-v1',
+      interventionExecutionVersion:'netwizard-intervention-execution-v1',
       interventionCloseoutVersion:'netwizard-intervention-closeout-v1'
     },
     normalizeDeviceKind,

@@ -1,4 +1,4 @@
-/* NetWizard Intervention Closeout UI v1 */
+/* NetWizard Intervention Closeout UI v2 */
 (function initNetWizardInterventionCloseoutUi(root){
 'use strict';
 
@@ -88,7 +88,7 @@ function closeIntervention(){
 function render(project){
   const preview=validateCandidate(project),card=make('div','card nw-card-wide');
   const head=make('div','card-h');head.append(make('div','card-t','✅ Cierre de intervención'));card.append(head);
-  card.append(make('p','hint','Cuando el Diseño To-Be ya coincide con lo ejecutado en campo, puedes convertirlo en el nuevo Inventario As-Built. Se guardará antes un snapshot restaurable del diseño.'));
+  card.append(make('p','hint','El cierre exige ejecución de campo completa, responsable, criterios de aceptación, captura Observed posterior y ausencia de drift bloqueante. Se guardará antes un snapshot restaurable del diseño.'));
 
   if(!preview.built||!preview.built.ok){
     card.append(make('div','co co-rd',preview.built&&preview.built.message||'No se puede preparar el cierre.'));
@@ -117,8 +117,8 @@ function render(project){
 
   if(blocking||schemaErrors.length){
     card.append(make('div','co co-rd',`No se puede cerrar todavía: ${blocking} bloqueo(s) físicos y ${schemaErrors.length} error(es) de contrato.`));
-  }else if(fieldCounts&&fieldCounts.pending){
-    card.append(make('div','co co-ac',`Progreso de campo: ${fieldCounts.done}/${fieldCounts.total}. Quedan ${fieldCounts.pending} acción(es) sin marcar. Esto no bloquea el cierre: confirma que el To-Be refleja lo realmente ejecutado.`));
+  }else if(fieldCounts&&(fieldCounts.pending||fieldCounts.blocked)){
+    card.append(make('div','co co-rd',`Progreso de campo incompleto: ${fieldCounts.done}/${fieldCounts.total}. Pendientes ${fieldCounts.pending||0}, bloqueadas ${fieldCounts.blocked||0}.`));
   }else if(warnings){
     card.append(make('div','co co-yw',`El cierre es posible, pero quedan ${warnings} aviso(s) documentales. Revisa que sean aceptables.`));
   }else{
@@ -143,7 +143,7 @@ function inject(){
   const project=snapshot();
   if(closeout()&&closeout().isDerivedDesign&&closeout().isDerivedDesign(project))mount.append(render(project));
 }
-const api={version:'netwizard-intervention-closeout-ui-v1',validateCandidate,closeIntervention,render,inject};
+const api={version:'netwizard-intervention-closeout-ui-v2',validateCandidate,closeIntervention,render,inject};
 root.NetWizardInterventionCloseoutUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){

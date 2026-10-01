@@ -376,6 +376,9 @@
             },
             "updatedFrom": {
               "$ref": "#/$defs/interventionCloseoutProvenance"
+            },
+            "interventionExecution": {
+              "$ref": "#/$defs/interventionExecution"
             }
           }
         },
@@ -2518,6 +2521,136 @@
         "interventionActionCount": {
           "type": "integer",
           "minimum": 0
+        },
+        "completedActionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidenceCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "technician": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "acceptedBy": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "acceptedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "observedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "acceptanceNote": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "interventionActionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "done",
+            "blocked"
+          ]
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "completedBy": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "maxLength": 240
+          }
+        }
+      }
+    },
+    "interventionAcceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "connectivityVerified": {
+          "type": "boolean"
+        },
+        "labelsVerified": {
+          "type": "boolean"
+        },
+        "asBuiltReviewed": {
+          "type": "boolean"
+        },
+        "requireClientAcceptance": {
+          "type": "boolean"
+        },
+        "clientAccepted": {
+          "type": "boolean"
+        },
+        "acceptedBy": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "acceptedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "interventionExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "actions",
+        "acceptance"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "netwizard-intervention-execution-v1"
+        },
+        "startedAt": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "technician": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/interventionActionEvidence"
+          }
+        },
+        "acceptance": {
+          "$ref": "#/$defs/interventionAcceptance"
         }
       }
     }

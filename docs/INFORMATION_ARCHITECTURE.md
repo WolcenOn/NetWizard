@@ -37,6 +37,8 @@ Los datos se corrigen en estas pantallas o en el editor específico de su domini
 
 En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente ligadas a las VLANs: DHCP por VLAN, Router-on-a-Stick y VTP Cisco. Estas opciones alimentan la generación posterior y por tanto deben completarse antes de Validación/Despliegue; no son artefactos de exportación. La evidencia VTP de producción no duplica esa intención: se registra como estado `Observed` bajo `observedState.vtpDevices[deviceId]` y el Private Engine la contrasta con `vtp` antes de certificar `apply-ready`.
 
+**Ejecución de intervención** no modifica el To-Be. La evidencia de campo se persiste en `workflow.interventionExecution`: técnico, estado por acción, timestamps, notas, referencias de evidencia y criterios de aceptación. El cierre a As-Built exige que todas las acciones estén completadas, que exista una captura `observedState.observedAt` posterior, que no haya drift bloqueante y que los criterios de aceptación estén confirmados. Al cerrar, la ejecución activa desaparece y solo queda un resumen trazable en `workflow.updatedFrom`.
+
 ### Visualizar
 
 **V5 principal** es el mapa operativo/editable de Red + IoT.
