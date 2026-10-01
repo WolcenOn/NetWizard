@@ -27,6 +27,8 @@ Los datos se corrigen en estas pantallas o en el editor específico de su domini
 
 **HA / routing services por dispositivo** se editan en Dispositivos sobre `highAvailability.devices[deviceId]`. La intención incluye DHCP relay, rutas por defecto, tracking/IP-SLA y grupos HSRP/VRRP, y alimenta directamente el Private Engine sin crear otra autoridad.
 
+**Routing estático inter-sede** también se edita en Dispositivos, pero sobre la autoridad `routing.staticRoutesByDevice[deviceId]`. Solo contiene prefijos remotos explícitos, next-hop y distancia administrativa. Las rutas por defecto permanecen en `highAvailability` para no duplicar responsabilidades. El plan neutral combina rutas explícitas válidas con inferencias de vecinos directos y el Private Engine bloquea `apply-ready` cuando una ruta explícita tiene un next-hop no alcanzable directamente.
+
 En **VLANs & Subnets** se editan también las intenciones L2/L3 directamente ligadas a las VLANs: DHCP por VLAN, Router-on-a-Stick y VTP Cisco. Estas opciones alimentan la generación posterior y por tanto deben completarse antes de Validación/Despliegue; no son artefactos de exportación. La evidencia VTP de producción no duplica esa intención: se registra como estado `Observed` bajo `observedState.vtpDevices[deviceId]` y el Private Engine la contrasta con `vtp` antes de certificar `apply-ready`.
 
 ### Visualizar
