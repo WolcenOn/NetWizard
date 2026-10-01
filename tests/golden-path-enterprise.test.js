@@ -59,7 +59,7 @@ assert.strictEqual(p.devices.filter(d=>d.type==='router').length,4);
 assert.strictEqual(p.devices.filter(d=>d.type==='switch').length,8);
 assert.strictEqual(p.vlans.length,24);
 assert.strictEqual(p.subnets.length,24);
-assert.strictEqual(p.hosts.length,20);
+assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.fwRules.length,116);
 assert.strictEqual(p.linkAggregations.length,4);
 assert.strictEqual(p.wifiAccessPoints.length,4);
