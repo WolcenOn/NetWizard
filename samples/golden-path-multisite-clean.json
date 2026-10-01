@@ -1164,7 +1164,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.1",
         "l3Cidr": "10.255.0.0/30",
-        "desc": "WAN privada a north"
+        "desc": "WAN privada a north",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "hq_north_b",
@@ -1177,7 +1178,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.2",
         "l3Cidr": "10.255.0.0/30",
-        "desc": "WAN privada a hq"
+        "desc": "WAN privada a hq",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "north_east_a",
@@ -1190,7 +1192,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.5",
         "l3Cidr": "10.255.0.4/30",
-        "desc": "WAN privada a east"
+        "desc": "WAN privada a east",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "north_east_b",
@@ -1203,7 +1206,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.6",
         "l3Cidr": "10.255.0.4/30",
-        "desc": "WAN privada a north"
+        "desc": "WAN privada a north",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "east_south_a",
@@ -1216,7 +1220,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.9",
         "l3Cidr": "10.255.0.8/30",
-        "desc": "WAN privada a south"
+        "desc": "WAN privada a south",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "east_south_b",
@@ -1229,7 +1234,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.10",
         "l3Cidr": "10.255.0.8/30",
-        "desc": "WAN privada a east"
+        "desc": "WAN privada a east",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "south_hq_a",
@@ -1242,7 +1248,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.13",
         "l3Cidr": "10.255.0.12/30",
-        "desc": "WAN privada a hq"
+        "desc": "WAN privada a hq",
+        "transitVlanRef": "transit_v904"
       },
       {
         "id": "south_hq_b",
@@ -1255,7 +1262,8 @@
         "speedMaxMbps": 1000,
         "l3Ip": "10.255.0.14",
         "l3Cidr": "10.255.0.12/30",
-        "desc": "WAN privada a south"
+        "desc": "WAN privada a south",
+        "transitVlanRef": "transit_v904"
       },
       {
         "id": "hq_acc_admin",
@@ -1650,6 +1658,54 @@
           "isolation": "isolated",
           "criticality": "low"
         }
+      },
+      {
+        "id": "transit_v901",
+        "vlanId": 901,
+        "name": "TRANSIT-HQ-NORTE",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "transit_v902",
+        "vlanId": 902,
+        "name": "TRANSIT-NORTE-LEVANTE",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "transit_v903",
+        "vlanId": 903,
+        "name": "TRANSIT-LEVANTE-SUR",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "transit_v904",
+        "vlanId": 904,
+        "name": "TRANSIT-SUR-HQ",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
       }
     ],
     "subnets": [
@@ -1820,6 +1876,30 @@
         "cidr": "10.40.60.0/24",
         "gateway": "10.40.60.1",
         "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "transit_sn901",
+        "vlanRef": "transit_v901",
+        "cidr": "10.255.0.0/30",
+        "gateway": ""
+      },
+      {
+        "id": "transit_sn902",
+        "vlanRef": "transit_v902",
+        "cidr": "10.255.0.4/30",
+        "gateway": ""
+      },
+      {
+        "id": "transit_sn903",
+        "vlanRef": "transit_v903",
+        "cidr": "10.255.0.8/30",
+        "gateway": ""
+      },
+      {
+        "id": "transit_sn904",
+        "vlanRef": "transit_v904",
+        "cidr": "10.255.0.12/30",
+        "gateway": ""
       }
     ],
     "hosts": [
@@ -2247,7 +2327,8 @@
         "lengthM": 1000,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada del operador"
+        "physicalPath": "Red privada del operador",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "link_north_east",
@@ -2259,7 +2340,8 @@
         "lengthM": 1000,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada del operador"
+        "physicalPath": "Red privada del operador",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "link_east_south",
@@ -2271,7 +2353,8 @@
         "lengthM": 1000,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada del operador"
+        "physicalPath": "Red privada del operador",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "link_south_hq",
@@ -2283,7 +2366,8 @@
         "lengthM": 1000,
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "Red privada del operador"
+        "physicalPath": "Red privada del operador",
+        "transitVlanRef": "transit_v904"
       }
     ],
     "fwRules": [],
