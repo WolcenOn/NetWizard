@@ -130,7 +130,7 @@ func (s *Server) verifySelfHostedPrivateSession(raw string, now time.Time) (self
 		return selfHostedPrivateSession{}, false
 	}
 	providedSig, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
+	if err != nil || base64.RawURLEncoding.EncodeToString(providedSig) != parts[1] {
 		return selfHostedPrivateSession{}, false
 	}
 	expectedMac := hmac.New(sha256.New, s.selfHostedPrivateSigningKey())
