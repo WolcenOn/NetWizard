@@ -38,6 +38,8 @@ test('VPN site-to-site persiste To-Be con alias y evidencia Observed separada', 
   await expect(page.locator('#nwSiteToSiteVpnEditor')).toBeVisible();
 
   await page.locator('#nwVpnName').fill('HQ ↔ NORTE');
+  await page.locator('#nwVpnRole').selectOption('primary');
+  await page.locator('#nwVpnPriority').fill('10');
   await page.locator('#nwVpnLocalDevice').selectOption('r1');
   await page.locator('#nwVpnLocalCircuit').selectOption('c1');
   await page.locator('#nwVpnRemoteDevice').selectOption('r2');
@@ -55,7 +57,7 @@ test('VPN site-to-site persiste To-Be con alias y evidencia Observed separada', 
     name:'HQ ↔ NORTE',localDeviceId:'r1',remoteDeviceId:'r2',
     localCircuitRef:'c1',remoteCircuitRef:'c2',
     localPrefixes:['10.10.0.0/24'],remotePrefixes:['10.20.0.0/24'],
-    secretAlias:'VPN_HQ_NORTE_PSK',ikeVersion:'2',encryption:'aes256',integrity:'sha256'
+    secretAlias:'VPN_HQ_NORTE_PSK',ikeVersion:'2',encryption:'aes256',integrity:'sha256',role:'primary',priority:10
   });
   expect(saved.psk).toBeUndefined();
   expect(saved.preSharedKey).toBeUndefined();
