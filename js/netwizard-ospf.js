@@ -188,11 +188,16 @@ function adjacencyPath(project,fromDeviceId,toDeviceId,options){
   for(const n of expected){
     let state='planned';
     if(useObserved){
-      const observed=observedNeighbors(project,n.deviceId),hasAny=observed.length>0;
-      if(hasAny){
-        const obs=observed.find(x=>clean(x.localPortId)===n.localPortId&&(clean(x.peerRouterId)===n.peerRouterId||clean(x.peerDeviceId)===n.peerDeviceId));
-        state=obs&&clean(obs.state).toLowerCase()==='full'?'full':'down';
-      }
+      const localObserved=observedNeighbors(project,n.deviceId),peerObserved=observedNeighbors(project,n.peerDeviceId);
+      const findState=(list,localPortId,peerRouterId,peerDeviceId)=>{
+        if(!list.length)return null;
+        const obs=list.find(x=>clean(x.localPortId)===localPortId&&(clean(x.peerRouterId)===peerRouterId||clean(x.peerDeviceId)===peerDeviceId));
+        return obs?clean(obs.state).toLowerCase():'missing';
+      };
+      const localState=findState(localObserved,n.localPortId,n.peerRouterId,n.peerDeviceId);
+      const peerState=findState(peerObserved,n.peerPortId,n.routerId,n.deviceId);
+      if(['down','missing'].includes(localState)||['down','missing'].includes(peerState))state='down';
+      else if(localState==='full'&&peerState==='full')state='full';
     }
     if(state==='down')continue;
     add(n.deviceId,{to:n.peerDeviceId,neighbor:n,state});
