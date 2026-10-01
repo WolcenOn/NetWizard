@@ -22,7 +22,8 @@ function fixture(){
     devices:[
       {id:'r1',name:'RTR-HQ',type:'router',vendorOs:'cisco_ios'},
       {id:'r2',name:'RTR-CORE',type:'router',vendorOs:'cisco_ios'},
-      {id:'r3',name:'RTR-BRANCH',type:'router',vendorOs:'cisco_ios'}
+      {id:'r3',name:'RTR-BRANCH',type:'router',vendorOs:'cisco_ios'},
+      {id:'r4',name:'RTR-NO-OSPF',type:'router',vendorOs:'cisco_ios'}
     ],
     ports:[
       {id:'r1r2',deviceId:'r1',name:'Gi0/0',mode:'routed',l3Ip:'10.255.0.1',l3Cidr:'10.255.0.0/30'},
@@ -46,6 +47,7 @@ function fixture(){
 let p=fixture(),report=Ospf.validateProject(p);
 assert.strictEqual(report.ok,true,JSON.stringify(report.issues));
 assert.strictEqual(report.neighbors.length,4);
+assert.strictEqual(report.plans.some(x=>x.deviceId==='r4'),false);
 assert.ok(report.neighbors.some(n=>n.deviceId==='r2'&&n.peerDeviceId==='r3'&&n.area==='10'));
 const r2=report.plans.find(x=>x.deviceId==='r2');
 assert.ok(r2.networks.some(n=>n.portId==='r2r3'&&n.cost===20&&n.area==='10'));
