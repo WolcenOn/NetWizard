@@ -835,7 +835,10 @@ Mantenimiento:
         return item;
       });
     }
-    for(const key of ADVANCED_OBJECT_KEYS) p[key] = sanitizeLooseValue(p[key], 1000);
+    for(const key of ADVANCED_OBJECT_KEYS){
+      const value=sanitizeLooseValue(p[key],1000);
+      if(value===undefined)delete p[key];else p[key]=value;
+    }
     p.observedState = sanitizeObservedState(p.observedState);
 
     return { project: p, warnings: workflowWarnings };
