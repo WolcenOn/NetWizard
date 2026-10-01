@@ -45,6 +45,19 @@ test('Cisco IOS router sin RoaS explícito genera subinterfaces, DHCP, NAT y ACL
   assert.ok(cfg.includes('! FW ACL TEST'));
 });
 
+test('Cisco IOS multi-router con gatewayDeviceRef trata RoaS como intención explícita', () => {
+  const project=JSON.parse(JSON.stringify(baseProject));
+  project.devices.push({id:'r2',name:'RTR Peer',type:'router',kind:'router',vendorOs:'cisco_ios'});
+  project.ports.push({id:'r2-transit',deviceId:'r2',name:'GigabitEthernet0/0',mode:'routed',role:'transit',l3Ip:'10.255.0.2',l3Cidr:'10.255.0.0/30'});
+  project.subnets[0].gatewayDeviceRef='r1';
+  project.ports[1].mode='trunk';
+  project.ports[1].allowedVlans=[10];
+  project.ports[1].nativeVlanRef='v10';
+  const cfg=genFor(project)('r1','cisco_ios');
+  assert.match(cfg,/interface GigabitEthernet0\/1\.10/);
+  assert.doesNotMatch(cfg,/gateway RoaS inferido automáticamente/);
+});
+
 test('Cisco IOS router de tránsito puro no recibe RoaS de VLANs pertenecientes a otro router', () => {
   const project=JSON.parse(JSON.stringify(baseProject));
   project.devices.push({id:'r2',name:'RTR Transit',type:'router',kind:'router',vendorOs:'cisco_ios'});
