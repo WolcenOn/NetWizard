@@ -1942,6 +1942,58 @@
         "staticIp": "10.40.99.20",
         "locationId": "south_cpd",
         "physicalLocation": "Sede Sur · CPD"
+      },
+      {
+        "id": "hq_ap_host",
+        "name": "AP-HQ-01",
+        "type": "ap",
+        "vlanRef": "hq_v120",
+        "portRef": "hq_acc_wifi",
+        "ipMode": "static",
+        "staticIp": "10.10.20.21",
+        "locationId": "hq_office",
+        "physicalLocation": "Wi-Fi corporativa",
+        "poeRequired": true,
+        "poeWatts": 20
+      },
+      {
+        "id": "north_ap_host",
+        "name": "AP-NORTE-01",
+        "type": "ap",
+        "vlanRef": "north_v220",
+        "portRef": "north_acc_wifi",
+        "ipMode": "static",
+        "staticIp": "10.20.20.21",
+        "locationId": "north_office",
+        "physicalLocation": "Wi-Fi corporativa",
+        "poeRequired": true,
+        "poeWatts": 20
+      },
+      {
+        "id": "east_ap_host",
+        "name": "AP-LEVANTE-01",
+        "type": "ap",
+        "vlanRef": "east_v320",
+        "portRef": "east_acc_wifi",
+        "ipMode": "static",
+        "staticIp": "10.30.20.21",
+        "locationId": "east_office",
+        "physicalLocation": "Wi-Fi corporativa",
+        "poeRequired": true,
+        "poeWatts": 20
+      },
+      {
+        "id": "south_ap_host",
+        "name": "AP-SUR-01",
+        "type": "ap",
+        "vlanRef": "south_v420",
+        "portRef": "south_acc_wifi",
+        "ipMode": "static",
+        "staticIp": "10.40.20.21",
+        "locationId": "south_office",
+        "physicalLocation": "Wi-Fi corporativa",
+        "poeRequired": true,
+        "poeWatts": 20
       }
     ],
     "links": [
@@ -7123,7 +7175,11 @@
           "south_servers_host": "south_vloc_office",
           "south_voice_host": "south_vloc_office",
           "south_cctv_host": "south_vloc_office",
-          "south_mgmt_host": "south_vloc_cpd"
+          "south_mgmt_host": "south_vloc_cpd",
+          "hq_ap_host": "hq_vloc_office",
+          "north_ap_host": "north_vloc_office",
+          "east_ap_host": "east_vloc_office",
+          "south_ap_host": "south_vloc_office"
         }
       },
       "pos": {},
