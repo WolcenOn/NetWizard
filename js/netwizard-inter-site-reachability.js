@@ -9,6 +9,7 @@ const clean=v=>String(v==null?'':v).trim();
 function tryRequire(path){try{return require(path);}catch{return null;}}
 function routingUtils(){return root.NetWizardRoutingUtils||(typeof require==='function'?tryRequire('./netwizard-routing-utils.js'):null);}
 function connectivityModel(){return root.NetWizardConnectivityModel||(typeof require==='function'?tryRequire('./netwizard-connectivity-model.js'):null);}
+function siteVpn(){return root.NetWizardSiteToSiteVpn||(typeof require==='function'?tryRequire('./netwizard-site-to-site-vpn.js'):null);}
 function ipv4Int(value){const parts=clean(value).split('.');if(parts.length!==4)return null;let n=0;for(const part of parts){if(!/^\d{1,3}$/.test(part))return null;const oct=Number(part);if(oct<0||oct>255)return null;n=(n<<8)|oct;}return n>>>0;}
 function ip4(n){return[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');}
 function parseCidr(cidr){const m=clean(cidr).match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d|[12]\d|3[0-2])$/);if(!m)return null;const ip=ipv4Int(m[1]),prefix=Number(m[2]);if(ip==null)return null;const mask=prefix===0?0:(0xffffffff<<(32-prefix))>>>0;const network=(ip&mask)>>>0;return{cidr:ip4(network)+'/'+prefix,ip,network,mask,prefix};}
@@ -36,6 +37,20 @@ function traceDirection(project,sourceSubnet,targetSubnet){
     if(visited.has(current)){result.reason='Se detectó un bucle de routing en '+labelDevice(project,current)+'.';return result;}
     visited.add(current);result.hops.push({kind:'device',deviceId:current,label:labelDevice(project,current)});
     if(current===targetOwner){result.ok=true;result.reason='El router destino posee la subnet remota.';return result;}
+    const VPN=siteVpn();
+    if(VPN&&typeof VPN.findOverlay==='function'){
+      const overlay=VPN.findOverlay(project,current,targetOwner,sourceSubnet.cidr,targetSubnet.cidr);
+      if(overlay&&overlay.matched){
+        if(!overlay.available){result.reason='VPN '+clean(overlay.plan&&overlay.plan.name||overlay.plan&&overlay.plan.id)+': '+clean(overlay.reason);return result;}
+        result.hops.push({
+          kind:'vpn',tunnelId:overlay.plan.id,label:'VPN '+clean(overlay.plan.name||overlay.plan.id),
+          localEndpoint:overlay.plan.localEndpoint,remoteEndpoint:overlay.plan.remoteEndpoint,
+          observedStatus:overlay.status,detail:overlay.reason
+        });
+        current=targetOwner;
+        continue;
+      }
+    }
     const selected=selectRoute(project,current,targetSubnet.cidr);
     if(selected.issues.length){result.reason='Routing inválido en '+labelDevice(project,current)+': '+selected.issues.map(i=>clean(i.message)).join(' ');return result;}
     const route=selected.route;

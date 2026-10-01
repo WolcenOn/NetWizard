@@ -104,6 +104,8 @@ Modelar overlays sobre circuitos Internet/WAN:
 
 Criterio de salida: dos sedes pueden conectarse por VPN site-to-site y NetWizard puede verificar qué prefijos pasan por el túnel.
 
+Implementación inicial: `routing.siteToSiteVpns[]` modela un overlay IKEv2/IPsec sobre `wanCircuits` existentes, con selectores locales/remotos, AES-256/SHA-256, DH14/PFS14 y referencias `secretAlias`. `observedState.siteToSiteVpns[tunnelId]` conserva UP/DOWN y endpoints observados. Private Engine genera Cisco IOS y FortiGate; Reachability atraviesa el overlay y bloquea cuando Observed declara DOWN. No se persisten PSK reales ni se modela Internet como routers ficticios.
+
 ## Fase 5 — Routing dinámico
 
 Empezar por OSPF y ampliar solo con casos reales.

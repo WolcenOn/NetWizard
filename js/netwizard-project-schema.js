@@ -93,6 +93,7 @@ Mantenimiento:
     ];
     for(const key of arrayKeys) p[key] = asArray(p[key]);
     for(const key of ADVANCED_OBJECT_KEYS) p[key] = asObject(p[key]);
+    p.routing.siteToSiteVpns = asArray(asObject(p.routing).siteToSiteVpns);
     p.workflow = asObject(p.workflow);
     p.designRequirements = asObject(p.designRequirements);
     p.observedState = p.observedState && typeof p.observedState === 'object' && !Array.isArray(p.observedState) ? p.observedState : null;
@@ -874,6 +875,22 @@ Mantenimiento:
     for(const circuit of p.wanCircuits){
       if(circuit.deviceId && !devIds.has(circuit.deviceId)) errors.push(`Circuito WAN ${circuit.name || circuit.id}: dispositivo inexistente.`);
       if(circuit.portId && !portIds.has(circuit.portId)) errors.push(`Circuito WAN ${circuit.name || circuit.id}: puerto inexistente.`);
+    }
+    const vpnIds=new Set();
+    for(const vpn of asArray(asObject(p.routing).siteToSiteVpns)){
+      const id=cleanText(vpn.id||'',120),label=cleanText(vpn.name||id||'VPN site-to-site',160);
+      if(!id) errors.push('VPN site-to-site: elemento sin id.');
+      else if(vpnIds.has(id)) errors.push(`VPN site-to-site: id duplicado ${id}.`);
+      vpnIds.add(id);
+      if(vpn.localDeviceId&&!devIds.has(vpn.localDeviceId)) errors.push(`VPN ${label}: dispositivo local inexistente.`);
+      if(vpn.remoteDeviceId&&!devIds.has(vpn.remoteDeviceId)) errors.push(`VPN ${label}: dispositivo remoto inexistente.`);
+      if(vpn.localCircuitRef&&!circuitIds.has(vpn.localCircuitRef)) errors.push(`VPN ${label}: circuito WAN local inexistente.`);
+      if(vpn.remoteCircuitRef&&!circuitIds.has(vpn.remoteCircuitRef)) errors.push(`VPN ${label}: circuito WAN remoto inexistente.`);
+      if(vpn.psk||vpn.preSharedKey||vpn.password) errors.push(`VPN ${label}: no se permite persistir PSK/password; usa secretAlias.`);
+      if(!cleanText(vpn.secretAlias||'',120)) warnings.push(`VPN ${label}: secretAlias no definido.`);
+      for(const cidr of asArray(vpn.localPrefixes).concat(asArray(vpn.remotePrefixes))){
+        if(nw&&cidr&&!nw.parseCidr(cidr)) errors.push(`VPN ${label}: selector CIDR inválido (${cidr}).`);
+      }
     }
     for(const profile of p.trafficProfiles){
       if(profile.circuitRef && !circuitIds.has(profile.circuitRef)) errors.push(`Perfil de tráfico ${profile.name || profile.id}: circuito WAN inexistente.`);

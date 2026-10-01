@@ -15,6 +15,8 @@ const Network=require('../js/netwizard-network-utils.js');
 const Capabilities=require('./vendor-config-capabilities.js');
 const VtpVerification=require('../js/netwizard-vtp-production-verification.js');
 const RoutingPlan=require('../js/netwizard-routing-plan.js');
+const SiteVpn=require('../js/netwizard-site-to-site-vpn.js');
+const SiteVpnGenerator=require('./site-to-site-vpn-generator.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -123,10 +125,15 @@ function configReadiness(project,device,output){
   if(capability.mode==='script'){
     return{status:'review-required',reasons:['El Private Engine genera un script por sistema operativo, pero necesita asociación inequívoca al host/dispositivo y revisión de interfaz/servicios antes de ejecución.']};
   }
+  const vpnPlan=SiteVpn.buildDevicePlan(p,d.id);
+  const vpnBlocking=arr(vpnPlan&&vpnPlan.issues).filter(issue=>issue&&issue.blocking).map(issue=>'VPN site-to-site: '+clean(issue.message,300));
   if(vendor!=='cisco_ios'){
-    const family=clean(d.model,120);
-    return{status:'review-required',reasons:[`Se generó CLI vendor-specific y se normalizó su cierre, pero ${vendor} requiere certificar familia/modelo${family?' '+family:''} y versión antes de marcarlo apply-ready.`]};
+    const family=clean(d.model,120),vendorReasons=[`Se generó CLI vendor-specific y se normalizó su cierre, pero ${vendor} requiere certificar familia/modelo${family?' '+family:''} y versión antes de marcarlo apply-ready.`];
+    if(arr(vpnPlan&&vpnPlan.tunnels).length&&!['fortinet'].includes(vendor))vendorReasons.push('La VPN site-to-site todavía no tiene generador privado para '+vendor+'.');
+    vendorReasons.push(...vpnBlocking);
+    return{status:'review-required',reasons:vendorReasons};
   }
+  reasons.push(...vpnBlocking);
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(isSwitch(d)){
     const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
@@ -228,6 +235,11 @@ function create(project){
     id:'routing.multivendor',order:110,
     supports(ctx){return ['juniper_junos','huawei_vrp','mikrotik_routeros'].includes(ctx.vendor)&&!isSwitch(ctx.device);},
     apply(config,ctx){return MultiRouting.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}
+  });
+  pipeline.registerStage({
+    id:'vpn.site-to-site',order:150,
+    supports(ctx){return ['cisco_ios','fortinet'].includes(ctx.vendor)&&!isSwitch(ctx.device);},
+    apply(config,ctx){return SiteVpnGenerator.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
   });
   pipeline.registerStage({
     id:'security.access',order:200,
