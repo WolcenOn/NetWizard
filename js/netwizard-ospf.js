@@ -58,15 +58,17 @@ function deviceConfig(project,deviceId){
 }
 function interfaceConfig(project,deviceId,port){
   const cfg=deviceConfig(project,deviceId),raw=obj(cfg.interfaces[port.id]);
-  const enabled=cfg.hasExplicit?raw.enabled===true:!/loopback/i.test(clean(port.name));
+  const portName=clean(port.name||port.id),role=clean(port.role).toLowerCase();
+  const enabled=cfg.hasExplicit?raw.enabled===true:true;
+  const defaultPassive=/lan|inside/.test(role)||/loopback/i.test(portName);
   return{
     portId:port.id,
-    portName:clean(port.name||port.id),
+    portName,
     cidr:clean(port.l3Cidr||port.routedCidr),
     ip:ipOnly(port.l3Ip||port.routedIp||port.l3Cidr||port.routedCidr),
     enabled,
     area:normalizeArea(raw.area||cfg.defaultArea)||cfg.defaultArea,
-    passive:raw.passive==null?false:raw.passive===true,
+    passive:raw.passive==null?defaultPassive:raw.passive===true,
     cost:raw.cost==null||raw.cost===''?null:Number(raw.cost)
   };
 }
