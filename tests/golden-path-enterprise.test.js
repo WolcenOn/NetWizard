@@ -104,15 +104,15 @@ for(const [src,dst] of [
   assert.strictEqual(result.reverse.confidence,'observed');
 }
 
-const appFlow=Connectivity.simulate(p,'hq_users_host','east_servers_host','https');
+const appFlow=Connectivity.simulate(p,'host:hq_users_host','host:east_servers_host','https');
 assert.strictEqual(appFlow.ok,true,appFlow.steps.map(x=>x.msg).join('\n'));
 assert.strictEqual(appFlow.partial,false);
 
-const blockedMgmt=Connectivity.simulate(p,'north_users_host','hq_mgmt_host','https');
+const blockedMgmt=Connectivity.simulate(p,'host:north_users_host','host:hq_mgmt_host','https');
 assert.strictEqual(blockedMgmt.ok,false,'Usuarios no deben alcanzar MGMT');
 assert.strictEqual(blockedMgmt.blockage.kind,'policy');
 
-const blockedCctv=Connectivity.simulate(p,'hq_users_host','south_cctv_host','rtsp');
+const blockedCctv=Connectivity.simulate(p,'host:hq_users_host','host:south_cctv_host','rtsp');
 assert.strictEqual(blockedCctv.ok,false,'Usuarios no deben alcanzar CCTV');
 assert.ok(['policy','firewall'].includes(blockedCctv.blockage.kind));
 
