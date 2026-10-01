@@ -397,10 +397,12 @@
           150,
           160
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 1"
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "hq_acc_ap2",
@@ -415,10 +417,12 @@
           150,
           160
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 2"
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "north_lan",
@@ -636,10 +640,12 @@
           250,
           260
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 1"
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "north_acc_ap2",
@@ -654,10 +660,12 @@
           250,
           260
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 2"
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "east_lan",
@@ -875,10 +883,12 @@
           350,
           360
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 1"
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "east_acc_ap2",
@@ -893,10 +903,12 @@
           350,
           360
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 2"
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "south_lan",
@@ -1114,10 +1126,12 @@
           450,
           460
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 1"
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "south_acc_ap2",
@@ -1132,10 +1146,12 @@
           450,
           460
         ],
-        "uplink": true,
+        "uplink": false,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "AP trunk 2"
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false
       },
       {
         "id": "hq_north_a",
