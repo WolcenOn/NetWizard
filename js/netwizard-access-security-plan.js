@@ -72,7 +72,24 @@
       if(entry.trusted) trusted.push(entry);
       else if(mode === 'access') access.push(entry);
     }
-    const protectedVlans=arr(project && project.vlans).map(v=>Number(v.vlanId)).filter(Boolean).sort((a,b)=>a-b);
+    const carried=new Set();
+    for(const p of ports){
+      const mode=clean(p.mode||p.role).toLowerCase();
+      if(mode==='access'){
+        const vid=vlanId(project,p.accessVlanRef);if(vid)carried.add(vid);
+      }
+      if(mode==='trunk'){
+        for(const vid of arr(p.allowedVlans||p.allowed).map(Number).filter(Boolean))carried.add(vid);
+        const native=vlanId(project,p.nativeVlanRef)||Number(p.nativeVlanRef||0);if(native)carried.add(native);
+      }
+    }
+    for(const raw of arr(project&&project.linkAggregations)){
+      const members=arr(raw.memberPortIds||raw.members).map(clean).filter(Boolean);
+      if(!ports.some(p=>members.includes(p.id)))continue;
+      for(const vid of arr(raw.allowedVlans).map(Number).filter(Boolean))carried.add(vid);
+      const native=Number(raw.nativeVlan||0);if(native)carried.add(native);
+    }
+    const protectedVlans=(carried.size?Array.from(carried):arr(project&&project.vlans).map(v=>Number(v.vlanId)).filter(Boolean)).sort((a,b)=>a-b);
     return {
       deviceId:device.id,
       deviceName:clean(device.name || device.id),
