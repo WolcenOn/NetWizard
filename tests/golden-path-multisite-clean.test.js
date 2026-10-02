@@ -57,7 +57,7 @@ assert.strictEqual(p.subnets.length,28);
 assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.links.length,16);
 assert.strictEqual(p.wifiAccessPoints.length,8);
-assert.strictEqual(p.vrfs.length,2);
+assert.strictEqual(p.vrfs.length,0);
 assert.strictEqual(p.ipv6Networks.length,12);
 assert.strictEqual(p.racks.length,4);
 assert.strictEqual(p.pdus.length,8);
@@ -140,8 +140,7 @@ const ipv6=Ipv6Vrf.validateProject(p);
 assert.strictEqual(ipv6.ok,true,ipv6.issues.map(x=>x.code+': '+x.message).join('\n'));
 assert.strictEqual(ipv6.counts.blocking,0);
 assert.strictEqual(ipv6.counts.warnings,0);
-assert.strictEqual(p.ipv6Networks.filter(x=>x.vrfRef==='corp').length,8);
-assert.strictEqual(p.ipv6Networks.filter(x=>x.vrfRef==='mgmt').length,4);
+assert.ok(p.ipv6Networks.every(x=>!x.vrfRef),'IPv6 debe quedar validado sin activar VRF parcial en este Golden READY');
 
 const services=Services.validateProject(p);
 assert.strictEqual(services.ok,true,services.issues.map(x=>x.code+': '+x.message).join('\n'));
