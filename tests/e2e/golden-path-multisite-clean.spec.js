@@ -17,7 +17,7 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   await page.locator('#btnGoldenPathClean').click();
 
   await page.waitForFunction(
-    ()=>window.NetWizardGoldenPathClean&&window.NetWizardGoldenPathClean.lastLoadPromise,
+    ()=>Boolean(window.NetWizardGoldenPathClean&&window.NetWizardGoldenPathClean.lastLoadPromise),
     null,{timeout:5000}
   );
   await page.evaluate(()=>window.NetWizardGoldenPathClean.lastLoadPromise);
