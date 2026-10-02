@@ -41,6 +41,16 @@ function safeName(v,fallback){
   return ascii.replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^[.-]+|[.-]+$/g,'').slice(0,100)||fallback||'device';
 }
 function isSwitch(device){return !!device&&/switch/i.test(clean(device.kind||device.type));}
+function canonicalWanContext(project,device){
+  const p=obj(project),d=obj(device);
+  const circuits=arr(p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
+  const primary=circuits.find(x=>clean(x.role,40).toLowerCase()==='primary')||circuits[0]||null;
+  const port=primary?arr(p.ports).find(x=>x&&x.id===primary.portId&&x.deviceId===d.id):null;
+  const haDevice=obj(obj(p.highAvailability).devices)[d.id]||{};
+  const routes=arr(haDevice.defaultRoutes);
+  const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
+  return{primary,port,route};
+}
 function formatWild(cidr){
   const parsed=Network.parseCidr(cidr);
   if(!parsed)return clean(cidr,120);
@@ -151,9 +161,11 @@ function configReadiness(project,device,output){
   if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
   if(/NEXT_HOP|TODO|REVISAR|VALIDAR/i.test(text))reasons.push('La configuración contiene placeholders o instrucciones de revisión manual.');
   if(String(d.internetEdge||'').toLowerCase()==='yes'){
-    const roas=obj(p.roas);
-    if(!clean(roas.wanCidr,80))reasons.push('El equipo edge no tiene WAN CIDR explícita.');
-    if(!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito.');
+    const wan=canonicalWanContext(p,d),roas=obj(p.roas);
+    const canonicalAddress=wan.port&&clean(wan.port.l3Ip||wan.port.routedIp,80)&&clean(wan.port.l3Cidr||wan.port.routedCidr,80);
+    const legacyAddress=clean(roas.wanCidr,80);
+    if(!canonicalAddress&&!legacyAddress)reasons.push('El equipo edge no tiene WAN CIDR explícita en su circuito/puerto canónico.');
+    if(!(wan.route&&clean(wan.route.nextHop,80))&&!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito en highAvailability.');
   }
   if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
     reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
