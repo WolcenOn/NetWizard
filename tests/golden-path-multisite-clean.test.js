@@ -23,6 +23,9 @@ const Capacity=require(path.join(root,'js','netwizard-traffic-capacity.js'));
 const Failure=require(path.join(root,'js','netwizard-failure-simulation.js'));
 const Access=require(path.join(root,'js','netwizard-access-security-plan.js'));
 const Management=require(path.join(root,'js','netwizard-management-plan.js'));
+global.NetWizardFieldInterventionPackage=require(path.join(root,'js','netwizard-field-intervention-package.js'));
+global.NetWizardXlsxWriter=require(path.join(root,'js','netwizard-xlsx-writer.js'));
+const Budget=require(path.join(root,'js','netwizard-budget.js'));
 const PrivateWorker=require(path.join(root,'private','deployment-worker.js'));
 
 const defaults=()=>({
@@ -168,6 +171,17 @@ for(const d of p.devices){
   assert.ok(mgmt,d.id+': debe tener plan de gestión');
   assert.deepStrictEqual(mgmt.warnings||[],[],d.id+': gestión sin warnings');
 }
+
+
+const budgetValidation=Budget.validateProject(p);
+assert.strictEqual(budgetValidation.ok,true,budgetValidation.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(budgetValidation.counts.blocking,0);
+assert.strictEqual(budgetValidation.counts.warnings,0);
+assert.strictEqual(budgetValidation.counts.unpriced,0,'Toda la BOM derivada debe estar valorada');
+const budget=Budget.build(p);
+assert.strictEqual(budget.counts.unpriced,0);
+assert.ok(budget.totals.year1Price>budget.totals.year1Cost,'El presupuesto debe conservar margen positivo');
+assert.ok(budget.totals.year1CustomerTotal>budget.totals.year1Price,'El total cliente debe incluir impuestos');
 
 const privateResult=PrivateWorker.handle({project:p,generatedAt:'2026-10-01T20:10:00.000Z'});
 assert.strictEqual(privateResult.ok,true,'Private Engine debe generar todos los artefactos');
