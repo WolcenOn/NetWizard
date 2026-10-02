@@ -11,6 +11,7 @@ require(path.join(root,'js','netwizard-l3-config-utils.js'));
 require(path.join(root,'js','netwizard-routing-utils.js'));
 const Schema=require(path.join(root,'js','netwizard-project-schema.js'));
 const Architecture=require(path.join(root,'js','netwizard-architecture-validator.js'));
+const Cabling=require(path.join(root,'js','netwizard-structured-cabling.js'));
 const Rack=require(path.join(root,'js','netwizard-rack-model.js'));
 const Connectivity=require(path.join(root,'js','netwizard-connectivity-model.js'));
 const Ospf=require(path.join(root,'js','netwizard-ospf.js'));
@@ -62,8 +63,21 @@ assert.strictEqual(p.ipv6Networks.length,12);
 assert.strictEqual(p.racks.length,4);
 assert.strictEqual(p.pdus.length,8);
 assert.strictEqual(p.powerConnections.length,12);
+assert.strictEqual(p.patchPanels.length,4);
+assert.strictEqual(p.telecomOutlets.length,24);
+assert.strictEqual(p.cableRuns.length,24);
+assert.strictEqual(p.patchConnections.length,24);
+assert.strictEqual(p.hostOutletConnections.length,24);
 assert.strictEqual(p.failureScenarios.length,4);
 
+
+
+const cabling=Cabling.validate(p);
+assert.strictEqual(cabling.ok,true,cabling.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(cabling.counts.blocking,0);
+assert.strictEqual(cabling.counts.warnings,0);
+assert.strictEqual(cabling.paths.length,24);
+assert.ok(cabling.paths.every(x=>x.complete),'Los 24 hosts deben tener trazabilidad física completa');
 
 const rack=Rack.validate(p);
 assert.strictEqual(rack.ok,true,rack.issues.map(x=>x.code+': '+x.message).join('\n'));
