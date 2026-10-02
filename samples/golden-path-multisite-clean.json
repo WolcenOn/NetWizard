@@ -3950,6 +3950,30 @@
         "name": "Sede Sur · CPD",
         "type": "room",
         "parentId": "south_site"
+      },
+      {
+        "id": "room_hq",
+        "name": "Sede Central · Oficina",
+        "type": "room",
+        "parentId": "hq_site"
+      },
+      {
+        "id": "room_north",
+        "name": "Sede Norte · Oficina",
+        "type": "room",
+        "parentId": "north_site"
+      },
+      {
+        "id": "room_east",
+        "name": "Sede Levante · Oficina",
+        "type": "room",
+        "parentId": "east_site"
+      },
+      {
+        "id": "room_south",
+        "name": "Sede Sur · Oficina",
+        "type": "room",
+        "parentId": "south_site"
       }
     ],
     "hostPhysicalLocations": [],
@@ -4004,7 +4028,84 @@
         "numberingDirection": "bottom-up"
       }
     ],
-    "rackItems": [],
+    "rackItems": [
+      {
+        "id": "rackitem_hq_patch01",
+        "rackId": "hq_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "hq_patch01",
+        "label": "PP-HQ-01",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "hq_cm01",
+        "rackId": "hq_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Sede Central",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "rackitem_north_patch01",
+        "rackId": "north_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "north_patch01",
+        "label": "PP-NORTH-01",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "north_cm01",
+        "rackId": "north_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Sede Norte",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "rackitem_east_patch01",
+        "rackId": "east_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "east_patch01",
+        "label": "PP-EAST-01",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "east_cm01",
+        "rackId": "east_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Sede Levante",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "rackitem_south_patch01",
+        "rackId": "south_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "south_patch01",
+        "label": "PP-SOUTH-01",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "south_cm01",
+        "rackId": "south_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Sede Sur",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
     "pdus": [
       {
         "id": "hq_pdu_a",
@@ -4193,11 +4294,816 @@
         "feed": "B"
       }
     ],
-    "patchPanels": [],
-    "telecomOutlets": [],
-    "cableRuns": [],
-    "patchConnections": [],
-    "hostOutletConnections": [],
+    "patchPanels": [
+      {
+        "id": "hq_patch01",
+        "rackId": "hq_rack01",
+        "name": "PP-HQ-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 42
+      },
+      {
+        "id": "north_patch01",
+        "rackId": "north_rack01",
+        "name": "PP-NORTH-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 42
+      },
+      {
+        "id": "east_patch01",
+        "rackId": "east_rack01",
+        "name": "PP-EAST-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 42
+      },
+      {
+        "id": "south_patch01",
+        "rackId": "south_rack01",
+        "name": "PP-SOUTH-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 42
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "hq_to_user",
+        "locationId": "room_hq",
+        "name": "TO-HQ-USER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_server",
+        "locationId": "room_hq",
+        "name": "TO-HQ-SERVER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_phone",
+        "locationId": "room_hq",
+        "name": "TO-HQ-PHONE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_camera",
+        "locationId": "room_hq",
+        "name": "TO-HQ-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_guest",
+        "locationId": "room_hq",
+        "name": "TO-HQ-GUEST",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_admin",
+        "locationId": "room_hq",
+        "name": "TO-HQ-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_user",
+        "locationId": "room_north",
+        "name": "TO-NORTH-USER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_server",
+        "locationId": "room_north",
+        "name": "TO-NORTH-SERVER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_phone",
+        "locationId": "room_north",
+        "name": "TO-NORTH-PHONE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_camera",
+        "locationId": "room_north",
+        "name": "TO-NORTH-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_guest",
+        "locationId": "room_north",
+        "name": "TO-NORTH-GUEST",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "north_to_admin",
+        "locationId": "room_north",
+        "name": "TO-NORTH-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_user",
+        "locationId": "room_east",
+        "name": "TO-EAST-USER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_server",
+        "locationId": "room_east",
+        "name": "TO-EAST-SERVER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_phone",
+        "locationId": "room_east",
+        "name": "TO-EAST-PHONE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_camera",
+        "locationId": "room_east",
+        "name": "TO-EAST-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_guest",
+        "locationId": "room_east",
+        "name": "TO-EAST-GUEST",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "east_to_admin",
+        "locationId": "room_east",
+        "name": "TO-EAST-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_user",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-USER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_server",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-SERVER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_phone",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-PHONE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_camera",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_guest",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-GUEST",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "south_to_admin",
+        "locationId": "room_south",
+        "name": "TO-SOUTH-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "hq_run_user",
+        "label": "Sede Central USER-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 1,
+        "outletId": "hq_to_user",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_server",
+        "label": "Sede Central SRV-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 2,
+        "outletId": "hq_to_server",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_phone",
+        "label": "Sede Central PHONE-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 3,
+        "outletId": "hq_to_phone",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_camera",
+        "label": "Sede Central CAM-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 4,
+        "outletId": "hq_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_guest",
+        "label": "Sede Central GUEST-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 5,
+        "outletId": "hq_to_guest",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_admin",
+        "label": "Sede Central ADMIN-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 6,
+        "outletId": "hq_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_user",
+        "label": "Sede Norte USER-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 1,
+        "outletId": "north_to_user",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_server",
+        "label": "Sede Norte SRV-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 2,
+        "outletId": "north_to_server",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_phone",
+        "label": "Sede Norte PHONE-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 3,
+        "outletId": "north_to_phone",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_camera",
+        "label": "Sede Norte CAM-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 4,
+        "outletId": "north_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_guest",
+        "label": "Sede Norte GUEST-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 5,
+        "outletId": "north_to_guest",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "north_run_admin",
+        "label": "Sede Norte ADMIN-N-01",
+        "patchPanelId": "north_patch01",
+        "patchPort": 6,
+        "outletId": "north_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Sede Norte CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_user",
+        "label": "Sede Levante USER-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 1,
+        "outletId": "east_to_user",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_server",
+        "label": "Sede Levante SRV-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 2,
+        "outletId": "east_to_server",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_phone",
+        "label": "Sede Levante PHONE-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 3,
+        "outletId": "east_to_phone",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_camera",
+        "label": "Sede Levante CAM-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 4,
+        "outletId": "east_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_guest",
+        "label": "Sede Levante GUEST-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 5,
+        "outletId": "east_to_guest",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "east_run_admin",
+        "label": "Sede Levante ADMIN-E-01",
+        "patchPanelId": "east_patch01",
+        "patchPort": 6,
+        "outletId": "east_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Sede Levante CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_user",
+        "label": "Sede Sur USER-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 1,
+        "outletId": "south_to_user",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_server",
+        "label": "Sede Sur SRV-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 2,
+        "outletId": "south_to_server",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_phone",
+        "label": "Sede Sur PHONE-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 3,
+        "outletId": "south_to_phone",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_camera",
+        "label": "Sede Sur CAM-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 4,
+        "outletId": "south_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_guest",
+        "label": "Sede Sur GUEST-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 5,
+        "outletId": "south_to_guest",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "south_run_admin",
+        "label": "Sede Sur ADMIN-S-01",
+        "patchPanelId": "south_patch01",
+        "patchPort": 6,
+        "outletId": "south_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Sede Sur CPD → bandeja principal → oficina"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "hq_patch_user",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 1,
+        "switchPortId": "hq_acc_user",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_server",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 2,
+        "switchPortId": "hq_acc_server",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_phone",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 3,
+        "switchPortId": "hq_acc_phone",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_camera",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 4,
+        "switchPortId": "hq_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_guest",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 5,
+        "switchPortId": "hq_acc_guest",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_admin",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 6,
+        "switchPortId": "hq_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_user",
+        "patchPanelId": "north_patch01",
+        "patchPort": 1,
+        "switchPortId": "north_acc_user",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_server",
+        "patchPanelId": "north_patch01",
+        "patchPort": 2,
+        "switchPortId": "north_acc_server",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_phone",
+        "patchPanelId": "north_patch01",
+        "patchPort": 3,
+        "switchPortId": "north_acc_phone",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_camera",
+        "patchPanelId": "north_patch01",
+        "patchPort": 4,
+        "switchPortId": "north_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_guest",
+        "patchPanelId": "north_patch01",
+        "patchPort": 5,
+        "switchPortId": "north_acc_guest",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "north_patch_admin",
+        "patchPanelId": "north_patch01",
+        "patchPort": 6,
+        "switchPortId": "north_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_user",
+        "patchPanelId": "east_patch01",
+        "patchPort": 1,
+        "switchPortId": "east_acc_user",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_server",
+        "patchPanelId": "east_patch01",
+        "patchPort": 2,
+        "switchPortId": "east_acc_server",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_phone",
+        "patchPanelId": "east_patch01",
+        "patchPort": 3,
+        "switchPortId": "east_acc_phone",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_camera",
+        "patchPanelId": "east_patch01",
+        "patchPort": 4,
+        "switchPortId": "east_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_guest",
+        "patchPanelId": "east_patch01",
+        "patchPort": 5,
+        "switchPortId": "east_acc_guest",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "east_patch_admin",
+        "patchPanelId": "east_patch01",
+        "patchPort": 6,
+        "switchPortId": "east_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_user",
+        "patchPanelId": "south_patch01",
+        "patchPort": 1,
+        "switchPortId": "south_acc_user",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_server",
+        "patchPanelId": "south_patch01",
+        "patchPort": 2,
+        "switchPortId": "south_acc_server",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_phone",
+        "patchPanelId": "south_patch01",
+        "patchPort": 3,
+        "switchPortId": "south_acc_phone",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_camera",
+        "patchPanelId": "south_patch01",
+        "patchPort": 4,
+        "switchPortId": "south_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_guest",
+        "patchPanelId": "south_patch01",
+        "patchPort": 5,
+        "switchPortId": "south_acc_guest",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "south_patch_admin",
+        "patchPanelId": "south_patch01",
+        "patchPort": 6,
+        "switchPortId": "south_acc_admin",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "hq_hostcord_user",
+        "hostId": "hq_user",
+        "outletId": "hq_to_user",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_server",
+        "hostId": "hq_server",
+        "outletId": "hq_to_server",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_phone",
+        "hostId": "hq_phone",
+        "outletId": "hq_to_phone",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_camera",
+        "hostId": "hq_camera",
+        "outletId": "hq_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_guest",
+        "hostId": "hq_guest",
+        "outletId": "hq_to_guest",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_admin",
+        "hostId": "hq_admin",
+        "outletId": "hq_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_user",
+        "hostId": "north_user",
+        "outletId": "north_to_user",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_server",
+        "hostId": "north_server",
+        "outletId": "north_to_server",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_phone",
+        "hostId": "north_phone",
+        "outletId": "north_to_phone",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_camera",
+        "hostId": "north_camera",
+        "outletId": "north_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_guest",
+        "hostId": "north_guest",
+        "outletId": "north_to_guest",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "north_hostcord_admin",
+        "hostId": "north_admin",
+        "outletId": "north_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_user",
+        "hostId": "east_user",
+        "outletId": "east_to_user",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_server",
+        "hostId": "east_server",
+        "outletId": "east_to_server",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_phone",
+        "hostId": "east_phone",
+        "outletId": "east_to_phone",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_camera",
+        "hostId": "east_camera",
+        "outletId": "east_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_guest",
+        "hostId": "east_guest",
+        "outletId": "east_to_guest",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "east_hostcord_admin",
+        "hostId": "east_admin",
+        "outletId": "east_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_user",
+        "hostId": "south_user",
+        "outletId": "south_to_user",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_server",
+        "hostId": "south_server",
+        "outletId": "south_to_server",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_phone",
+        "hostId": "south_phone",
+        "outletId": "south_to_phone",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_camera",
+        "hostId": "south_camera",
+        "outletId": "south_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_guest",
+        "hostId": "south_guest",
+        "outletId": "south_to_guest",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "south_hostcord_admin",
+        "hostId": "south_admin",
+        "outletId": "south_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      }
+    ],
     "customDeviceModels": [],
     "topo": {
       "pos": {
@@ -4562,6 +5468,734 @@
           "chargeType": "one-time",
           "capexOpex": "capex",
           "note": "DAC para uplink LACP"
+        },
+        "patchPanel:hq_patch01": {
+          "unitCost": 140,
+          "unitPrice": 195,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "patchPanel:north_patch01": {
+          "unitCost": 140,
+          "unitPrice": 195,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "patchPanel:east_patch01": {
+          "unitCost": 140,
+          "unitPrice": 195,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "patchPanel:south_patch01": {
+          "unitCost": 140,
+          "unitPrice": 195,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "telecomOutlet:hq_to_user": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_server": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_phone": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_camera": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_guest": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_admin": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_user": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_server": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_phone": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_camera": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_guest": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:north_to_admin": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_user": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_server": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_phone": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_camera": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_guest": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:east_to_admin": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_user": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_server": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_phone": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_camera": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_guest": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:south_to_admin": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "cableRun:hq_run_user": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_server": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_phone": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_guest": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_user": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_server": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_phone": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_guest": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:north_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_user": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_server": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_phone": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_guest": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:east_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_user": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_server": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_phone": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_guest": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:south_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "patchConnection:hq_patch_user": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_server": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_phone": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_guest": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_user": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_server": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_phone": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_guest": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:north_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_user": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_server": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_phone": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_guest": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:east_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_user": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_server": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_phone": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_guest": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:south_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_user": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_server": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_phone": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_guest": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_user": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_server": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_phone": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_guest": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:north_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_user": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_server": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_phone": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_guest": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:east_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_user": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_server": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_phone": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_guest": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:south_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "rackItem:hq_cm01": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Pasacables horizontal 1U"
+        },
+        "rackItem:north_cm01": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Pasacables horizontal 1U"
+        },
+        "rackItem:east_cm01": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Pasacables horizontal 1U"
+        },
+        "rackItem:south_cm01": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Pasacables horizontal 1U"
         }
       },
       "modelPricing": {
