@@ -57,6 +57,9 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   expect(result.allowed).toEqual({ok:true,partial:false});
   expect(result.blockedGuest).toEqual({ok:false,kind:'policy'});
 
+  await page.evaluate(()=>window.navTo('dash'));
+  await expect(page.locator('#pg-dash')).toBeVisible();
+  await page.locator('#btnProductionGate').click();
   await expect.poll(()=>page.evaluate(()=>window.NetWizardLastProductionGateReport&&window.NetWizardLastProductionGateReport.status))
     .toBe('ready');
   await expect(page.locator('#productionGateOut')).toContainText('LISTO');
