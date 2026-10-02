@@ -45,7 +45,7 @@ test('Golden Path seguro multisede carga limpio y demuestra conectividad segment
   expect(state.routers).toBe(6);
   expect(state.switches).toBe(4);
   expect(state.ports).toBe(85);
-  expect(state.vlans).toBe(28);
+  expect(state.vlans).toBe(37);
   expect(state.hosts).toBe(25);
   expect(state.links).toBe(13);
   expect(state.architecture.ok).toBe(true);
