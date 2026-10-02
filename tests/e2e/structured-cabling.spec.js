@@ -29,6 +29,8 @@ test('editor físico crea una ruta completa switch → patch panel → toma → 
     if(window.navTo)window.navTo('physical');
   });
   await page.waitForSelector('#structuredCablingMount');
+  await page.locator('#structuredCablingSection').evaluate(el=>{el.open=true;el.dispatchEvent(new Event('toggle'));});
+  await expect(page.locator('[data-form="cable-panel"]')).toBeVisible();
 
   const panel=page.locator('[data-form="cable-panel"]');
   await panel.locator('select').selectOption('rack1');
