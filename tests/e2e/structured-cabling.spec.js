@@ -28,8 +28,9 @@ test('editor físico crea una ruta completa switch → patch panel → toma → 
     window.NetWizardState.replaceProject(p,{source:'e2e-cabling'});
     if(window.navTo)window.navTo('physical');
   });
-  await page.waitForSelector('#structuredCablingMount');
+  await expect(page.locator('#structuredCablingMount')).toBeAttached();
   await page.locator('#structuredCablingSection').evaluate(el=>{el.open=true;el.dispatchEvent(new Event('toggle'));});
+  await expect(page.locator('#structuredCablingMount')).toBeVisible();
   await expect(page.locator('[data-form="cable-panel"]')).toBeVisible();
 
   const panel=page.locator('[data-form="cable-panel"]');
