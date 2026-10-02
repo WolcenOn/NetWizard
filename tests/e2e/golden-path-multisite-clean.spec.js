@@ -25,6 +25,14 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   expect(await page.evaluate(()=>window.NetWizardState.getSnapshot().projName))
     .toBe('Golden Path Multisede Seguro · 4 sedes');
 
+  expect(await page.locator('#vlanMatrix').locator('tr').count()).toBe(0);
+  await page.evaluate(()=>window.navTo('fw'));
+  await expect(page.locator('#pg-fw')).toBeVisible();
+  expect(await page.locator('#vlanMatrix').locator('tr').count()).toBe(0);
+  await page.locator('.tab[data-tab="fw-matrix"]').click();
+  await expect(page.locator('#fw-matrix')).toBeVisible();
+  expect(await page.locator('#vlanMatrix tbody tr').count()).toBe(32);
+
   const result=await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
     const gate=window.NetWizardProductionGate.runProductionGate(p,{productionMode:true,strict:true});
