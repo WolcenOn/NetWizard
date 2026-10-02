@@ -2915,6 +2915,7 @@ function renderActiveStep(){
       renderVtp();
       break;
     case 'hosts':
+      fillVlanSels();
       fillHostDeviceSel();
       fillHostManagedDeviceSel();
       fillHostPortSel();
@@ -2925,12 +2926,14 @@ function renderActiveStep(){
       if($('ipMapPanel')?.open)renderIpMap();
       break;
     case 'links':
+      fillVlanSels();
       fillSwDevSels();
       fillLinkPickers();
       renderVisPorts();
       renderLinks();
       break;
     case 'fw':
+      fillVlanSels();
       renderFwRules();
       renderSecurityControls();
       if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
