@@ -48,8 +48,8 @@ const p=prepared.project;
 
 assert.strictEqual(p.projName,'Golden Path Secure Multisite · 4 sedes');
 assert.strictEqual(p.devices.filter(d=>d.kind==='router').length,6);
-assert.strictEqual(p.vlans.length,28);
-assert.strictEqual(p.subnets.length,28);
+assert.strictEqual(p.vlans.length,37);
+assert.strictEqual(p.subnets.length,37);
 assert.strictEqual(p.routing.protocol,'ospf');
 
 const architecture=Architecture.validate(p);
