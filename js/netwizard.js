@@ -1821,13 +1821,14 @@ function renderVisPorts(){
   const d=devById(devId);
   if(!d?.layout?.total){setSingleHint(grid,'Este switch no tiene layout. Usa "Layout switch" o añade puertos en la sección Puertos.');return;}
   const pbp=new Map();for(const p of portsByDev(devId))if(p.position)pbp.set(p.position,p);
+  const linkedPorts=new Set();for(const link of S.links||[]){if(link.aPortId)linkedPorts.add(link.aPortId);if(link.bPortId)linkedPorts.add(link.bPortId);}
   for(let pos=1;pos<=d.layout.total;pos++){
     const slot=d.layout.slots?.[pos-1]||'EMPTY';const p=pbp.get(pos)||null;
     const cell=makeEl('div','pport');
     if(slot==='EMPTY'){
       cell.style.opacity='.25'; cell.style.cursor='default'; cell.append(makeEl('div','pn','—'),makeEl('div','pm',`P${pos}`)); grid.appendChild(cell); continue;
     }
-    const label=p?.name||buildPName(d.vendorOs,slot,pos,d.layout.base||''); const lnk=p?isLinked(p.id):false;
+    const label=p?.name||buildPName(d.vendorOs,slot,pos,d.layout.base||''); const lnk=p?linkedPorts.has(p.id):false;
     cell.className=`pport ${p?p.mode:'access'} ${lnk?'linked':''}`;
     if(p){ cell.dataset.pp=p.id; cell.addEventListener('click',()=>openPortModal(p.id)); }
     cell.appendChild(makeEl('div','pn',label));
@@ -1836,20 +1837,31 @@ function renderVisPorts(){
     grid.appendChild(cell);
   }
 }
+let linksPage=0;
+const LINKS_PAGE_SIZE=100;
 function renderLinks(){
   const el=$('linksList');
   el.textContent='';
   if(!S.links.length){const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin enlaces.'; empty.appendChild(p); el.appendChild(empty); return;}
+  const portById=new Map(S.ports.map(p=>[p.id,p])),deviceById=new Map(S.devices.map(d=>[d.id,d])),vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
+  const portDispFast=p=>`${deviceById.get(p?.deviceId)?.name||'?'} :: ${p?.name||''}`;
   const lrows=S.links.slice(); const lsort=S.uiSort.links||{key:'a',dir:1};
-  lrows.sort((x,y)=>{const ax=S.ports.find(p=>p.id===x.aPortId), ay=S.ports.find(p=>p.id===y.aPortId), bx=S.ports.find(p=>p.id===x.bPortId), by=S.ports.find(p=>p.id===y.bPortId); let av='',bv=''; switch(lsort.key){case 'b': av=portDisp(bx||{}); bv=portDisp(by||{}); break; case 'notes': av=x.notes||''; bv=y.notes||''; break; default: av=portDisp(ax||{}); bv=portDisp(ay||{});} return lsort.dir*cmpMixed(av,bv);});
+  lrows.sort((x,y)=>{const ax=portById.get(x.aPortId),ay=portById.get(y.aPortId),bx=portById.get(x.bPortId),by=portById.get(y.bPortId);let av='',bv='';switch(lsort.key){case 'b':av=portDispFast(bx);bv=portDispFast(by);break;case 'notes':av=x.notes||'';bv=y.notes||'';break;default:av=portDispFast(ax);bv=portDispFast(ay);}return lsort.dir*cmpMixed(av,bv);});
+  const totalPages=Math.max(1,Math.ceil(lrows.length/LINKS_PAGE_SIZE));
+  linksPage=Math.min(Math.max(0,linksPage),totalPages-1);
+  const start=linksPage*LINKS_PAGE_SIZE,visible=lrows.slice(start,start+LINKS_PAGE_SIZE);
+  const pageInfo=$('linksPageInfo');if(pageInfo)pageInfo.textContent=`${lrows.length} enlaces · página ${linksPage+1}/${totalPages}`;
+  const prev=$('linksPrev'),next=$('linksNext'),pager=$('linksPager');
+  if(pager)pager.style.display=lrows.length>LINKS_PAGE_SIZE?'flex':'none';
+  if(prev)prev.disabled=linksPage<=0;if(next)next.disabled=linksPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw';
   const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
   [['a','Puerto A'],['b','Puerto B'],['notes','Notas']].forEach(([k,l])=>trh.appendChild(createSortTh('links',k,l)));
   ['Cableado','Tránsito',''].forEach(l=>{const th=document.createElement('th'); th.textContent=l; trh.appendChild(th);});
   thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  lrows.forEach(l=>{
-    const a=S.ports.find(p=>p.id===l.aPortId), b=S.ports.find(p=>p.id===l.bPortId), v=vByRef(l.transitVlanRef||l.vlanRef||l.l3VlanRef);
+  visible.forEach(l=>{
+    const a=portById.get(l.aPortId),b=portById.get(l.bPortId),v=vlanByRef.get(l.transitVlanRef||l.vlanRef||l.l3VlanRef);
     const cab=[l.medium&&l.medium!=='auto'?l.medium:'',l.cableType&&l.cableType!=='auto'?l.cableType:'',l.lengthM?l.lengthM+' m':'',l.speed&&l.speed!=='auto'?l.speed:''].filter(Boolean).join(' · ')||'—';
     const tr=document.createElement('tr');
     const tdA=document.createElement('td'); tdA.className='mono'; tdA.textContent=a?portDisp(a):'?'; if(a&&a.l3Ip){const ip=document.createElement('div'); ip.className='hint mono'; ip.textContent=`${a.l3Ip}/${(a.l3Cidr||'').split('/')[1]||''}`; tdA.appendChild(ip);} tr.appendChild(tdA);
@@ -1862,6 +1874,8 @@ function renderLinks(){
   });
   table.appendChild(tbody); wrap.appendChild(table); el.appendChild(wrap);
   el.querySelectorAll('[data-dl]').forEach(btn=>btn.onclick=()=>{S.links=S.links.filter(x=>x.id!==btn.dataset.dl);save();refresh();});
+  if($('linksPrev'))$('linksPrev').onclick=()=>{if(linksPage>0){linksPage--;renderLinks();}};
+  if($('linksNext'))$('linksNext').onclick=()=>{linksPage++;renderLinks();};
 }
 $('btnAddLink').onclick=()=>{
   const a=$('lnkA').value,b=$('lnkB').value;const notes=($('lnkNotes').value||'').trim()||null;
