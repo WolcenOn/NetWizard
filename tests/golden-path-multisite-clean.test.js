@@ -15,6 +15,8 @@ const Cabling=require(path.join(root,'js','netwizard-structured-cabling.js'));
 const Rack=require(path.join(root,'js','netwizard-rack-model.js'));
 const Connectivity=require(path.join(root,'js','netwizard-connectivity-model.js'));
 const Ospf=require(path.join(root,'js','netwizard-ospf.js'));
+const Wan=require(path.join(root,'js','netwizard-wan-circuits.js'));
+const Resilience=require(path.join(root,'js','netwizard-wan-resilience.js'));
 const Reach=require(path.join(root,'js','netwizard-inter-site-reachability.js'));
 const Vtp=require(path.join(root,'js','netwizard-vtp-production-verification.js'));
 const Wifi=require(path.join(root,'js','netwizard-wifi-planning.js'));
@@ -24,6 +26,7 @@ const Capacity=require(path.join(root,'js','netwizard-traffic-capacity.js'));
 const Failure=require(path.join(root,'js','netwizard-failure-simulation.js'));
 const Access=require(path.join(root,'js','netwizard-access-security-plan.js'));
 const Management=require(path.join(root,'js','netwizard-management-plan.js'));
+const Ha=require(path.join(root,'js','netwizard-ha-services-plan.js'));
 const PhysicalPlan=require(path.join(root,'js','netwizard-physical-intervention-plan.js'));
 global.NetWizardPhysicalInterventionPlan=PhysicalPlan;
 global.NetWizardObservedDrift=require(path.join(root,'js','netwizard-observed-drift.js'));
@@ -61,6 +64,7 @@ assert.strictEqual(p.vlans.length,32);
 assert.strictEqual(p.subnets.length,28);
 assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.links.length,16);
+assert.strictEqual(p.wanCircuits.length,8);
 assert.strictEqual(p.wifiAccessPoints.length,8);
 assert.strictEqual(p.vrfs.length,0);
 assert.strictEqual(p.ipv6Networks.length,12);
@@ -144,6 +148,23 @@ assert.strictEqual(blockedUserMgmt.blockage&&blockedUserMgmt.blockage.kind,'poli
 
 const allowedMgmtService=Connectivity.simulate(p,'host:hq_admin','host:east_server','https');
 assert.strictEqual(allowedMgmtService.ok,true,'Gestión debe poder alcanzar servicios internos');
+
+
+const wan=Wan.validateProject(p);
+assert.strictEqual(wan.ok,true,wan.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(wan.counts.blocking,0);
+assert.strictEqual(wan.counts.warnings,0);
+
+const resilience=Resilience.validateProject(p);
+assert.strictEqual(resilience.ok,true,resilience.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(resilience.counts.blocking,0);
+assert.strictEqual(resilience.counts.warnings,0);
+
+for(const id of ['hq_rtr','north_rtr','east_rtr','south_rtr']){
+  const ha=Ha.build(p,id);
+  assert.strictEqual(ha.defaultRoutes.length,2,id+': primary + floating backup');
+  assert.strictEqual(ha.tracking.length,1,id+': tracking del circuito principal');
+}
 
 const wifi=Wifi.validateProject(p);
 assert.strictEqual(wifi.ok,true,wifi.issues.map(x=>x.code+': '+x.message).join('\n'));
