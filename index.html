@@ -388,8 +388,8 @@
       </div>
     </div>
     <div>
-      <div class="card"><div class="card-h"><div class="card-t">🏷 VLANs</div></div><div id="vlanList"></div></div>
-      <div class="card"><div class="card-h"><div class="card-t">🌐 Subnets</div></div><div id="snList"></div></div>
+      <details class="card" id="vlanListPanel" open><summary><span class="card-t">🏷 VLANs</span></summary><div id="vlanList"></div></details>
+      <details class="card" id="subnetListPanel" open><summary><span class="card-t">🌐 Subnets</span></summary><div id="snList"></div></details>
     </div>
   </div>
 
@@ -410,11 +410,11 @@
         <label class="fl">Next-hop ISP</label><input id="wanNh" placeholder="203.0.113.1"/>
         <div class="brow"><button class="btn bg" id="btnRoas">✔ Aplicar RoaS</button></div>
       </div>
-      <div class="card">
-        <div class="card-t" style="margin-bottom:9px;">📡 DHCP por VLAN</div>
+      <details class="card" id="dhcpPanel">
+        <summary><span class="card-t">📡 DHCP por VLAN</span></summary>
         <div class="hint" style="margin-bottom:8px;">Pools, DNS y lease se definen por VLAN sobre la subnet canónica existente.</div>
         <div id="dhcpView"></div>
-      </div>
+      </details>
     </div>
     <div>
       <div class="card">
@@ -506,10 +506,10 @@
       </div>
     </div>
     <div>
-      <div class="card"><div class="card-h"><div class="card-t">🗺 Mapa IP por VLAN</div></div><div id="ipMap"></div></div>
+      <details class="card" id="ipMapPanel"><summary><span class="card-t">🗺 Mapa IP por VLAN</span></summary><div id="ipMap"></div></details>
     </div>
   </div>
-  <div class="card"><div class="card-h"><div class="card-t">💻 Hosts</div><span class="b bac" id="hCnt">0</span></div><div id="hostsList"></div></div>
+  <details class="card" id="hostsPanel" open><summary><span class="card-t">💻 Hosts</span> <span class="b bac" id="hCnt">0</span></summary><div id="hostsList"></div></details>
 </div>
 
 
