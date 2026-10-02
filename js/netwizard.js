@@ -1635,7 +1635,9 @@ $('bulkAdd').onclick=()=>{
   $('bulkModal').classList.remove('on');$('bulkTxt').value='';save();refresh();
   alert(`${ok} hosts añadidos.${errs.length ? ('\nErrores:\n' + errs.join('\n')) : ''}`);
 };
-$('hFiltV').onchange=$('hFiltT').onchange=renderHosts;
+$('hFiltV').onchange=$('hFiltT').onchange=()=>{hostsPage=0;renderHosts();};
+if($('hostsPrev'))$('hostsPrev').onclick=()=>{if(hostsPage>0){hostsPage--;renderHosts();}};
+if($('hostsNext'))$('hostsNext').onclick=()=>{hostsPage++;renderHosts();};
 function createSortTh(name,key,label){
   const th=document.createElement('th');
   th.style.cursor='pointer';
@@ -1649,11 +1651,28 @@ function makeBadge(text, cls){ const span=document.createElement('span'); span.c
 function safeColor(value, fallback){ const s=String(value || '').trim(); return /^#[0-9a-f]{3,8}$/i.test(s) ? s : (fallback || '#888'); }
 function textColorForBg(value){ const s=safeColor(value,'#3b82f6').replace('#',''); const hex=s.length===3?s.split('').map(x=>x+x).join(''):s.slice(0,6); const r=parseInt(hex.slice(0,2),16)||0,g=parseInt(hex.slice(2,4),16)||0,b=parseInt(hex.slice(4,6),16)||0; return ((r*299+g*587+b*114)/1000)>=150?'#111827':'#ffffff'; }
 function addOption(sel, value, text, selected){ const opt=document.createElement('option'); opt.value=String(value ?? ''); opt.textContent=String(text ?? ''); if(selected)opt.selected=true; sel.appendChild(opt); return opt; }
+let hostsPage=0;
+const HOSTS_PAGE_SIZE=80;
 function renderHosts(){
   const fv=$('hFiltV').value,ft=$('hFiltT').value;
+  const vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
+  const deviceById=new Map(S.devices.map(d=>[d.id,d]));
+  const portById=new Map(S.ports.map(p=>[p.id,p]));
+  const visualLocById=new Map(vLocs().map(l=>[l.id,l]));
+  const hostMeta=new Map(),ipSortCache=new Map();
+  const metaFor=h=>{
+    if(hostMeta.has(h.id))return hostMeta.get(h.id);
+    const access=structuredHostAccess(h);
+    const resolvedPortId=access?.structured&&access.complete&&access.switchPortId?access.switchPortId:(h.portRef||null);
+    const port=resolvedPortId?portById.get(resolvedPortId)||null:null;
+    const deviceId=access?.structured&&access.complete&&access.deviceId?access.deviceId:(h.connectedDeviceId&&deviceById.has(h.connectedDeviceId)?h.connectedDeviceId:(port?.deviceId||null));
+    const value={access,resolvedPortId,port,dev:deviceId?deviceById.get(deviceId)||null:null,loc:visualLocById.get(hostVisualLoc(h.id)||'')||null};
+    hostMeta.set(h.id,value);return value;
+  };
+  const ipFor=h=>{if(!ipSortCache.has(h.id))ipSortCache.set(h.id,effectiveHostIp(h));return ipSortCache.get(h.id);};
   let hosts=S.hosts.slice();if(fv)hosts=hosts.filter(h=>h.vlanRef===fv);if(ft)hosts=hosts.filter(h=>h.type===ft);
   const sort=S.uiSort.hosts||{key:'name',dir:1};
-  hosts.sort((a,b)=>{const va=vByRef(a.vlanRef), vb=vByRef(b.vlanRef), da=devById(hostConnectedDeviceId(a)||''), db=devById(hostConnectedDeviceId(b)||''); const la=vLocById(hostVisualLoc(a.id)||''), lb=vLocById(hostVisualLoc(b.id)||''); let av='',bv=''; switch(sort.key){case 'type': av=HT[a.type]?.l||a.type; bv=HT[b.type]?.l||b.type; break; case 'vlan': av=va?.vlanId||99999; bv=vb?.vlanId||99999; break; case 'ip': av=effectiveHostIp(a); bv=effectiveHostIp(b); break; case 'location': av=la?.name||a.physicalLocation||''; bv=lb?.name||b.physicalLocation||''; break; case 'connection': av=(da?.name||'')+' '+(hostResolvedPortId(a)||''); bv=(db?.name||'')+' '+(hostResolvedPortId(b)||''); break; default: av=a.name; bv=b.name; } return sort.dir*cmpMixed(av,bv); });
+  hosts.sort((a,b)=>{const va=vlanByRef.get(a.vlanRef),vb=vlanByRef.get(b.vlanRef);let av='',bv='';switch(sort.key){case 'type':av=HT[a.type]?.l||a.type;bv=HT[b.type]?.l||b.type;break;case 'vlan':av=va?.vlanId||99999;bv=vb?.vlanId||99999;break;case 'ip':av=ipFor(a);bv=ipFor(b);break;case 'location':{const ma=metaFor(a),mb=metaFor(b);av=ma.loc?.name||a.physicalLocation||'';bv=mb.loc?.name||b.physicalLocation||'';break;}case 'connection':{const ma=metaFor(a),mb=metaFor(b);av=(ma.dev?.name||'')+' '+(ma.resolvedPortId||'');bv=(mb.dev?.name||'')+' '+(mb.resolvedPortId||'');break;}default:av=a.name;bv=b.name;}return sort.dir*cmpMixed(av,bv);});
   $('hCnt').textContent=`${S.hosts.length} hosts`;
   const el=$('hostsList');
   el.textContent='';
@@ -1663,13 +1682,20 @@ function renderHosts(){
     const p=document.createElement('p'); p.textContent=S.hosts.length?'Sin resultados.':'Añade hosts arriba.';
     empty.append(icon,p); el.appendChild(empty); return;
   }
+  const totalPages=Math.max(1,Math.ceil(hosts.length/HOSTS_PAGE_SIZE));
+  hostsPage=Math.min(Math.max(0,hostsPage),totalPages-1);
+  const start=hostsPage*HOSTS_PAGE_SIZE,visible=hosts.slice(start,start+HOSTS_PAGE_SIZE);
+  const pageInfo=$('hostsPageInfo');if(pageInfo)pageInfo.textContent=`${hosts.length} resultados · página ${hostsPage+1}/${totalPages}`;
+  const prev=$('hostsPrev'),next=$('hostsNext'),pager=$('hostsPager');
+  if(pager)pager.style.display=hosts.length>HOSTS_PAGE_SIZE?'flex':'none';
+  if(prev)prev.disabled=hostsPage<=0;if(next)next.disabled=hostsPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw';
   const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
   [['name','Nombre'],['type','Tipo'],['vlan','VLAN'],['ip','IP'],['location','Ubicación'],['connection','Conexión']].forEach(([k,l])=>trh.appendChild(createSortTh('hosts',k,l)));
   trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  hosts.forEach(h=>{
-    const v=vByRef(h.vlanRef); const access=structuredHostAccess(h); const dev=devById(hostConnectedDeviceId(h)||''); const resolvedPortId=hostResolvedPortId(h); const port=resolvedPortId?S.ports.find(p=>p.id===resolvedPortId):null; const loc=vLocById(hostVisualLoc(h.id)||'');
+  visible.forEach(h=>{
+    const v=vlanByRef.get(h.vlanRef); const {access,dev,resolvedPortId,port,loc}=metaFor(h);
     const tr=document.createElement('tr');
     const tdName=document.createElement('td'); const bName=document.createElement('b'); bName.textContent=h.name||''; const hint=document.createElement('div'); hint.className='hint'; hint.textContent=h.physicalLocation||'—'; tdName.append(bName,hint); tr.appendChild(tdName);
     const tdType=document.createElement('td'); appendText(tdType,`${HT[h.type]?.i||''} ${HT[h.type]?.l||h.type||''}`); tr.appendChild(tdType);
