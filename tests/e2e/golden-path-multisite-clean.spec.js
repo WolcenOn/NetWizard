@@ -14,12 +14,13 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   await page.evaluate(()=>window.navTo('cfg'));
   await expect(page.locator('#pg-cfg')).toBeVisible();
   await expect(page.locator('#btnGoldenPathClean')).toBeVisible();
-  await page.locator('#btnGoldenPathClean').click();
-
-  await page.waitForFunction(
-    ()=>Boolean(window.NetWizardGoldenPathClean&&window.NetWizardGoldenPathClean.lastLoadPromise),
-    null,{timeout:5000}
-  );
+  const loadStarted=await page.evaluate(()=>{
+    const button=document.getElementById('btnGoldenPathClean');
+    if(!button)return false;
+    button.click();
+    return Boolean(window.NetWizardGoldenPathClean&&window.NetWizardGoldenPathClean.lastLoadPromise);
+  });
+  expect(loadStarted).toBe(true);
   await page.evaluate(()=>window.NetWizardGoldenPathClean.lastLoadPromise);
   expect(await page.evaluate(()=>window.NetWizardState.getSnapshot().projName))
     .toBe('Golden Path Multisede Seguro · 4 sedes');
