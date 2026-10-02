@@ -263,6 +263,7 @@ assert.match(hqConfig,/deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.30\.60\.0 0\.0\.0\
 assert.match(hqConfig,/interface GigabitEthernet0\/1\.110[\s\S]*ip access-group NW_SEG_V110 in/);
 assert.match(hqConfig,/ip access-list standard NW_MGMT_SOURCES/);
 assert.match(hqConfig,/line vty 0 15[\s\S]*access-class NW_MGMT_SOURCES in[\s\S]*transport input ssh/);
-assert.doesNotMatch(hqConfig,/ip access-list extended FW_POLICY/,'No debe quedar una ACL de intención global sin binding');
+assert.match(hqConfig,/ip access-list extended FW_POLICY/,'La política FW debe generarse por router');
+assert.match(hqConfig,/interface GigabitEthernet0\/1\.140[\s\S]*ip access-group FW_POLICY in/,'La ACL FW debe quedar vinculada inbound a la subinterfaz de origen');
 
 console.log('✓ Golden Path Multisede limpio: 4 routers en anillo, OSPF redundante, segmentación y Production Gate READY');
