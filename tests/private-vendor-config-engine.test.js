@@ -38,14 +38,15 @@ const result=Engine.generateAll(project);
 assert.strictEqual(result.contractVersion,'netwizard-private-vendor-config-v1');
 assert.strictEqual(result.ok,true);
 for(const id of ['r1','sw1','asa1','win1','lin1'])assert.strictEqual(result.sources[id],'private');
-assert.strictEqual(result.configReadiness.r1.status,'review-required');
-assert.ok(result.configReadiness.r1.reasons.some(x=>/políticas firewall/.test(x)));
+assert.strictEqual(result.configReadiness.r1.status,'apply-ready');
+assert.deepStrictEqual(result.configReadiness.r1.reasons,[]);
 assert.strictEqual(result.configReadiness.sw1.status,'apply-ready');
 assert.strictEqual(result.configReadiness.asa1.status,'review-required');
 assert.strictEqual(result.configReadiness.win1.status,'review-required');
 
 assert.match(result.configs.r1,/FW Policy ACL/);
 assert.match(result.configs.r1,/DNS outbound/);
+assert.match(result.configs.r1,/interface GigabitEthernet0\/1\.10[\s\S]*ip access-group FW_POLICY in/);
 const routerConfig=result.configs.r1;
 assert.strictEqual((routerConfig.match(/^configure terminal$/gm)||[]).length,1,'Cisco IOS debe abrir config mode una sola vez');
 assert.strictEqual((routerConfig.match(/^end$/gm)||[]).length,1,'Cisco IOS debe cerrar config mode una sola vez');
