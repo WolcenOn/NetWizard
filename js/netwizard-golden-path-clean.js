@@ -24,6 +24,12 @@ async function loadIntoProject(){
   if(typeof root.navTo==='function')root.navTo('dash');
   return project;
 }
+let lastLoadPromise=null;
+function beginLoad(){
+  lastLoadPromise=loadIntoProject();
+  api.lastLoadPromise=lastLoadPromise;
+  return lastLoadPromise;
+}
 async function download(){
   const a=root.document.createElement('a');
   a.href=SAMPLE_URL;
@@ -45,7 +51,7 @@ function inject(){
   load.title='Referencia production-ready: 4 sedes, 4 routers en anillo OSPF, LACP, segmentación, Wi-Fi y seguridad L2';
   load.onclick=async()=>{
     if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el Golden Multisede limpio?'))return;
-    try{await loadIntoProject();}
+    try{await beginLoad();}
     catch(error){root.alert?root.alert(error.message):root.console?.error(error);}
   };
 
@@ -59,7 +65,7 @@ function inject(){
 }
 const api={
   version:'netwizard-golden-path-clean-v1',url:SAMPLE_URL,
-  fetchPayload,preparedProject,loadIntoProject,download,inject
+  fetchPayload,preparedProject,loadIntoProject,beginLoad,lastLoadPromise,download,inject
 };
 root.NetWizardGoldenPathClean=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
