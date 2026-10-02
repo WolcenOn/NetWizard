@@ -22,7 +22,9 @@
         "powerDrawWatts": 120,
         "lanIf": "GigabitEthernet0/1",
         "rackId": "hq_rack01",
-        "rackUnit": 37
+        "rackUnit": 37,
+        "originRef": "hq_rtr",
+        "designDisposition": "keep"
       },
       {
         "id": "hq_core",
@@ -38,7 +40,9 @@
         "mgmtIp": "10.10.60.10",
         "powerDrawWatts": 110,
         "rackId": "hq_rack01",
-        "rackUnit": 34
+        "rackUnit": 34,
+        "originRef": "hq_core",
+        "designDisposition": "keep"
       },
       {
         "id": "hq_access",
@@ -55,7 +59,9 @@
         "powerDrawWatts": 95,
         "poeBudgetW": 740,
         "rackId": "hq_rack01",
-        "rackUnit": 31
+        "rackUnit": 31,
+        "originRef": "hq_access",
+        "designDisposition": "keep"
       },
       {
         "id": "north_rtr",
@@ -72,7 +78,9 @@
         "powerDrawWatts": 120,
         "lanIf": "GigabitEthernet0/1",
         "rackId": "north_rack01",
-        "rackUnit": 37
+        "rackUnit": 37,
+        "originRef": "north_rtr",
+        "designDisposition": "keep"
       },
       {
         "id": "north_core",
@@ -88,7 +96,9 @@
         "mgmtIp": "10.20.60.10",
         "powerDrawWatts": 110,
         "rackId": "north_rack01",
-        "rackUnit": 34
+        "rackUnit": 34,
+        "originRef": "north_core",
+        "designDisposition": "keep"
       },
       {
         "id": "north_access",
@@ -105,7 +115,9 @@
         "powerDrawWatts": 95,
         "poeBudgetW": 740,
         "rackId": "north_rack01",
-        "rackUnit": 31
+        "rackUnit": 31,
+        "originRef": "north_access",
+        "designDisposition": "keep"
       },
       {
         "id": "east_rtr",
@@ -122,7 +134,9 @@
         "powerDrawWatts": 120,
         "lanIf": "GigabitEthernet0/1",
         "rackId": "east_rack01",
-        "rackUnit": 37
+        "rackUnit": 37,
+        "originRef": "east_rtr",
+        "designDisposition": "keep"
       },
       {
         "id": "east_core",
@@ -138,7 +152,9 @@
         "mgmtIp": "10.30.60.10",
         "powerDrawWatts": 110,
         "rackId": "east_rack01",
-        "rackUnit": 34
+        "rackUnit": 34,
+        "originRef": "east_core",
+        "designDisposition": "keep"
       },
       {
         "id": "east_access",
@@ -155,7 +171,9 @@
         "powerDrawWatts": 95,
         "poeBudgetW": 740,
         "rackId": "east_rack01",
-        "rackUnit": 31
+        "rackUnit": 31,
+        "originRef": "east_access",
+        "designDisposition": "keep"
       },
       {
         "id": "south_rtr",
@@ -172,7 +190,9 @@
         "powerDrawWatts": 120,
         "lanIf": "GigabitEthernet0/1",
         "rackId": "south_rack01",
-        "rackUnit": 37
+        "rackUnit": 37,
+        "originRef": "south_rtr",
+        "designDisposition": "keep"
       },
       {
         "id": "south_core",
@@ -188,7 +208,9 @@
         "mgmtIp": "10.40.60.10",
         "powerDrawWatts": 110,
         "rackId": "south_rack01",
-        "rackUnit": 34
+        "rackUnit": 34,
+        "originRef": "south_core",
+        "designDisposition": "keep"
       },
       {
         "id": "south_access",
@@ -205,7 +227,8 @@
         "powerDrawWatts": 95,
         "poeBudgetW": 740,
         "rackId": "south_rack01",
-        "rackUnit": 31
+        "rackUnit": 31,
+        "designDisposition": "add"
       }
     ],
     "ports": [
@@ -6256,6 +6279,1058 @@
           "billingPeriodMonths": 1
         }
       ]
+    },
+    "workflow": {
+      "mode": "design",
+      "derivedFrom": {
+        "type": "inventory",
+        "snapshotId": "golden-multisite-asbuilt-2026-10-01",
+        "sourceProjectName": "Golden Path Multisede Seguro · As-Built previo",
+        "sourceSchemaVersion": "3.50.0",
+        "createdAt": "2026-10-01T17:05:00.000Z"
+      },
+      "interventionBaseline": {
+        "version": "netwizard-physical-intervention-baseline-v1",
+        "capturedAt": "2026-10-01T17:00:00.000Z",
+        "racks": [
+          {
+            "id": "hq_rack01",
+            "name": "RACK-HQ-01",
+            "locationId": "hq_cpd",
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
+          },
+          {
+            "id": "north_rack01",
+            "name": "RACK-NORTH-01",
+            "locationId": "north_cpd",
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
+          },
+          {
+            "id": "east_rack01",
+            "name": "RACK-EAST-01",
+            "locationId": "east_cpd",
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
+          },
+          {
+            "id": "south_rack01",
+            "name": "RACK-SOUTH-01",
+            "locationId": "south_cpd",
+            "rackUnits": 42,
+            "numberingDirection": "bottom-up"
+          }
+        ],
+        "devices": [
+          {
+            "id": "hq_rtr",
+            "name": "RTR-HQ-01",
+            "locationId": "hq_cpd",
+            "rackId": "hq_rack01",
+            "rackUnit": 37,
+            "manufacturer": "Cisco",
+            "model": "ISR 4331"
+          },
+          {
+            "id": "hq_core",
+            "name": "SW-CORE-HQ-01",
+            "locationId": "hq_cpd",
+            "rackId": "hq_rack01",
+            "rackUnit": 34,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9300"
+          },
+          {
+            "id": "hq_access",
+            "name": "SW-ACCESS-HQ-01",
+            "locationId": "hq_cpd",
+            "rackId": "hq_rack01",
+            "rackUnit": 31,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9200L 48P PoE+"
+          },
+          {
+            "id": "north_rtr",
+            "name": "RTR-N-01",
+            "locationId": "north_cpd",
+            "rackId": "north_rack01",
+            "rackUnit": 37,
+            "manufacturer": "Cisco",
+            "model": "ISR 4331"
+          },
+          {
+            "id": "north_core",
+            "name": "SW-CORE-N-01",
+            "locationId": "north_cpd",
+            "rackId": "north_rack01",
+            "rackUnit": 34,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9300"
+          },
+          {
+            "id": "north_access",
+            "name": "SW-ACCESS-N-01",
+            "locationId": "north_cpd",
+            "rackId": "north_rack01",
+            "rackUnit": 31,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9200L 48P PoE+"
+          },
+          {
+            "id": "east_rtr",
+            "name": "RTR-E-01",
+            "locationId": "east_cpd",
+            "rackId": "east_rack01",
+            "rackUnit": 37,
+            "manufacturer": "Cisco",
+            "model": "ISR 4331"
+          },
+          {
+            "id": "east_core",
+            "name": "SW-CORE-E-01",
+            "locationId": "east_cpd",
+            "rackId": "east_rack01",
+            "rackUnit": 34,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9300"
+          },
+          {
+            "id": "east_access",
+            "name": "SW-ACCESS-E-01",
+            "locationId": "east_cpd",
+            "rackId": "east_rack01",
+            "rackUnit": 31,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9200L 48P PoE+"
+          },
+          {
+            "id": "south_rtr",
+            "name": "RTR-S-01",
+            "locationId": "south_cpd",
+            "rackId": "south_rack01",
+            "rackUnit": 37,
+            "manufacturer": "Cisco",
+            "model": "ISR 4331"
+          },
+          {
+            "id": "south_core",
+            "name": "SW-CORE-S-01",
+            "locationId": "south_cpd",
+            "rackId": "south_rack01",
+            "rackUnit": 34,
+            "manufacturer": "Cisco",
+            "model": "Catalyst 9300"
+          }
+        ],
+        "pdus": [
+          {
+            "id": "hq_pdu_a",
+            "name": "PDU-HQ-A",
+            "rackId": "hq_rack01",
+            "feed": "A",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "hq_pdu_b",
+            "name": "PDU-HQ-B",
+            "rackId": "hq_rack01",
+            "feed": "B",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "north_pdu_a",
+            "name": "PDU-NORTH-A",
+            "rackId": "north_rack01",
+            "feed": "A",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "north_pdu_b",
+            "name": "PDU-NORTH-B",
+            "rackId": "north_rack01",
+            "feed": "B",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "east_pdu_a",
+            "name": "PDU-EAST-A",
+            "rackId": "east_rack01",
+            "feed": "A",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "east_pdu_b",
+            "name": "PDU-EAST-B",
+            "rackId": "east_rack01",
+            "feed": "B",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "south_pdu_a",
+            "name": "PDU-SOUTH-A",
+            "rackId": "south_rack01",
+            "feed": "A",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          },
+          {
+            "id": "south_pdu_b",
+            "name": "PDU-SOUTH-B",
+            "rackId": "south_rack01",
+            "feed": "B",
+            "mounting": "vertical-rear",
+            "outletCount": 16,
+            "voltage": 230,
+            "maxCurrentAmps": 16,
+            "maxPowerWatts": 3680
+          }
+        ],
+        "powerConnections": [
+          {
+            "id": "hq_pwr_hq_rtr",
+            "name": "",
+            "deviceId": "hq_rtr",
+            "pduId": "hq_pdu_a",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "hq_pwr_hq_core",
+            "name": "",
+            "deviceId": "hq_core",
+            "pduId": "hq_pdu_a",
+            "outlet": 2,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "hq_pwr_hq_access",
+            "name": "",
+            "deviceId": "hq_access",
+            "pduId": "hq_pdu_b",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "B"
+          },
+          {
+            "id": "north_pwr_north_rtr",
+            "name": "",
+            "deviceId": "north_rtr",
+            "pduId": "north_pdu_a",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "north_pwr_north_core",
+            "name": "",
+            "deviceId": "north_core",
+            "pduId": "north_pdu_a",
+            "outlet": 2,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "north_pwr_north_access",
+            "name": "",
+            "deviceId": "north_access",
+            "pduId": "north_pdu_b",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "B"
+          },
+          {
+            "id": "east_pwr_east_rtr",
+            "name": "",
+            "deviceId": "east_rtr",
+            "pduId": "east_pdu_a",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "east_pwr_east_core",
+            "name": "",
+            "deviceId": "east_core",
+            "pduId": "east_pdu_a",
+            "outlet": 2,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "east_pwr_east_access",
+            "name": "",
+            "deviceId": "east_access",
+            "pduId": "east_pdu_b",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "B"
+          },
+          {
+            "id": "south_pwr_south_rtr",
+            "name": "",
+            "deviceId": "south_rtr",
+            "pduId": "south_pdu_a",
+            "outlet": 1,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          },
+          {
+            "id": "south_pwr_south_core",
+            "name": "",
+            "deviceId": "south_core",
+            "pduId": "south_pdu_a",
+            "outlet": 2,
+            "powerSupplyIndex": 0,
+            "feed": "A"
+          }
+        ],
+        "cableRuns": [
+          {
+            "id": "hq_run_user",
+            "name": "Sede Central USER-HQ-01",
+            "label": "Sede Central USER-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 1,
+            "outletId": "hq_to_user",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 33,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "hq_run_server",
+            "name": "Sede Central SRV-HQ-01",
+            "label": "Sede Central SRV-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 2,
+            "outletId": "hq_to_server",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 36,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "hq_run_phone",
+            "name": "Sede Central PHONE-HQ-01",
+            "label": "Sede Central PHONE-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 3,
+            "outletId": "hq_to_phone",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 39,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "hq_run_camera",
+            "name": "Sede Central CAM-HQ-01",
+            "label": "Sede Central CAM-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 4,
+            "outletId": "hq_to_camera",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 42,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "hq_run_guest",
+            "name": "Sede Central GUEST-HQ-01",
+            "label": "Sede Central GUEST-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 5,
+            "outletId": "hq_to_guest",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 45,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "hq_run_admin",
+            "name": "Sede Central ADMIN-HQ-01",
+            "label": "Sede Central ADMIN-HQ-01",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 6,
+            "outletId": "hq_to_admin",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 48,
+            "route": "Sede Central CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_user",
+            "name": "Sede Norte USER-N-01",
+            "label": "Sede Norte USER-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 1,
+            "outletId": "north_to_user",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 33,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_server",
+            "name": "Sede Norte SRV-N-01",
+            "label": "Sede Norte SRV-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 2,
+            "outletId": "north_to_server",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 36,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_phone",
+            "name": "Sede Norte PHONE-N-01",
+            "label": "Sede Norte PHONE-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 3,
+            "outletId": "north_to_phone",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 39,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_camera",
+            "name": "Sede Norte CAM-N-01",
+            "label": "Sede Norte CAM-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 4,
+            "outletId": "north_to_camera",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 42,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_guest",
+            "name": "Sede Norte GUEST-N-01",
+            "label": "Sede Norte GUEST-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 5,
+            "outletId": "north_to_guest",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 45,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "north_run_admin",
+            "name": "Sede Norte ADMIN-N-01",
+            "label": "Sede Norte ADMIN-N-01",
+            "patchPanelId": "north_patch01",
+            "patchPort": 6,
+            "outletId": "north_to_admin",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 48,
+            "route": "Sede Norte CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_user",
+            "name": "Sede Levante USER-E-01",
+            "label": "Sede Levante USER-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 1,
+            "outletId": "east_to_user",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 33,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_server",
+            "name": "Sede Levante SRV-E-01",
+            "label": "Sede Levante SRV-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 2,
+            "outletId": "east_to_server",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 36,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_phone",
+            "name": "Sede Levante PHONE-E-01",
+            "label": "Sede Levante PHONE-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 3,
+            "outletId": "east_to_phone",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 39,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_camera",
+            "name": "Sede Levante CAM-E-01",
+            "label": "Sede Levante CAM-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 4,
+            "outletId": "east_to_camera",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 42,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_guest",
+            "name": "Sede Levante GUEST-E-01",
+            "label": "Sede Levante GUEST-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 5,
+            "outletId": "east_to_guest",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 45,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "east_run_admin",
+            "name": "Sede Levante ADMIN-E-01",
+            "label": "Sede Levante ADMIN-E-01",
+            "patchPanelId": "east_patch01",
+            "patchPort": 6,
+            "outletId": "east_to_admin",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 48,
+            "route": "Sede Levante CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_user",
+            "name": "Sede Sur USER-S-01",
+            "label": "Sede Sur USER-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 1,
+            "outletId": "south_to_user",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 33,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_server",
+            "name": "Sede Sur SRV-S-01",
+            "label": "Sede Sur SRV-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 2,
+            "outletId": "south_to_server",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 36,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_phone",
+            "name": "Sede Sur PHONE-S-01",
+            "label": "Sede Sur PHONE-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 3,
+            "outletId": "south_to_phone",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 39,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_camera",
+            "name": "Sede Sur CAM-S-01",
+            "label": "Sede Sur CAM-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 4,
+            "outletId": "south_to_camera",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 42,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_guest",
+            "name": "Sede Sur GUEST-S-01",
+            "label": "Sede Sur GUEST-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 5,
+            "outletId": "south_to_guest",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 45,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          },
+          {
+            "id": "south_run_admin",
+            "name": "Sede Sur ADMIN-S-01",
+            "label": "Sede Sur ADMIN-S-01",
+            "patchPanelId": "south_patch01",
+            "patchPort": 6,
+            "outletId": "south_to_admin",
+            "outletPort": 1,
+            "cableType": "Cat6A",
+            "lengthM": 48,
+            "route": "Sede Sur CPD → bandeja principal → oficina"
+          }
+        ],
+        "patchConnections": [
+          {
+            "id": "hq_patch_user",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 1,
+            "switchPortId": "hq_acc_user",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "hq_patch_server",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 2,
+            "switchPortId": "hq_acc_server",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "hq_patch_phone",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 3,
+            "switchPortId": "hq_acc_phone",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "hq_patch_camera",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 4,
+            "switchPortId": "hq_acc_camera",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "hq_patch_guest",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 5,
+            "switchPortId": "hq_acc_guest",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "hq_patch_admin",
+            "name": "",
+            "patchPanelId": "hq_patch01",
+            "patchPort": 6,
+            "switchPortId": "hq_acc_admin",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_user",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 1,
+            "switchPortId": "north_acc_user",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_server",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 2,
+            "switchPortId": "north_acc_server",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_phone",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 3,
+            "switchPortId": "north_acc_phone",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_camera",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 4,
+            "switchPortId": "north_acc_camera",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_guest",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 5,
+            "switchPortId": "north_acc_guest",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "north_patch_admin",
+            "name": "",
+            "patchPanelId": "north_patch01",
+            "patchPort": 6,
+            "switchPortId": "north_acc_admin",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_user",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 1,
+            "switchPortId": "east_acc_user",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_server",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 2,
+            "switchPortId": "east_acc_server",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_phone",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 3,
+            "switchPortId": "east_acc_phone",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_camera",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 4,
+            "switchPortId": "east_acc_camera",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_guest",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 5,
+            "switchPortId": "east_acc_guest",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "east_patch_admin",
+            "name": "",
+            "patchPanelId": "east_patch01",
+            "patchPort": 6,
+            "switchPortId": "east_acc_admin",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_user",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 1,
+            "switchPortId": "south_acc_user",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_server",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 2,
+            "switchPortId": "south_acc_server",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_phone",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 3,
+            "switchPortId": "south_acc_phone",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_camera",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 4,
+            "switchPortId": "south_acc_camera",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_guest",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 5,
+            "switchPortId": "south_acc_guest",
+            "patchCordLengthM": 1
+          },
+          {
+            "id": "south_patch_admin",
+            "name": "",
+            "patchPanelId": "south_patch01",
+            "patchPort": 6,
+            "switchPortId": "south_acc_admin",
+            "patchCordLengthM": 1
+          }
+        ],
+        "hostOutletConnections": [
+          {
+            "id": "hq_hostcord_user",
+            "name": "",
+            "hostId": "hq_user",
+            "outletId": "hq_to_user",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "hq_hostcord_server",
+            "name": "",
+            "hostId": "hq_server",
+            "outletId": "hq_to_server",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "hq_hostcord_phone",
+            "name": "",
+            "hostId": "hq_phone",
+            "outletId": "hq_to_phone",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "hq_hostcord_camera",
+            "name": "",
+            "hostId": "hq_camera",
+            "outletId": "hq_to_camera",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "hq_hostcord_guest",
+            "name": "",
+            "hostId": "hq_guest",
+            "outletId": "hq_to_guest",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "hq_hostcord_admin",
+            "name": "",
+            "hostId": "hq_admin",
+            "outletId": "hq_to_admin",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_user",
+            "name": "",
+            "hostId": "north_user",
+            "outletId": "north_to_user",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_server",
+            "name": "",
+            "hostId": "north_server",
+            "outletId": "north_to_server",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_phone",
+            "name": "",
+            "hostId": "north_phone",
+            "outletId": "north_to_phone",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_camera",
+            "name": "",
+            "hostId": "north_camera",
+            "outletId": "north_to_camera",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_guest",
+            "name": "",
+            "hostId": "north_guest",
+            "outletId": "north_to_guest",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "north_hostcord_admin",
+            "name": "",
+            "hostId": "north_admin",
+            "outletId": "north_to_admin",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_user",
+            "name": "",
+            "hostId": "east_user",
+            "outletId": "east_to_user",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_server",
+            "name": "",
+            "hostId": "east_server",
+            "outletId": "east_to_server",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_phone",
+            "name": "",
+            "hostId": "east_phone",
+            "outletId": "east_to_phone",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_camera",
+            "name": "",
+            "hostId": "east_camera",
+            "outletId": "east_to_camera",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_guest",
+            "name": "",
+            "hostId": "east_guest",
+            "outletId": "east_to_guest",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "east_hostcord_admin",
+            "name": "",
+            "hostId": "east_admin",
+            "outletId": "east_to_admin",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_user",
+            "name": "",
+            "hostId": "south_user",
+            "outletId": "south_to_user",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_server",
+            "name": "",
+            "hostId": "south_server",
+            "outletId": "south_to_server",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_phone",
+            "name": "",
+            "hostId": "south_phone",
+            "outletId": "south_to_phone",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_camera",
+            "name": "",
+            "hostId": "south_camera",
+            "outletId": "south_to_camera",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_guest",
+            "name": "",
+            "hostId": "south_guest",
+            "outletId": "south_to_guest",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          },
+          {
+            "id": "south_hostcord_admin",
+            "name": "",
+            "hostId": "south_admin",
+            "outletId": "south_to_admin",
+            "outletPort": 1,
+            "patchCordLengthM": 2
+          }
+        ]
+      },
+      "interventionExecution": {
+        "version": "netwizard-intervention-execution-v1",
+        "startedAt": "2026-10-01T18:00:00.000Z",
+        "technician": "Técnico Golden",
+        "actions": {
+          "device:add:south_access": {
+            "status": "done",
+            "completedAt": "2026-10-01T18:25:00.000Z",
+            "completedBy": "Técnico Golden",
+            "note": "Switch de acceso Sur instalado y etiquetado.",
+            "evidenceRefs": [
+              "foto-south-access-frontal",
+              "serial-south-access",
+              "test-console-south-access"
+            ]
+          },
+          "power:add:south_pwr_south_access": {
+            "status": "done",
+            "completedAt": "2026-10-01T18:30:00.000Z",
+            "completedBy": "Técnico Golden",
+            "note": "Alimentación del switch Sur conectada y verificada.",
+            "evidenceRefs": [
+              "foto-south-pdu-b1",
+              "medicion-south-access"
+            ]
+          }
+        },
+        "acceptance": {
+          "connectivityVerified": true,
+          "labelsVerified": true,
+          "asBuiltReviewed": true,
+          "requireClientAcceptance": true,
+          "clientAccepted": true,
+          "acceptedBy": "Supervisor Golden",
+          "acceptedAt": "2026-10-01T20:10:00.000Z",
+          "note": "Intervención validada contra diseño, Observed y documentación física."
+        }
+      }
     }
   }
 }
