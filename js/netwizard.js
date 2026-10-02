@@ -1212,6 +1212,10 @@ function renderPortsList(){
   let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=deviceById.get(a.deviceId),db=deviceById.get(b.deviceId),va=vlanByRef.get(a.accessVlanRef),vb=vlanByRef.get(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
   const el=$('portsList'); el.textContent='';
   if(!pts.length){
+    portsPage=0;
+    const info=$('portsPageInfo');if(info)info.textContent='0 puertos';
+    const pager=$('portsPager');if(pager)pager.style.display='none';
+    if($('portsPrev'))$('portsPrev').disabled=true;if($('portsNext'))$('portsNext').disabled=true;
     const empty=document.createElement('div'); empty.className='empty';
     const icon=document.createElement('div'); icon.className='ei'; icon.textContent='🔌';
     const p=document.createElement('p'); p.textContent=S.ports.length?'Cambia el filtro.':'Añade puertos arriba.';
@@ -1719,6 +1723,10 @@ function renderHosts(){
   const el=$('hostsList');
   el.textContent='';
   if(!hosts.length){
+    hostsPage=0;
+    const info=$('hostsPageInfo');if(info)info.textContent='0 resultados';
+    const pager=$('hostsPager');if(pager)pager.style.display='none';
+    if($('hostsPrev'))$('hostsPrev').disabled=true;if($('hostsNext'))$('hostsNext').disabled=true;
     const empty=document.createElement('div'); empty.className='empty';
     const icon=document.createElement('div'); icon.className='ei'; icon.textContent='💻';
     const p=document.createElement('p'); p.textContent=S.hosts.length?'Sin resultados.':'Añade hosts arriba.';
@@ -1889,7 +1897,7 @@ const LINKS_PAGE_SIZE=100;
 function renderLinks(){
   const el=$('linksList');
   el.textContent='';
-  if(!S.links.length){const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin enlaces.'; empty.appendChild(p); el.appendChild(empty); return;}
+  if(!S.links.length){linksPage=0;const info=$('linksPageInfo');if(info)info.textContent='0 enlaces';const pager=$('linksPager');if(pager)pager.style.display='none';if($('linksPrev'))$('linksPrev').disabled=true;if($('linksNext'))$('linksNext').disabled=true;const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin enlaces.'; empty.appendChild(p); el.appendChild(empty); return;}
   const portById=new Map(S.ports.map(p=>[p.id,p])),deviceById=new Map(S.devices.map(d=>[d.id,d])),vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
   const portDispFast=p=>`${deviceById.get(p?.deviceId)?.name||'?'} :: ${p?.name||''}`;
   const lrows=S.links.slice(); const lsort=S.uiSort.links||{key:'a',dir:1};
@@ -1911,8 +1919,8 @@ function renderLinks(){
     const a=portById.get(l.aPortId),b=portById.get(l.bPortId),v=vlanByRef.get(l.transitVlanRef||l.vlanRef||l.l3VlanRef);
     const cab=[l.medium&&l.medium!=='auto'?l.medium:'',l.cableType&&l.cableType!=='auto'?l.cableType:'',l.lengthM?l.lengthM+' m':'',l.speed&&l.speed!=='auto'?l.speed:''].filter(Boolean).join(' · ')||'—';
     const tr=document.createElement('tr');
-    const tdA=document.createElement('td'); tdA.className='mono'; tdA.textContent=a?portDisp(a):'?'; if(a&&a.l3Ip){const ip=document.createElement('div'); ip.className='hint mono'; ip.textContent=`${a.l3Ip}/${(a.l3Cidr||'').split('/')[1]||''}`; tdA.appendChild(ip);} tr.appendChild(tdA);
-    const tdB=document.createElement('td'); tdB.className='mono'; tdB.textContent=b?portDisp(b):'?'; if(b&&b.l3Ip){const ip=document.createElement('div'); ip.className='hint mono'; ip.textContent=`${b.l3Ip}/${(b.l3Cidr||'').split('/')[1]||''}`; tdB.appendChild(ip);} tr.appendChild(tdB);
+    const tdA=document.createElement('td'); tdA.className='mono'; tdA.textContent=a?portDispFast(a):'?'; if(a&&a.l3Ip){const ip=document.createElement('div'); ip.className='hint mono'; ip.textContent=`${a.l3Ip}/${(a.l3Cidr||'').split('/')[1]||''}`; tdA.appendChild(ip);} tr.appendChild(tdA);
+    const tdB=document.createElement('td'); tdB.className='mono'; tdB.textContent=b?portDispFast(b):'?'; if(b&&b.l3Ip){const ip=document.createElement('div'); ip.className='hint mono'; ip.textContent=`${b.l3Ip}/${(b.l3Cidr||'').split('/')[1]||''}`; tdB.appendChild(ip);} tr.appendChild(tdB);
     const tdNotes=document.createElement('td'); tdNotes.textContent=l.notes||''; tr.appendChild(tdNotes);
     const tdCab=document.createElement('td'); tdCab.textContent=cab; tr.appendChild(tdCab);
     const tdTransit=document.createElement('td'); if(v)tdTransit.appendChild(makeBadge(`V${v.vlanId}`,'b bpu')); else tdTransit.textContent='—'; tr.appendChild(tdTransit);
