@@ -661,6 +661,7 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
   const id=btn.dataset.tab;
   const pg=btn.closest('.pg')||document;
   pg.querySelectorAll('.tc').forEach(tc=>tc.classList.toggle('on',tc.id===id));
+  if(id==='fw-matrix')renderVlanMatrix();
 });
 
 // ─────────────────── RENDER NAV ───────────────────
@@ -2833,27 +2834,87 @@ vcv.addEventListener('mouseleave',v5HideLinkTooltip);
 // 15. REFRESH GLOBAL E INICIALIZACIÓN
 // Refresh central que re-renderiza la aplicación tras cambios de estado. Event listeners quedan antes de este bloque.
 // =========================================================
+function renderSecurityControls(){
+  ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{
+    const k=id.replace('sec','').toLowerCase();
+    if($(id))$(id).value=S.security[k]||'no';
+  });
+  if($('secBpdu'))$('secBpdu').value=S.security.bpdu||'yes';
+  if($('secPs'))$('secPs').value=S.security.ps||'yes';
+  if($('secDs'))$('secDs').value=S.security.ds||'yes';
+  if($('secDai'))$('secDai').value=S.security.dai||'yes';
+  if($('secDsV'))$('secDsV').value=S.security.dsV||'';
+}
+function renderActiveStep(){
+  switch(S.step){
+    case 'dash':
+      renderDash();
+      break;
+    case 'wiz':
+      renderWizard();
+      break;
+    case 'loc':
+      renderPhysicalLocations();
+      fillPhysicalLocationParentSel($('plEditId')?.value||'');
+      break;
+    case 'dev':
+      initDeviceModelList();
+      initDeviceKindSelect();
+      initDeviceVendorSelect();
+      renderDevs();
+      break;
+    case 'ports':
+      fillPortDevSel();
+      updatePortRoleOpts();
+      fillVlanSels();
+      renderPortsList();
+      break;
+    case 'vlan':
+      renderVlans();
+      renderSubnets();
+      fillVlanSels();
+      updManualSnHint();
+      fillRoasSels();
+      renderDhcp();
+      renderVtp();
+      break;
+    case 'hosts':
+      fillHostDeviceSel();
+      fillHostManagedDeviceSel();
+      fillHostPortSel();
+      fillHostLocSel();
+      fillHostPhysLocSel();
+      updateHostDeviceHint();
+      renderHosts();
+      renderIpMap();
+      break;
+    case 'links':
+      fillSwDevSels();
+      fillLinkPickers();
+      renderVisPorts();
+      renderLinks();
+      break;
+    case 'fw':
+      renderFwRules();
+      renderSecurityControls();
+      if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
+      break;
+    case 'graphs':
+      drawTopo();
+      resizeV5();
+      renderV5Panel();
+      break;
+    case 'cfg':
+      renderDevPickCfg();
+      if(selDevCfg)selectDevCfg(selDevCfg);
+      break;
+    default:
+      break;
+  }
+}
 function refresh(){
-  initDeviceModelList();
-  initDeviceKindSelect();
-  initDeviceVendorSelect();
   renderNav();
-  renderDash();
-  renderWizard();
-  fillPortDevSel();
-  updatePortRoleOpts();
-  renderDevs();
-  renderPortsList();
-  renderVlans();renderSubnets();fillVlanSels();updManualSnHint();
-  renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostManagedDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
-  fillSwDevSels();fillLinkPickers();renderVisPorts();renderLinks();
-  renderFwRules();renderVlanMatrix();
-  ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
-  $('secBpdu').value=S.security.bpdu||'yes';$('secPs').value=S.security.ps||'yes';$('secDs').value=S.security.ds||'yes';$('secDai').value=S.security.dai||'yes';
-  $('secDsV').value=S.security.dsV||'';
-  fillRoasSels();renderDhcp();renderDevPickCfg();renderVtp();
-  if(S.step==='graphs'){drawTopo();resizeV5();renderV5Panel();}
-  if(S.step==='cfg'){if(selDevCfg)selectDevCfg(selDevCfg);}
+  renderActiveStep();
   if(window.NetWizardI18n&&window.NetWizardI18n.applyI18n)window.NetWizardI18n.applyI18n(document);
 }
 
