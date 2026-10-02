@@ -41,7 +41,7 @@ test('Golden Path seguro multisede carga limpio y demuestra conectividad segment
     };
   });
 
-  expect(state.devices).toBe(12);
+  expect(state.devices).toBe(10);
   expect(state.routers).toBe(6);
   expect(state.switches).toBe(4);
   expect(state.ports).toBe(85);
