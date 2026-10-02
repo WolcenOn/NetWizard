@@ -233,7 +233,8 @@
         "l3Ip": "10.255.0.1",
         "l3Cidr": "10.255.0.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r1 ↔ core_r2"
+        "desc": "OSPF core_r1 ↔ core_r2",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "corelink_core_r2",
@@ -245,7 +246,8 @@
         "l3Ip": "10.255.0.2",
         "l3Cidr": "10.255.0.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r2 ↔ core_r1"
+        "desc": "OSPF core_r2 ↔ core_r1",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "east_a_core_r1",
@@ -257,7 +259,8 @@
         "l3Ip": "10.255.3.1",
         "l3Cidr": "10.255.3.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r1 ↔ east_rtr"
+        "desc": "OSPF core_r1 ↔ east_rtr",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "east_a_east_rtr",
@@ -269,7 +272,8 @@
         "l3Ip": "10.255.3.2",
         "l3Cidr": "10.255.3.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF east_rtr ↔ core_r1"
+        "desc": "OSPF east_rtr ↔ core_r1",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "east_b_core_r2",
@@ -281,7 +285,8 @@
         "l3Ip": "10.255.3.5",
         "l3Cidr": "10.255.3.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r2 ↔ east_rtr"
+        "desc": "OSPF core_r2 ↔ east_rtr",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "east_b_east_rtr",
@@ -293,7 +298,8 @@
         "l3Ip": "10.255.3.6",
         "l3Cidr": "10.255.3.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF east_rtr ↔ core_r2"
+        "desc": "OSPF east_rtr ↔ core_r2",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "east_gw_cameras",
@@ -500,7 +506,8 @@
         "l3Ip": "10.255.1.1",
         "l3Cidr": "10.255.1.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r1 ↔ hq_site_rtr"
+        "desc": "OSPF core_r1 ↔ hq_site_rtr",
+        "transitVlanRef": "transit_v904"
       },
       {
         "id": "hq_a_hq_site_rtr",
@@ -512,7 +519,8 @@
         "l3Ip": "10.255.1.2",
         "l3Cidr": "10.255.1.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF hq_site_rtr ↔ core_r1"
+        "desc": "OSPF hq_site_rtr ↔ core_r1",
+        "transitVlanRef": "transit_v904"
       },
       {
         "id": "hq_b_core_r2",
@@ -524,7 +532,8 @@
         "l3Ip": "10.255.1.5",
         "l3Cidr": "10.255.1.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r2 ↔ hq_site_rtr"
+        "desc": "OSPF core_r2 ↔ hq_site_rtr",
+        "transitVlanRef": "transit_v905"
       },
       {
         "id": "hq_b_hq_site_rtr",
@@ -536,7 +545,8 @@
         "l3Ip": "10.255.1.6",
         "l3Cidr": "10.255.1.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF hq_site_rtr ↔ core_r2"
+        "desc": "OSPF hq_site_rtr ↔ core_r2",
+        "transitVlanRef": "transit_v905"
       },
       {
         "id": "hq_gw_cameras",
@@ -798,7 +808,8 @@
         "l3Ip": "10.255.2.1",
         "l3Cidr": "10.255.2.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r1 ↔ north_rtr"
+        "desc": "OSPF core_r1 ↔ north_rtr",
+        "transitVlanRef": "transit_v906"
       },
       {
         "id": "north_a_north_rtr",
@@ -810,7 +821,8 @@
         "l3Ip": "10.255.2.2",
         "l3Cidr": "10.255.2.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF north_rtr ↔ core_r1"
+        "desc": "OSPF north_rtr ↔ core_r1",
+        "transitVlanRef": "transit_v906"
       },
       {
         "id": "north_b_core_r2",
@@ -822,7 +834,8 @@
         "l3Ip": "10.255.2.5",
         "l3Cidr": "10.255.2.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r2 ↔ north_rtr"
+        "desc": "OSPF core_r2 ↔ north_rtr",
+        "transitVlanRef": "transit_v907"
       },
       {
         "id": "north_b_north_rtr",
@@ -834,7 +847,8 @@
         "l3Ip": "10.255.2.6",
         "l3Cidr": "10.255.2.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF north_rtr ↔ core_r2"
+        "desc": "OSPF north_rtr ↔ core_r2",
+        "transitVlanRef": "transit_v907"
       },
       {
         "id": "north_gw_cameras",
@@ -1041,7 +1055,8 @@
         "l3Ip": "10.255.4.1",
         "l3Cidr": "10.255.4.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r1 ↔ south_rtr"
+        "desc": "OSPF core_r1 ↔ south_rtr",
+        "transitVlanRef": "transit_v908"
       },
       {
         "id": "south_a_south_rtr",
@@ -1053,7 +1068,8 @@
         "l3Ip": "10.255.4.2",
         "l3Cidr": "10.255.4.0/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF south_rtr ↔ core_r1"
+        "desc": "OSPF south_rtr ↔ core_r1",
+        "transitVlanRef": "transit_v908"
       },
       {
         "id": "south_b_core_r2",
@@ -1065,7 +1081,8 @@
         "l3Ip": "10.255.4.5",
         "l3Cidr": "10.255.4.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF core_r2 ↔ south_rtr"
+        "desc": "OSPF core_r2 ↔ south_rtr",
+        "transitVlanRef": "transit_v909"
       },
       {
         "id": "south_b_south_rtr",
@@ -1077,7 +1094,8 @@
         "l3Ip": "10.255.4.6",
         "l3Cidr": "10.255.4.4/30",
         "transceiver": "SFP-GE-LX",
-        "desc": "OSPF south_rtr ↔ core_r2"
+        "desc": "OSPF south_rtr ↔ core_r2",
+        "transitVlanRef": "transit_v909"
       },
       {
         "id": "south_gw_cameras",
@@ -1415,6 +1433,132 @@
         "id": "south_v499",
         "vlanId": 499,
         "name": "SUR-Gestión"
+      },
+      {
+        "id": "transit_v901",
+        "vlanId": 901,
+        "name": "TRANSIT-01",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v902",
+        "vlanId": 902,
+        "name": "TRANSIT-02",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v903",
+        "vlanId": 903,
+        "name": "TRANSIT-03",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v904",
+        "vlanId": 904,
+        "name": "TRANSIT-04",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v905",
+        "vlanId": 905,
+        "name": "TRANSIT-05",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v906",
+        "vlanId": 906,
+        "name": "TRANSIT-06",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v907",
+        "vlanId": 907,
+        "name": "TRANSIT-07",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v908",
+        "vlanId": 908,
+        "name": "TRANSIT-08",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "transit_v909",
+        "vlanId": 909,
+        "name": "TRANSIT-09",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
       }
     ],
     "subnets": [
@@ -1613,6 +1757,60 @@
         "cidr": "10.40.20.0/24",
         "gateway": "10.40.20.1",
         "gatewayDeviceRef": "south_rtr"
+      },
+      {
+        "id": "transit_sn_1",
+        "vlanRef": "transit_v901",
+        "cidr": "10.255.0.0/30",
+        "gateway": "10.255.0.1"
+      },
+      {
+        "id": "transit_sn_2",
+        "vlanRef": "transit_v902",
+        "cidr": "10.255.3.0/30",
+        "gateway": "10.255.3.1"
+      },
+      {
+        "id": "transit_sn_3",
+        "vlanRef": "transit_v903",
+        "cidr": "10.255.3.4/30",
+        "gateway": "10.255.3.5"
+      },
+      {
+        "id": "transit_sn_4",
+        "vlanRef": "transit_v904",
+        "cidr": "10.255.1.0/30",
+        "gateway": "10.255.1.1"
+      },
+      {
+        "id": "transit_sn_5",
+        "vlanRef": "transit_v905",
+        "cidr": "10.255.1.4/30",
+        "gateway": "10.255.1.5"
+      },
+      {
+        "id": "transit_sn_6",
+        "vlanRef": "transit_v906",
+        "cidr": "10.255.2.0/30",
+        "gateway": "10.255.2.1"
+      },
+      {
+        "id": "transit_sn_7",
+        "vlanRef": "transit_v907",
+        "cidr": "10.255.2.4/30",
+        "gateway": "10.255.2.5"
+      },
+      {
+        "id": "transit_sn_8",
+        "vlanRef": "transit_v908",
+        "cidr": "10.255.4.0/30",
+        "gateway": "10.255.4.1"
+      },
+      {
+        "id": "transit_sn_9",
+        "vlanRef": "transit_v909",
+        "cidr": "10.255.4.4/30",
+        "gateway": "10.255.4.5"
       }
     ],
     "hosts": [
@@ -1743,7 +1941,7 @@
       },
       {
         "id": "hq_nvr",
-        "name": "NVR-HQ-01",
+        "name": "MEDIA-HQ-01",
         "type": "server",
         "vlanRef": "hq_v140",
         "portRef": "hq_sw_srv_30",
@@ -1930,108 +2128,108 @@
         "name": "Transit core_r1 ↔ core_r2",
         "aPortId": "corelink_core_r1",
         "bPortId": "corelink_core_r2",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v901"
       },
       {
         "id": "link_east_a",
         "name": "Transit core_r1 ↔ east_rtr",
         "aPortId": "east_a_core_r1",
         "bPortId": "east_a_east_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v902"
       },
       {
         "id": "link_east_b",
         "name": "Transit core_r2 ↔ east_rtr",
         "aPortId": "east_b_core_r2",
         "bPortId": "east_b_east_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v903"
       },
       {
         "id": "link_hq_a",
         "name": "Transit core_r1 ↔ hq_site_rtr",
         "aPortId": "hq_a_core_r1",
         "bPortId": "hq_a_hq_site_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v904"
       },
       {
         "id": "link_hq_b",
         "name": "Transit core_r2 ↔ hq_site_rtr",
         "aPortId": "hq_b_core_r2",
         "bPortId": "hq_b_hq_site_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v905"
       },
       {
         "id": "link_north_a",
         "name": "Transit core_r1 ↔ north_rtr",
         "aPortId": "north_a_core_r1",
         "bPortId": "north_a_north_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v906"
       },
       {
         "id": "link_north_b",
         "name": "Transit core_r2 ↔ north_rtr",
         "aPortId": "north_b_core_r2",
         "bPortId": "north_b_north_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v907"
       },
       {
         "id": "link_south_a",
         "name": "Transit core_r1 ↔ south_rtr",
         "aPortId": "south_a_core_r1",
         "bPortId": "south_a_south_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v908"
       },
       {
         "id": "link_south_b",
         "name": "Transit core_r2 ↔ south_rtr",
         "aPortId": "south_b_core_r2",
         "bPortId": "south_b_south_rtr",
-        "medium": "fiber",
-        "cableType": "SMF",
-        "lengthM": 1000,
+        "medium": "logical",
+        "cableType": "provider",
         "speed": "1G",
         "capacityMbps": 1000,
-        "physicalPath": "WAN privada L3"
+        "physicalPath": "WAN privada L3",
+        "transitVlanRef": "transit_v909"
       },
       {
         "id": "north_lan_trunk",
