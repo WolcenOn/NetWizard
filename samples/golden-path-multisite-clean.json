@@ -4596,7 +4596,8 @@
           "unitCost": 55,
           "unitPrice": 85,
           "chargeType": "one-time",
-          "capexOpex": "opex"
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
         },
         {
           "id": "svc-install",
@@ -4606,7 +4607,8 @@
           "unitCost": 45,
           "unitPrice": 75,
           "chargeType": "one-time",
-          "capexOpex": "opex"
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
         },
         {
           "id": "svc-doc",
@@ -4616,7 +4618,8 @@
           "unitCost": 45,
           "unitPrice": 75,
           "chargeType": "one-time",
-          "capexOpex": "opex"
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
         }
       ]
     }
