@@ -95,6 +95,25 @@ cleanRouterProject.ports=project.ports.filter(x=>x.deviceId==='r1');
 const cleanRouter=Engine.generateAll(cleanRouterProject);
 assert.strictEqual(cleanRouter.configReadiness.r1.status,'apply-ready');
 
+
+const canonicalWanProject=JSON.parse(JSON.stringify(cleanRouterProject));
+canonicalWanProject.roas={gwId:'r1',lanIf:'GigabitEthernet0/1'};
+canonicalWanProject.ports=canonicalWanProject.ports.map(x=>x.id==='r1-wan'
+  ?Object.assign({},x,{mode:'routed',l3Ip:'192.0.2.2',l3Cidr:'192.0.2.0/30'})
+  :x);
+canonicalWanProject.wanCircuits=[{
+  id:'r1-primary',deviceId:'r1',portId:'r1-wan',role:'primary',enabled:true,
+  provider:'ISP-A',bandwidthDownMbps:1000,bandwidthUpMbps:1000
+}];
+canonicalWanProject.highAvailability={devices:{r1:{
+  defaultRoutes:[{nextHop:'192.0.2.1',distance:1,circuitRef:'r1-primary'}],
+  tracking:[],dhcpRelays:[],firstHopGroups:[]
+}}};
+const canonicalWan=Engine.generateAll(canonicalWanProject);
+assert.strictEqual(canonicalWan.configReadiness.r1.status,'apply-ready');
+assert.match(canonicalWan.configs.r1,/ip nat outside/);
+assert.match(canonicalWan.configs.r1,/ip route 0\.0\.0\.0 0\.0\.0\.0 192\.0\.2\.1 1/);
+
 const haRouterProject=JSON.parse(JSON.stringify(cleanRouterProject));
 haRouterProject.highAvailability={
   devices:{
