@@ -48,7 +48,10 @@ function policyRuleOwner(project,rule){
   let subnet=null;
   if(clean(r.vlanRef,256))subnet=arr(p.subnets).find(s=>s&&s.vlanRef===r.vlanRef)||null;
   if(!subnet&&clean(r.src,120))subnet=arr(p.subnets).find(s=>s&&clean(s.cidr,120)===clean(r.src,120))||null;
-  return subnetOwnerId(subnet);
+  const explicit=subnetOwnerId(subnet);
+  if(explicit)return explicit;
+  const legacyGw=clean(obj(p.roas).gwId,256);
+  return subnet&&legacyGw?legacyGw:'';
 }
 function manualPolicyRulesForDevice(project,deviceId){
   return arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false&&policyRuleOwner(project,r)===deviceId);
