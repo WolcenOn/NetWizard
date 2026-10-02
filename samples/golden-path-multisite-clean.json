@@ -4384,6 +4384,266 @@
         "panX": 0,
         "panY": 0
       }
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:hq_rack01": {
+          "unitCost": 950,
+          "unitPrice": 1250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Rack 42U"
+        },
+        "rack:north_rack01": {
+          "unitCost": 950,
+          "unitPrice": 1250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Rack 42U"
+        },
+        "rack:east_rack01": {
+          "unitCost": 950,
+          "unitPrice": 1250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Rack 42U"
+        },
+        "rack:south_rack01": {
+          "unitCost": 950,
+          "unitPrice": 1250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Rack 42U"
+        },
+        "pdu:hq_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:hq_pdu_b": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:north_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:north_pdu_b": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:east_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:east_pdu_b": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:south_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:south_pdu_b": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "port:hq_north_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:hq_north_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:north_east_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:north_east_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:east_south_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:east_south_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:south_hq_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:south_hq_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "link:hq_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:hq_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:north_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:north_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:east_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:east_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:south_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:south_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|isr 4331|": {
+          "unitCost": 1800,
+          "unitPrice": 2400,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Router Cisco de referencia para Golden"
+        },
+        "manual:cisco|catalyst 9300|": {
+          "unitCost": 3200,
+          "unitPrice": 4266.67,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Core switching de referencia para Golden"
+        },
+        "manual:cisco|catalyst 9200l 48p poe+|": {
+          "unitCost": 2100,
+          "unitPrice": 2800,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Access PoE de referencia para Golden"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-design",
+          "description": "Ingeniería y diseño de red multisede",
+          "quantity": 24,
+          "unit": "h",
+          "unitCost": 55,
+          "unitPrice": 85,
+          "chargeType": "one-time",
+          "capexOpex": "opex"
+        },
+        {
+          "id": "svc-install",
+          "description": "Instalación, configuración y pruebas",
+          "quantity": 40,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex"
+        },
+        {
+          "id": "svc-doc",
+          "description": "Documentación As-Built y entrega",
+          "quantity": 12,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex"
+        }
+      ]
     }
   }
 }
