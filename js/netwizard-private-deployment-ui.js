@@ -484,18 +484,21 @@ function render(){
 }
 function install(){
   if(!root.document)return false;
-  const rerender=()=>{try{render();}catch(err){if(root.console)root.console.error('NetWizard private deployment UI',err);}};
+  const active=()=>root.document.getElementById('pg-cfg')?.classList.contains('on');
+  const rerender=()=>{if(!active())return;try{render();}catch(err){if(root.console)root.console.error('NetWizard private deployment UI',err);}};
   const remoteChanged=()=>rerender();
   root.addEventListener&&root.addEventListener('nw:auth:changed',rerender);
   root.addEventListener&&root.addEventListener('nw:remote-project:changed',remoteChanged);
   root.addEventListener&&root.addEventListener('nw:self-hosted-private:changed',rerender);
   root.document.addEventListener&&root.document.addEventListener('nw:project:changed',()=>{
     markResultStale();
+    if(!active())return;
     rerender();
     if(root.NetWizardConfigView&&typeof root.NetWizardConfigView.refreshPrivateArtifacts==='function'){
       root.NetWizardConfigView.refreshPrivateArtifacts();
     }
   });
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='cfg')rerender();});
   if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',rerender,{once:true});else rerender();
   return true;
 }

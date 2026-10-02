@@ -54,8 +54,10 @@ function renderGoldenPath(project){
 }
 function inject(){
  if(!root.document)return;
- const dash=root.document.getElementById('pg-dash');if(dash){let mount=root.document.getElementById('workflowSelectorMount');if(!mount){mount=root.document.createElement('div');mount.id='workflowSelectorMount';dash.insertBefore(mount,dash.children[1]||null);}mount.textContent='';mount.append(workflowSelector());}
- const physical=root.document.getElementById('inventoryGoldenPathMount');if(physical){physical.textContent='';physical.append(renderGoldenPath(snapshot()));}
+ const dash=root.document.getElementById('pg-dash');
+ if(dash?.classList.contains('on')){let mount=root.document.getElementById('workflowSelectorMount');if(!mount){mount=root.document.createElement('div');mount.id='workflowSelectorMount';dash.insertBefore(mount,dash.children[1]||null);}mount.textContent='';mount.append(workflowSelector());}
+ const physical=root.document.getElementById('inventoryGoldenPathMount');
+ if(physical&&root.document.getElementById('pg-physical')?.classList.contains('on')){physical.textContent='';physical.append(renderGoldenPath(snapshot()));}
  const mode=snapshot().workflow&&snapshot().workflow.mode||'design';
  const wiz=root.document.querySelector('.sb-it[data-step="wiz"]');if(wiz)wiz.style.display=mode==='inventory'?'none':'';
  const phys=root.document.querySelector('.sb-it[data-step="physical"]');if(phys)phys.style.display='';
@@ -63,5 +65,5 @@ function inject(){
 const api={version:'netwizard-inventory-golden-path-ui-v1',setMode,renderGoldenPath,inject};
 root.NetWizardInventoryGoldenPathUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
-if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
+if(root.document){root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));root.document.addEventListener('nw:view:changed',()=>setTimeout(inject,0));}
 })(typeof window!=='undefined'?window:globalThis);

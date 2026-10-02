@@ -147,8 +147,10 @@ const api={version:'netwizard-intervention-closeout-ui-v2',validateCandidate,clo
 root.NetWizardInterventionCloseoutUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(inject,0));
-  else root.setTimeout(inject,0);
-  root.document.addEventListener('nw:project:changed',()=>root.setTimeout(inject,0));
+  const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');
+  const refresh=()=>{if(active())root.setTimeout(inject,0);};
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);else refresh();
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')root.setTimeout(inject,0);});
 }
 })(typeof window!=='undefined'?window:globalThis);

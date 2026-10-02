@@ -130,7 +130,7 @@ function loadS(){
   }catch{return null;}
 }
 function save(options={}){
-  if(NWSchema && typeof NWSchema.sanitizeProject==='function'){
+  if(!options.skipNormalize && NWSchema && typeof NWSchema.sanitizeProject==='function'){
     Object.assign(S,NWSchema.sanitizeProject(S,{defaults:defS}).project);
   }
   localStorage.setItem(SK,JSON.stringify(S));
@@ -138,7 +138,9 @@ function save(options={}){
     const el=$('savedLbl');
     if(el){el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1300);}
   }
-  document.dispatchEvent(new CustomEvent('nw:project:changed',{detail:{source:options.source||'netwizard'}}));
+  if(options.notify!==false){
+    document.dispatchEvent(new CustomEvent('nw:project:changed',{detail:{source:options.source||'netwizard'}}));
+  }
 }
 function projectSnapshot(){return JSON.parse(JSON.stringify(S));}
 function replaceProject(project,options={}){
@@ -146,6 +148,7 @@ function replaceProject(project,options={}){
   const next=normalizeProject(project);
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
+  if(typeof ensureVisualModel==='function')ensureVisualModel();
   save({source:options.source||'api',silent:options.silent});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
   return projectSnapshot();
@@ -632,7 +635,12 @@ function normalizeWorkflowStep(step){
   if(S.workflow?.mode==='inventory'&&step==='wiz')return'loc';
   return step;
 }
-function navTo(step){S.step=normalizeWorkflowStep(step);save();refresh();}
+function navTo(step){
+  S.step=normalizeWorkflowStep(step);
+  save({source:'navigation',silent:true,notify:false,skipNormalize:true});
+  refresh();
+  document.dispatchEvent(new CustomEvent('nw:view:changed',{detail:{step:S.step}}));
+}
 function projectCounters(project=S){
   const p=project||{},iot=p.iot||{};
   return{
@@ -661,7 +669,19 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
   const id=btn.dataset.tab;
   const pg=btn.closest('.pg')||document;
   pg.querySelectorAll('.tc').forEach(tc=>tc.classList.toggle('on',tc.id===id));
+  if(id==='fw-matrix')renderVlanMatrix();
 });
+
+function initLazyPanels(){
+  const bind=(id,render)=>{
+    const el=$(id);
+    if(!el||el.dataset.lazyBound==='1')return;
+    el.dataset.lazyBound='1';
+    el.addEventListener('toggle',()=>{if(el.open)render();});
+  };
+  bind('ipMapPanel',renderIpMap);
+  bind('dhcpPanel',renderDhcp);
+}
 
 // ─────────────────── RENDER NAV ───────────────────
 function renderNav(){
@@ -1158,9 +1178,15 @@ $('btnQuick24').onclick=()=>{
   save();refresh();alert(`✓ ${added} puertos GE añadidos a ${d.name}.`);
 };
 
+let portsPage=0;
+const PORTS_PAGE_SIZE=80;
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
-  let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId),va=vByRef(a.accessVlanRef),vb=vByRef(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
+  const deviceById=new Map(S.devices.map(d=>[d.id,d]));
+  const vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
+  const linkedPorts=new Set();
+  for(const link of S.links||[]){if(link.aPortId)linkedPorts.add(link.aPortId);if(link.bPortId)linkedPorts.add(link.bPortId);}
+  let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=deviceById.get(a.deviceId),db=deviceById.get(b.deviceId),va=vlanByRef.get(a.accessVlanRef),vb=vlanByRef.get(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
   const el=$('portsList'); el.textContent='';
   if(!pts.length){
     const empty=document.createElement('div'); empty.className='empty';
@@ -1168,13 +1194,22 @@ function renderPortsList(){
     const p=document.createElement('p'); p.textContent=S.ports.length?'Cambia el filtro.':'Añade puertos arriba.';
     empty.append(icon,p); el.appendChild(empty); return;
   }
+  const totalPages=Math.max(1,Math.ceil(pts.length/PORTS_PAGE_SIZE));
+  portsPage=Math.min(Math.max(0,portsPage),totalPages-1);
+  const start=portsPage*PORTS_PAGE_SIZE;
+  const visible=pts.slice(start,start+PORTS_PAGE_SIZE);
+  const info=$('portsPageInfo');if(info)info.textContent=`${pts.length} puertos · página ${portsPage+1}/${totalPages}`;
+  const prev=$('portsPrev'),next=$('portsNext'),pager=$('portsPager');
+  if(pager)pager.style.display=pts.length>PORTS_PAGE_SIZE?'flex':'none';
+  if(prev)prev.disabled=portsPage<=0;
+  if(next)next.disabled=portsPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
   const thead=document.createElement('thead'); const trh=document.createElement('tr');
   [['device','Dispositivo'],['port','Puerto'],['mode','Modo'],['info','VLAN/Info']].forEach(([k,l])=>trh.appendChild(createSortTh('ports',k,l)));
   trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  pts.forEach(p=>{
-    const d=devById(p.deviceId); const v=vByRef(p.accessVlanRef); const lnk=isLinked(p.id);
+  visible.forEach(p=>{
+    const d=deviceById.get(p.deviceId); const v=vlanByRef.get(p.accessVlanRef); const lnk=linkedPorts.has(p.id);
     const tr=document.createElement('tr');
     const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=textColorForBg(d.labelColor);devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
     const tdPort=document.createElement('td'); tdPort.className='mono'; const b=document.createElement('b'); b.textContent=p.name||''; tdPort.appendChild(b);
@@ -1184,7 +1219,7 @@ function renderPortsList(){
     const tdInfo=document.createElement('td'); tdInfo.className='mono';
     let info='L3';
     if(p.mode==='access') info=`V${v?.vlanId||'?'}${p.portFast===false?' · PF off':''}${p.bpduGuard===false?' · BPDU off':''}`;
-    else if(p.mode==='trunk') info=`${(p.allowedVlans||[]).length}VL${p.nativeVlanRef?` · native V${vByRef(p.nativeVlanRef)?.vlanId||'?'}`:''}${p.uplink===true?' · uplink':''}`;
+    else if(p.mode==='trunk') info=`${(p.allowedVlans||[]).length}VL${p.nativeVlanRef?` · native V${vlanByRef.get(p.nativeVlanRef)?.vlanId||'?'}`:''}${p.uplink===true?' · uplink':''}`;
     appendText(tdInfo,info);
     if(lnk){ tdInfo.appendChild(document.createTextNode(' ')); tdInfo.appendChild(makeBadge('🔗','b bac')); }
     tr.appendChild(tdInfo);
@@ -1202,7 +1237,9 @@ function renderPortsList(){
     S.ports=S.ports.filter(p=>p.id!==pid);save();refresh();
   });
 }
-$('portFiltDev').onchange=()=>renderPortsList();
+$('portFiltDev').onchange=()=>{portsPage=0;renderPortsList();};
+if($('portsPrev'))$('portsPrev').onclick=()=>{if(portsPage>0){portsPage--;renderPortsList();}};
+if($('portsNext'))$('portsNext').onclick=()=>{portsPage++;renderPortsList();};
 
 // ─────────────────── VLANs ───────────────────
 
@@ -2833,27 +2870,100 @@ vcv.addEventListener('mouseleave',v5HideLinkTooltip);
 // 15. REFRESH GLOBAL E INICIALIZACIÓN
 // Refresh central que re-renderiza la aplicación tras cambios de estado. Event listeners quedan antes de este bloque.
 // =========================================================
-function refresh(){
+function renderSecurityControls(){
+  ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{
+    const k=id.replace('sec','').toLowerCase();
+    if($(id))$(id).value=S.security[k]||'no';
+  });
+  if($('secBpdu'))$('secBpdu').value=S.security.bpdu||'yes';
+  if($('secPs'))$('secPs').value=S.security.ps||'yes';
+  if($('secDs'))$('secDs').value=S.security.ds||'yes';
+  if($('secDai'))$('secDai').value=S.security.dai||'yes';
+  if($('secDsV'))$('secDsV').value=S.security.dsV||'';
+}
+function renderActiveStep(){
+  switch(S.step){
+    case 'dash':
+      renderDash();
+      break;
+    case 'wiz':
+      renderWizard();
+      break;
+    case 'loc':
+      renderPhysicalLocations();
+      fillPhysicalLocationParentSel($('plEditId')?.value||'');
+      break;
+    case 'dev':
+      initDeviceModelList();
+      initDeviceKindSelect();
+      initDeviceVendorSelect();
+      renderDevs();
+      break;
+    case 'ports':
+      fillPortDevSel();
+      updatePortRoleOpts();
+      fillVlanSels();
+      renderPortsList();
+      break;
+    case 'vlan':
+      renderVlans();
+      renderSubnets();
+      fillVlanSels();
+      updManualSnHint();
+      fillRoasSels();
+      if($('dhcpPanel')?.open)renderDhcp();
+      renderVtp();
+      break;
+    case 'hosts':
+      fillVlanSels();
+      fillHostDeviceSel();
+      fillHostManagedDeviceSel();
+      fillHostPortSel();
+      fillHostLocSel();
+      fillHostPhysLocSel();
+      updateHostDeviceHint();
+      renderHosts();
+      if($('ipMapPanel')?.open)renderIpMap();
+      break;
+    case 'links':
+      fillVlanSels();
+      fillSwDevSels();
+      fillLinkPickers();
+      renderVisPorts();
+      renderLinks();
+      break;
+    case 'fw':
+      fillVlanSels();
+      renderFwRules();
+      renderSecurityControls();
+      if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
+      break;
+    case 'graphs':
+      drawTopo();
+      resizeV5();
+      renderV5Panel();
+      break;
+    case 'cfg':
+      renderDevPickCfg();
+      if(selDevCfg)selectDevCfg(selDevCfg);
+      break;
+    default:
+      break;
+  }
+}
+let staticUiInitialized=false;
+function initStaticUiOnce(){
+  if(staticUiInitialized)return;
   initDeviceModelList();
   initDeviceKindSelect();
   initDeviceVendorSelect();
+  initLazyPanels();
+  staticUiInitialized=true;
+}
+function refresh(){
+  initStaticUiOnce();
   renderNav();
-  renderDash();
-  renderWizard();
-  fillPortDevSel();
-  updatePortRoleOpts();
-  renderDevs();
-  renderPortsList();
-  renderVlans();renderSubnets();fillVlanSels();updManualSnHint();
-  renderPhysicalLocations();fillPhysicalLocationParentSel($('plEditId')?.value||'');fillHostDeviceSel();fillHostManagedDeviceSel();fillHostPortSel();fillHostLocSel();fillHostPhysLocSel();updateHostDeviceHint();renderHosts();renderIpMap();
-  fillSwDevSels();fillLinkPickers();renderVisPorts();renderLinks();
-  renderFwRules();renderVlanMatrix();
-  ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{const k=id.replace('sec','').toLowerCase();if($(id))$(id).value=S.security[k]||'no';});
-  $('secBpdu').value=S.security.bpdu||'yes';$('secPs').value=S.security.ps||'yes';$('secDs').value=S.security.ds||'yes';$('secDai').value=S.security.dai||'yes';
-  $('secDsV').value=S.security.dsV||'';
-  fillRoasSels();renderDhcp();renderDevPickCfg();renderVtp();
-  if(S.step==='graphs'){drawTopo();resizeV5();renderV5Panel();}
-  if(S.step==='cfg'){if(selDevCfg)selectDevCfg(selDevCfg);}
+  renderActiveStep();
   if(window.NetWizardI18n&&window.NetWizardI18n.applyI18n)window.NetWizardI18n.applyI18n(document);
 }
 
