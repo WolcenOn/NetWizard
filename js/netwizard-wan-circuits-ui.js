@@ -273,9 +273,12 @@ function inject(){
 function refresh(){inject();renderEditor();}
 function install(){
   if(!root.document)return false;
-  document.addEventListener('nw:project:changed',refresh);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,100));
-  else setTimeout(refresh,0);
+  const active=()=>root.document.getElementById('pg-validate')?.classList.contains('on');
+  const refreshIfActive=()=>{if(active())refresh();};
+  document.addEventListener('nw:project:changed',refreshIfActive);
+  document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='validate')refresh();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshIfActive,100));
+  else setTimeout(refreshIfActive,0);
   return true;
 }
 const api={version:'netwizard-wan-circuits-ui-v2',buildModel,renderInto,renderEditor,inject,refresh,install};
