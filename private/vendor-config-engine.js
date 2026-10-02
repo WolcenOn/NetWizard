@@ -60,6 +60,16 @@ function manualPolicyRulesForDevice(project,deviceId){
 function unboundManualPolicyRules(project){
   return arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false&&!policyRuleOwner(project,r));
 }
+function effectivePolicyRulesForDevice(project,deviceId){
+  return Policy.mergeWithManualRules(project)
+    .filter(r=>r&&r.enabled!==false&&policyRuleOwner(project,r)===deviceId);
+}
+function policyRuleVlanRef(project,rule){
+  const p=obj(project),r=obj(rule);
+  if(clean(r.vlanRef,256))return clean(r.vlanRef,256);
+  const subnet=arr(p.subnets).find(s=>s&&clean(s.cidr,120)===clean(r.src,120));
+  return clean(subnet&&subnet.vlanRef,256);
+}
 function canonicalWanContext(project,device){
   const p=obj(project),d=obj(device);
   const circuits=arr(p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
@@ -209,8 +219,10 @@ function configReadiness(project,device,output){
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
 function firewallAcl(project,deviceId){
-  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
-  if(deviceId)rules=rules.filter(rule=>policyRuleOwner(project,rule)===deviceId);
+  let rules=deviceId
+    ?effectivePolicyRulesForDevice(project,deviceId)
+    :Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false);
+  rules=rules.sort((a,b)=>(a.prio||100)-(b.prio||100));
   rules=Policy.enrichPolicyRules(project,rules);
   if(!rules.length)return'';
   const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
@@ -252,7 +264,10 @@ function create(project){
   const enhanced=Vendor.createEnhancedGenConfig({
     originalGenConfig:fallback,
     getProject:()=>p,
-    getFwAcl:(deviceId)=>firewallAcl(p,deviceId),
+    getFwAcl:(deviceId)=>({
+      text:firewallAcl(p,deviceId),
+      vlanRefs:[...new Set(effectivePolicyRulesForDevice(p,deviceId).map(rule=>policyRuleVlanRef(p,rule)).filter(Boolean))]
+    }),
     netUtils:Network
   });
   pipeline.registerRenderer({
