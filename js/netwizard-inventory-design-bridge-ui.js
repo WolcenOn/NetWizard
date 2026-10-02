@@ -167,26 +167,30 @@ function renderDerivedDesign(project){
 
 function inject(){
   const d=doc();if(!d)return;
-  const p=snapshot();
+  const p=snapshot(),physicalActive=d.getElementById('pg-physical')?.classList.contains('on'),devActive=d.getElementById('pg-dev')?.classList.contains('on');
 
-  let inventoryMount=d.getElementById('inventoryToDesignMount');
-  if(!inventoryMount){
-    const host=d.getElementById('inventoryGoldenPathMount');
-    if(host&&host.parentNode){inventoryMount=d.createElement('div');inventoryMount.id='inventoryToDesignMount';host.parentNode.insertBefore(inventoryMount,host.nextSibling);}
-  }
-  if(inventoryMount){
-    inventoryMount.textContent='';
-    if(obj(p.workflow).mode==='inventory')inventoryMount.append(renderInventoryAction(p));
+  if(physicalActive){
+    let inventoryMount=d.getElementById('inventoryToDesignMount');
+    if(!inventoryMount){
+      const host=d.getElementById('inventoryGoldenPathMount');
+      if(host&&host.parentNode){inventoryMount=d.createElement('div');inventoryMount.id='inventoryToDesignMount';host.parentNode.insertBefore(inventoryMount,host.nextSibling);}
+    }
+    if(inventoryMount){
+      inventoryMount.textContent='';
+      if(obj(p.workflow).mode==='inventory')inventoryMount.append(renderInventoryAction(p));
+    }
   }
 
-  let designMount=d.getElementById('inventoryDerivedDesignMount');
-  if(!designMount){
-    const host=d.getElementById('pg-dev');
-    if(host){designMount=d.createElement('div');designMount.id='inventoryDerivedDesignMount';host.insertBefore(designMount,host.children[1]||null);}
-  }
-  if(designMount){
-    designMount.textContent='';
-    if(isDerivedDesign(p))designMount.append(renderDerivedDesign(p));
+  if(devActive){
+    let designMount=d.getElementById('inventoryDerivedDesignMount');
+    if(!designMount){
+      const host=d.getElementById('pg-dev');
+      if(host){designMount=d.createElement('div');designMount.id='inventoryDerivedDesignMount';host.insertBefore(designMount,host.children[1]||null);}
+    }
+    if(designMount){
+      designMount.textContent='';
+      if(isDerivedDesign(p))designMount.append(renderDerivedDesign(p));
+    }
   }
 }
 
@@ -194,8 +198,10 @@ const api={version:'netwizard-inventory-design-bridge-ui-v1',deriveToDesign,rest
 root.NetWizardInventoryDesignBridgeUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(inject,0));
-  else root.setTimeout(inject,0);
-  root.document.addEventListener('nw:project:changed',()=>root.setTimeout(inject,0));
+  const refresh=()=>root.setTimeout(inject,0);
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);
+  else refresh();
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical'||event.detail?.step==='dev')refresh();});
 }
 })(typeof window!=='undefined'?window:globalThis);
