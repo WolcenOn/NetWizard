@@ -725,55 +725,77 @@ function renderDash(){
     stat.append(sv,sl); stats.appendChild(stat);
   });
 
+  const DASH_DEVICE_LIMIT=20,DASH_VLAN_LIMIT=24,DASH_HOST_VLAN_LIMIT=10,DASH_HOSTS_PER_VLAN=6;
+  const portCountByDevice=new Map(),hostCountByVlan=new Map(),hostsByVlan=new Map(),subnetByVlan=new Map();
+  for(const p of S.ports||[])portCountByDevice.set(p.deviceId,(portCountByDevice.get(p.deviceId)||0)+1);
+  for(const sn of S.subnets||[])if(sn.vlanRef&&!subnetByVlan.has(sn.vlanRef))subnetByVlan.set(sn.vlanRef,sn);
+  for(const h of S.hosts||[]){
+    hostCountByVlan.set(h.vlanRef,(hostCountByVlan.get(h.vlanRef)||0)+1);
+    if(!hostsByVlan.has(h.vlanRef))hostsByVlan.set(h.vlanRef,[]);
+    const bucket=hostsByVlan.get(h.vlanRef);
+    if(bucket.length<DASH_HOSTS_PER_VLAN)bucket.push(h);
+  }
+  const sortedVlans=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
+
   const dDevs=$('dDevs'); clearNode(dDevs);
   if(S.devices.length){
+    const visible=S.devices.slice(0,DASH_DEVICE_LIMIT);
     const wrap=makeEl('div','tw'); const table=document.createElement('table');
     const thead=document.createElement('thead'); const hr=document.createElement('tr');
     ['Nombre','Tipo','Vendor','Pts'].forEach(t=>hr.appendChild(makeEl('th','',t))); thead.appendChild(hr); table.appendChild(thead);
     const tbody=document.createElement('tbody');
-    S.devices.forEach(d=>{
+    visible.forEach(d=>{
       const tr=document.createElement('tr');
       const tdName=document.createElement('td'); const b=document.createElement('b'); b.textContent=d.name||''; tdName.appendChild(b); tr.appendChild(tdName);
       const tdType=document.createElement('td'); const sp=makeEl('span',`dtype dtype-${devKind(d).slice(0,2)}`); sp.textContent=`${devIcon(d)} ${devLabel(d)}`; tdType.appendChild(sp); tr.appendChild(tdType);
       const tdVendor=document.createElement('td'); tdVendor.appendChild(makeEl('span','b bac',d.vendorOs||'-')); tr.appendChild(tdVendor);
-      tr.appendChild(makeEl('td','',portsByDev(d.id).length));
+      tr.appendChild(makeEl('td','',portCountByDevice.get(d.id)||0));
       tbody.appendChild(tr);
     });
     table.appendChild(tbody); wrap.appendChild(table); dDevs.appendChild(wrap);
+    if(S.devices.length>visible.length)dDevs.appendChild(makeEl('div','hint',`Mostrando ${visible.length} de ${S.devices.length} dispositivos. Abre Dispositivos para ver el inventario completo.`));
   } else dDevs.appendChild(makeEmpty('🖥','Sin dispositivos.\nUsa el Asistente para empezar.'));
 
   const dVlans=$('dVlans'); clearNode(dVlans);
-  if(S.vlans.length){
-    S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).forEach(v=>{
-      const sn=snByVRef(v.id); const hc=S.hosts.filter(h=>h.vlanRef===v.id).length;
+  if(sortedVlans.length){
+    const visible=sortedVlans.slice(0,DASH_VLAN_LIMIT);
+    visible.forEach(v=>{
+      const sn=subnetByVlan.get(v.id),hc=hostCountByVlan.get(v.id)||0;
       const row=makeEl('div','hrow'); const dot=makeEl('span','vd'); dot.style.background=v.color||vColor(v.id);
-      const info=makeEl('div','hinfo'); info.append(makeEl('div','hn',`VLAN ${v.vlanId} — ${v.name||''}`), makeEl('div','hm',`${sn?sn.cidr:'Sin subnet'} · ${hc} hosts`));
-      row.append(dot,info); if(sn) row.appendChild(makeEl('span','b bgn mono',sn.gateway||'')); dVlans.appendChild(row);
+      const info=makeEl('div','hinfo'); info.append(makeEl('div','hn',`VLAN ${v.vlanId} — ${v.name||''}`),makeEl('div','hm',`${sn?sn.cidr:'Sin subnet'} · ${hc} hosts`));
+      row.append(dot,info); if(sn)row.appendChild(makeEl('span','b bgn mono',sn.gateway||'')); dVlans.appendChild(row);
     });
+    if(sortedVlans.length>visible.length)dVlans.appendChild(makeEl('div','hint',`Mostrando ${visible.length} de ${sortedVlans.length} VLANs.`));
   } else dVlans.appendChild(makeEmpty('🏷','Sin VLANs'));
 
   const dHosts=$('dHosts'); clearNode(dHosts);
-  let anyHosts=false;
-  S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId).forEach(v=>{
-    const hosts=S.hosts.filter(h=>h.vlanRef===v.id); if(!hosts.length) return; anyHosts=true;
-    const block=document.createElement('div'); block.style.marginBottom='11px';
-    const title=document.createElement('div'); title.style.fontSize='12px'; title.style.fontWeight='700'; title.style.marginBottom='5px'; title.style.display='flex'; title.style.alignItems='center'; title.style.gap='5px';
-    const dot=makeEl('span','vd'); dot.style.background=v.color||vColor(v.id); title.append(dot, document.createTextNode(`VLAN ${v.vlanId} — ${v.name||''} `), makeEl('span','b bgr',hosts.length)); block.appendChild(title);
-    const wrap=makeEl('div','tw'); const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
-    ['Nombre','Tipo','IP','MAC'].forEach(t=>trh.appendChild(makeEl('th','',t))); thead.appendChild(trh); table.appendChild(thead);
-    const tbody=document.createElement('tbody');
-    hosts.forEach(h=>{
-      const tr=document.createElement('tr');
-      const tdN=document.createElement('td'); appendText(tdN,`${HT[h.type]?.i||''} `); const b=document.createElement('b'); b.textContent=h.name||''; tdN.appendChild(b); tr.appendChild(tdN);
-      tr.appendChild(makeEl('td','',HT[h.type]?.l||h.type||''));
-      const tdIp=makeEl('td','mono'); tdIp.appendChild(makeEl('span',h.ipMode==='static'?'b bgn':'b bac',h.ipMode==='static'?(h.staticIp||''):'DHCP')); tr.appendChild(tdIp);
-      tr.appendChild(makeEl('td','mono',h.mac||'—'));
-      tbody.appendChild(tr);
+  const vlansWithHosts=sortedVlans.filter(v=>(hostCountByVlan.get(v.id)||0)>0);
+  if(vlansWithHosts.length){
+    const visibleVlans=vlansWithHosts.slice(0,DASH_HOST_VLAN_LIMIT);
+    visibleVlans.forEach(v=>{
+      const total=hostCountByVlan.get(v.id)||0,hosts=hostsByVlan.get(v.id)||[];
+      const block=document.createElement('div'); block.style.marginBottom='11px';
+      const title=document.createElement('div'); title.style.fontSize='12px'; title.style.fontWeight='700'; title.style.marginBottom='5px'; title.style.display='flex'; title.style.alignItems='center'; title.style.gap='5px';
+      const dot=makeEl('span','vd'); dot.style.background=v.color||vColor(v.id); title.append(dot,document.createTextNode(`VLAN ${v.vlanId} — ${v.name||''} `),makeEl('span','b bgr',total)); block.appendChild(title);
+      const wrap=makeEl('div','tw'); const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
+      ['Nombre','Tipo','IP','MAC'].forEach(t=>trh.appendChild(makeEl('th','',t))); thead.appendChild(trh); table.appendChild(thead);
+      const tbody=document.createElement('tbody');
+      hosts.forEach(h=>{
+        const tr=document.createElement('tr');
+        const tdN=document.createElement('td'); appendText(tdN,`${HT[h.type]?.i||''} `); const b=document.createElement('b'); b.textContent=h.name||''; tdN.appendChild(b); tr.appendChild(tdN);
+        tr.appendChild(makeEl('td','',HT[h.type]?.l||h.type||''));
+        const tdIp=makeEl('td','mono'); tdIp.appendChild(makeEl('span',h.ipMode==='static'?'b bgn':'b bac',h.ipMode==='static'?(h.staticIp||''):'DHCP')); tr.appendChild(tdIp);
+        tr.appendChild(makeEl('td','mono',h.mac||'—'));
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody); wrap.appendChild(table); block.appendChild(wrap);
+      if(total>hosts.length)block.appendChild(makeEl('div','hint',`Mostrando ${hosts.length} de ${total} hosts de esta VLAN.`));
+      dHosts.appendChild(block);
     });
-    table.appendChild(tbody); wrap.appendChild(table); block.appendChild(wrap); dHosts.appendChild(block);
-  });
-  if(!anyHosts) dHosts.appendChild(makeEmpty('💻','Sin hosts'));
+    if(vlansWithHosts.length>visibleVlans.length)dHosts.appendChild(makeEl('div','hint',`Mostrando hosts de ${visibleVlans.length} de ${vlansWithHosts.length} VLANs con hosts.`));
+  }else dHosts.appendChild(makeEmpty('💻','Sin hosts'));
 }
+
 $('saveProj').onclick=()=>{S.projName=($('projName').value||'').trim();save();$('projLbl').textContent=S.projName||'Sin título';};
 
 // ─────────────────── WIZARD ───────────────────
