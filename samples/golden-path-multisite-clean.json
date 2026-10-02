@@ -3721,8 +3721,142 @@
         "purpose": "guest"
       }
     ],
-    "vrfs": [],
-    "ipv6Networks": [],
+    "vrfs": [
+      {
+        "id": "corp",
+        "name": "CORP",
+        "routeDistinguisher": "65000:10",
+        "leakTo": []
+      },
+      {
+        "id": "mgmt",
+        "name": "MGMT",
+        "routeDistinguisher": "65000:99",
+        "leakTo": []
+      }
+    ],
+    "ipv6Networks": [
+      {
+        "id": "hq_v6_users",
+        "name": "HQ usuarios IPv6",
+        "prefix": "2001:db8:10:10::/64",
+        "vrfRef": "corp",
+        "vlanRef": "hq_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:10:10::1"
+      },
+      {
+        "id": "hq_v6_wifi",
+        "name": "HQ Wi-Fi corporativa IPv6",
+        "prefix": "2001:db8:10:20::/64",
+        "vrfRef": "corp",
+        "vlanRef": "hq_v120",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:10:20::1"
+      },
+      {
+        "id": "hq_v6_mgmt",
+        "name": "HQ gestión IPv6",
+        "prefix": "2001:db8:10:99::/64",
+        "vrfRef": "mgmt",
+        "vlanRef": "hq_v199",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:10:99::1"
+      },
+      {
+        "id": "north_v6_users",
+        "name": "Norte usuarios IPv6",
+        "prefix": "2001:db8:20:10::/64",
+        "vrfRef": "corp",
+        "vlanRef": "north_v210",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:20:10::1"
+      },
+      {
+        "id": "north_v6_wifi",
+        "name": "Norte Wi-Fi corporativa IPv6",
+        "prefix": "2001:db8:20:20::/64",
+        "vrfRef": "corp",
+        "vlanRef": "north_v220",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:20:20::1"
+      },
+      {
+        "id": "north_v6_mgmt",
+        "name": "Norte gestión IPv6",
+        "prefix": "2001:db8:20:99::/64",
+        "vrfRef": "mgmt",
+        "vlanRef": "north_v299",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:20:99::1"
+      },
+      {
+        "id": "east_v6_users",
+        "name": "Levante usuarios IPv6",
+        "prefix": "2001:db8:30:10::/64",
+        "vrfRef": "corp",
+        "vlanRef": "east_v310",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:30:10::1"
+      },
+      {
+        "id": "east_v6_wifi",
+        "name": "Levante Wi-Fi corporativa IPv6",
+        "prefix": "2001:db8:30:20::/64",
+        "vrfRef": "corp",
+        "vlanRef": "east_v320",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:30:20::1"
+      },
+      {
+        "id": "east_v6_mgmt",
+        "name": "Levante gestión IPv6",
+        "prefix": "2001:db8:30:99::/64",
+        "vrfRef": "mgmt",
+        "vlanRef": "east_v399",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:30:99::1"
+      },
+      {
+        "id": "south_v6_users",
+        "name": "Sur usuarios IPv6",
+        "prefix": "2001:db8:40:10::/64",
+        "vrfRef": "corp",
+        "vlanRef": "south_v410",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:40:10::1"
+      },
+      {
+        "id": "south_v6_wifi",
+        "name": "Sur Wi-Fi corporativa IPv6",
+        "prefix": "2001:db8:40:20::/64",
+        "vrfRef": "corp",
+        "vlanRef": "south_v420",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:40:20::1"
+      },
+      {
+        "id": "south_v6_mgmt",
+        "name": "Sur gestión IPv6",
+        "prefix": "2001:db8:40:99::/64",
+        "vrfRef": "mgmt",
+        "vlanRef": "south_v499",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:40:99::1"
+      }
+    ],
     "failureScenarios": [
       {
         "id": "fail_hq_north",
