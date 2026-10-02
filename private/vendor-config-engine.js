@@ -19,6 +19,7 @@ const Ospf=require('../js/netwizard-ospf.js');
 const SiteVpn=require('../js/netwizard-site-to-site-vpn.js');
 const SiteVpnGenerator=require('./site-to-site-vpn-generator.js');
 const WanResilience=require('../js/netwizard-wan-resilience.js');
+const CiscoSegmentation=require('./cisco-vlan-segmentation.js');
 
 const CONTRACT_VERSION='netwizard-private-vendor-config-v1';
 const MODULAR_VENDORS=new Set([
@@ -58,6 +59,26 @@ function manualPolicyRulesForDevice(project,deviceId){
 }
 function unboundManualPolicyRules(project){
   return arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false&&!policyRuleOwner(project,r));
+}
+function effectivePolicyRulesForDevice(project,deviceId){
+  return Policy.mergeWithManualRules(project)
+    .filter(r=>r&&r.enabled!==false&&policyRuleOwner(project,r)===deviceId);
+}
+function policyRuleVlanRef(project,rule){
+  const p=obj(project),r=obj(rule);
+  if(clean(r.vlanRef,256))return clean(r.vlanRef,256);
+  const subnet=arr(p.subnets).find(s=>s&&clean(s.cidr,120)===clean(r.src,120));
+  return clean(subnet&&subnet.vlanRef,256);
+}
+function canonicalWanContext(project,device){
+  const p=obj(project),d=obj(device);
+  const circuits=arr(p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
+  const primary=circuits.find(x=>clean(x.role,40).toLowerCase()==='primary')||circuits[0]||null;
+  const port=primary?arr(p.ports).find(x=>x&&x.id===primary.portId&&x.deviceId===d.id):null;
+  const haDevice=obj(obj(p.highAvailability).devices)[d.id]||{};
+  const routes=arr(haDevice.defaultRoutes);
+  const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
+  return{primary,port,route};
 }
 function formatWild(cidr){
   const parsed=Network.parseCidr(cidr);
@@ -157,6 +178,10 @@ function configReadiness(project,device,output){
     return{status:'review-required',reasons:vendorReasons};
   }
   reasons.push(...vpnBlocking,...resilienceBlocking);
+  if(vendor==='cisco_ios'&&!isSwitch(d)){
+    const segmentation=CiscoSegmentation.validateDevice(p,d.id);
+    for(const issue of arr(segmentation&&segmentation.issues).filter(x=>x&&x.blocking))reasons.push('Segmentación inter-VLAN: '+clean(issue.message,300));
+  }
   if(/\$\{SECRET:[^}]+\}/.test(text))reasons.push('La configuración contiene alias de secretos que deben resolverse antes de aplicar.');
   if(isSwitch(d)){
     const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
@@ -165,9 +190,11 @@ function configReadiness(project,device,output){
   if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
   if(/NEXT_HOP|TODO|REVISAR|VALIDAR/i.test(text))reasons.push('La configuración contiene placeholders o instrucciones de revisión manual.');
   if(String(d.internetEdge||'').toLowerCase()==='yes'){
-    const roas=obj(p.roas);
-    if(!clean(roas.wanCidr,80))reasons.push('El equipo edge no tiene WAN CIDR explícita.');
-    if(!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito.');
+    const wan=canonicalWanContext(p,d),roas=obj(p.roas);
+    const canonicalAddress=wan.port&&clean(wan.port.l3Ip||wan.port.routedIp,80)&&clean(wan.port.l3Cidr||wan.port.routedCidr,80);
+    const legacyAddress=clean(roas.wanCidr,80);
+    if(!canonicalAddress&&!legacyAddress)reasons.push('El equipo edge no tiene WAN CIDR explícita en su circuito/puerto canónico.');
+    if(!(wan.route&&clean(wan.route.nextHop,80))&&!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito en highAvailability.');
   }
   if(!isSwitch(d)){
     const localPolicyRules=manualPolicyRulesForDevice(p,d.id),unboundPolicyRules=unboundManualPolicyRules(p);
@@ -192,8 +219,10 @@ function configReadiness(project,device,output){
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
 function firewallAcl(project,deviceId){
-  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
-  if(deviceId)rules=rules.filter(rule=>policyRuleOwner(project,rule)===deviceId);
+  let rules=deviceId
+    ?effectivePolicyRulesForDevice(project,deviceId)
+    :Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false);
+  rules=rules.sort((a,b)=>(a.prio||100)-(b.prio||100));
   rules=Policy.enrichPolicyRules(project,rules);
   if(!rules.length)return'';
   const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
@@ -235,7 +264,10 @@ function create(project){
   const enhanced=Vendor.createEnhancedGenConfig({
     originalGenConfig:fallback,
     getProject:()=>p,
-    getFwAcl:(deviceId)=>firewallAcl(p,deviceId),
+    getFwAcl:(deviceId)=>({
+      text:firewallAcl(p,deviceId),
+      vlanRefs:[...new Set(effectivePolicyRulesForDevice(p,deviceId).map(rule=>policyRuleVlanRef(p,rule)).filter(Boolean))]
+    }),
     netUtils:Network
   });
   pipeline.registerRenderer({
@@ -267,6 +299,11 @@ function create(project){
     id:'routing.multivendor',order:110,
     supports(ctx){return ['juniper_junos','huawei_vrp','mikrotik_routeros'].includes(ctx.vendor)&&!isSwitch(ctx.device);},
     apply(config,ctx){return MultiRouting.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}
+  });
+  pipeline.registerStage({
+    id:'segmentation.cisco',order:130,
+    supports(ctx){return ctx.vendor==='cisco_ios'&&!isSwitch(ctx.device);},
+    apply(config,ctx){return CiscoSegmentation.append(config,ctx.project,ctx.deviceId);}
   });
   pipeline.registerStage({
     id:'vpn.site-to-site',order:150,

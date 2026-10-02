@@ -79,12 +79,22 @@
       const byRole=ports.find(x=>/wan|outside/i.test(clean(x.role||x.desc||x.name)));
       return byRole ? byRole.name : 'GigabitEthernet0/0';
     }
+    function canonicalWanContext(p,d){
+      const circuits=arr(p&&p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
+      const primary=circuits.find(x=>clean(x.role).toLowerCase()==='primary')||circuits[0]||null;
+      const port=primary?arr(p&&p.ports).find(x=>x&&x.id===primary.portId&&x.deviceId===d.id):null;
+      const haDevice=((p&&p.highAvailability&&p.highAvailability.devices)||{})[d.id]||{};
+      const routes=arr(haDevice.defaultRoutes);
+      const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
+      return{primary,port,route};
+    }
     function originalOrEmpty(devId,format){ return originalGenConfig ? originalGenConfig(devId,format) : ''; }
     function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^[!#]\s*Vendor\/OS todavía no implementado/i.test(out||''); }
 
     function genCiscoRouterAuto(d){
       const p=project();
-      const lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
+      const wanContext=canonicalWanContext(p,d);
+      const lanIf=inferLanPort(p,d), wanIf=clean(wanContext.port&&wanContext.port.name)||inferWanPort(p,d);
       const explicitRoaS=!!(p.roas&&p.roas.gwId===d.id);
       const legacySingleRouter=arr(p.devices).filter(isRouterLike).length===1;
       const routedVlans=arr(p.vlans).filter(v=>{
@@ -98,8 +108,12 @@
         const sn=subnetByVlan(p,v.id)||{};
         return clean(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef)===d.id;
       });
+      const hasUnownedRoutedVlan=routedVlans.some(v=>{
+        const sn=subnetByVlan(p,v.id);
+        return !clean(sn&&(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef));
+      });
       const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
-      if(needsRoaS&&!explicitRoaS&&!deterministicRoaS){
+      if(needsRoaS&&!explicitRoaS&&!deterministicRoaS&&hasUnownedRoutedVlan){
         L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
       }
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
@@ -132,17 +146,29 @@
         dh.push(` dns-server ${dhcpDns(p,v).replace(/,/g,' ')}`,` lease ${dhcpLease(p,v)}`,' exit');
       });
       if(dh.length) L.push('!','! DHCP Pools',...dh);
-      const wanCidr=clean((p.roas||{}).wanCidr), nh=clean((p.roas||{}).wanNh);
-      if(d.internetEdge==='yes' && wanIf && wanCidr) L.push('!','! WAN',`interface ${cliText(wanIf,80)}`,` ip address ${cidrIp(wanCidr)} ${mask(wanCidr)}`,' ip nat outside',' no shutdown',' exit');
-      if(d.internetEdge==='yes' && nh) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${nh}`);
+      const legacyWanCidr=clean((p.roas||{}).wanCidr), legacyNh=clean((p.roas||{}).wanNh);
+      const canonicalPort=wanContext.port;
+      if(d.internetEdge==='yes' && wanIf){
+        const wanLines=['!','! WAN',`interface ${cliText(wanIf,80)}`];
+        if(!(canonicalPort&&(canonicalPort.l3Ip||canonicalPort.routedIp)&&(canonicalPort.l3Cidr||canonicalPort.routedCidr))&&legacyWanCidr){
+          wanLines.push(` ip address ${cidrIp(legacyWanCidr)} ${mask(legacyWanCidr)}`);
+        }
+        wanLines.push(' ip nat outside',' no shutdown',' exit');
+        L.push(...wanLines);
+      }
+      if(d.internetEdge==='yes' && legacyNh && !wanContext.route) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${legacyNh}`);
       if(d.internetEdge==='yes' && wanIf) L.push('!','! NAT overload','access-list 100 permit ip any any',`ip nat inside source list 100 interface ${cliText(wanIf,80)} overload`);
-      const acl=getFwAcl(d.id); if(acl){
+      const aclResult=getFwAcl(d.id);
+      const acl=typeof aclResult==='string'?aclResult:String(aclResult&&aclResult.text||'');
+      if(acl){
         L.push('',acl);
-        const boundVlanRefs=new Set(arr(p.fwRules).filter(r=>r&&r.enabled!==false).map(r=>{
+        const explicitRefs=arr(aclResult&&aclResult.vlanRefs).filter(Boolean);
+        const fallbackRefs=arr(p.fwRules).filter(r=>r&&r.enabled!==false).map(r=>{
           if(r.vlanRef)return r.vlanRef;
           const sn=arr(p.subnets).find(s=>s&&clean(s.cidr)===clean(r.src));
           return sn&&sn.vlanRef;
-        }).filter(Boolean));
+        }).filter(Boolean);
+        const boundVlanRefs=new Set(explicitRefs.length?explicitRefs:fallbackRefs);
         routedVlans.filter(v=>boundVlanRefs.has(v.id)).forEach(v=>{
           L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,' ip access-group FW_POLICY in',' exit');
         });

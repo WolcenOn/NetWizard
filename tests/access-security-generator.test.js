@@ -6,7 +6,7 @@ function test(name,fn){try{fn();console.log(`✓ ${name}`);}catch(e){console.err
 function project(vendorOs){return {
   accessSecurity:{dhcpSnooping:true,arpInspection:true,portSecurity:true,maxMac:3,sticky:true},
   devices:[{id:'sw1',name:'SW-ACCESS',type:'switch',vendorOs}],
-  vlans:[{id:'v10',vlanId:10,name:'Users'},{id:'v20',vlanId:20,name:'Voice'}],
+  vlans:[{id:'v10',vlanId:10,name:'Users'},{id:'v20',vlanId:20,name:'Voice'},{id:'v30',vlanId:30,name:'Otra sede'}],
   ports:[
     {id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10'},
     {id:'p47',deviceId:'sw1',name:'Gi1/0/47',mode:'trunk',uplink:'yes'},
@@ -21,6 +21,7 @@ test('Plan neutral clasifica uplinks confiables y puertos access',()=>{
   assert.strictEqual(plan.accessPorts.length,1);
   assert.strictEqual(plan.aggregates[0].memberPortNames.length,2);
   assert.deepStrictEqual(plan.protectedVlans,[10,20]);
+  assert.ok(!plan.protectedVlans.includes(30));
 });
 
 test('Cisco genera DHCP snooping, DAI, port-security y LACP',()=>{
@@ -48,4 +49,26 @@ test('La inserción es idempotente',()=>{
   const twice=Gen.appendToConfig(once,p,'sw1','cisco_ios');
   assert.strictEqual(once,twice);
 });
+
+test('False explícito mantiene un trunk hacia AP como no confiable',()=>{
+  const p=project('cisco_ios');
+  p.ports.push({
+    id:'ap1',deviceId:'sw1',name:'Gi1/0/20',mode:'trunk',role:'ap-trunk',
+    allowedVlans:[10,20],dhcpTrusted:false,securityTrusted:false
+  });
+  const plan=Plan.build(p).devices[0];
+  assert.ok(!plan.trustedPorts.some(x=>x.portId==='ap1'));
+});
+
+test('Trunk abierto con VLAN nativa protege todas las VLAN transportadas',()=>{
+  const p=project('cisco_ios');
+  p.linkAggregations=[];
+  p.ports=[
+    {id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10'},
+    {id:'open',deviceId:'sw1',name:'Gi1/0/48',mode:'trunk',allowedVlans:[],nativeVlanRef:'v10'}
+  ];
+  const plan=Plan.build(p).devices[0];
+  assert.deepStrictEqual(plan.protectedVlans,[10,20,30]);
+});
+
 console.log('\nTests access security/LACP completados.');

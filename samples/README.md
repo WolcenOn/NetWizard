@@ -45,3 +45,15 @@ Incluye dos sedes (HQ + sucursal), switching Cisco con LACP, VLAN/DHCP/VTP obser
 El proyecto es deliberadamente **seguro para demostración**: los túneles VPN contienen `secretAlias`, nunca PSK reales. Por ello el Private Production Gate debe mantener los routers en `review-required`/bloqueado hasta que esos alias se resuelvan fuera del proyecto. Los switches Cisco sí deben quedar `apply-ready`. El sample de cuatro sedes continúa siendo la referencia de Production Gate totalmente `READY`.
 
 En la pantalla de importación aparecen los botones **⭐ Cargar Golden Path completo** y **⬇ JSON Golden Path**, ambos usando exactamente este archivo.
+
+## Golden Path Multisede limpio
+
+`golden-path-multisite-clean.json` es la referencia **production-ready** de arquitectura multisede. A diferencia del showcase Enterprise, su criterio de salida es estricto: debe cargar sin errores ni avisos relevantes, el Production Gate debe quedar en `ready`, y todos los dispositivos Cisco deben quedar `apply-ready`.
+
+Modela cuatro sedes — Central, Norte, Levante y Sur — unidas por cuatro routers Cisco IOS en un anillo OSPF. Cada router tiene dos vecinos y los cuatro enlaces P2P usan redes de tránsito canónicas /30, por lo que la pérdida de un enlace conserva comunicación entre sedes por el camino alternativo. Cada sede dispone de core + acceso Cisco con LACP, VLANs separadas para usuarios, servicios, voz, cámaras, invitados y gestión, además de una VLAN nativa no usada por usuarios.
+
+La seguridad demostrable incluye DHCP Snooping, DAI y port-security en acceso, trunks con listas VLAN explícitas, Wi-Fi corporativa WPA2-Enterprise con RADIUS e invitados WPA3 con client isolation. La matriz inter-VLAN se traduce en Cisco IOS a ACLs por VLAN origen y se aplica `in` sobre cada subinterfaz RoaS, de modo que invitados → redes internas, cámaras → usuarios/gestión y usuarios → gestión quedan bloqueados en la configuración generada. Además, `management.sourceNetworks` genera una ACL estándar `NW_MGMT_SOURCES` aplicada con `access-class ... in` a las líneas VTY, limitando SSH a las subredes de administración. Reglas firewall manuales genéricas siguen requiriendo revisión si no tienen binding inequívoco; el Golden no depende de ellas.
+
+El test `tests/golden-path-multisite-clean.test.js` exige Production Gate `ready` con 0 warnings, OSPF Observed FULL, reachability entre sedes, supervivencia ante fallo de cualquiera de los cuatro enlaces y bloqueos de segmentación. `tests/e2e/golden-path-multisite-clean.spec.js` repite el contrato cargando exactamente el mismo JSON desde el navegador.
+
+En Importar/Exportar aparece **✅ Cargar Golden Multisede limpio** junto con **⬇ JSON Golden limpio**.

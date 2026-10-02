@@ -40,6 +40,7 @@ const modules=[
   {"path":"js/netwizard-v5-bridge.js","dependsOn":["js/netwizard.js","js/netwizard-v5-core.js","js/netwizard-v5-renderer.js","js/netwizard-v5-interaction.js","js/netwizard-v5-scene.js","js/netwizard-v5-commands.js"]},
   {"path":"js/netwizard-sample-four-sites.js"},
   {"path":"js/netwizard-golden-path-enterprise.js","dependsOn":["js/netwizard-project-schema.js"],"requiredGlobal":"NetWizardGoldenPathEnterprise"},
+  {"path":"js/netwizard-golden-path-clean.js","dependsOn":["js/netwizard-project-schema.js"],"requiredGlobal":"NetWizardGoldenPathClean"},
   {"path":"js/netwizard-bulk-port-editor.js"},
   {"path":"js/netwizard-config-pipeline.js","requiredGlobal":"NetWizardConfigPipeline"},
   {"path":"js/netwizard-vendor-config-generators.js","dependsOn":["js/netwizard-config-pipeline.js","js/netwizard.js","js/netwizard-legacy-config-generator.js"],"requiredGlobal":"NetWizardVendorConfigGenerators","production":false},

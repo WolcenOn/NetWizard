@@ -55,4 +55,17 @@ assert.doesNotMatch(r1,/B DNS/);
 assert.match(r2,/B DNS/);
 assert.doesNotMatch(r2,/A HTTPS/);
 
+
+const intentProject=JSON.parse(JSON.stringify(project));
+intentProject.fwRules=[];
+intentProject.vlans[0].intent={type:'guests',internet:true,isolation:'isolated'};
+intentProject.vlans[1].intent={type:'users',internet:true,isolation:'standard'};
+const intentGenerated=Engine.generateAll(intentProject);
+assert.strictEqual(intentGenerated.ok,true,JSON.stringify(intentGenerated.issues));
+assert.strictEqual(intentGenerated.configReadiness.r1.status,'apply-ready',JSON.stringify(intentGenerated.configReadiness.r1));
+assert.match(intentGenerated.configs.r1,/ip access-list extended FW_POLICY/);
+assert.match(intentGenerated.configs.r1,/Bloquear .* hacia red interna/);
+assert.match(intentGenerated.configs.r1,/interface GigabitEthernet0\/1\.10[\s\S]*ip access-group FW_POLICY in/);
+assert.doesNotMatch(intentGenerated.configs.r2,/ip access-list extended FW_POLICY/);
+
 console.log('✓ Cisco multisede vincula ACL por gateway y acepta RoaS determinista');
