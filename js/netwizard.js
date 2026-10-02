@@ -1182,7 +1182,11 @@ let portsPage=0;
 const PORTS_PAGE_SIZE=80;
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
-  let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId),va=vByRef(a.accessVlanRef),vb=vByRef(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
+  const deviceById=new Map(S.devices.map(d=>[d.id,d]));
+  const vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
+  const linkedPorts=new Set();
+  for(const link of S.links||[]){if(link.aPortId)linkedPorts.add(link.aPortId);if(link.bPortId)linkedPorts.add(link.bPortId);}
+  let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=deviceById.get(a.deviceId),db=deviceById.get(b.deviceId),va=vlanByRef.get(a.accessVlanRef),vb=vlanByRef.get(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
   const el=$('portsList'); el.textContent='';
   if(!pts.length){
     const empty=document.createElement('div'); empty.className='empty';
@@ -1205,7 +1209,7 @@ function renderPortsList(){
   trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
   visible.forEach(p=>{
-    const d=devById(p.deviceId); const v=vByRef(p.accessVlanRef); const lnk=isLinked(p.id);
+    const d=deviceById.get(p.deviceId); const v=vlanByRef.get(p.accessVlanRef); const lnk=linkedPorts.has(p.id);
     const tr=document.createElement('tr');
     const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=textColorForBg(d.labelColor);devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
     const tdPort=document.createElement('td'); tdPort.className='mono'; const b=document.createElement('b'); b.textContent=p.name||''; tdPort.appendChild(b);
@@ -1215,7 +1219,7 @@ function renderPortsList(){
     const tdInfo=document.createElement('td'); tdInfo.className='mono';
     let info='L3';
     if(p.mode==='access') info=`V${v?.vlanId||'?'}${p.portFast===false?' · PF off':''}${p.bpduGuard===false?' · BPDU off':''}`;
-    else if(p.mode==='trunk') info=`${(p.allowedVlans||[]).length}VL${p.nativeVlanRef?` · native V${vByRef(p.nativeVlanRef)?.vlanId||'?'}`:''}${p.uplink===true?' · uplink':''}`;
+    else if(p.mode==='trunk') info=`${(p.allowedVlans||[]).length}VL${p.nativeVlanRef?` · native V${vlanByRef.get(p.nativeVlanRef)?.vlanId||'?'}`:''}${p.uplink===true?' · uplink':''}`;
     appendText(tdInfo,info);
     if(lnk){ tdInfo.appendChild(document.createTextNode(' ')); tdInfo.appendChild(makeBadge('🔗','b bac')); }
     tr.appendChild(tdInfo);
