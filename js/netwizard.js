@@ -130,7 +130,7 @@ function loadS(){
   }catch{return null;}
 }
 function save(options={}){
-  if(NWSchema && typeof NWSchema.sanitizeProject==='function'){
+  if(!options.skipNormalize && NWSchema && typeof NWSchema.sanitizeProject==='function'){
     Object.assign(S,NWSchema.sanitizeProject(S,{defaults:defS}).project);
   }
   localStorage.setItem(SK,JSON.stringify(S));
@@ -138,7 +138,9 @@ function save(options={}){
     const el=$('savedLbl');
     if(el){el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1300);}
   }
-  document.dispatchEvent(new CustomEvent('nw:project:changed',{detail:{source:options.source||'netwizard'}}));
+  if(options.notify!==false){
+    document.dispatchEvent(new CustomEvent('nw:project:changed',{detail:{source:options.source||'netwizard'}}));
+  }
 }
 function projectSnapshot(){return JSON.parse(JSON.stringify(S));}
 function replaceProject(project,options={}){
@@ -633,7 +635,12 @@ function normalizeWorkflowStep(step){
   if(S.workflow?.mode==='inventory'&&step==='wiz')return'loc';
   return step;
 }
-function navTo(step){S.step=normalizeWorkflowStep(step);save();refresh();}
+function navTo(step){
+  S.step=normalizeWorkflowStep(step);
+  save({source:'navigation',silent:true,notify:false,skipNormalize:true});
+  refresh();
+  document.dispatchEvent(new CustomEvent('nw:view:changed',{detail:{step:S.step}}));
+}
 function projectCounters(project=S){
   const p=project||{},iot=p.iot||{};
   return{
