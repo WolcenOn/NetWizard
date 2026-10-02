@@ -25,6 +25,27 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   expect(await page.evaluate(()=>window.NetWizardState.getSnapshot().projName))
     .toBe('Golden Path Multisede Seguro · 4 sedes');
 
+  await expect(page.locator('#pg-dash')).toBeVisible();
+  expect(await page.locator('#nwOspfCard').count()).toBe(0);
+  expect(await page.locator('#nwHaServicesEditorCard').count()).toBe(0);
+  expect(await page.locator('#nwInterSiteTransitCard').count()).toBe(0);
+  expect(await page.locator('#nwVtpVerificationCard').count()).toBe(0);
+  await page.waitForTimeout(300);
+  expect(await page.locator('#nwOspfCard').count()).toBe(0);
+  expect(await page.locator('#nwHaServicesEditorCard').count()).toBe(0);
+  expect(await page.locator('#nwInterSiteTransitCard').count()).toBe(0);
+  expect(await page.locator('#nwVtpVerificationCard').count()).toBe(0);
+
+  await page.evaluate(()=>window.navTo('dev'));
+  await expect(page.locator('#nwOspfCard')).toBeVisible();
+  await expect(page.locator('#nwHaServicesEditorCard')).toBeVisible();
+
+  await page.evaluate(()=>window.navTo('links'));
+  await expect(page.locator('#nwInterSiteTransitCard')).toBeVisible();
+
+  await page.evaluate(()=>window.navTo('vlan'));
+  await expect(page.locator('#nwVtpVerificationCard')).toBeVisible();
+
   expect(await page.locator('#vlanMatrix').locator('tr').count()).toBe(0);
   await page.evaluate(()=>window.navTo('fw'));
   await expect(page.locator('#pg-fw')).toBeVisible();
