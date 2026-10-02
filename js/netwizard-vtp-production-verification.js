@@ -197,8 +197,11 @@ const api={version:'netwizard-vtp-production-verification-v1',evaluateDevice,eva
 root.NetWizardVtpProductionVerification=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',install);
-  else install();
-  root.document.addEventListener('nw:project:changed',()=>{try{render();}catch(err){if(root.console)root.console.error('NetWizard VTP verification',err);}});
+  const active=()=>root.document.getElementById('pg-vlan')?.classList.contains('on');
+  const refresh=()=>{if(active()){try{install();render();}catch(err){if(root.console)root.console.error('NetWizard VTP verification',err);}}};
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);
+  else refresh();
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='vlan')refresh();});
 }
 })(typeof window!=='undefined'?window:globalThis);
