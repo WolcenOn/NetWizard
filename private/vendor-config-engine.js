@@ -41,6 +41,25 @@ function safeName(v,fallback){
   return ascii.replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^[.-]+|[.-]+$/g,'').slice(0,100)||fallback||'device';
 }
 function isSwitch(device){return !!device&&/switch/i.test(clean(device.kind||device.type));}
+function subnetOwnerId(subnet){
+  return clean(subnet&&(subnet.gatewayDeviceRef||subnet.gatewayDeviceId||subnet.ownerDeviceRef||subnet.routingDeviceRef),256);
+}
+function policyRuleOwner(project,rule){
+  const p=obj(project),r=obj(rule);
+  let subnet=null;
+  if(clean(r.vlanRef,256))subnet=arr(p.subnets).find(s=>s&&s.vlanRef===r.vlanRef)||null;
+  if(!subnet&&clean(r.src,120))subnet=arr(p.subnets).find(s=>s&&clean(s.cidr,120)===clean(r.src,120))||null;
+  const explicit=subnetOwnerId(subnet);
+  if(explicit)return explicit;
+  const legacyGw=clean(obj(p.roas).gwId,256);
+  return subnet&&legacyGw?legacyGw:'';
+}
+function manualPolicyRulesForDevice(project,deviceId){
+  return arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false&&policyRuleOwner(project,r)===deviceId);
+}
+function unboundManualPolicyRules(project){
+  return arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false&&!policyRuleOwner(project,r));
+}
 function canonicalWanContext(project,device){
   const p=obj(project),d=obj(device);
   const circuits=arr(p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
@@ -167,8 +186,10 @@ function configReadiness(project,device,output){
     if(!canonicalAddress&&!legacyAddress)reasons.push('El equipo edge no tiene WAN CIDR explícita en su circuito/puerto canónico.');
     if(!(wan.route&&clean(wan.route.nextHop,80))&&!clean(roas.wanNh,80))reasons.push('El equipo edge no tiene next-hop WAN explícito en highAvailability.');
   }
-  if(!isSwitch(d)&&arr(p.fwRules).some(rule=>rule&&rule.enabled!==false)){
-    reasons.push('Existen políticas firewall, pero Cisco IOS router aún no tiene una vinculación inequívoca de cada ACL a interfaz/dirección; revisar antes de aplicar.');
+  if(!isSwitch(d)){
+    const localPolicyRules=manualPolicyRulesForDevice(p,d.id),unboundPolicyRules=unboundManualPolicyRules(p);
+    if(unboundPolicyRules.length)reasons.push('Existen políticas firewall con origen no resoluble a una VLAN/gateway concreto; revisar binding de ACL.');
+    if(localPolicyRules.length&&!/ip access-group FW_POLICY in/i.test(text))reasons.push('Existen políticas firewall locales, pero no se generó una vinculación ACL inbound a las subinterfaces de origen.');
   }
   if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='static'){
     const plan=RoutingPlan.build(p),devicePlan=arr(plan&&plan.devices).find(item=>item&&item.deviceId===d.id);
@@ -187,8 +208,9 @@ function configReadiness(project,device,output){
   if(endAt<0||saveAt<0||saveAt<endAt)reasons.push('El cierre/guardado de Cisco IOS no está en orden aplicable.');
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
-function firewallAcl(project){
-  let rules=arr(obj(project).fwRules).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
+function firewallAcl(project,deviceId){
+  let rules=Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false).sort((a,b)=>(a.prio||100)-(b.prio||100));
+  if(deviceId)rules=rules.filter(rule=>policyRuleOwner(project,rule)===deviceId);
   rules=Policy.enrichPolicyRules(project,rules);
   if(!rules.length)return'';
   const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
@@ -230,7 +252,7 @@ function create(project){
   const enhanced=Vendor.createEnhancedGenConfig({
     originalGenConfig:fallback,
     getProject:()=>p,
-    getFwAcl:()=>firewallAcl(p),
+    getFwAcl:(deviceId)=>firewallAcl(p,deviceId),
     netUtils:Network
   });
   pipeline.registerRenderer({
