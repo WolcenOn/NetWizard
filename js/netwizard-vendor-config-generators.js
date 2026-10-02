@@ -158,13 +158,17 @@
       }
       if(d.internetEdge==='yes' && legacyNh && !wanContext.route) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${legacyNh}`);
       if(d.internetEdge==='yes' && wanIf) L.push('!','! NAT overload','access-list 100 permit ip any any',`ip nat inside source list 100 interface ${cliText(wanIf,80)} overload`);
-      const acl=getFwAcl(d.id); if(acl){
+      const aclResult=getFwAcl(d.id);
+      const acl=typeof aclResult==='string'?aclResult:String(aclResult&&aclResult.text||'');
+      if(acl){
         L.push('',acl);
-        const boundVlanRefs=new Set(arr(p.fwRules).filter(r=>r&&r.enabled!==false).map(r=>{
+        const explicitRefs=arr(aclResult&&aclResult.vlanRefs).filter(Boolean);
+        const fallbackRefs=arr(p.fwRules).filter(r=>r&&r.enabled!==false).map(r=>{
           if(r.vlanRef)return r.vlanRef;
           const sn=arr(p.subnets).find(s=>s&&clean(s.cidr)===clean(r.src));
           return sn&&sn.vlanRef;
-        }).filter(Boolean));
+        }).filter(Boolean);
+        const boundVlanRefs=new Set(explicitRefs.length?explicitRefs:fallbackRefs);
         routedVlans.filter(v=>boundVlanRefs.has(v.id)).forEach(v=>{
           L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,' ip access-group FW_POLICY in',' exit');
         });
