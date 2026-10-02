@@ -67,6 +67,27 @@ test('proyecto grande mantiene DOM acotado en puertos, hosts y enlaces', async (
     window.NetWizardState.replaceProject(prepared.project,{source:'e2e-large-rendering'});
   },payload);
 
+  await page.evaluate(()=>window.navTo('dash'));
+  await expect(page.locator('#pg-dash')).toBeVisible();
+  const initialHiddenState=await page.evaluate(()=>({
+    capability:document.querySelectorAll('#nwCapabilityPanel').length,
+    inventoryBridge:document.querySelectorAll('#inventoryToDesignMount').length,
+    rack:document.querySelectorAll('#rackPlannerMount').length,
+    cabling:document.querySelectorAll('#structuredCablingSection').length
+  }));
+  await page.waitForTimeout(500);
+  const delayedHiddenState=await page.evaluate(()=>({
+    capability:document.querySelectorAll('#nwCapabilityPanel').length,
+    inventoryBridge:document.querySelectorAll('#inventoryToDesignMount').length,
+    rack:document.querySelectorAll('#rackPlannerMount').length,
+    cabling:document.querySelectorAll('#structuredCablingSection').length
+  }));
+  expect(delayedHiddenState).toEqual(initialHiddenState);
+  expect(delayedHiddenState.capability).toBe(0);
+  expect(delayedHiddenState.inventoryBridge).toBe(0);
+  expect(delayedHiddenState.rack).toBe(0);
+  expect(delayedHiddenState.cabling).toBe(0);
+
   await page.evaluate(()=>window.navTo('ports'));
   await expect(page.locator('#pg-ports')).toBeVisible();
   await expect(page.locator('#portsList tbody tr')).toHaveCount(80);
