@@ -130,7 +130,7 @@ assert.ok(budget.totals.year1Price>budget.totals.year1Cost);
 assert.ok(budget.totals.grossMarginPct>0);
 
 const privateResult=PrivateWorker.handle({project:p,generatedAt:'2026-10-02T06:50:00.000Z'});
-assert.strictEqual(privateResult.ok,true,'Private Engine debe completar la generación');
+assert.strictEqual(privateResult.ok,true,'Private Engine debe completar la generación: '+JSON.stringify(privateResult.issues,null,2));
 assert.strictEqual(privateResult.productionStatus,'ready',privateResult.productionGateSummaryMarkdown);
 assert.strictEqual(privateResult.productionReady,true,privateResult.productionGateSummaryMarkdown);
 assert.strictEqual(privateResult.productionGate.canExport,true,privateResult.productionGateSummaryMarkdown);
