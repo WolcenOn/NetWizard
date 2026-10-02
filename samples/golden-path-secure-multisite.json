@@ -104,6 +104,42 @@
         "mgmtIp": "10.10.99.1"
       },
       {
+        "id": "hq_srv1",
+        "name": "SRV-HQ-CORE-01",
+        "type": "server",
+        "kind": "server",
+        "vendorOs": "linux",
+        "manufacturer": "Dell",
+        "model": "PowerEdge R350",
+        "modelSource": "manual",
+        "locationId": "hq_cpd",
+        "physicalLocation": "Sede Central · CPD",
+        "rackId": "hq_rack01",
+        "rackUnit": 18,
+        "rackUnits": 1,
+        "powerDrawWatts": 180,
+        "designDisposition": "keep",
+        "originRef": "hq_srv1"
+      },
+      {
+        "id": "hq_srv2",
+        "name": "SRV-HQ-CORE-02",
+        "type": "server",
+        "kind": "server",
+        "vendorOs": "linux",
+        "manufacturer": "Dell",
+        "model": "PowerEdge R350",
+        "modelSource": "manual",
+        "locationId": "hq_cpd",
+        "physicalLocation": "Sede Central · CPD",
+        "rackId": "hq_rack01",
+        "rackUnit": 16,
+        "rackUnits": 1,
+        "powerDrawWatts": 180,
+        "designDisposition": "keep",
+        "originRef": "hq_srv2"
+      },
+      {
         "locationId": "hq_cpd",
         "physicalLocation": "Sede Central · CPD",
         "modelSource": "manual",
@@ -3298,6 +3334,38 @@
         "pduId": "hq_pdu_b",
         "outlet": 2,
         "feed": "B"
+      },
+      {
+        "id": "hq_pwr_hq_srv1_a",
+        "deviceId": "hq_srv1",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 3,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_srv1_b",
+        "deviceId": "hq_srv1",
+        "powerSupplyIndex": 1,
+        "pduId": "hq_pdu_b",
+        "outlet": 3,
+        "feed": "B"
+      },
+      {
+        "id": "hq_pwr_hq_srv2_a",
+        "deviceId": "hq_srv2",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 4,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_srv2_b",
+        "deviceId": "hq_srv2",
+        "powerSupplyIndex": 1,
+        "pduId": "hq_pdu_b",
+        "outlet": 4,
+        "feed": "B"
       }
     ],
     "wanCircuits": [],
@@ -3411,11 +3479,11 @@
         "critical": true,
         "endpoints": [
           {
-            "deviceId": "hq_dns1",
+            "deviceId": "hq_srv1",
             "ip": "10.10.40.10"
           },
           {
-            "deviceId": "hq_dns2",
+            "deviceId": "hq_srv2",
             "ip": "10.10.40.11"
           }
         ]
@@ -3430,8 +3498,12 @@
         ],
         "endpoints": [
           {
-            "deviceId": "hq_radius",
+            "deviceId": "hq_srv1",
             "ip": "10.10.40.40"
+          },
+          {
+            "deviceId": "hq_srv2",
+            "ip": "10.10.40.41"
           }
         ]
       },
@@ -3445,8 +3517,12 @@
         ],
         "endpoints": [
           {
-            "deviceId": "hq_app",
+            "deviceId": "hq_srv1",
             "ip": "10.10.40.20"
+          },
+          {
+            "deviceId": "hq_srv2",
+            "ip": "10.10.40.21"
           }
         ]
       },
@@ -3460,7 +3536,7 @@
         ],
         "endpoints": [
           {
-            "deviceId": "hq_nvr",
+            "deviceId": "hq_srv1",
             "ip": "10.10.40.30"
           }
         ]
@@ -4497,6 +4573,13 @@
         "manual:cisco|catalyst 9200l 48p poe+|": {
           "unitCost": 1800,
           "unitPrice": 2400,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1
+        },
+        "manual:dell|poweredge r350|": {
+          "unitCost": 2200,
+          "unitPrice": 3000,
           "chargeType": "one-time",
           "capexOpex": "capex",
           "billingPeriodMonths": 1
