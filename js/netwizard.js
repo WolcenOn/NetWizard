@@ -665,6 +665,17 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn=>btn.onclick=()=>{
   if(id==='fw-matrix')renderVlanMatrix();
 });
 
+function initLazyPanels(){
+  const bind=(id,render)=>{
+    const el=$(id);
+    if(!el||el.dataset.lazyBound==='1')return;
+    el.dataset.lazyBound='1';
+    el.addEventListener('toggle',()=>{if(el.open)render();});
+  };
+  bind('ipMapPanel',renderIpMap);
+  bind('dhcpPanel',renderDhcp);
+}
+
 // ─────────────────── RENDER NAV ───────────────────
 function renderNav(){
   const safeStep=normalizeWorkflowStep(S.step);if(safeStep!==S.step)S.step=safeStep;
@@ -2876,7 +2887,7 @@ function renderActiveStep(){
       fillVlanSels();
       updManualSnHint();
       fillRoasSels();
-      renderDhcp();
+      if($('dhcpPanel')?.open)renderDhcp();
       renderVtp();
       break;
     case 'hosts':
@@ -2887,7 +2898,7 @@ function renderActiveStep(){
       fillHostPhysLocSel();
       updateHostDeviceHint();
       renderHosts();
-      renderIpMap();
+      if($('ipMapPanel')?.open)renderIpMap();
       break;
     case 'links':
       fillSwDevSels();
@@ -2919,6 +2930,7 @@ function initStaticUiOnce(){
   initDeviceModelList();
   initDeviceKindSelect();
   initDeviceVendorSelect();
+  initLazyPanels();
   staticUiInitialized=true;
 }
 function refresh(){
