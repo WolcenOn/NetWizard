@@ -87,4 +87,13 @@ test('proyecto grande mantiene DOM acotado en puertos, hosts y enlaces', async (
 
   await page.evaluate(()=>window.navTo('dash'));
   await expect(page.locator('#pg-dash')).toBeVisible();
+  await expect(page.locator('#dDevs tbody tr')).toHaveCount(20);
+  await expect(page.locator('#dVlans .hrow')).toHaveCount(24);
+  expect(await page.locator('#dHosts tbody tr').count()).toBeLessThanOrEqual(60);
+
+  const metrics=await page.evaluate(()=>window.NetWizardRenderMetrics.snapshot());
+  expect(metrics.byStep.ports.count).toBeGreaterThan(0);
+  expect(metrics.byStep.hosts.count).toBeGreaterThan(0);
+  expect(metrics.byStep.links.count).toBeGreaterThan(0);
+  expect(metrics.byStep.dash.count).toBeGreaterThan(0);
 });
