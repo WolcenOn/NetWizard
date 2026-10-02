@@ -11,6 +11,8 @@ test('Golden Multisede limpio carga READY y mantiene segmentación segura', asyn
   page.on('dialog',dialog=>dialog.accept());
   await resetStorage(page);
 
+  await page.evaluate(()=>window.navTo('cfg'));
+  await expect(page.locator('#pg-cfg')).toBeVisible();
   await expect(page.locator('#btnGoldenPathClean')).toBeVisible();
   await page.locator('#btnGoldenPathClean').click();
 
