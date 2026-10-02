@@ -77,6 +77,7 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
   await expect.poll(()=>page.evaluate(()=>window.NetWizardV5CommandState?.name)).toBe('updateDevice');
   await expect.poll(()=>page.evaluate(()=>window.NetWizardV5CommandState?.payload?.key)).toBe('name');
 
+  await page.evaluate(()=>{window.__v5ProjectChanged=0;document.addEventListener('nw:project:changed',()=>window.__v5ProjectChanged++);});
   await page.mouse.move(box.x+start.screen.x,box.y+start.screen.y);
   await page.mouse.down();
   await page.mouse.move(box.x+start.screen.x+70,box.y+start.screen.y+45,{steps:5});
@@ -85,6 +86,7 @@ test('V5 modular mantiene selección, drag y zoom sobre canvas', async ({page})=
   const moved=await page.evaluate(()=>window.NetWizardState.getSnapshot().visual.pos.sw1);
   expect(Math.abs(moved.x-start.pos.x)).toBeGreaterThan(20);
   expect(Math.abs(moved.y-start.pos.y)).toBeGreaterThan(10);
+  expect(await page.evaluate(()=>window.__v5ProjectChanged)).toBe(0);
 
   await page.mouse.move(box.x+300,box.y+220);
   await page.mouse.wheel(0,-250);
