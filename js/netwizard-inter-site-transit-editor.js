@@ -132,8 +132,11 @@ const api={version:'netwizard-inter-site-transit-editor-v1',install,render,isRou
 root.NetWizardInterSiteTransitEditor=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',install);
-  else install();
-  root.document.addEventListener('nw:project:changed',()=>{try{render();}catch(err){if(root.console)root.console.error('NetWizard inter-site transit',err);}});
+  const active=()=>root.document.getElementById('pg-links')?.classList.contains('on');
+  const refresh=()=>{if(active()){try{install();render();}catch(err){if(root.console)root.console.error('NetWizard inter-site transit',err);}}};
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);
+  else refresh();
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='links')refresh();});
 }
 })(typeof window!=='undefined'?window:globalThis);
