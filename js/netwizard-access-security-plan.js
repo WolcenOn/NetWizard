@@ -75,16 +75,25 @@
       else if(mode === 'access') access.push(entry);
     }
     const carried=new Set();
+    const allVlans=arr(project&&project.vlans).map(v=>Number(v&&v.vlanId)).filter(Boolean);
+    const lagByMember=new Map();
+    for(const raw of arr(project&&project.linkAggregations)){
+      const members=arr(raw.memberPortIds||raw.members).map(clean).filter(Boolean);
+      for(const memberId of members)lagByMember.set(memberId,raw);
+    }
     for(const p of ports){
       const mode=clean(p.mode||p.role).toLowerCase();
       if(mode==='access'){
         const vid=vlanId(project,p.accessVlanRef);if(vid)carried.add(vid);
       }
       if(mode==='trunk'){
-        const allowed=arr(p.allowedVlans||p.allowed).map(Number).filter(Boolean);
-        if(allowed.length)for(const vid of allowed)carried.add(vid);
-        else for(const v of arr(project&&project.vlans)){const vid=Number(v&&v.vlanId);if(vid)carried.add(vid);}
-        const native=vlanId(project,p.nativeVlanRef)||Number(p.nativeVlanRef||0);if(native)carried.add(native);
+        const lag=lagByMember.get(clean(p.id));
+        const portAllowed=arr(p.allowedVlans||p.allowed).map(Number).filter(Boolean);
+        const lagAllowed=lag?arr(lag.allowedVlans).map(Number).filter(Boolean):[];
+        const effectiveAllowed=portAllowed.length?portAllowed:(lagAllowed.length?lagAllowed:allVlans);
+        for(const vid of effectiveAllowed)carried.add(vid);
+        const native=vlanId(project,p.nativeVlanRef)||Number(p.nativeVlanRef||0)||(lag&&Number(lag.nativeVlan||0))||null;
+        if(native)carried.add(native);
       }
     }
     for(const raw of arr(project&&project.linkAggregations)){
@@ -92,7 +101,7 @@
       if(!ports.some(p=>members.includes(p.id)))continue;
       const lagAllowed=arr(raw.allowedVlans).map(Number).filter(Boolean);
       if(lagAllowed.length)for(const vid of lagAllowed)carried.add(vid);
-      else if(raw.trunk!==false)for(const v of arr(project&&project.vlans)){const vid=Number(v&&v.vlanId);if(vid)carried.add(vid);}
+      else if(raw.trunk!==false)for(const vid of allVlans)carried.add(vid);
       const native=Number(raw.nativeVlan||0);if(native)carried.add(native);
     }
     const protectedVlans=(carried.size?Array.from(carried):arr(project&&project.vlans).map(v=>Number(v.vlanId)).filter(Boolean)).sort((a,b)=>a-b);
