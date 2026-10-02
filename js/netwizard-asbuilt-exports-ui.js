@@ -37,5 +37,5 @@ function inject(){
   mount.textContent='';mount.append(render());
 }
 root.NetWizardAsBuiltExportsUi={version:'netwizard-asbuilt-export-pack-ui-v1',render,inject};
-if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>setTimeout(inject,0));else setTimeout(inject,0);root.document.addEventListener('nw:project:changed',()=>setTimeout(inject,0));}
+if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);else refresh();root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});}
 })(typeof window!=='undefined'?window:globalThis);
