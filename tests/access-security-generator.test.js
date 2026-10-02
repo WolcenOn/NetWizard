@@ -49,4 +49,26 @@ test('La inserción es idempotente',()=>{
   const twice=Gen.appendToConfig(once,p,'sw1','cisco_ios');
   assert.strictEqual(once,twice);
 });
+
+test('False explícito mantiene un trunk hacia AP como no confiable',()=>{
+  const p=project('cisco_ios');
+  p.ports.push({
+    id:'ap1',deviceId:'sw1',name:'Gi1/0/20',mode:'trunk',role:'ap-trunk',
+    allowedVlans:[10,20],dhcpTrusted:false,securityTrusted:false
+  });
+  const plan=Plan.build(p).devices[0];
+  assert.ok(!plan.trustedPorts.some(x=>x.portId==='ap1'));
+});
+
+test('Trunk abierto con VLAN nativa protege todas las VLAN transportadas',()=>{
+  const p=project('cisco_ios');
+  p.linkAggregations=[];
+  p.ports=[
+    {id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10'},
+    {id:'open',deviceId:'sw1',name:'Gi1/0/48',mode:'trunk',allowedVlans:[],nativeVlanRef:'v10'}
+  ];
+  const plan=Plan.build(p).devices[0];
+  assert.deepStrictEqual(plan.protectedVlans,[10,20,30]);
+});
+
 console.log('\nTests access security/LACP completados.');
