@@ -3312,12 +3312,13 @@
         "role": "primary",
         "enabled": true,
         "bandwidthDownMbps": 1000,
-        "bandwidthUpMbps": 500,
+        "bandwidthUpMbps": 1000,
         "latencyTargetMs": 25,
         "lossTargetPercent": 0.5,
         "slaAvailability": 99.9,
         "demarcLocation": "hq_site · CPD",
-        "physicalPath": "Demarcación principal → router"
+        "physicalPath": "Demarcación principal → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "hq_wan_backup",
@@ -3328,13 +3329,14 @@
         "provider": "ISP-B",
         "role": "backup",
         "enabled": true,
-        "bandwidthDownMbps": 500,
-        "bandwidthUpMbps": 250,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
         "latencyTargetMs": 40,
         "lossTargetPercent": 1,
         "slaAvailability": 99.5,
         "demarcLocation": "hq_site · CPD",
-        "physicalPath": "Demarcación secundaria → router"
+        "physicalPath": "Demarcación secundaria → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "north_wan_primary",
@@ -3346,12 +3348,13 @@
         "role": "primary",
         "enabled": true,
         "bandwidthDownMbps": 1000,
-        "bandwidthUpMbps": 500,
+        "bandwidthUpMbps": 1000,
         "latencyTargetMs": 25,
         "lossTargetPercent": 0.5,
         "slaAvailability": 99.9,
         "demarcLocation": "north_site · CPD",
-        "physicalPath": "Demarcación principal → router"
+        "physicalPath": "Demarcación principal → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "north_wan_backup",
@@ -3362,13 +3365,14 @@
         "provider": "ISP-B",
         "role": "backup",
         "enabled": true,
-        "bandwidthDownMbps": 500,
-        "bandwidthUpMbps": 250,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
         "latencyTargetMs": 40,
         "lossTargetPercent": 1,
         "slaAvailability": 99.5,
         "demarcLocation": "north_site · CPD",
-        "physicalPath": "Demarcación secundaria → router"
+        "physicalPath": "Demarcación secundaria → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "east_wan_primary",
@@ -3380,12 +3384,13 @@
         "role": "primary",
         "enabled": true,
         "bandwidthDownMbps": 1000,
-        "bandwidthUpMbps": 500,
+        "bandwidthUpMbps": 1000,
         "latencyTargetMs": 25,
         "lossTargetPercent": 0.5,
         "slaAvailability": 99.9,
         "demarcLocation": "east_site · CPD",
-        "physicalPath": "Demarcación principal → router"
+        "physicalPath": "Demarcación principal → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "east_wan_backup",
@@ -3396,13 +3401,14 @@
         "provider": "ISP-B",
         "role": "backup",
         "enabled": true,
-        "bandwidthDownMbps": 500,
-        "bandwidthUpMbps": 250,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
         "latencyTargetMs": 40,
         "lossTargetPercent": 1,
         "slaAvailability": 99.5,
         "demarcLocation": "east_site · CPD",
-        "physicalPath": "Demarcación secundaria → router"
+        "physicalPath": "Demarcación secundaria → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "south_wan_primary",
@@ -3414,12 +3420,13 @@
         "role": "primary",
         "enabled": true,
         "bandwidthDownMbps": 1000,
-        "bandwidthUpMbps": 500,
+        "bandwidthUpMbps": 1000,
         "latencyTargetMs": 25,
         "lossTargetPercent": 0.5,
         "slaAvailability": 99.9,
         "demarcLocation": "south_site · CPD",
-        "physicalPath": "Demarcación principal → router"
+        "physicalPath": "Demarcación principal → router",
+        "expectedPeakMbps": 300
       },
       {
         "id": "south_wan_backup",
@@ -3430,13 +3437,14 @@
         "provider": "ISP-B",
         "role": "backup",
         "enabled": true,
-        "bandwidthDownMbps": 500,
-        "bandwidthUpMbps": 250,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
         "latencyTargetMs": 40,
         "lossTargetPercent": 1,
         "slaAvailability": 99.5,
         "demarcLocation": "south_site · CPD",
-        "physicalPath": "Demarcación secundaria → router"
+        "physicalPath": "Demarcación secundaria → router",
+        "expectedPeakMbps": 300
       }
     ],
     "linkAggregations": [
