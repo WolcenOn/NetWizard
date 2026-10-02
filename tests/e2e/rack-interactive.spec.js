@@ -63,6 +63,8 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
     return{label:item&&item.label,itemU:item&&item.startUnit,deviceU:dev&&dev.rackUnit};
   })).toEqual({label:'SW-01 editado',itemU:12,deviceU:12});
 
+  await page.evaluate(()=>{window.__rackProjectChanged=0;document.addEventListener('nw:project:changed',()=>window.__rackProjectChanged++);});
+
   const source=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="12"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
   const target=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"]');
   await expect(source).toBeVisible();
@@ -75,6 +77,7 @@ test('rack interactivo permite seleccionar editar arrastrar y eliminar un elemen
       deviceU:p.devices.find(x=>x.id==='sw1')?.rackUnit
     };
   })).toEqual({itemU:15,deviceU:15});
+  expect(await page.evaluate(()=>window.__rackProjectChanged)).toBe(0);
 
   const moved=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="15"][data-drag-rack-item="1"][data-item-id="ri-sw1"]');
   const occupied=page.locator('#rackPlannerMount .rack-u[data-rack-id="rack1"][data-unit="7"]');

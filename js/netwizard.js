@@ -156,23 +156,23 @@ function save(options={}){
 function projectSnapshot(){return JSON.parse(JSON.stringify(S));}
 function replaceProject(project,options={}){
   if(!project || typeof project!=='object')throw new Error('Proyecto inválido');
-  const next=normalizeProject(project);
+  const next=options.skipNormalize?project:normalizeProject(project);
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
   if(typeof ensureVisualModel==='function')ensureVisualModel();
-  save({source:options.source||'api',silent:options.silent,skipNormalize:true});
+  save({source:options.source||'api',silent:options.silent,skipNormalize:true,notify:options.notify});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
-  return projectSnapshot();
+  return options.returnSnapshot===false?true:projectSnapshot();
 }
 function updateProject(patchOrUpdater,options={}){
   const patch=typeof patchOrUpdater==='function'?patchOrUpdater(projectSnapshot()):patchOrUpdater;
-  if(!patch || typeof patch!=='object')return projectSnapshot();
-  const next=normalizeProject({...S,...patch});
+  if(!patch || typeof patch!=='object')return options.returnSnapshot===false?false:projectSnapshot();
+  const next=options.skipNormalize?{...S,...patch}:normalizeProject({...S,...patch});
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
-  save({source:options.source||'api',silent:options.silent,skipNormalize:true});
+  save({source:options.source||'api',silent:options.silent,skipNormalize:true,notify:options.notify});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
-  return projectSnapshot();
+  return options.returnSnapshot===false?true:projectSnapshot();
 }
 window.NetWizardState={version:'netwizard-state-api-v1',storageKey:SK,getSnapshot:projectSnapshot,replaceProject,updateProject,save:(options={})=>save({...options,source:options.source||'api'})};
 const esc=NWCore.escapeHtml||((s)=>(s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])));
@@ -2446,12 +2446,12 @@ function drawTopo(){
 }
 let drag=null;
 canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(const d of S.devices){const p=S.topo.pos[d.id];if(!p)continue;if(Math.abs(x-p.x)<72&&Math.abs(y-p.y)<25)drag={id:d.id,dx:x-p.x,dy:y-p.y};}});
-window.addEventListener('mouseup',()=>{if(drag){save();drag=null;}});
+window.addEventListener('mouseup',()=>{if(drag){save({source:'topology-drag',silent:true,notify:false,skipNormalize:true});drag=null;}});
 window.addEventListener('mousemove',e=>{if(!drag)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;S.topo.pos[drag.id].x=x-drag.dx;S.topo.pos[drag.id].y=y-drag.dy;drawTopo();});
 canvas.addEventListener('click',e=>{if(drag)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(const d of S.devices){const p=S.topo.pos[d.id];if(!p)continue;if(Math.abs(x-p.x)<72&&Math.abs(y-p.y)<25){openDevCfgModal(d.id);return;}}});
 canvas.addEventListener('touchstart',e=>{const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;for(const d of S.devices){const p=S.topo.pos[d.id];if(!p)continue;if(Math.abs(x-p.x)<72&&Math.abs(y-p.y)<25){drag={id:d.id,dx:x-p.x,dy:y-p.y};break;}}},{passive:true});
 canvas.addEventListener('touchmove',e=>{if(!drag)return;e.preventDefault();const t=e.touches[0];const r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;S.topo.pos[drag.id].x=x-drag.dx;S.topo.pos[drag.id].y=y-drag.dy;drawTopo();},{passive:false});
-canvas.addEventListener('touchend',()=>{if(drag){save();drag=null;}});
+canvas.addEventListener('touchend',()=>{if(drag){save({source:'topology-drag',silent:true,notify:false,skipNormalize:true});drag=null;}});
 $('fitTopo').onclick=()=>{autoLayout();drawTopo();};$('reLy').onclick=()=>{for(const k in S.topo.pos)delete S.topo.pos[k];autoLayout();drawTopo();};
 window.addEventListener('resize',()=>{if(S.step==='graphs')drawTopo();});
 
@@ -2945,8 +2945,8 @@ function createV5DragController(){
     clearSelection:()=>{vv().sel=null;renderV5Panel();},
     draw:drawV5,
     renderPanel:renderV5Panel,
-    save,
-    refresh,
+    save:()=>save({source:'v5-drag',silent:true,notify:false,skipNormalize:true}),
+    refresh:()=>{drawV5();renderV5Panel();},
     freezeAutoBounds:v5FreezeAutoBounds,
     locationById:vLocById,
     locationBounds:visualLocBounds,

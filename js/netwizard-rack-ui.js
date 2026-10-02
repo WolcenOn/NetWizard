@@ -224,7 +224,8 @@ function bind(mount,state){
       selectedRackItemId=id;
       if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
       rackEditorNotice='Cambios guardados. Las referencias de cableado y equipo se han conservado.';
-      state.replaceProject(result.project,{source:'rack-item-editor'});
+      state.replaceProject(result.project,{source:'rack-item-editor',skipNormalize:true,skipRefresh:true,notify:false,silent:true,returnSnapshot:false});
+      rerenderMount(mount,state);
     };
     if(remove)remove.onclick=e=>{
       e.preventDefault();e.stopPropagation();
@@ -268,7 +269,8 @@ function bind(mount,state){
       selectedRackItemId=id;
       if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
       rackEditorNotice=`Movido a ${arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId} · U${row.dataset.unit}. Cableado y referencias conservados.`;
-      state.replaceProject(result.project,{source:'rack-pointer-drag'});
+      state.replaceProject(result.project,{source:'rack-pointer-drag',skipNormalize:true,skipRefresh:true,notify:false,silent:true,returnSnapshot:false});
+      rerenderMount(mount,state);
     };
     node.onpointerup=finishPointer;
     node.onpointercancel=e=>{
