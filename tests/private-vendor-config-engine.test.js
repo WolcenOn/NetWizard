@@ -84,7 +84,7 @@ assert.deepStrictEqual(
 );
 assert.deepStrictEqual(
   result.pipeline.stages.map(x=>x.id),
-  ['routing.cisco','routing.multivendor','vpn.site-to-site','security.access','management.baseline','ha.services']
+  ['routing.cisco','routing.multivendor','segmentation.cisco','vpn.site-to-site','security.access','management.baseline','ha.services']
 );
 assert.deepStrictEqual(result.issues,[]);
 
