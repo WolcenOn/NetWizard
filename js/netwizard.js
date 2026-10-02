@@ -1178,6 +1178,8 @@ $('btnQuick24').onclick=()=>{
   save();refresh();alert(`✓ ${added} puertos GE añadidos a ${d.name}.`);
 };
 
+let portsPage=0;
+const PORTS_PAGE_SIZE=80;
 function renderPortsList(){
   const filtDev=$('portFiltDev').value;
   let pts=S.ports.slice(); if(filtDev)pts=pts.filter(p=>p.deviceId===filtDev); const psort=S.uiSort.ports||{key:'device',dir:1}; pts.sort((a,b)=>{const da=devById(a.deviceId),db=devById(b.deviceId),va=vByRef(a.accessVlanRef),vb=vByRef(b.accessVlanRef); let av='',bv=''; switch(psort.key){case 'port': av=a.name; bv=b.name; break; case 'mode': av=a.mode; bv=b.mode; break; case 'info': av=a.mode==='access'?(va?.vlanId||99999):((a.allowedVlans||[]).length); bv=b.mode==='access'?(vb?.vlanId||99999):((b.allowedVlans||[]).length); break; default: av=da?.name||''; bv=db?.name||'';} return psort.dir*cmpMixed(av,bv);});
@@ -1188,12 +1190,21 @@ function renderPortsList(){
     const p=document.createElement('p'); p.textContent=S.ports.length?'Cambia el filtro.':'Añade puertos arriba.';
     empty.append(icon,p); el.appendChild(empty); return;
   }
+  const totalPages=Math.max(1,Math.ceil(pts.length/PORTS_PAGE_SIZE));
+  portsPage=Math.min(Math.max(0,portsPage),totalPages-1);
+  const start=portsPage*PORTS_PAGE_SIZE;
+  const visible=pts.slice(start,start+PORTS_PAGE_SIZE);
+  const info=$('portsPageInfo');if(info)info.textContent=`${pts.length} puertos · página ${portsPage+1}/${totalPages}`;
+  const prev=$('portsPrev'),next=$('portsNext'),pager=$('portsPager');
+  if(pager)pager.style.display=pts.length>PORTS_PAGE_SIZE?'flex':'none';
+  if(prev)prev.disabled=portsPage<=0;
+  if(next)next.disabled=portsPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
   const thead=document.createElement('thead'); const trh=document.createElement('tr');
   [['device','Dispositivo'],['port','Puerto'],['mode','Modo'],['info','VLAN/Info']].forEach(([k,l])=>trh.appendChild(createSortTh('ports',k,l)));
   trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  pts.forEach(p=>{
+  visible.forEach(p=>{
     const d=devById(p.deviceId); const v=vByRef(p.accessVlanRef); const lnk=isLinked(p.id);
     const tr=document.createElement('tr');
     const tdDev=document.createElement('td'); const devBadge=makeBadge(d?.name||'?','b bgr'); if(d&&/^#[0-9a-f]{6}$/i.test(d.labelColor||'')){devBadge.style.background=d.labelColor;devBadge.style.color=textColorForBg(d.labelColor);devBadge.style.borderColor=d.labelColor;} tdDev.appendChild(devBadge); tr.appendChild(tdDev);
@@ -1222,7 +1233,9 @@ function renderPortsList(){
     S.ports=S.ports.filter(p=>p.id!==pid);save();refresh();
   });
 }
-$('portFiltDev').onchange=()=>renderPortsList();
+$('portFiltDev').onchange=()=>{portsPage=0;renderPortsList();};
+if($('portsPrev'))$('portsPrev').onclick=()=>{if(portsPage>0){portsPage--;renderPortsList();}};
+if($('portsNext'))$('portsNext').onclick=()=>{portsPage++;renderPortsList();};
 
 // ─────────────────── VLANs ───────────────────
 
