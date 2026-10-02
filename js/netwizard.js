@@ -130,6 +130,7 @@ function loadS(){
   }catch{return null;}
 }
 function save(options={}){
+  vlanSelectSignature='';
   if(!options.skipNormalize && NWSchema && typeof NWSchema.sanitizeProject==='function'){
     Object.assign(S,NWSchema.sanitizeProject(S,{defaults:defS}).project);
   }
@@ -1270,12 +1271,18 @@ if($('portsNext'))$('portsNext').onclick=()=>{portsPage++;renderPortsList();};
 // 08. VLANS Y SUBNETS
 // Selectores VLAN, subnetting manual/automático y listados de VLAN/subnets.
 // =========================================================
+let vlanSelectSignature='';
 function fillVlanSels(){
   const sorted=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
+  const signature=sorted.map(v=>`${v.id}:${v.vlanId}:${v.name||''}`).join('|');
+  if(signature===vlanSelectSignature)return;
+  vlanSelectSignature=signature;
+  const selected=new Map();
+  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan','hVlan','hFiltV'].forEach(id=>{const el=$(id);if(el)selected.set(id,el.value);});
   const baseOpts=()=>[makeOption('','(ninguna)'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))];
-  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan'].forEach(id=>{if($(id))setOptions($(id),baseOpts());});
-  setOptions($('hVlan'),[makeOption('','(elige VLAN)'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);
-  setOptions($('hFiltV'),[makeOption('','Todas'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);
+  ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan'].forEach(id=>{const el=$(id);if(el){setOptions(el,baseOpts());if(selected.get(id)&&Array.from(el.options).some(o=>o.value===selected.get(id)))el.value=selected.get(id);}});
+  const hVlan=$('hVlan');if(hVlan){setOptions(hVlan,[makeOption('','(elige VLAN)'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hVlan')&&Array.from(hVlan.options).some(o=>o.value===selected.get('hVlan')))hVlan.value=selected.get('hVlan');}
+  const hFiltV=$('hFiltV');if(hFiltV){setOptions(hFiltV,[makeOption('','Todas'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hFiltV')&&Array.from(hFiltV.options).some(o=>o.value===selected.get('hFiltV')))hFiltV.value=selected.get('hFiltV');}
 }
 
 function updManualSnHint(){
@@ -3040,11 +3047,23 @@ function initStaticUiOnce(){
   initLazyPanels();
   staticUiInitialized=true;
 }
+const renderMetrics={last:null,byStep:{}};
+window.NetWizardRenderMetrics={
+  snapshot:()=>JSON.parse(JSON.stringify(renderMetrics))
+};
 function refresh(){
+  const totalStart=performance.now();
   initStaticUiOnce();
   renderNav();
+  const stepStart=performance.now();
   renderActiveStep();
+  const stepMs=performance.now()-stepStart;
   if(window.NetWizardI18n&&window.NetWizardI18n.applyI18n)window.NetWizardI18n.applyI18n(document);
+  const totalMs=performance.now()-totalStart;
+  const prev=renderMetrics.byStep[S.step]||{count:0,totalMs:0,maxMs:0,lastMs:0};
+  prev.count++;prev.totalMs+=stepMs;prev.lastMs=stepMs;prev.maxMs=Math.max(prev.maxMs,stepMs);
+  renderMetrics.byStep[S.step]=prev;
+  renderMetrics.last={step:S.step,stepMs,totalMs,at:Date.now()};
 }
 
 refresh();
