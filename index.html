@@ -332,13 +332,18 @@
       </div>
     </div>
     <div>
-      <div class="card">
+      <details class="card" id="portsListPanel" open>
+        <summary><span class="card-t">🔌 Puertos registrados</span></summary>
         <div class="card-h">
-          <div class="card-t">🔌 Puertos registrados</div>
+          <span class="hint" id="portsPageInfo"></span>
           <select id="portFiltDev" style="font-size:11.5px;padding:4px 22px 4px 7px;"></select>
         </div>
         <div id="portsList"></div>
-      </div>
+        <div class="brow" id="portsPager" style="justify-content:space-between;">
+          <button class="btn bs bsm" id="portsPrev" type="button">← Anterior</button>
+          <button class="btn bs bsm" id="portsNext" type="button">Siguiente →</button>
+        </div>
+      </details>
     </div>
   </div>
 </div>
