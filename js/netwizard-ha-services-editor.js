@@ -189,9 +189,11 @@ function renderHa(){
 function renderAll(){renderHa();}
 function install(){
   if(!root.document)return false;
-  const boot=()=>{haCard();renderAll();};
-  root.document.addEventListener('nw:project:changed',renderAll);
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(boot,80),{once:true});else root.setTimeout(boot,0);
+  const active=()=>root.document.getElementById('pg-dev')?.classList.contains('on');
+  const refresh=()=>{if(active()){haCard();renderAll();}};
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='dev')refresh();});
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(refresh,80),{once:true});else root.setTimeout(refresh,0);
   return true;
 }
 const api={version:'netwizard-ha-services-editor-v1',renderAll,renderHa,saveRelays,addRoute,addProbe,addFhrp};
