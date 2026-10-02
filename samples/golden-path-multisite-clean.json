@@ -16,11 +16,13 @@
         "manufacturer": "Cisco",
         "model": "ISR 4331",
         "modelSource": "manual",
-        "locationId": "room_hq",
+        "locationId": "hq_cpd",
         "physicalLocation": "CPD Central",
         "mgmtIp": "10.10.60.1",
         "powerDrawWatts": 120,
-        "lanIf": "GigabitEthernet0/1"
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "hq_rack01",
+        "rackUnit": 37
       },
       {
         "id": "hq_core",
@@ -31,10 +33,12 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9300",
         "modelSource": "manual",
-        "locationId": "room_hq",
+        "locationId": "hq_cpd",
         "physicalLocation": "CPD Central",
         "mgmtIp": "10.10.60.10",
-        "powerDrawWatts": 110
+        "powerDrawWatts": 110,
+        "rackId": "hq_rack01",
+        "rackUnit": 34
       },
       {
         "id": "hq_access",
@@ -45,11 +49,13 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9200L 48P PoE+",
         "modelSource": "manual",
-        "locationId": "room_hq",
+        "locationId": "hq_cpd",
         "physicalLocation": "CPD Central",
         "mgmtIp": "10.10.60.11",
         "powerDrawWatts": 95,
-        "poeBudgetW": 740
+        "poeBudgetW": 740,
+        "rackId": "hq_rack01",
+        "rackUnit": 31
       },
       {
         "id": "north_rtr",
@@ -60,11 +66,13 @@
         "manufacturer": "Cisco",
         "model": "ISR 4331",
         "modelSource": "manual",
-        "locationId": "room_north",
+        "locationId": "north_cpd",
         "physicalLocation": "CPD Norte",
         "mgmtIp": "10.20.60.1",
         "powerDrawWatts": 120,
-        "lanIf": "GigabitEthernet0/1"
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "north_rack01",
+        "rackUnit": 37
       },
       {
         "id": "north_core",
@@ -75,10 +83,12 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9300",
         "modelSource": "manual",
-        "locationId": "room_north",
+        "locationId": "north_cpd",
         "physicalLocation": "CPD Norte",
         "mgmtIp": "10.20.60.10",
-        "powerDrawWatts": 110
+        "powerDrawWatts": 110,
+        "rackId": "north_rack01",
+        "rackUnit": 34
       },
       {
         "id": "north_access",
@@ -89,11 +99,13 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9200L 48P PoE+",
         "modelSource": "manual",
-        "locationId": "room_north",
+        "locationId": "north_cpd",
         "physicalLocation": "CPD Norte",
         "mgmtIp": "10.20.60.11",
         "powerDrawWatts": 95,
-        "poeBudgetW": 740
+        "poeBudgetW": 740,
+        "rackId": "north_rack01",
+        "rackUnit": 31
       },
       {
         "id": "east_rtr",
@@ -104,11 +116,13 @@
         "manufacturer": "Cisco",
         "model": "ISR 4331",
         "modelSource": "manual",
-        "locationId": "room_east",
+        "locationId": "east_cpd",
         "physicalLocation": "CPD Levante",
         "mgmtIp": "10.30.60.1",
         "powerDrawWatts": 120,
-        "lanIf": "GigabitEthernet0/1"
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "east_rack01",
+        "rackUnit": 37
       },
       {
         "id": "east_core",
@@ -119,10 +133,12 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9300",
         "modelSource": "manual",
-        "locationId": "room_east",
+        "locationId": "east_cpd",
         "physicalLocation": "CPD Levante",
         "mgmtIp": "10.30.60.10",
-        "powerDrawWatts": 110
+        "powerDrawWatts": 110,
+        "rackId": "east_rack01",
+        "rackUnit": 34
       },
       {
         "id": "east_access",
@@ -133,11 +149,13 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9200L 48P PoE+",
         "modelSource": "manual",
-        "locationId": "room_east",
+        "locationId": "east_cpd",
         "physicalLocation": "CPD Levante",
         "mgmtIp": "10.30.60.11",
         "powerDrawWatts": 95,
-        "poeBudgetW": 740
+        "poeBudgetW": 740,
+        "rackId": "east_rack01",
+        "rackUnit": 31
       },
       {
         "id": "south_rtr",
@@ -148,11 +166,13 @@
         "manufacturer": "Cisco",
         "model": "ISR 4331",
         "modelSource": "manual",
-        "locationId": "room_south",
+        "locationId": "south_cpd",
         "physicalLocation": "CPD Sur",
         "mgmtIp": "10.40.60.1",
         "powerDrawWatts": 120,
-        "lanIf": "GigabitEthernet0/1"
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "south_rack01",
+        "rackUnit": 37
       },
       {
         "id": "south_core",
@@ -163,10 +183,12 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9300",
         "modelSource": "manual",
-        "locationId": "room_south",
+        "locationId": "south_cpd",
         "physicalLocation": "CPD Sur",
         "mgmtIp": "10.40.60.10",
-        "powerDrawWatts": 110
+        "powerDrawWatts": 110,
+        "rackId": "south_rack01",
+        "rackUnit": 34
       },
       {
         "id": "south_access",
@@ -177,11 +199,13 @@
         "manufacturer": "Cisco",
         "model": "Catalyst 9200L 48P PoE+",
         "modelSource": "manual",
-        "locationId": "room_south",
+        "locationId": "south_cpd",
         "physicalLocation": "CPD Sur",
         "mgmtIp": "10.40.60.11",
         "powerDrawWatts": 95,
-        "poeBudgetW": 740
+        "poeBudgetW": 740,
+        "rackId": "south_rack01",
+        "rackUnit": 31
       }
     ],
     "ports": [
@@ -3909,56 +3933,291 @@
     ],
     "physicalLocations": [
       {
-        "id": "loc_hq",
+        "id": "hq_site",
         "name": "Sede Central",
         "type": "site"
       },
       {
-        "id": "room_hq",
-        "name": "CPD Central",
+        "id": "hq_cpd",
+        "name": "Sede Central · CPD",
         "type": "room",
-        "parentId": "loc_hq"
+        "parentId": "hq_site"
       },
       {
-        "id": "loc_north",
+        "id": "north_site",
         "name": "Sede Norte",
         "type": "site"
       },
       {
-        "id": "room_north",
-        "name": "CPD Norte",
+        "id": "north_cpd",
+        "name": "Sede Norte · CPD",
         "type": "room",
-        "parentId": "loc_north"
+        "parentId": "north_site"
       },
       {
-        "id": "loc_east",
+        "id": "east_site",
         "name": "Sede Levante",
         "type": "site"
       },
       {
-        "id": "room_east",
-        "name": "CPD Levante",
+        "id": "east_cpd",
+        "name": "Sede Levante · CPD",
         "type": "room",
-        "parentId": "loc_east"
+        "parentId": "east_site"
       },
       {
-        "id": "loc_south",
+        "id": "south_site",
         "name": "Sede Sur",
         "type": "site"
       },
       {
-        "id": "room_south",
-        "name": "CPD Sur",
+        "id": "south_cpd",
+        "name": "Sede Sur · CPD",
         "type": "room",
-        "parentId": "loc_south"
+        "parentId": "south_site"
       }
     ],
     "hostPhysicalLocations": [],
     "uiSort": {},
-    "racks": [],
+    "racks": [
+      {
+        "id": "hq_rack01",
+        "name": "RACK-HQ-01",
+        "locationId": "hq_cpd",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 900,
+        "powerCapacityWatts": 7000,
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
+      },
+      {
+        "id": "north_rack01",
+        "name": "RACK-NORTH-01",
+        "locationId": "north_cpd",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 900,
+        "powerCapacityWatts": 7000,
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
+      },
+      {
+        "id": "east_rack01",
+        "name": "RACK-EAST-01",
+        "locationId": "east_cpd",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 900,
+        "powerCapacityWatts": 7000,
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
+      },
+      {
+        "id": "south_rack01",
+        "name": "RACK-SOUTH-01",
+        "locationId": "south_cpd",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 900,
+        "powerCapacityWatts": 7000,
+        "coolingCapacityWatts": 5000,
+        "numberingDirection": "bottom-up"
+      }
+    ],
     "rackItems": [],
-    "pdus": [],
-    "powerConnections": [],
+    "pdus": [
+      {
+        "id": "hq_pdu_a",
+        "rackId": "hq_rack01",
+        "name": "PDU-HQ-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "hq_pdu_b",
+        "rackId": "hq_rack01",
+        "name": "PDU-HQ-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "north_pdu_a",
+        "rackId": "north_rack01",
+        "name": "PDU-NORTH-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "north_pdu_b",
+        "rackId": "north_rack01",
+        "name": "PDU-NORTH-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "east_pdu_a",
+        "rackId": "east_rack01",
+        "name": "PDU-EAST-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "east_pdu_b",
+        "rackId": "east_rack01",
+        "name": "PDU-EAST-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "south_pdu_a",
+        "rackId": "south_rack01",
+        "name": "PDU-SOUTH-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "south_pdu_b",
+        "rackId": "south_rack01",
+        "name": "PDU-SOUTH-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "hq_pwr_hq_rtr",
+        "deviceId": "hq_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_core",
+        "deviceId": "hq_core",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_access",
+        "deviceId": "hq_access",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      },
+      {
+        "id": "north_pwr_north_rtr",
+        "deviceId": "north_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "north_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "north_pwr_north_core",
+        "deviceId": "north_core",
+        "powerSupplyIndex": 0,
+        "pduId": "north_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "north_pwr_north_access",
+        "deviceId": "north_access",
+        "powerSupplyIndex": 0,
+        "pduId": "north_pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      },
+      {
+        "id": "east_pwr_east_rtr",
+        "deviceId": "east_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "east_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "east_pwr_east_core",
+        "deviceId": "east_core",
+        "powerSupplyIndex": 0,
+        "pduId": "east_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "east_pwr_east_access",
+        "deviceId": "east_access",
+        "powerSupplyIndex": 0,
+        "pduId": "east_pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      },
+      {
+        "id": "south_pwr_south_rtr",
+        "deviceId": "south_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "south_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "south_pwr_south_core",
+        "deviceId": "south_core",
+        "powerSupplyIndex": 0,
+        "pduId": "south_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "south_pwr_south_access",
+        "deviceId": "south_access",
+        "powerSupplyIndex": 0,
+        "pduId": "south_pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      }
+    ],
     "patchPanels": [],
     "telecomOutlets": [],
     "cableRuns": [],
