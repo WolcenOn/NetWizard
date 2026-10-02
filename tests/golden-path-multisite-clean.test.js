@@ -11,6 +11,7 @@ require(path.join(root,'js','netwizard-l3-config-utils.js'));
 require(path.join(root,'js','netwizard-routing-utils.js'));
 const Schema=require(path.join(root,'js','netwizard-project-schema.js'));
 const Architecture=require(path.join(root,'js','netwizard-architecture-validator.js'));
+const Rack=require(path.join(root,'js','netwizard-rack-model.js'));
 const Connectivity=require(path.join(root,'js','netwizard-connectivity-model.js'));
 const Ospf=require(path.join(root,'js','netwizard-ospf.js'));
 const Reach=require(path.join(root,'js','netwizard-inter-site-reachability.js'));
@@ -55,7 +56,16 @@ assert.strictEqual(p.links.length,16);
 assert.strictEqual(p.wifiAccessPoints.length,8);
 assert.strictEqual(p.vrfs.length,2);
 assert.strictEqual(p.ipv6Networks.length,12);
+assert.strictEqual(p.racks.length,4);
+assert.strictEqual(p.pdus.length,8);
+assert.strictEqual(p.powerConnections.length,12);
 assert.strictEqual(p.failureScenarios.length,4);
+
+
+const rack=Rack.validate(p);
+assert.strictEqual(rack.ok,true,rack.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(rack.counts.blocking,0);
+assert.strictEqual(rack.counts.warnings,0);
 
 const architecture=Architecture.validate(p);
 assert.strictEqual(architecture.ok,true,architecture.issues.map(x=>x.code+': '+x.message).join('\n'));
