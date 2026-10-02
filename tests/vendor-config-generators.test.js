@@ -45,6 +45,27 @@ test('Cisco IOS router sin RoaS explícito genera subinterfaces, DHCP, NAT y ACL
   assert.ok(cfg.includes('! FW ACL TEST'));
 });
 
+
+test('Cisco IOS usa WAN canónica por dispositivo sin duplicar autoridad en roas', () => {
+  const project=JSON.parse(JSON.stringify(baseProject));
+  project.roas={};
+  project.ports[0]={
+    id:'wan',deviceId:'r1',name:'GigabitEthernet0/0',mode:'routed',role:'wan',
+    l3Ip:'198.51.100.2',l3Cidr:'198.51.100.0/30'
+  };
+  project.wanCircuits=[{
+    id:'wan-primary',deviceId:'r1',portId:'wan',role:'primary',enabled:true,
+    provider:'ISP-A',bandwidthDownMbps:1000,bandwidthUpMbps:1000
+  }];
+  project.highAvailability={devices:{r1:{defaultRoutes:[
+    {nextHop:'198.51.100.1',distance:1,circuitRef:'wan-primary'}
+  ]}}};
+  const cfg=genFor(project)('r1','cisco_ios');
+  assert.match(cfg,/interface GigabitEthernet0\/0[\s\S]*ip address 198\.51\.100\.2 255\.255\.255\.252/);
+  assert.match(cfg,/interface GigabitEthernet0\/0[\s\S]*ip nat outside/);
+  assert.match(cfg,/ip nat inside source list 100 interface GigabitEthernet0\/0 overload/);
+});
+
 test('Cisco IOS multi-router con gatewayDeviceRef trata RoaS como intención explícita', () => {
   const project=JSON.parse(JSON.stringify(baseProject));
   project.devices.push({id:'r2',name:'RTR Peer',type:'router',kind:'router',vendorOs:'cisco_ios'});
