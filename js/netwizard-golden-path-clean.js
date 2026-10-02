@@ -20,8 +20,8 @@ async function preparedProject(){
 async function loadIntoProject(){
   const project=await preparedProject();
   if(!root.NetWizardState||typeof root.NetWizardState.replaceProject!=='function')throw new Error('NetWizardState no está disponible.');
+  project.step='dash';
   root.NetWizardState.replaceProject(project,{source:'golden-path-multisite-clean'});
-  if(typeof root.navTo==='function')root.navTo('dash');
   return project;
 }
 let lastLoadPromise=null;
