@@ -16,6 +16,7 @@ const Ospf=require(path.join(root,'js','netwizard-ospf.js'));
 const Reach=require(path.join(root,'js','netwizard-inter-site-reachability.js'));
 const Vtp=require(path.join(root,'js','netwizard-vtp-production-verification.js'));
 const Wifi=require(path.join(root,'js','netwizard-wifi-planning.js'));
+const Ipv6Vrf=require(path.join(root,'js','netwizard-ipv6-vrf.js'));
 const Services=require(path.join(root,'js','netwizard-internal-services.js'));
 const Capacity=require(path.join(root,'js','netwizard-traffic-capacity.js'));
 const Failure=require(path.join(root,'js','netwizard-failure-simulation.js'));
@@ -52,6 +53,8 @@ assert.strictEqual(p.subnets.length,28);
 assert.strictEqual(p.hosts.length,24);
 assert.strictEqual(p.links.length,16);
 assert.strictEqual(p.wifiAccessPoints.length,8);
+assert.strictEqual(p.vrfs.length,2);
+assert.strictEqual(p.ipv6Networks.length,12);
 assert.strictEqual(p.failureScenarios.length,4);
 
 const architecture=Architecture.validate(p);
@@ -118,6 +121,14 @@ assert.strictEqual(wifi.counts.warnings,0);
 assert.strictEqual(wifi.summary.controllers,2);
 assert.strictEqual(wifi.summary.accessPoints,8);
 assert.strictEqual(wifi.summary.ssids,8);
+
+
+const ipv6=Ipv6Vrf.validateProject(p);
+assert.strictEqual(ipv6.ok,true,ipv6.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(ipv6.counts.blocking,0);
+assert.strictEqual(ipv6.counts.warnings,0);
+assert.strictEqual(p.ipv6Networks.filter(x=>x.vrfRef==='corp').length,8);
+assert.strictEqual(p.ipv6Networks.filter(x=>x.vrfRef==='mgmt').length,4);
 
 const services=Services.validateProject(p);
 assert.strictEqual(services.ok,true,services.issues.map(x=>x.code+': '+x.message).join('\n'));
