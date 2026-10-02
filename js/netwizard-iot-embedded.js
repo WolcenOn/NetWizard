@@ -197,7 +197,9 @@
   }
 
   function init(){load();
-    document.addEventListener('nw:project:changed',e=>{if(e.detail?.source==='iot')return;const embedded=projectIotState();if(embedded){state=defaultState();mergeState(embedded);migrateLocationFields();render();}});
+    const iotActive=()=>document.getElementById('pg-iot')?.classList.contains('on');
+    document.addEventListener('nw:project:changed',e=>{if(e.detail?.source==='iot')return;const embedded=projectIotState();if(embedded){state=defaultState();mergeState(embedded);migrateLocationFields();if(iotActive())render();}});
+    document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='iot')render();});
     $('iotAddAccess')?.addEventListener('click',()=>openAccess());$('iotAddDevice')?.addEventListener('click',()=>openDevice());$('iotMapRefresh')?.addEventListener('click',render);$('iotMapFit')?.addEventListener('click',()=>{state.map.panX=0;state.map.panY=0;state.map.scale=1;drawMap();});$('iotCopyPlan')?.addEventListener('click',()=>{navigator.clipboard?.writeText($('iotPlanOut').value);alert('Plan IoT copiado.');});
     ['iotAccessClose','iotAccessCancel'].forEach(id=>$(id)?.addEventListener('click',()=>close('iotAccessModal')));$('iotAccessSave')?.addEventListener('click',saveAccess);
     ['iotDeviceClose','iotDeviceCancel'].forEach(id=>$(id)?.addEventListener('click',()=>close('iotDeviceModal')));$('iotDeviceSave')?.addEventListener('click',saveDevice);

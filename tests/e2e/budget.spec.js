@@ -37,6 +37,7 @@ test('BOM y presupuesto persiste pricing por modelo/recurso y servicios', async 
     window.navTo('physical');
   });
 
+  await page.locator('#budgetSection').evaluate(el=>{el.open=true;el.dispatchEvent(new Event('toggle'));});
   const mount=page.locator('#budgetMount');
   await expect(mount).toBeVisible();
   await expect(mount).toContainText('BOM & Presupuesto');

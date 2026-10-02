@@ -74,6 +74,7 @@ test('Golden Path seguro multisede carga limpio y demuestra conectividad segment
   }
 
   await page.evaluate(()=>window.navTo('physical'));
+  await page.locator('#budgetSection').evaluate(el=>{el.open=true;el.dispatchEvent(new Event('toggle'));});
   await expect(page.locator('#budgetMount')).toBeVisible();
   await expect(page.locator('#budgetMount')).toContainText('BOM & Presupuesto');
   await expect(page.locator('#budgetMount')).toContainText('Toda la BOM incluida tiene precio.');

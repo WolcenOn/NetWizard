@@ -305,8 +305,11 @@ function install(attempt){
     if((attempt||0)<50)root.setTimeout(()=>install((attempt||0)+1),100);
     return false;
   }
-  render();
-  root.document.addEventListener('nw:project:changed',render);
+  const active=()=>root.document.getElementById('pg-loc')?.classList.contains('on');
+  const refresh=()=>{if(active())render();};
+  refresh();
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='loc')render();});
   return true;
 }
 
