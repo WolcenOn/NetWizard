@@ -187,8 +187,11 @@ function render(){
 }
 function install(){
   if(!root.document)return false;
-  root.document.addEventListener('nw:project:changed',()=>{try{render();}catch(err){root.console?.error('NetWizard OSPF editor',err);}});
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',render);else render();
+  const active=()=>root.document.getElementById('pg-dev')?.classList.contains('on');
+  const refresh=()=>{if(active()){try{render();}catch(err){root.console?.error('NetWizard OSPF editor',err);}}};
+  root.document.addEventListener('nw:project:changed',refresh);
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='dev')refresh();});
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);else refresh();
   return true;
 }
 const api={version:'netwizard-ospf-editor-v1',render,install,setObservedNeighbor};
