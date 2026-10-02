@@ -129,12 +129,19 @@ function loadS(){
     return raw;
   }catch{return null;}
 }
+const stateTimingMetrics={saves:0,totalMs:0,maxMs:0,lastMs:0,lastNormalizeMs:0,lastStorageMs:0};
 function save(options={}){
+  const saveStarted=performance.now();
   vlanSelectSignature='';
+  let normalizeMs=0,storageMs=0;
   if(!options.skipNormalize && NWSchema && typeof NWSchema.sanitizeProject==='function'){
+    const normalizeStarted=performance.now();
     Object.assign(S,NWSchema.sanitizeProject(S,{defaults:defS}).project);
+    normalizeMs=performance.now()-normalizeStarted;
   }
+  const storageStarted=performance.now();
   localStorage.setItem(SK,JSON.stringify(S));
+  storageMs=performance.now()-storageStarted;
   if(!options.silent){
     const el=$('savedLbl');
     if(el){el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1300);}
@@ -142,6 +149,9 @@ function save(options={}){
   if(options.notify!==false){
     document.dispatchEvent(new CustomEvent('nw:project:changed',{detail:{source:options.source||'netwizard'}}));
   }
+  const elapsed=performance.now()-saveStarted;
+  stateTimingMetrics.saves++;stateTimingMetrics.totalMs+=elapsed;stateTimingMetrics.lastMs=elapsed;stateTimingMetrics.maxMs=Math.max(stateTimingMetrics.maxMs,elapsed);
+  stateTimingMetrics.lastNormalizeMs=normalizeMs;stateTimingMetrics.lastStorageMs=storageMs;
 }
 function projectSnapshot(){return JSON.parse(JSON.stringify(S));}
 function replaceProject(project,options={}){
@@ -150,7 +160,7 @@ function replaceProject(project,options={}){
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
   if(typeof ensureVisualModel==='function')ensureVisualModel();
-  save({source:options.source||'api',silent:options.silent});
+  save({source:options.source||'api',silent:options.silent,skipNormalize:true});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
   return projectSnapshot();
 }
@@ -160,7 +170,7 @@ function updateProject(patchOrUpdater,options={}){
   const next=normalizeProject({...S,...patch});
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
-  save({source:options.source||'api',silent:options.silent});
+  save({source:options.source||'api',silent:options.silent,skipNormalize:true});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
   return projectSnapshot();
 }
@@ -3057,7 +3067,7 @@ function initStaticUiOnce(){
 }
 const renderMetrics={last:null,byStep:{}};
 window.NetWizardRenderMetrics={
-  snapshot:()=>JSON.parse(JSON.stringify(renderMetrics))
+  snapshot:()=>JSON.parse(JSON.stringify({...renderMetrics,state:stateTimingMetrics}))
 };
 function refresh(){
   const totalStart=performance.now();
