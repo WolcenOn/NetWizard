@@ -200,8 +200,14 @@ function render(project){
 function inject(){
   const d=doc();if(!d||!engine())return;
   const host=d.getElementById('pg-physical');if(!host)return;
-  let mount=d.getElementById('budgetMount');
-  if(!mount){mount=d.createElement('div');mount.id='budgetMount';host.append(mount);}
+  let section=d.getElementById('budgetSection'),mount=d.getElementById('budgetMount');
+  if(!section){
+    section=d.createElement('details');section.id='budgetSection';section.className='card';
+    const summary=d.createElement('summary');summary.className='card-t';summary.textContent='💶 BOM & Presupuesto';
+    mount=d.createElement('div');mount.id='budgetMount';section.append(summary,mount);host.append(section);
+    section.addEventListener('toggle',()=>{if(section.open)inject();});
+  }
+  if(!section.open)return;
   mount.textContent='';mount.append(render(snapshot()));
 }
 const api={version:'netwizard-budget-ui-v1',render,inject,persist};
