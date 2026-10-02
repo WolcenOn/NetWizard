@@ -24,7 +24,9 @@
         "rackId": "hq_rack01",
         "rackUnit": 37,
         "originRef": "hq_rtr",
-        "designDisposition": "keep"
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
       },
       {
         "id": "hq_core",
@@ -80,7 +82,9 @@
         "rackId": "north_rack01",
         "rackUnit": 37,
         "originRef": "north_rtr",
-        "designDisposition": "keep"
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
       },
       {
         "id": "north_core",
@@ -136,7 +140,9 @@
         "rackId": "east_rack01",
         "rackUnit": 37,
         "originRef": "east_rtr",
-        "designDisposition": "keep"
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
       },
       {
         "id": "east_core",
@@ -192,7 +198,9 @@
         "rackId": "south_rack01",
         "rackUnit": 37,
         "originRef": "south_rtr",
-        "designDisposition": "keep"
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
       },
       {
         "id": "south_core",
@@ -1371,6 +1379,94 @@
         "poeMode": "off",
         "poeWattsMax": 0,
         "desc": "ADMIN-S-01"
+      },
+      {
+        "id": "hq_wan1",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.2",
+        "l3Cidr": "203.0.113.0/30"
+      },
+      {
+        "id": "hq_wan2",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.6",
+        "l3Cidr": "203.0.113.4/30"
+      },
+      {
+        "id": "north_wan1",
+        "deviceId": "north_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "198.51.100.2",
+        "l3Cidr": "198.51.100.0/30"
+      },
+      {
+        "id": "north_wan2",
+        "deviceId": "north_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "198.51.100.6",
+        "l3Cidr": "198.51.100.4/30"
+      },
+      {
+        "id": "east_wan1",
+        "deviceId": "east_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "192.0.2.2",
+        "l3Cidr": "192.0.2.0/30"
+      },
+      {
+        "id": "east_wan2",
+        "deviceId": "east_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "192.0.2.6",
+        "l3Cidr": "192.0.2.4/30"
+      },
+      {
+        "id": "south_wan1",
+        "deviceId": "south_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.10",
+        "l3Cidr": "203.0.113.8/30"
+      },
+      {
+        "id": "south_wan2",
+        "deviceId": "south_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.14",
+        "l3Cidr": "203.0.113.12/30"
       }
     ],
     "vlans": [
@@ -3205,7 +3301,144 @@
       "banner": "Acceso exclusivo a personal autorizado. Actividad monitorizada.",
       "backup": false
     },
-    "wanCircuits": [],
+    "wanCircuits": [
+      {
+        "id": "hq_wan_primary",
+        "name": "Internet HQ Primary",
+        "siteRef": "hq_site",
+        "deviceId": "hq_rtr",
+        "portId": "hq_wan1",
+        "provider": "ISP-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
+        "latencyTargetMs": 25,
+        "lossTargetPercent": 0.5,
+        "slaAvailability": 99.9,
+        "demarcLocation": "hq_site · CPD",
+        "physicalPath": "Demarcación principal → router"
+      },
+      {
+        "id": "hq_wan_backup",
+        "name": "Internet HQ Backup",
+        "siteRef": "hq_site",
+        "deviceId": "hq_rtr",
+        "portId": "hq_wan2",
+        "provider": "ISP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 500,
+        "bandwidthUpMbps": 250,
+        "latencyTargetMs": 40,
+        "lossTargetPercent": 1,
+        "slaAvailability": 99.5,
+        "demarcLocation": "hq_site · CPD",
+        "physicalPath": "Demarcación secundaria → router"
+      },
+      {
+        "id": "north_wan_primary",
+        "name": "Internet NORTH Primary",
+        "siteRef": "north_site",
+        "deviceId": "north_rtr",
+        "portId": "north_wan1",
+        "provider": "ISP-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
+        "latencyTargetMs": 25,
+        "lossTargetPercent": 0.5,
+        "slaAvailability": 99.9,
+        "demarcLocation": "north_site · CPD",
+        "physicalPath": "Demarcación principal → router"
+      },
+      {
+        "id": "north_wan_backup",
+        "name": "Internet NORTH Backup",
+        "siteRef": "north_site",
+        "deviceId": "north_rtr",
+        "portId": "north_wan2",
+        "provider": "ISP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 500,
+        "bandwidthUpMbps": 250,
+        "latencyTargetMs": 40,
+        "lossTargetPercent": 1,
+        "slaAvailability": 99.5,
+        "demarcLocation": "north_site · CPD",
+        "physicalPath": "Demarcación secundaria → router"
+      },
+      {
+        "id": "east_wan_primary",
+        "name": "Internet EAST Primary",
+        "siteRef": "east_site",
+        "deviceId": "east_rtr",
+        "portId": "east_wan1",
+        "provider": "ISP-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
+        "latencyTargetMs": 25,
+        "lossTargetPercent": 0.5,
+        "slaAvailability": 99.9,
+        "demarcLocation": "east_site · CPD",
+        "physicalPath": "Demarcación principal → router"
+      },
+      {
+        "id": "east_wan_backup",
+        "name": "Internet EAST Backup",
+        "siteRef": "east_site",
+        "deviceId": "east_rtr",
+        "portId": "east_wan2",
+        "provider": "ISP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 500,
+        "bandwidthUpMbps": 250,
+        "latencyTargetMs": 40,
+        "lossTargetPercent": 1,
+        "slaAvailability": 99.5,
+        "demarcLocation": "east_site · CPD",
+        "physicalPath": "Demarcación secundaria → router"
+      },
+      {
+        "id": "south_wan_primary",
+        "name": "Internet SOUTH Primary",
+        "siteRef": "south_site",
+        "deviceId": "south_rtr",
+        "portId": "south_wan1",
+        "provider": "ISP-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 500,
+        "latencyTargetMs": 25,
+        "lossTargetPercent": 0.5,
+        "slaAvailability": 99.9,
+        "demarcLocation": "south_site · CPD",
+        "physicalPath": "Demarcación principal → router"
+      },
+      {
+        "id": "south_wan_backup",
+        "name": "Internet SOUTH Backup",
+        "siteRef": "south_site",
+        "deviceId": "south_rtr",
+        "portId": "south_wan2",
+        "provider": "ISP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 500,
+        "bandwidthUpMbps": 250,
+        "latencyTargetMs": 40,
+        "lossTargetPercent": 1,
+        "slaAvailability": 99.5,
+        "demarcLocation": "south_site · CPD",
+        "physicalPath": "Demarcación secundaria → router"
+      }
+    ],
     "linkAggregations": [
       {
         "id": "hq_lag_core_access",
@@ -6219,6 +6452,70 @@
           "chargeType": "one-time",
           "capexOpex": "capex",
           "note": "Pasacables horizontal 1U"
+        },
+        "wanCircuit:hq_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 260,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-A primary"
+        },
+        "wanCircuit:hq_wan_backup": {
+          "unitCost": 120,
+          "unitPrice": 180,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-B backup"
+        },
+        "wanCircuit:north_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 260,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-A primary"
+        },
+        "wanCircuit:north_wan_backup": {
+          "unitCost": 120,
+          "unitPrice": 180,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-B backup"
+        },
+        "wanCircuit:east_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 260,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-A primary"
+        },
+        "wanCircuit:east_wan_backup": {
+          "unitCost": 120,
+          "unitPrice": 180,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-B backup"
+        },
+        "wanCircuit:south_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 260,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-A primary"
+        },
+        "wanCircuit:south_wan_backup": {
+          "unitCost": 120,
+          "unitPrice": 180,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-B backup"
         }
       },
       "modelPricing": {
@@ -7329,6 +7626,126 @@
           "acceptedBy": "Supervisor Golden",
           "acceptedAt": "2026-10-01T20:10:00.000Z",
           "note": "Intervención validada contra diseño, Observed y documentación física."
+        }
+      }
+    },
+    "highAvailability": {
+      "devices": {
+        "hq_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "203.0.113.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "hq_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.5",
+              "distance": 20,
+              "circuitRef": "hq_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "hq_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        },
+        "north_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "198.51.100.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "north_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "198.51.100.5",
+              "distance": 20,
+              "circuitRef": "north_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "north_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        },
+        "east_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "192.0.2.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "east_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "192.0.2.5",
+              "distance": 20,
+              "circuitRef": "east_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "east_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        },
+        "south_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "203.0.113.9",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "south_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.13",
+              "distance": 20,
+              "circuitRef": "south_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "south_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
         }
       }
     }
