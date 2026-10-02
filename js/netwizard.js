@@ -146,6 +146,7 @@ function replaceProject(project,options={}){
   const next=normalizeProject(project);
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,next);
+  if(typeof ensureVisualModel==='function')ensureVisualModel();
   save({source:options.source||'api',silent:options.silent});
   if(!options.skipRefresh && typeof refresh==='function')refresh();
   return projectSnapshot();
@@ -2912,7 +2913,16 @@ function renderActiveStep(){
       break;
   }
 }
+let staticUiInitialized=false;
+function initStaticUiOnce(){
+  if(staticUiInitialized)return;
+  initDeviceModelList();
+  initDeviceKindSelect();
+  initDeviceVendorSelect();
+  staticUiInitialized=true;
+}
 function refresh(){
+  initStaticUiOnce();
   renderNav();
   renderActiveStep();
   if(window.NetWizardI18n&&window.NetWizardI18n.applyI18n)window.NetWizardI18n.applyI18n(document);
