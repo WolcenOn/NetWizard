@@ -273,12 +273,19 @@ function inject(){
 function refresh(){inject();renderEditor();}
 function install(){
   if(!root.document)return false;
-  const active=()=>root.document.getElementById('pg-validate')?.classList.contains('on');
-  const refreshIfActive=()=>{if(active())refresh();};
-  document.addEventListener('nw:project:changed',refreshIfActive);
-  document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='validate')refresh();});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshIfActive,100));
-  else setTimeout(refreshIfActive,0);
+  const linksActive=()=>root.document.getElementById('pg-links')?.classList.contains('on');
+  const validateActive=()=>root.document.getElementById('pg-validate')?.classList.contains('on');
+  const refreshActive=()=>{
+    if(linksActive())renderEditor();
+    if(validateActive())inject();
+  };
+  document.addEventListener('nw:project:changed',refreshActive);
+  document.addEventListener('nw:view:changed',event=>{
+    if(event.detail?.step==='links')renderEditor();
+    else if(event.detail?.step==='validate')inject();
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshActive,100));
+  else setTimeout(refreshActive,0);
   return true;
 }
 const api={version:'netwizard-wan-circuits-ui-v2',buildModel,renderInto,renderEditor,inject,refresh,install};
