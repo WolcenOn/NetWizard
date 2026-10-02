@@ -24,10 +24,15 @@ function install(){
   return true;
 }
 function inject(){
-  for(const name of ['NetWizardRackUi','NetWizardStructuredCablingUi','NetWizardCompactReport']){
-    const mod=root[name];
-    if(mod&&typeof mod.inject==='function'){try{mod.inject();}catch(_e){}}
+  const physicalActive=root.document?.getElementById('pg-physical')?.classList.contains('on');
+  if(physicalActive){
+    for(const name of ['NetWizardRackUi','NetWizardStructuredCablingUi']){
+      const mod=root[name];
+      if(mod&&typeof mod.inject==='function'){try{mod.inject();}catch(_e){}}
+    }
   }
+  const report=root.NetWizardCompactReport;
+  if(report&&typeof report.inject==='function'){try{report.inject();}catch(_e){}}
 }
 function boot(attempt){
   if(install()){inject();return;}
