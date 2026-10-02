@@ -24,6 +24,10 @@ const Capacity=require(path.join(root,'js','netwizard-traffic-capacity.js'));
 const Failure=require(path.join(root,'js','netwizard-failure-simulation.js'));
 const Access=require(path.join(root,'js','netwizard-access-security-plan.js'));
 const Management=require(path.join(root,'js','netwizard-management-plan.js'));
+const PhysicalPlan=require(path.join(root,'js','netwizard-physical-intervention-plan.js'));
+global.NetWizardPhysicalInterventionPlan=PhysicalPlan;
+global.NetWizardObservedDrift=require(path.join(root,'js','netwizard-observed-drift.js'));
+const Execution=require(path.join(root,'js','netwizard-intervention-execution.js'));
 global.NetWizardFieldInterventionPackage=require(path.join(root,'js','netwizard-field-intervention-package.js'));
 global.NetWizardXlsxWriter=require(path.join(root,'js','netwizard-xlsx-writer.js'));
 const Budget=require(path.join(root,'js','netwizard-budget.js'));
@@ -185,6 +189,28 @@ for(const d of p.devices){
   assert.deepStrictEqual(mgmt.warnings||[],[],d.id+': gestión sin warnings');
 }
 
+
+
+const fieldPlan=PhysicalPlan.buildChecklist(p);
+assert.strictEqual(fieldPlan.ok,true,fieldPlan.message);
+assert.deepStrictEqual(
+  fieldPlan.actions.map(x=>x.id).sort(),
+  ['device:add:south_access','power:add:south_pwr_south_access'],
+  'La intervención Golden debe ser pequeña, explícita y completamente trazable'
+);
+
+const execution=Execution.build(p);
+assert.strictEqual(execution.ok,true);
+assert.strictEqual(execution.counts.total,2);
+assert.strictEqual(execution.counts.done,2);
+assert.strictEqual(execution.counts.pending,0);
+assert.strictEqual(execution.counts.blocked,0);
+assert.strictEqual(execution.counts.percent,100);
+
+const acceptance=Execution.acceptanceChecks(p);
+assert.strictEqual(acceptance.ready,true,acceptance.issues.map(x=>x.code+': '+x.message).join('\n'));
+assert.strictEqual(acceptance.counts.blocking,0);
+assert.strictEqual(acceptance.counts.warnings,0);
 
 const budgetValidation=Budget.validateProject(p);
 assert.strictEqual(budgetValidation.ok,true,budgetValidation.issues.map(x=>x.code+': '+x.message).join('\n'));
