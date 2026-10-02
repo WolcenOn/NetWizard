@@ -2,7 +2,7 @@
 (function initNetWizardGoldenPathEnterprise(root){
 'use strict';
 
-const SAMPLE_URL='./samples/golden-path-enterprise-complete.json';
+const SAMPLE_URL='./samples/golden-path-secure-multisite.json';
 
 async function fetchPayload(){
   const response=await root.fetch(SAMPLE_URL,{cache:'no-store'});
@@ -27,7 +27,7 @@ async function loadIntoProject(){
 async function download(){
   const a=root.document.createElement('a');
   a.href=SAMPLE_URL;
-  a.download='netwizard-golden-path-enterprise-complete.json';
+  a.download='netwizard-golden-path-secure-multisite.json';
   root.document.body.appendChild(a);a.click();a.remove();
   return true;
 }
@@ -38,9 +38,9 @@ function inject(){
   const load=root.document.createElement('button');
   load.id='btnGoldenPathEnterprise';load.type='button';load.className='btn bp';
   load.textContent='⭐ Cargar Golden Path completo';
-  load.title='Demo integral HQ + sucursal: routing, VPN, resiliencia, físico, Observed, workflow y presupuesto';
+  load.title='Referencia limpia de 4 sedes: OSPF redundante, servicios segmentados, políticas explícitas y Production Gate READY';
   load.onclick=async()=>{
-    if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el Golden Path Enterprise completo?'))return;
+    if(root.confirm&&!root.confirm('Sustituir el proyecto actual por el Golden Path seguro multisede?'))return;
     try{await loadIntoProject();}
     catch(error){root.alert?root.alert(error.message):root.console?.error(error);}
   };
@@ -50,7 +50,7 @@ function inject(){
   anchor.insertAdjacentElement('afterend',dl);
   anchor.insertAdjacentElement('afterend',load);
 }
-const api={version:'netwizard-golden-path-enterprise-v1',url:SAMPLE_URL,fetchPayload,preparedProject,loadIntoProject,download,inject};
+const api={version:'netwizard-golden-path-secure-multisite-v1',url:SAMPLE_URL,fetchPayload,preparedProject,loadIntoProject,download,inject};
 root.NetWizardGoldenPathEnterprise=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document){
