@@ -491,8 +491,13 @@ Mantenimiento:
     $('btnProductionGateChecklist').onclick = () => { downloadText('netwizard-production-checklist.md', exportChecklistMarkdown(ensureReport(), {locale:localeForReport()}), 'text/markdown;charset=utf-8'); };
     $('btnProductionGateToCfg').onclick = () => { if(root.navTo) root.navTo('cfg'); };
     try{ run(); }catch(_e){}
-    doc.addEventListener('nw:project:changed', () => { try{ run(); }catch(_e){} });
-    root.addEventListener && root.addEventListener('nw:mode:changed', () => { try{ run(); }catch(_e){} });
+    const markStale=()=>{
+      lastReport=null;
+      const out=$('productionGateOut');
+      if(out)out.textContent='Proyecto modificado. Ejecuta la puerta de producción para recalcular.';
+    };
+    doc.addEventListener('nw:project:changed', markStale);
+    root.addEventListener && root.addEventListener('nw:mode:changed', markStale);
   }
 
   const api = {version:'netwizard-production-gate-v3.50', runProductionGate, evaluateReleaseCriteria, summarizeGate, summarizeCounts, collectModuleIssues, applyStrictProductionEscalation, remediationForIssue, buildRemediationGuide, summarizeRemediationGuide, exportChecklistMarkdown};
