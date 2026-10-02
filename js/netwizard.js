@@ -1669,7 +1669,20 @@ function renderHosts(){
     const value={access,resolvedPortId,port,dev:deviceId?deviceById.get(deviceId)||null:null,loc:visualLocById.get(hostVisualLoc(h.id)||'')||null};
     hostMeta.set(h.id,value);return value;
   };
-  const ipFor=h=>{if(!ipSortCache.has(h.id))ipSortCache.set(h.id,effectiveHostIp(h));return ipSortCache.get(h.id);};
+  const hostOrdinalById=new Map(),vlanOrdinal=new Map(),subnetInfoByVlan=new Map();
+  for(const host of S.hosts){const n=vlanOrdinal.get(host.vlanRef)||0;hostOrdinalById.set(host.id,n);vlanOrdinal.set(host.vlanRef,n+1);}
+  for(const subnet of S.subnets||[]){if(subnet.vlanRef)subnetInfoByVlan.set(subnet.vlanRef,parseCidr(subnet.cidr));}
+  const ipFor=h=>{
+    if(ipSortCache.has(h.id))return ipSortCache.get(h.id);
+    let value=h.staticIp||'';
+    if(h.ipMode!=='static'){
+      const ci=subnetInfoByVlan.get(h.vlanRef),ordinal=hostOrdinalById.get(h.id)||0;
+      const idx=Math.max(2,ordinal+2);
+      const next=ci&&ci.fh!=null&&ci.lh!=null&&(ci.fh+idx)<=ci.lh?ip4s(ci.fh+idx):'DHCP';
+      value=h.ipMode==='dhcp'?('DHCP · '+next):next;
+    }
+    ipSortCache.set(h.id,value);return value;
+  };
   let hosts=S.hosts.slice();if(fv)hosts=hosts.filter(h=>h.vlanRef===fv);if(ft)hosts=hosts.filter(h=>h.type===ft);
   const sort=S.uiSort.hosts||{key:'name',dir:1};
   hosts.sort((a,b)=>{const va=vlanByRef.get(a.vlanRef),vb=vlanByRef.get(b.vlanRef);let av='',bv='';switch(sort.key){case 'type':av=HT[a.type]?.l||a.type;bv=HT[b.type]?.l||b.type;break;case 'vlan':av=va?.vlanId||99999;bv=vb?.vlanId||99999;break;case 'ip':av=ipFor(a);bv=ipFor(b);break;case 'location':{const ma=metaFor(a),mb=metaFor(b);av=ma.loc?.name||a.physicalLocation||'';bv=mb.loc?.name||b.physicalLocation||'';break;}case 'connection':{const ma=metaFor(a),mb=metaFor(b);av=(ma.dev?.name||'')+' '+(ma.resolvedPortId||'');bv=(mb.dev?.name||'')+' '+(mb.resolvedPortId||'');break;}default:av=a.name;bv=b.name;}return sort.dir*cmpMixed(av,bv);});
@@ -1803,16 +1816,18 @@ function applyLy(devId){
   save();refresh();alert(`✓ Puertos generados para ${d.name}.`);
 }
 $('visDev').onchange=renderVisPorts;
-function portChips(p){
+function portChips(p,context=null){
   const frag=document.createDocumentFragment();
   const chip=(txt,css)=>{const sp=makeEl('span','pch',txt); if(css) Object.entries(css).forEach(([k,v])=>sp.style[k]=v); frag.appendChild(sp);};
   chip(p.media||'');
   if(p.mode==='access'){
-    const v=vByRef(p.accessVlanRef); chip(v?'V'+v.vlanId:'?',{background:v?(v.color||vColor(v.id)):'var(--s3)',color:v?'#fff':'var(--t3)'});
+    const v=context?.vlanByRef?.get(p.accessVlanRef)||vByRef(p.accessVlanRef); chip(v?'V'+v.vlanId:'?',{background:v?(v.color||vColor(v.id)):'var(--s3)',color:v?'#fff':'var(--t3)'});
   } else if(p.mode==='trunk') chip('TRK',{background:'var(--ywd)',color:'var(--yw)'});
   else chip('L3',{background:'var(--pud)',color:'var(--pu)'});
-  if(isLinked(p.id)) chip('🔗',{background:'var(--acd)',color:'var(--ac)'});
-  const hc=S.hosts.filter(h=>hostResolvedPortId(h)===p.id).length; if(hc) chip(`${hc}💻`,{background:'var(--gnd)',color:'var(--gn)'});
+  const linked=context?.linkedPorts?context.linkedPorts.has(p.id):isLinked(p.id);
+  if(linked)chip('🔗',{background:'var(--acd)',color:'var(--ac)'});
+  const hc=context?.hostCountByPort?context.hostCountByPort.get(p.id)||0:S.hosts.filter(h=>hostResolvedPortId(h)===p.id).length;
+  if(hc) chip(`${hc}💻`,{background:'var(--gnd)',color:'var(--gn)'});
   return frag;
 }
 function renderVisPorts(){
@@ -1822,6 +1837,9 @@ function renderVisPorts(){
   if(!d?.layout?.total){setSingleHint(grid,'Este switch no tiene layout. Usa "Layout switch" o añade puertos en la sección Puertos.');return;}
   const pbp=new Map();for(const p of portsByDev(devId))if(p.position)pbp.set(p.position,p);
   const linkedPorts=new Set();for(const link of S.links||[]){if(link.aPortId)linkedPorts.add(link.aPortId);if(link.bPortId)linkedPorts.add(link.bPortId);}
+  const hostCountByPort=new Map();for(const host of S.hosts||[]){const pid=hostResolvedPortId(host);if(pid)hostCountByPort.set(pid,(hostCountByPort.get(pid)||0)+1);}
+  const vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
+  const chipContext={linkedPorts,hostCountByPort,vlanByRef};
   for(let pos=1;pos<=d.layout.total;pos++){
     const slot=d.layout.slots?.[pos-1]||'EMPTY';const p=pbp.get(pos)||null;
     const cell=makeEl('div','pport');
@@ -1833,7 +1851,7 @@ function renderVisPorts(){
     if(p){ cell.dataset.pp=p.id; cell.addEventListener('click',()=>openPortModal(p.id)); }
     cell.appendChild(makeEl('div','pn',label));
     const meta=makeEl('div','pm'); meta.appendChild(document.createTextNode(`${slot} P${pos}`)); if(p?.desc){ meta.appendChild(document.createElement('br')); meta.appendChild(document.createTextNode(String(p.desc).substring(0,16))); } cell.appendChild(meta);
-    const chips=makeEl('div','pc'); if(p) chips.appendChild(portChips(p)); cell.appendChild(chips);
+    const chips=makeEl('div','pc'); if(p) chips.appendChild(portChips(p,chipContext)); cell.appendChild(chips);
     grid.appendChild(cell);
   }
 }
