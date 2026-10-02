@@ -514,7 +514,15 @@
       <details class="card" id="ipMapPanel"><summary><span class="card-t">🗺 Mapa IP por VLAN</span></summary><div id="ipMap"></div></details>
     </div>
   </div>
-  <details class="card" id="hostsPanel" open><summary><span class="card-t">💻 Hosts</span> <span class="b bac" id="hCnt">0</span></summary><div id="hostsList"></div></details>
+  <details class="card" id="hostsPanel" open>
+    <summary><span class="card-t">💻 Hosts</span> <span class="b bac" id="hCnt">0</span></summary>
+    <div class="card-h"><span class="hint" id="hostsPageInfo"></span></div>
+    <div id="hostsList"></div>
+    <div class="brow" id="hostsPager" style="justify-content:space-between;">
+      <button class="btn bs bsm" id="hostsPrev" type="button">← Anterior</button>
+      <button class="btn bs bsm" id="hostsNext" type="button">Siguiente →</button>
+    </div>
+  </details>
 </div>
 
 
@@ -598,7 +606,15 @@
         </div>
         <div id="portGrid" class="pgrid"></div>
       </div>
-      <div class="card"><div class="card-h"><div class="card-t">🔗 Enlaces</div></div><div id="linksList"></div></div>
+      <details class="card" id="linksListPanel" open>
+        <summary><span class="card-t">🔗 Enlaces</span></summary>
+        <div class="card-h"><span class="hint" id="linksPageInfo"></span></div>
+        <div id="linksList"></div>
+        <div class="brow" id="linksPager" style="justify-content:space-between;">
+          <button class="btn bs bsm" id="linksPrev" type="button">← Anterior</button>
+          <button class="btn bs bsm" id="linksNext" type="button">Siguiente →</button>
+        </div>
+      </details>
     </div>
   </div>
   <div id="nwWanCircuitsEditorMount"></div>
