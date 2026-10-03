@@ -83,6 +83,8 @@ test('el asistente separa infraestructura gestionada y endpoints sin switches fi
   page.on('dialog', dialog => dialog.accept());
   await page.click('[data-step="wiz"]');
   await page.click('[data-sc="office"]');
+  await expect(page.locator('#wModeCard')).toBeVisible();
+  await page.click('#wNewScenario');
   for(const id of ['server','ap','pc','iot','nvr']) await page.click(`[data-dp="${id}"]`);
   await page.click('#wNext2');
   await page.click('#wApply');
