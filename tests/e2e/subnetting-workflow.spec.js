@@ -61,6 +61,8 @@ test('asistente reutiliza el planificador común para las subnets del escenario'
 
   await page.evaluate(()=>window.navTo('wiz'));
   await page.locator('[data-sc="home"]').click();
+  await expect(page.locator('#wModeCard')).toBeVisible();
+  await page.locator('#wNewScenario').click();
   await expect(page.locator('#wStep2Card')).toBeVisible();
   await page.locator('#wNext2').click();
   await expect(page.locator('#wStep3Card')).toBeVisible();
