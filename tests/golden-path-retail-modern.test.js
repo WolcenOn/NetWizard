@@ -26,6 +26,7 @@ const Budget=require(path.join(root,'js','netwizard-budget.js'));
 const Vtp=require(path.join(root,'js','netwizard-vtp-production-verification.js'));
 const Gate=require(path.join(root,'js','netwizard-production-gate.js'));
 const PrivateWorker=require(path.join(root,'private','deployment-worker.js'));
+const PrivateEngine=require(path.join(root,'private','vendor-config-engine.js'));
 
 const payload=JSON.parse(fs.readFileSync(path.join(root,'samples','golden-path-retail-modern.json'),'utf8'));
 assert.strictEqual(payload.format,'netwizard-project');
@@ -183,14 +184,16 @@ for(const d of p.devices){
   assert.strictEqual(privateResult.configReadiness[d.id].status,'apply-ready',d.id+': '+JSON.stringify(privateResult.configReadiness[d.id].reasons));
 }
 
-const routerCfg=privateResult.configs.retail_rtr;
+const generated=PrivateEngine.generateAll(p);
+assert.strictEqual(generated.ok,true,JSON.stringify(generated.issues));
+const routerCfg=generated.configs.retail_rtr;
 assert.match(routerCfg,/ip nat inside source list 100 interface GigabitEthernet0\/0 overload/);
 assert.match(routerCfg,/ip nat inside source list 100 interface GigabitEthernet0\/4 overload/);
 assert.match(routerCfg,/ip access-list extended FW_POLICY/);
 assert.doesNotMatch(routerCfg,/ip access-list extended NW_SEG_/);
 assert.match(routerCfg,/^ipv6 unicast-routing$/m);
 assert.match(routerCfg,/ipv6 access-list FW_POLICY_V6/);
-assert.match(privateResult.configs.retail_core,/interface Vlan160[\s\S]*ip address 10\.70\.60\.10 255\.255\.255\.0/);
-assert.match(privateResult.configs.retail_access,/interface Vlan160[\s\S]*ip address 10\.70\.60\.11 255\.255\.255\.0/);
+assert.match(generated.configs.retail_core,/interface Vlan160[\s\S]*ip address 10\.70\.60\.10 255\.255\.255\.0/);
+assert.match(generated.configs.retail_access,/interface Vlan160[\s\S]*ip address 10\.70\.60\.11 255\.255\.255\.0/);
 
 console.log('✓ Golden Retail: POS aislado, Wi-Fi moderno, dual-stack, dual-WAN y Production Gate READY');
