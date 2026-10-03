@@ -33,7 +33,7 @@ Mantenimiento:
   function devLabel(d){ return d ? `${d.name || d.id || '?'}` : 'dispositivo desconocido'; }
   function portLabel(p, devicesById){ const d = devicesById.get(p && p.deviceId); return `${devLabel(d)}:${p && p.name || p && p.id || '?'}`; }
   function isSwitch(d){ return lc(d && d.type) === 'switch' || lc(d && d.type).includes('switch'); }
-  function isL3Capable(d){ const t = lc(d && d.type); return t === 'router' || t === 'firewall' || t === 'l3switch' || t === 'l3_switch' || (t.includes('switch') && (d && (d.l3 === true || d.layer3 === true || d.routing === true || /l3|layer ?3|core/i.test(clean(d.role || d.model || d.notes))))); }
+  function isL3Capable(d){ const t = lc(d && d.type); return t === 'router' || t === 'firewall' || t === 'l3switch' || t === 'l3_switch' || (t.includes('switch') && (d && (d.l3 === true || d.layer3 === true || d.routing === true || lc(d.l3Capable)==='yes' || /l3|layer ?3|core/i.test(clean(d.role || d.model || d.notes))))); }
   function isAccess(p){ return lc(p && p.mode) === 'access'; }
   function isTrunk(p){ return lc(p && p.mode) === 'trunk'; }
   function isRouted(p){ return lc(p && p.mode) === 'routed' || clean(p && (p.l3Ip || p.routedIp)); }
