@@ -1,0 +1,1829 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-03T08:00:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path · Oficina pequeña segura",
+    "workflow": {
+      "mode": "design"
+    },
+    "customDeviceModels": [],
+    "devices": [
+      {
+        "id": "hq_rtr",
+        "name": "RTR-OFFICE-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 8200L",
+        "modelSource": "manual",
+        "locationId": "hq_cpd",
+        "physicalLocation": "Armario comunicaciones",
+        "mgmtIp": "10.10.60.1",
+        "powerDrawWatts": 120,
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "hq_rack01",
+        "rackUnit": 20,
+        "originRef": "hq_rtr",
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
+      },
+      {
+        "id": "hq_core",
+        "name": "SW-CORE-OFFICE-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L",
+        "modelSource": "manual",
+        "locationId": "hq_cpd",
+        "physicalLocation": "Armario comunicaciones",
+        "mgmtIp": "10.10.60.10",
+        "powerDrawWatts": 110,
+        "rackId": "hq_rack01",
+        "rackUnit": 18,
+        "originRef": "hq_core",
+        "designDisposition": "keep"
+      },
+      {
+        "id": "hq_access",
+        "name": "SW-ACCESS-OFFICE-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9200L 48P PoE+",
+        "modelSource": "manual",
+        "locationId": "hq_cpd",
+        "physicalLocation": "Armario comunicaciones",
+        "mgmtIp": "10.10.60.11",
+        "powerDrawWatts": 95,
+        "poeBudgetW": 740,
+        "rackId": "hq_rack01",
+        "rackUnit": 16,
+        "originRef": "hq_access",
+        "designDisposition": "keep"
+      }
+    ],
+    "ports": [
+      {
+        "id": "hq_lan",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "copper",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LAN trunk HQ",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "hq_core_rtr",
+        "deviceId": "hq_core",
+        "name": "GigabitEthernet1/0/48",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "copper",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-HQ-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "hq_core_acc_1",
+        "deviceId": "hq_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "hq_acc_core_1",
+        "deviceId": "hq_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "hq_core_acc_2",
+        "deviceId": "hq_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "hq_acc_core_2",
+        "deviceId": "hq_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "hq_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "hq_acc_user",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v110",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "USER-HQ-01"
+      },
+      {
+        "id": "hq_acc_server",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SRV-HQ-01"
+      },
+      {
+        "id": "hq_acc_phone",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v130",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "PHONE-HQ-01"
+      },
+      {
+        "id": "hq_acc_camera",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "af",
+        "poeWattsMax": 15.4,
+        "desc": "CAM-HQ-01"
+      },
+      {
+        "id": "hq_acc_guest",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v150",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "GUEST-HQ-01"
+      },
+      {
+        "id": "hq_acc_ap1",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "hq_v160",
+        "allowedVlans": [
+          110,
+          150,
+          160,
+          170
+        ],
+        "uplink": false,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false
+      },
+      {
+        "id": "hq_acc_ap2",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "hq_v160",
+        "allowedVlans": [
+          110,
+          150,
+          160,
+          170
+        ],
+        "uplink": false,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false
+      },
+      {
+        "id": "hq_acc_admin",
+        "deviceId": "hq_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "hq_v160",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-HQ-01"
+      },
+      {
+        "id": "hq_wan1",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.2",
+        "l3Cidr": "203.0.113.0/30"
+      },
+      {
+        "id": "hq_wan2",
+        "deviceId": "hq_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "203.0.113.6",
+        "l3Cidr": "203.0.113.4/30"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "hq_v110",
+        "vlanId": 110,
+        "name": "HQ-Usuarios",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v120",
+        "vlanId": 120,
+        "name": "HQ-Servicios",
+        "intent": {
+          "type": "servers",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "hq_v130",
+        "vlanId": 130,
+        "name": "HQ-Voz",
+        "intent": {
+          "type": "voice",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v140",
+        "vlanId": 140,
+        "name": "HQ-Camaras",
+        "intent": {
+          "type": "cameras",
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v170",
+        "vlanId": 170,
+        "name": "OFFICE-WiFi-Corporativa",
+        "intent": {
+          "type": "users",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "hq_v150",
+        "vlanId": 150,
+        "name": "HQ-Invitados",
+        "intent": {
+          "type": "guests",
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "hq_v160",
+        "vlanId": 160,
+        "name": "HQ-Gestion",
+        "intent": {
+          "type": "management",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "hq_v199",
+        "vlanId": 199,
+        "name": "HQ-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "hq_sn_users",
+        "vlanRef": "hq_v110",
+        "cidr": "10.10.10.0/24",
+        "gateway": "10.10.10.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_servers",
+        "vlanRef": "hq_v120",
+        "cidr": "10.10.20.0/24",
+        "gateway": "10.10.20.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_voice",
+        "vlanRef": "hq_v130",
+        "cidr": "10.10.30.0/24",
+        "gateway": "10.10.30.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_cameras",
+        "vlanRef": "hq_v140",
+        "cidr": "10.10.40.0/24",
+        "gateway": "10.10.40.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_guest",
+        "vlanRef": "hq_v150",
+        "cidr": "10.10.50.0/24",
+        "gateway": "10.10.50.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_mgmt",
+        "vlanRef": "hq_v160",
+        "cidr": "10.10.60.0/24",
+        "gateway": "10.10.60.1",
+        "gatewayDeviceRef": "hq_rtr"
+      },
+      {
+        "id": "hq_sn_wifi",
+        "vlanRef": "hq_v170",
+        "cidr": "10.10.70.0/24",
+        "gateway": "10.10.70.1",
+        "gatewayDeviceRef": "hq_rtr"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "hq_user",
+        "name": "USER-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v110",
+        "portRef": "hq_acc_user",
+        "ipMode": "static",
+        "staticIp": "10.10.10.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal"
+      },
+      {
+        "id": "hq_server",
+        "name": "SRV-HQ-01",
+        "type": "server",
+        "vlanRef": "hq_v120",
+        "portRef": "hq_acc_server",
+        "ipMode": "static",
+        "staticIp": "10.10.20.10",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal"
+      },
+      {
+        "id": "hq_phone",
+        "name": "PHONE-HQ-01",
+        "type": "phone",
+        "vlanRef": "hq_v130",
+        "portRef": "hq_acc_phone",
+        "ipMode": "static",
+        "staticIp": "10.10.30.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal",
+        "poeRequired": true,
+        "poeWatts": 7
+      },
+      {
+        "id": "hq_camera",
+        "name": "CAM-HQ-01",
+        "type": "camera",
+        "vlanRef": "hq_v140",
+        "portRef": "hq_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.10.40.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "hq_guest",
+        "name": "GUEST-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v150",
+        "portRef": "hq_acc_guest",
+        "ipMode": "static",
+        "staticIp": "10.10.50.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal"
+      },
+      {
+        "id": "hq_admin",
+        "name": "ADMIN-HQ-01",
+        "type": "pc",
+        "vlanRef": "hq_v160",
+        "portRef": "hq_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.10.60.20",
+        "locationId": "room_hq",
+        "physicalLocation": "Oficina principal"
+      }
+    ],
+    "links": [
+      {
+        "id": "hq_link_rtr_core",
+        "name": "HQ router-core",
+        "aPortId": "hq_lan",
+        "bPortId": "hq_core_rtr",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 3,
+        "speed": "1G",
+        "capacityMbps": 1000
+      },
+      {
+        "id": "hq_lag_link_1",
+        "name": "HQ LAG member 1",
+        "aPortId": "hq_core_acc_1",
+        "bPortId": "hq_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "hq_lag_link_2",
+        "name": "HQ LAG member 2",
+        "aPortId": "hq_core_acc_2",
+        "bPortId": "hq_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 3,
+        "speed": "10G",
+        "capacityMbps": 10000
+      }
+    ],
+    "fwRules": [],
+    "vlanMatrix": {
+      "hq_v150_hq_v110": false,
+      "hq_v110_hq_v150": false,
+      "hq_v150_hq_v120": false,
+      "hq_v120_hq_v150": false,
+      "hq_v150_hq_v130": false,
+      "hq_v130_hq_v150": false,
+      "hq_v150_hq_v140": false,
+      "hq_v140_hq_v150": false,
+      "hq_v150_hq_v160": false,
+      "hq_v160_hq_v150": false,
+      "hq_v150_hq_v170": false,
+      "hq_v170_hq_v150": false,
+      "hq_v140_hq_v110": false,
+      "hq_v140_hq_v130": false,
+      "hq_v140_hq_v160": false,
+      "hq_v140_hq_v170": false,
+      "hq_v140_hq_v120": true,
+      "hq_v110_hq_v160": false,
+      "hq_v130_hq_v160": false,
+      "hq_v170_hq_v160": false,
+      "hq_v110_hq_v140": false,
+      "hq_v170_hq_v140": false
+    },
+    "dhcp": {
+      "110": {
+        "enabled": true,
+        "start": "10.10.10.50",
+        "end": "10.10.10.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "130": {
+        "enabled": true,
+        "start": "10.10.30.50",
+        "end": "10.10.30.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "140": {
+        "enabled": true,
+        "start": "10.10.40.50",
+        "end": "10.10.40.199",
+        "dns": "10.10.20.10,10.20.20.10",
+        "domain": "corp.example",
+        "lease": 7,
+        "exclusions": [],
+        "reservations": []
+      },
+      "150": {
+        "enabled": true,
+        "start": "10.10.50.50",
+        "end": "10.10.50.199",
+        "dns": "1.1.1.1,8.8.8.8",
+        "domain": "guest.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "170": {
+        "enabled": true,
+        "start": "10.10.70.50",
+        "end": "10.10.70.199",
+        "dns": "10.10.20.10",
+        "domain": "office.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "998",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "997"
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-OFFICE",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "hq_core": "transparent",
+        "hq_access": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-03T08:00:00.000Z",
+      "vtpDevices": {
+        "hq_core": {
+          "domain": "NW-OFFICE",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T08:00:00.000Z"
+        },
+        "hq_access": {
+          "domain": "NW-OFFICE",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T08:00:00.000Z"
+        }
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
+    "physicalLocations": [
+      {
+        "id": "hq_site",
+        "name": "Oficina principal",
+        "type": "site"
+      },
+      {
+        "id": "hq_cpd",
+        "name": "Oficina principal · Armario comunicaciones",
+        "type": "room",
+        "parentId": "hq_site"
+      },
+      {
+        "id": "room_hq",
+        "name": "Oficina principal · Zona de trabajo",
+        "type": "room",
+        "parentId": "hq_site"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "hq_rack01",
+        "name": "RACK-OFFICE-01",
+        "locationId": "hq_cpd",
+        "rackUnits": 24,
+        "widthMm": 600,
+        "depthMm": 1000,
+        "maxLoadKg": 500,
+        "powerCapacityWatts": 3500,
+        "coolingCapacityWatts": 2500,
+        "numberingDirection": "bottom-up"
+      }
+    ],
+    "rackItems": [
+      {
+        "id": "rackitem_hq_patch01",
+        "rackId": "hq_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "hq_patch01",
+        "label": "PP-OFFICE-01",
+        "startUnit": 24,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "hq_cm01",
+        "rackId": "hq_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables oficina",
+        "startUnit": 23,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
+    "patchPanels": [
+      {
+        "id": "hq_patch01",
+        "rackId": "hq_rack01",
+        "name": "PP-OFFICE-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 24
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "hq_to_user",
+        "locationId": "room_hq",
+        "name": "TO-HQ-USER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_server",
+        "locationId": "room_hq",
+        "name": "TO-HQ-SERVER",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_phone",
+        "locationId": "room_hq",
+        "name": "TO-HQ-PHONE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_camera",
+        "locationId": "room_hq",
+        "name": "TO-HQ-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_guest",
+        "locationId": "room_hq",
+        "name": "TO-HQ-GUEST",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "hq_to_admin",
+        "locationId": "room_hq",
+        "name": "TO-HQ-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "hq_run_user",
+        "label": "Sede Central USER-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 1,
+        "outletId": "hq_to_user",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_server",
+        "label": "Sede Central SRV-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 2,
+        "outletId": "hq_to_server",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_phone",
+        "label": "Sede Central PHONE-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 3,
+        "outletId": "hq_to_phone",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_camera",
+        "label": "Sede Central CAM-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 4,
+        "outletId": "hq_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_guest",
+        "label": "Sede Central GUEST-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 5,
+        "outletId": "hq_to_guest",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      },
+      {
+        "id": "hq_run_admin",
+        "label": "Sede Central ADMIN-HQ-01",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 6,
+        "outletId": "hq_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Sede Central CPD → bandeja principal → oficina"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "hq_patch_user",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 1,
+        "switchPortId": "hq_acc_user",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_server",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 2,
+        "switchPortId": "hq_acc_server",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_phone",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 3,
+        "switchPortId": "hq_acc_phone",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_camera",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 4,
+        "switchPortId": "hq_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_guest",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 5,
+        "switchPortId": "hq_acc_guest",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hq_patch_admin",
+        "patchPanelId": "hq_patch01",
+        "patchPort": 6,
+        "switchPortId": "hq_acc_admin",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "hq_hostcord_user",
+        "hostId": "hq_user",
+        "outletId": "hq_to_user",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_server",
+        "hostId": "hq_server",
+        "outletId": "hq_to_server",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_phone",
+        "hostId": "hq_phone",
+        "outletId": "hq_to_phone",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_camera",
+        "hostId": "hq_camera",
+        "outletId": "hq_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_guest",
+        "hostId": "hq_guest",
+        "outletId": "hq_to_guest",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "hq_hostcord_admin",
+        "hostId": "hq_admin",
+        "outletId": "hq_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      }
+    ],
+    "pdus": [
+      {
+        "id": "hq_pdu_a",
+        "rackId": "hq_rack01",
+        "name": "PDU-HQ-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      },
+      {
+        "id": "hq_pdu_b",
+        "rackId": "hq_rack01",
+        "name": "PDU-HQ-B",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 16
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "hq_pwr_hq_rtr",
+        "deviceId": "hq_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_core",
+        "deviceId": "hq_core",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "hq_pwr_hq_access",
+        "deviceId": "hq_access",
+        "powerSupplyIndex": 0,
+        "pduId": "hq_pdu_b",
+        "outlet": 1,
+        "feed": "B"
+      }
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_hq",
+          "name": "Oficina principal",
+          "color": "#10233c",
+          "x": 180,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "hq_site"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "hq_rtr": "vloc_hq",
+          "hq_core": "vloc_hq",
+          "hq_access": "vloc_hq"
+        },
+        "hosts": {
+          "hq_user": "vloc_hq",
+          "hq_server": "vloc_hq",
+          "hq_phone": "vloc_hq",
+          "hq_camera": "vloc_hq",
+          "hq_guest": "vloc_hq",
+          "hq_admin": "vloc_hq"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "vrfs": [],
+    "wanCircuits": [
+      {
+        "id": "hq_wan_primary",
+        "name": "Fibra empresarial principal",
+        "siteRef": "hq_site",
+        "deviceId": "hq_rtr",
+        "portId": "hq_wan1",
+        "provider": "ISP-FIBRA-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 1000,
+        "latencyTargetMs": 20,
+        "lossTargetPercent": 0.3,
+        "slaAvailability": 99.9,
+        "demarcLocation": "Oficina principal · Armario comunicaciones",
+        "physicalPath": "ONT/demarcación principal → RTR-OFFICE-01",
+        "expectedPeakMbps": 420
+      },
+      {
+        "id": "hq_wan_backup",
+        "name": "Internet backup independiente",
+        "siteRef": "hq_site",
+        "deviceId": "hq_rtr",
+        "portId": "hq_wan2",
+        "provider": "ISP-BACKUP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 300,
+        "bandwidthUpMbps": 100,
+        "latencyTargetMs": 45,
+        "lossTargetPercent": 1,
+        "slaAvailability": 99.5,
+        "demarcLocation": "Oficina principal · Armario comunicaciones",
+        "physicalPath": "Demarcación secundaria → RTR-OFFICE-01",
+        "expectedPeakMbps": 180
+      }
+    ],
+    "linkAggregations": [
+      {
+        "id": "hq_lag_core_access",
+        "name": "HQ Core-Access LACP",
+        "number": 1,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "hq_core_acc_1",
+          "hq_core_acc_2",
+          "hq_acc_core_1",
+          "hq_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 199,
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ]
+      }
+    ],
+    "trafficProfiles": [
+      {
+        "id": "traffic-office-edge",
+        "name": "Carga LAN hacia Internet",
+        "linkRef": "hq_link_rtr_core",
+        "averageMbps": 120,
+        "peakMbps": 420,
+        "criticalMbps": 250,
+        "latencyMaxMs": 15,
+        "jitterMaxMs": 10,
+        "lossMaxPercent": 0.5
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS corporativo",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "dns-local.office.example"
+          },
+          {
+            "hostname": "dns-cloud.office.example"
+          }
+        ]
+      },
+      {
+        "id": "radius",
+        "name": "RADIUS / 802.1X",
+        "type": "radius",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "radius-local.office.example"
+          },
+          {
+            "hostname": "radius-cloud.office.example"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP corporativo",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "ntp-local.office.example"
+          },
+          {
+            "hostname": "ntp-cloud.office.example"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Logging / SIEM",
+        "type": "syslog",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.10.20.10",
+            "hostname": "syslog-local.office.example"
+          },
+          {
+            "hostname": "siem-cloud.office.example"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [
+      {
+        "id": "wlan-cloud",
+        "name": "Plano de control WLAN gestionado",
+        "critical": false,
+        "peerControllerRefs": []
+      }
+    ],
+    "wifiAccessPoints": [
+      {
+        "id": "ap_hq_1",
+        "name": "AP-HQ-01",
+        "uplinkPortRef": "hq_acc_ap1",
+        "controllerRef": "wlan-cloud",
+        "poeWatts": 25,
+        "locationRef": "room_hq",
+        "ssidRefs": [
+          "ssid_office_corp",
+          "ssid_office_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_hq_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 13,
+            "expectedClients": 6,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_hq_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 16,
+            "expectedClients": 16,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_hq_1_6",
+            "band": "6GHz",
+            "channel": 5,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_hq_2",
+        "name": "AP-HQ-02",
+        "uplinkPortRef": "hq_acc_ap2",
+        "controllerRef": "wlan-cloud",
+        "poeWatts": 25,
+        "locationRef": "room_hq",
+        "ssidRefs": [
+          "ssid_office_corp",
+          "ssid_office_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_hq_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 13,
+            "expectedClients": 6,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_hq_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 16,
+            "expectedClients": 16,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_hq_2_6",
+            "band": "6GHz",
+            "channel": 21,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      }
+    ],
+    "wifiSsids": [
+      {
+        "id": "ssid_office_corp",
+        "name": "OFFICE-CORP",
+        "vlanRef": "hq_v170",
+        "security": "wpa3-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_office_guest",
+        "name": "OFFICE-GUEST",
+        "vlanRef": "hq_v150",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      }
+    ],
+    "ipv6Networks": [
+      {
+        "id": "office_v6_users",
+        "name": "Usuarios cableados IPv6",
+        "prefix": "2001:db8:50:10::/64",
+        "vlanRef": "hq_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:50:10::1"
+      },
+      {
+        "id": "office_v6_wifi",
+        "name": "Wi-Fi corporativa IPv6",
+        "prefix": "2001:db8:50:70::/64",
+        "vlanRef": "hq_v170",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:50:70::1"
+      },
+      {
+        "id": "office_v6_mgmt",
+        "name": "Gestión IPv6",
+        "prefix": "2001:db8:50:60::/64",
+        "vlanRef": "hq_v160",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:50:60::1"
+      }
+    ],
+    "failureScenarios": [
+      {
+        "id": "fail-primary-wan",
+        "name": "Fallo Internet principal",
+        "events": [
+          {
+            "type": "circuit",
+            "targetRef": "hq_wan_primary"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "wan",
+            "ref": ""
+          }
+        ],
+        "requireWan": true
+      },
+      {
+        "id": "fail-lag-member",
+        "name": "Fallo de un miembro LACP",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "hq_lag_link_1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "link",
+            "ref": "hq_lag_link_2"
+          }
+        ],
+        "requireWan": true
+      }
+    ],
+    "stacks": [],
+    "mlagDomains": [],
+    "haGroups": [],
+    "diversityPolicies": [],
+    "routing": {
+      "strategy": "static",
+      "staticRoutesByDevice": {}
+    },
+    "highAvailability": {
+      "devices": {
+        "hq_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "203.0.113.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "hq_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.5",
+              "distance": 20,
+              "circuitRef": "hq_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "hq_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        }
+      }
+    },
+    "accessSecurity": {
+      "dhcpSnooping": true,
+      "arpInspection": true,
+      "portSecurity": true,
+      "maxMac": 2,
+      "violation": "restrict",
+      "sticky": true,
+      "dhcpRateLimit": 15
+    },
+    "management": {
+      "domain": "office.example",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.10.60.0/24"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.10.20.10"
+      ],
+      "ntpServers": [
+        "10.10.20.10"
+      ],
+      "dnsServers": [
+        "10.10.20.10"
+      ],
+      "banner": "Acceso exclusivo a personal autorizado. Actividad monitorizada.",
+      "backup": false
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:hq_rack01": {
+          "unitCost": 950,
+          "unitPrice": 1250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Rack 42U"
+        },
+        "pdu:hq_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "pdu:hq_pdu_b": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "PDU rack"
+        },
+        "port:hq_north_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:hq_north_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:south_hq_a": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "port:south_hq_b": {
+          "unitCost": 85,
+          "unitPrice": 120,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Óptica SFP-1G-LX"
+        },
+        "link:hq_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "link:hq_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "DAC para uplink LACP"
+        },
+        "patchPanel:hq_patch01": {
+          "unitCost": 140,
+          "unitPrice": 195,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "telecomOutlet:hq_to_user": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_server": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_phone": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_camera": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_guest": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:hq_to_admin": {
+          "unitCost": 18,
+          "unitPrice": 28,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Toma Cat6A"
+        },
+        "cableRun:hq_run_user": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_server": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_phone": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_guest": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:hq_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "patchConnection:hq_patch_user": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_server": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_phone": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_guest": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:hq_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_user": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_server": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_phone": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_guest": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "hostOutletConnection:hq_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Latiguillo usuario Cat6A"
+        },
+        "rackItem:hq_cm01": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Pasacables horizontal 1U"
+        },
+        "wanCircuit:hq_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 260,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-A primary"
+        },
+        "wanCircuit:hq_wan_backup": {
+          "unitCost": 120,
+          "unitPrice": 180,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "ISP-B backup"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|catalyst 8200l|": {
+          "unitCost": 1500,
+          "unitPrice": 2050,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Router de borde para oficina"
+        },
+        "manual:cisco|catalyst 9300l|": {
+          "unitCost": 2600,
+          "unitPrice": 3500,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Core switching de oficina"
+        },
+        "manual:cisco|catalyst 9200l 48p poe+|": {
+          "unitCost": 2100,
+          "unitPrice": 2800,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "note": "Acceso PoE 48 puertos"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-design",
+          "description": "Diseño, hardening y plan de direccionamiento",
+          "quantity": 12,
+          "unit": "h",
+          "unitCost": 55,
+          "unitPrice": 85,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-install",
+          "description": "Instalación, configuración y pruebas de aceptación",
+          "quantity": 20,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-doc",
+          "description": "Documentación As-Built, runbook y entrega",
+          "quantity": 8,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        }
+      ]
+    }
+  }
+}
