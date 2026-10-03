@@ -90,7 +90,7 @@
           199
         ],
         "uplink": true,
-        "desc": "Trunk LAN Empresa mediana",
+        "desc": "Trunk LAN sede principal",
         "speedMaxMbps": 1000
       },
       {
@@ -112,7 +112,7 @@
           199
         ],
         "uplink": true,
-        "desc": "Uplink a RTR-CORP-01",
+        "desc": "Uplink a RTR-EDGE-HQ-01",
         "speedMaxMbps": 1000
       },
       {
@@ -134,7 +134,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-ACCESS-STORE-01"
+        "desc": "LACP a SW-ACCESS-HQ-01"
       },
       {
         "id": "corp_acc_core_1",
@@ -155,7 +155,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-CORE-STORE-01"
+        "desc": "LACP a SW-CORE-HQ-01"
       },
       {
         "id": "corp_core_acc_2",
@@ -176,7 +176,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-ACCESS-STORE-01"
+        "desc": "LACP a SW-ACCESS-HQ-01"
       },
       {
         "id": "corp_acc_core_2",
@@ -197,7 +197,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-CORE-STORE-01"
+        "desc": "LACP a SW-CORE-HQ-01"
       },
       {
         "id": "corp_acc_finance",
@@ -211,7 +211,7 @@
         "bpduGuard": true,
         "poeMode": "off",
         "poeWattsMax": 0,
-        "desc": "Terminal POS cableado",
+        "desc": "Puesto Finanzas / RRHH",
         "speedMaxMbps": 2500
       },
       {
@@ -226,7 +226,7 @@
         "bpduGuard": true,
         "poeMode": "off",
         "poeWattsMax": 0,
-        "desc": "Servicios locales 1",
+        "desc": "Servidor APP-CORE-01",
         "speedMaxMbps": 2500
       },
       {
@@ -241,7 +241,7 @@
         "bpduGuard": true,
         "poeMode": "at",
         "poeWattsMax": 30,
-        "desc": "Puesto empleados",
+        "desc": "Telefono IP corporativo",
         "speedMaxMbps": 2500
       },
       {
@@ -271,7 +271,7 @@
         "bpduGuard": true,
         "poeMode": "off",
         "poeWattsMax": 0,
-        "desc": "Servicios locales 2",
+        "desc": "Servidor INFRA-SVC-02",
         "speedMaxMbps": 1000
       },
       {
@@ -290,7 +290,7 @@
         "uplink": false,
         "poeMode": "bt",
         "poeWattsMax": 60,
-        "desc": "AP corp tri-band",
+        "desc": "AP-HQ-01 tri-band",
         "dhcpTrusted": false,
         "securityTrusted": false,
         "speedMaxMbps": 2500
@@ -311,7 +311,7 @@
         "uplink": false,
         "poeMode": "bt",
         "poeWattsMax": 60,
-        "desc": "AP corp tri-band",
+        "desc": "AP-HQ-02 tri-band",
         "dhcpTrusted": false,
         "securityTrusted": false,
         "speedMaxMbps": 2500
@@ -328,7 +328,7 @@
         "bpduGuard": true,
         "poeMode": "off",
         "poeWattsMax": 0,
-        "desc": "Consola administracion",
+        "desc": "Consola de administracion",
         "speedMaxMbps": 1000
       },
       {
@@ -366,7 +366,7 @@
         "poeMode": "off",
         "poeWattsMax": 0,
         "speedMaxMbps": 2500,
-        "desc": "NVR local"
+        "desc": "NVR-HQ-01"
       }
     ],
     "vlans": [
@@ -490,7 +490,7 @@
         "cidr": "10.80.10.0/24",
         "gateway": "10.80.10.1",
         "gatewayDeviceRef": "corp_rtr",
-        "name": "POS IPv4"
+        "name": "Finanzas/RRHH IPv4"
       },
       {
         "id": "corp_sn_servers",
@@ -498,7 +498,7 @@
         "cidr": "10.80.20.0/24",
         "gateway": "10.80.20.1",
         "gatewayDeviceRef": "corp_rtr",
-        "name": "Servicios IPv4"
+        "name": "Servidores IPv4"
       },
       {
         "id": "corp_sn_operations",
@@ -506,7 +506,7 @@
         "cidr": "10.80.30.0/24",
         "gateway": "10.80.30.1",
         "gatewayDeviceRef": "corp_rtr",
-        "name": "Empleados IPv4"
+        "name": "Operaciones IPv4"
       },
       {
         "id": "corp_sn_cameras",
@@ -514,7 +514,7 @@
         "cidr": "10.80.40.0/24",
         "gateway": "10.80.40.1",
         "gatewayDeviceRef": "corp_rtr",
-        "name": "Camaras/NVR IPv4"
+        "name": "Camaras/IoT IPv4"
       },
       {
         "id": "corp_sn_guest",
@@ -538,7 +538,7 @@
         "cidr": "10.80.70.0/24",
         "gateway": "10.80.70.1",
         "gatewayDeviceRef": "corp_rtr",
-        "name": "IoT IPv4"
+        "name": "Voz IPv4"
       }
     ],
     "hosts": [
@@ -551,7 +551,7 @@
         "ipMode": "static",
         "staticIp": "10.80.10.20",
         "locationId": "corp_office",
-        "physicalLocation": "Tienda · Caja principal"
+        "physicalLocation": "Sede principal · Finanzas / RRHH"
       },
       {
         "id": "corp_server",
@@ -562,7 +562,7 @@
         "ipMode": "static",
         "staticIp": "10.80.20.10",
         "locationId": "corp_rack_room",
-        "physicalLocation": "Tienda · Cuarto técnico"
+        "physicalLocation": "Sede principal · CPD / cuarto técnico"
       },
       {
         "id": "corp_phone",
@@ -573,7 +573,7 @@
         "ipMode": "dhcp",
         "staticIp": "",
         "locationId": "corp_office",
-        "physicalLocation": "Tienda · Backoffice",
+        "physicalLocation": "Sede principal · Finanzas / RRHH",
         "poeRequired": true,
         "poeWatts": 8
       },
@@ -586,7 +586,7 @@
         "ipMode": "static",
         "staticIp": "10.80.40.20",
         "locationId": "corp_living",
-        "physicalLocation": "Tienda · Sala de ventas",
+        "physicalLocation": "Sede principal · Operaciones",
         "poeRequired": true,
         "poeWatts": 12
       },
@@ -599,7 +599,7 @@
         "ipMode": "static",
         "staticIp": "10.80.20.11",
         "locationId": "corp_rack_room",
-        "physicalLocation": "Tienda · Cuarto técnico"
+        "physicalLocation": "Sede principal · CPD / cuarto técnico"
       },
       {
         "id": "corp_admin",
@@ -610,7 +610,7 @@
         "ipMode": "static",
         "staticIp": "10.80.60.20",
         "locationId": "corp_office",
-        "physicalLocation": "Tienda · Backoffice"
+        "physicalLocation": "Sede principal · Finanzas / RRHH"
       },
       {
         "id": "corp_nvr",
@@ -621,7 +621,7 @@
         "ipMode": "static",
         "staticIp": "10.80.40.10",
         "locationId": "corp_rack_room",
-        "physicalLocation": "Tienda · Cuarto técnico",
+        "physicalLocation": "Sede principal · CPD / cuarto técnico",
         "poeRequired": false,
         "poeWatts": null
       }
@@ -882,63 +882,63 @@
       {
         "id": "corp_to_finance",
         "locationId": "corp_office",
-        "name": "TO-CORP-TRUSTED",
+        "name": "TO-HQ-FINANCE",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_hypervisor",
         "locationId": "corp_rack_room",
-        "name": "TO-CORP-HYPERVISOR",
+        "name": "TO-HQ-APP01",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_voice",
         "locationId": "corp_office",
-        "name": "TO-CORP-NODE",
+        "name": "TO-HQ-VOICE",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_camera",
         "locationId": "corp_living",
-        "name": "TO-CORP-IOT",
+        "name": "TO-HQ-CAMERA",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_services",
         "locationId": "corp_rack_room",
-        "name": "TO-CORP-SERVICES",
+        "name": "TO-HQ-SVC02",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_admin",
         "locationId": "corp_office",
-        "name": "TO-CORP-ADMIN",
+        "name": "TO-HQ-ADMIN",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_nvr",
         "locationId": "corp_rack_room",
-        "name": "TO-CORP-BACKUP",
+        "name": "TO-HQ-NVR",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_ap1",
         "locationId": "corp_office",
-        "name": "TO-CORP-AP1",
+        "name": "TO-HQ-AP1",
         "portCount": 1,
         "category": "Cat6A"
       },
       {
         "id": "corp_to_ap2",
         "locationId": "corp_living",
-        "name": "TO-CORP-AP2",
+        "name": "TO-HQ-AP2",
         "portCount": 1,
         "category": "Cat6A"
       }
@@ -953,7 +953,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 33,
-        "route": "Rack HQ mediana → canalización → CLIENT-TRUSTED-01",
+        "route": "Rack HQ → canalización → FIN-HR-WS-01",
         "name": "FIN-HR-WS-01"
       },
       {
@@ -965,7 +965,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 36,
-        "route": "Rack HQ mediana → canalización → HYPERVISOR-01",
+        "route": "Rack HQ → APP-CORE-01",
         "name": "APP-CORE-01"
       },
       {
@@ -977,7 +977,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 39,
-        "route": "Rack HQ mediana → canalización → CORP-NODE-01",
+        "route": "Rack HQ → canalización → IP-PHONE-01",
         "name": "IP-PHONE-01"
       },
       {
@@ -989,7 +989,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 42,
-        "route": "Rack HQ mediana → canalización → IOT-HUB-01",
+        "route": "Rack HQ → canalización → CAM-HQ-01",
         "name": "CAM-HQ-01"
       },
       {
@@ -1001,7 +1001,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 45,
-        "route": "Rack HQ mediana → canalización → SVC-CORP-02",
+        "route": "Rack HQ → INFRA-SVC-02",
         "name": "INFRA-SVC-02"
       },
       {
@@ -1013,7 +1013,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 48,
-        "route": "Rack HQ mediana → canalización → ADMIN-CONSOLE-01",
+        "route": "Rack HQ → canalización → MGMT-ADMIN-01",
         "name": "MGMT-ADMIN-01"
       },
       {
@@ -1026,7 +1026,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 4,
-        "route": "Rack HQ mediana → BACKUP-NODE-01"
+        "route": "Rack HQ → NVR-HQ-01"
       },
       {
         "id": "corp_run_ap1",
@@ -1038,7 +1038,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 18,
-        "route": "Rack HQ mediana → techo Finanzas/RRHH"
+        "route": "Rack HQ → techo Finanzas/RRHH"
       },
       {
         "id": "corp_run_ap2",
@@ -1050,7 +1050,7 @@
         "outletPort": 1,
         "cableType": "Cat6A",
         "lengthM": 24,
-        "route": "Rack HQ mediana → techo Operaciones"
+        "route": "Rack HQ → techo Operaciones"
       }
     ],
     "patchConnections": [
