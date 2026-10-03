@@ -21,19 +21,12 @@ function targetExists(project,event){
 }
 function impactedDevices(project,event){
   const type=clean(event.type),id=clean(event.targetRef),out=new Set();
+  // Resource failures (link/circuit/provider/VPN) must not imply that their
+  // endpoint devices have failed. Only explicit infrastructure-domain events
+  // remove devices from service.
   if(type==='device')out.add(id);
-  if(type==='link'){
-    const l=arr(project.links).find(x=>x.id===id);
-    if(l)for(const p of arr(project.ports))if([l.aPortId,l.bPortId,l.a,l.b].includes(p.id)&&p.deviceId)out.add(p.deviceId);
-  }
-  if(type==='circuit'){
-    const c=arr(project.wanCircuits).find(x=>x.id===id);if(c&&c.deviceId)out.add(c.deviceId);
-  }
-  if(type==='provider')for(const c of arr(project.wanCircuits))if(clean(c.provider)===id&&c.deviceId)out.add(c.deviceId);
-  if(type==='rack'||type==='powerDomain'||type==='site')for(const d of arr(project.devices))if(clean(d[type]||d.siteRef)===id)out.add(d.id);
-  if(type==='vpn'){
-    const t=arr(project&&project.routing&&project.routing.siteToSiteVpns).find(x=>x&&x.id===id);
-    if(t){if(t.localDeviceId)out.add(t.localDeviceId);if(t.remoteDeviceId)out.add(t.remoteDeviceId);}
+  if(type==='rack'||type==='powerDomain'||type==='site'){
+    for(const d of arr(project.devices))if(clean(d[type]||d.siteRef)===id)out.add(d.id);
   }
   return out;
 }
