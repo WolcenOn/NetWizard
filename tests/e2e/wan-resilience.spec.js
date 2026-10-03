@@ -74,6 +74,8 @@ test('resiliencia WAN mantiene tráfico con circuito backup y detecta SPOF de ed
 
   await page.evaluate(()=>window.navTo('validate'));
   await expect(page.locator('#nwWanResiliencePanel')).toBeVisible();
+  await expect(page.locator('#nwWanResiliencePanel')).toContainText('Pendiente de análisis');
+  await page.locator('#nwWanResilienceRun').click();
   await expect(page.locator('#nwWanResiliencePanel')).toContainText('Diseño: válido');
   await expect(page.locator('#nwWanResiliencePanel')).toContainText('Caída circuito HQ ISP-A');
 
