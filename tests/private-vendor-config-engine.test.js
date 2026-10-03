@@ -304,10 +304,10 @@ const aclV6=Engine.firewallIpv6Acl(aclRemarkProject,'r1').text;
 assert.match(aclV4,/^ remark vlanMatrix 10->20$/m);
 assert.match(aclV4,/^ deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.10\.20\.0 0\.0\.0\.255$/m);
 assert.match(aclV4,/^ remark Users catch all$/m);
-assert.doesNotMatch(aclV4,/^\s*(?:permit|deny)\s+.*\s!\s+/m);
+assert.doesNotMatch(aclV4,/^[ \t]*(?:permit|deny)[ \t]+[^\r\n]*[ \t]![ \t]+/m);
 assert.match(aclV6,/^ remark vlanMatrix 10->20$/m);
 assert.match(aclV6,/^ deny ipv6 2001:db8:10:10::\/64 2001:db8:10:20::\/64$/m);
-assert.doesNotMatch(aclV6,/^\s*(?:permit|deny)\s+.*\s!\s+/m);
+assert.doesNotMatch(aclV6,/^[ \t]*(?:permit|deny)[ \t]+[^\r\n]*[ \t]![ \t]+/m);
 
 const wanResilienceProject={
   _schemaVersion:'3.50.0',
