@@ -2412,14 +2412,6 @@
           "billingPeriodMonths": 1,
           "note": "Par óptico OM4 40G + ópticas"
         },
-        "rackItem:rackitem_dc_patch_a": {
-          "unitCost": 0,
-          "unitPrice": 0,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Representación del patch panel ya valorado"
-        },
         "rackItem:dc_cm_a": {
           "unitCost": 35,
           "unitPrice": 55,
@@ -2427,14 +2419,6 @@
           "capexOpex": "capex",
           "billingPeriodMonths": 1,
           "note": "Pasacables 1U"
-        },
-        "rackItem:rackitem_dc_patch_b": {
-          "unitCost": 0,
-          "unitPrice": 0,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Representación del patch panel ya valorado"
         },
         "rackItem:dc_cm_b": {
           "unitCost": 35,
