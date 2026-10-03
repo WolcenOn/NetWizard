@@ -631,7 +631,7 @@
     "links": [
       {
         "id": "retail_link_rtr_core",
-        "name": "LAB router-core",
+        "name": "Retail router-core",
         "aPortId": "retail_lan",
         "bPortId": "retail_core_rtr",
         "medium": "copper",
@@ -642,7 +642,7 @@
       },
       {
         "id": "retail_lag_link_1",
-        "name": "LAB LAG member 1",
+        "name": "Retail LAG member 1",
         "aPortId": "retail_core_acc_1",
         "bPortId": "retail_acc_core_1",
         "medium": "dac",
@@ -653,7 +653,7 @@
       },
       {
         "id": "retail_lag_link_2",
-        "name": "LAB LAG member 2",
+        "name": "Retail LAG member 2",
         "aPortId": "retail_core_acc_2",
         "bPortId": "retail_acc_core_2",
         "medium": "dac",
@@ -767,7 +767,7 @@
     },
     "roas": {},
     "vtp": {
-      "domain": "NW-HOMELAB",
+      "domain": "NW-RETAIL",
       "password": "",
       "version": "3",
       "pruning": "no",
@@ -780,7 +780,7 @@
       "observedAt": "2026-10-03T11:30:00.000Z",
       "vtpDevices": {
         "retail_core": {
-          "domain": "NW-HOMELAB",
+          "domain": "NW-RETAIL",
           "version": "3",
           "mode": "transparent",
           "revision": 0,
@@ -792,7 +792,7 @@
           "observedAt": "2026-10-03T11:30:00.000Z"
         },
         "retail_access": {
-          "domain": "NW-HOMELAB",
+          "domain": "NW-RETAIL",
           "version": "3",
           "mode": "transparent",
           "revision": 0,
@@ -1308,7 +1308,7 @@
     "linkAggregations": [
       {
         "id": "retail_lag_core_access",
-        "name": "LAB Core-Access LACP",
+        "name": "Retail Core-Access LACP",
         "number": 1,
         "protocol": "lacp",
         "mode": "active",
