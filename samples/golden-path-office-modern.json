@@ -1525,34 +1525,6 @@
           "capexOpex": "capex",
           "note": "PDU rack"
         },
-        "port:hq_north_a": {
-          "unitCost": 85,
-          "unitPrice": 120,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "note": "Óptica SFP-1G-LX"
-        },
-        "port:hq_north_b": {
-          "unitCost": 85,
-          "unitPrice": 120,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "note": "Óptica SFP-1G-LX"
-        },
-        "port:south_hq_a": {
-          "unitCost": 85,
-          "unitPrice": 120,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "note": "Óptica SFP-1G-LX"
-        },
-        "port:south_hq_b": {
-          "unitCost": 85,
-          "unitPrice": 120,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "note": "Óptica SFP-1G-LX"
-        },
         "link:hq_lag_link_1": {
           "unitCost": 55,
           "unitPrice": 80,
