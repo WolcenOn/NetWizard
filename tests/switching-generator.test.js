@@ -13,6 +13,27 @@ test('Cisco materializa SVI y gateway de gestión cuando existe mgmtIp',()=>{
   assert.match(out,/interface Vlan99[\s\S]*ip address 10\.10\.99\.10 255\.255\.255\.0[\s\S]*no shutdown/);
   assert.match(out,/ip default-gateway 10\.10\.99\.1/);
 });
+test('Cisco L3 switch materializa underlay routed, SVI dual-stack y ACL unificada',()=>{
+  const p={
+    devices:[{id:'leaf1',name:'LEAF-01',type:'l3switch',kind:'switch',vendorOs:'cisco_ios',l3Capable:'yes'}],
+    vlans:[{id:'v110',vlanId:110,name:'Frontend',intent:{type:'servers'}}],
+    subnets:[{id:'s110',vlanRef:'v110',cidr:'10.90.10.0/24',gateway:'10.90.10.1',gatewayDeviceRef:'leaf1'}],
+    ipv6Networks:[{id:'v6-110',vlanRef:'v110',prefix:'2001:db8:90:10::/64',gateway:'2001:db8:90:10::1',slaac:true,routerAdvertisement:true}],
+    ports:[{id:'leaf1-spine',deviceId:'leaf1',name:'TenGigabitEthernet1/0/49',mode:'routed',role:'transit',l3Ip:'10.255.90.2',l3Cidr:'10.255.90.0/30',desc:'Underlay to SPINE-01'}]
+  };
+  const out=G.render(p,'leaf1','cisco_ios',{
+    ipv4Acl:'!\n! FW Policy ACL unified (intent/manual + vlanMatrix)\nip access-list extended FW_POLICY\n deny ip any any log',
+    ipv6Acl:'!\n! FW Policy ACL IPv6 unified (intent/manual + vlanMatrix)\nipv6 access-list FW_POLICY_V6\n deny ipv6 any any log',
+    policyVlanRefs:['v110']
+  });
+  assert.match(out,/^ip routing$/m);
+  assert.match(out,/^ipv6 unicast-routing$/m);
+  assert.match(out,/interface TenGigabitEthernet1\/0\/49[\s\S]*no switchport[\s\S]*ip address 10\.255\.90\.2 255\.255\.255\.252/);
+  assert.match(out,/interface Vlan110[\s\S]*ip address 10\.90\.10\.1 255\.255\.255\.0[\s\S]*ipv6 address 2001:db8:90:10::1\/64/);
+  assert.match(out,/interface Vlan110[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
+  assert.doesNotMatch(out,/ip default-gateway/);
+});
+
 test('Cisco VTP server usa placeholder de secreto y conserva creación local de VLANs',()=>{
   const p=project('cisco_ios');
   p.vtp={domain:'EMPRESA',password:'super-secret-plain',version:'2',pruning:'yes',roles:{sw1:'server'}};
