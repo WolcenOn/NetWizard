@@ -107,3 +107,16 @@ El Asistente carga este JSON mediante **Retail / Comercio → Cargar ejemplo · 
 Incluye Finanzas/RRHH, usuarios de Operaciones, servidores, voz, cámaras/IoT, invitados, gestión y una VLAN nativa blackhole; Wi-Fi corporativa WPA3-Enterprise con RADIUS, Wi-Fi de invitados aislada, IPv6 con paridad de política, servicios DNS/NTP/Syslog/RADIUS, hardening L2, management separado, escenarios de fallo WAN/LACP, rack, PDU, Cat6A y presupuesto completo.
 
 Su contrato exige Production Gate estricto `READY`, cero warnings y configuraciones privadas `apply-ready`. El ejemplo se carga desde el escenario **Empresa mediana** del Asistente.
+
+
+## Golden Path Datacenter leaf-spine moderno
+
+`golden-path-datacenter-modern.json` es la arquitectura de referencia para el escenario **Datacenter**. Modela un fabric leaf-spine físicamente redundante con dos spines y dos leaves Cisco de capa 3, cuatro enlaces OM4 de 40G y un underlay OSPF área 0. Cada leaf mantiene conectividad hacia ambos spines, las adyacencias observadas están en estado FULL y las parejas spine/leaf se distribuyen entre racks, alimentación y zonas de refrigeración distintas.
+
+Las redes de aplicación se separan en Frontend, Backend, Database, Storage y Gestión. Los gateways residen en SVIs canónicas de los leaves, IPv4 e IPv6 comparten intención de política y la ACL unificada `FW_POLICY`/`FW_POLICY_V6` aplica segmentación east-west antes de los permits explícitos de tráfico no bloqueado. Frontend puede alcanzar Backend, pero no puede saltar directamente a Database, Storage ni Gestión.
+
+El modelo físico incluye dos racks 42U, cuatro PDUs A/B, doble alimentación de cada switch, patch panels Cat6A y cableado representativo de los servidores. DNS, NTP y Syslog disponen de endpoints en ambos lados del fabric; se modelan capacidad de los enlaces y fallos de spine/enlace para verificar que permanece un camino alternativo.
+
+Esta Golden **no activa BGP, EVPN, VXLAN ni MLAG**. El producto todavía no dispone de autoridad canónica y generación privada completa para esas funciones, por lo que representarlas como configuración real sería engañoso. La redundancia actual se implementa con underlay L3/OSPF y doble conexión leaf-spine, capacidades que sí son modeladas, validadas y generadas por NetWizard.
+
+El contrato exige Production Gate estricto `READY`, cero warnings, OSPF observado coherente y los cuatro switches `apply-ready`. El Asistente carga el ejemplo desde **Datacenter → Cargar ejemplo · Golden Path Datacenter leaf-spine moderno**.
