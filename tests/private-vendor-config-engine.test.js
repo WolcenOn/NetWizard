@@ -278,6 +278,37 @@ for(const id of ['leaf-a','leaf-b']){
 assert.match(l3FabricResult.configs['leaf-a'],/interface Vlan110[\s\S]*ip address 10\.91\.10\.1 255\.255\.255\.0[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
 assert.match(l3FabricResult.configs['leaf-b'],/interface Vlan120[\s\S]*ip address 10\.91\.20\.1 255\.255\.255\.0[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
 
+const aclRemarkProject={
+  _schemaVersion:'3.50.0',
+  devices:[{id:'r1',name:'R1',type:'router',kind:'router',vendorOs:'cisco_ios'}],
+  ports:[{id:'lan',deviceId:'r1',name:'GigabitEthernet0/1',mode:'trunk',role:'lan',allowedVlans:[10,20]}],
+  vlans:[
+    {id:'v10',vlanId:10,name:'Users',intent:{type:'users'}},
+    {id:'v20',vlanId:20,name:'Servers',intent:{type:'servers'}}
+  ],
+  subnets:[
+    {id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'r1'},
+    {id:'s20',vlanRef:'v20',cidr:'10.10.20.0/24',gateway:'10.10.20.1',gatewayDeviceRef:'r1'}
+  ],
+  vlanMatrix:{'v10_v20':false},
+  fwRules:[{id:'allow-users',name:'Users catch all',src:'10.10.10.0/24',dst:'any',proto:'any',port:'any',action:'allow',enabled:true,prio:900,vlanRef:'v10'}],
+  ipv6Networks:[
+    {id:'v6-10',vlanRef:'v10',prefix:'2001:db8:10:10::/64',gateway:'2001:db8:10:10::1'},
+    {id:'v6-20',vlanRef:'v20',prefix:'2001:db8:10:20::/64',gateway:'2001:db8:10:20::1'}
+  ],
+  routing:{strategy:'static',staticRoutesByDevice:{}},highAvailability:{devices:{}},wanCircuits:[],linkAggregations:[],
+  accessSecurity:{},management:{},hosts:[],links:[],dhcp:{},roas:{gwId:'r1',lanIf:'GigabitEthernet0/1'},vtp:{roles:{}}
+};
+const aclV4=Engine.firewallAcl(aclRemarkProject,'r1');
+const aclV6=Engine.firewallIpv6Acl(aclRemarkProject,'r1').text;
+assert.match(aclV4,/^ remark vlanMatrix 10->20$/m);
+assert.match(aclV4,/^ deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.10\.20\.0 0\.0\.0\.255$/m);
+assert.match(aclV4,/^ remark Users catch all$/m);
+assert.doesNotMatch(aclV4,/^\s*(?:permit|deny)\s+.*\s!\s+/m);
+assert.match(aclV6,/^ remark vlanMatrix 10->20$/m);
+assert.match(aclV6,/^ deny ipv6 2001:db8:10:10::\/64 2001:db8:10:20::\/64$/m);
+assert.doesNotMatch(aclV6,/^\s*(?:permit|deny)\s+.*\s!\s+/m);
+
 const wanResilienceProject={
   _schemaVersion:'3.50.0',
   projName:'Private WAN resilience',
