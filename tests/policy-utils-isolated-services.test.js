@@ -28,13 +28,16 @@ for(const ref of ['v40','v70']){
   const vlan=project.vlans.find(v=>v.id===ref);
   const rules=Policy.buildRulesForVlan(project,vlan);
   const denyServices=rules.find(r=>r.action==='deny'&&r.dst==='10.70.20.0/24');
-  const dnsPermit=rules.find(r=>r.action==='allow'&&r.dst==='10.70.20.10'&&r.proto==='udp'&&r.port==='53');
-  const ntpPermit=rules.find(r=>r.action==='allow'&&r.dst==='10.70.20.10'&&r.proto==='udp'&&r.port==='123');
+  const dnsPermit=rules.find(r=>r.action==='allow'&&r.dst==='10.70.20.0/24'&&r.proto==='udp'&&r.port==='53'&&r.code==='NW-POL-INTERNAL-DNS');
+  const dnsTcpPermit=rules.find(r=>r.action==='allow'&&r.dst==='10.70.20.0/24'&&r.proto==='tcp'&&r.port==='53'&&r.code==='NW-POL-INTERNAL-DNS');
+  const ntpPermit=rules.find(r=>r.action==='allow'&&r.dst==='10.70.20.0/24'&&r.proto==='udp'&&r.port==='123'&&r.code==='NW-POL-INTERNAL-NTP');
   assert.ok(denyServices,ref+': debe conservar aislamiento hacia la subnet de servicios');
-  assert.ok(dnsPermit,ref+': debe permitir el DNS interno explícito');
-  assert.ok(ntpPermit,ref+': debe permitir el NTP interno explícito');
+  assert.ok(dnsPermit,ref+': debe permitir DNS interno hacia la subnet canónica');
+  assert.ok(dnsTcpPermit,ref+': debe permitir DNS TCP interno hacia la subnet canónica');
+  assert.ok(ntpPermit,ref+': debe permitir NTP interno hacia la subnet canónica');
   assert.ok(dnsPermit.prio<denyServices.prio,ref+': DNS interno debe evaluarse antes del deny lateral');
   assert.ok(ntpPermit.prio<denyServices.prio,ref+': NTP interno debe evaluarse antes del deny lateral');
+  assert.strictEqual(rules.filter(r=>r.code==='NW-POL-INTERNAL-DNS'&&r.dst==='10.70.20.0/24'&&r.proto==='udp'&&r.port==='53').length,1,ref+': endpoints DNS de la misma subnet deben deduplicarse');
   assert.ok(!rules.some(r=>r.code==='NW-POL-INTERNAL-DNS'&&r.dst==='1.1.1.1'),'DNS externo no debe convertirse en excepción interna previa');
 }
 
@@ -43,4 +46,4 @@ const cameraDeny=cameraRules.find(r=>r.action==='deny'&&r.dst==='10.70.20.0/24')
 const broadVideo=cameraRules.find(r=>r.code==='NW-POL-CAM-SVC'&&r.port==='554,8000,443');
 assert.ok(broadVideo.prio>cameraDeny.prio,'el permiso genérico de vídeo no debe saltarse el aislamiento interno');
 
-console.log('✓ Política isolated permite DNS/NTP internos explícitos antes del deny sin abrir lateralidad');
+console.log('✓ Política isolated permite DNS/NTP internos por subnet canónica antes del deny sin abrir lateralidad');
