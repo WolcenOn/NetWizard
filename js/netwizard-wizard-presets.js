@@ -293,10 +293,21 @@ const presets={
   ]
 }
 };
+const files={
+  'golden-office-modern':'./samples/golden-path-office-modern.json'
+};
 function clone(value){return JSON.parse(JSON.stringify(value));}
 function get(id){return presets[id]?clone(presets[id]):null;}
-function list(){return Object.keys(presets);}
-const api={version:'netwizard-wizard-presets-v1',get,list};
+async function load(id){
+  if(presets[id])return clone(presets[id]);
+  const url=files[id];if(!url||typeof root.fetch!=='function')return null;
+  const response=await root.fetch(url,{cache:'no-store'});
+  if(!response.ok)throw new Error('No se pudo cargar el ejemplo '+id+' ('+response.status+').');
+  const payload=await response.json();
+  return clone(payload&&payload.project?payload.project:payload);
+}
+function list(){return [...Object.keys(presets),...Object.keys(files)];}
+const api={version:'netwizard-wizard-presets-v2',get,load,list,files:clone(files)};
 root.NetWizardWizardPresets=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
