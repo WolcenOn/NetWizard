@@ -191,8 +191,16 @@ assert.match(routerCfg,/ip nat inside source list 100 interface GigabitEthernet0
 assert.match(routerCfg,/ip nat inside source list 100 interface GigabitEthernet0\/4 overload/);
 assert.match(routerCfg,/ip access-list extended FW_POLICY/);
 assert.doesNotMatch(routerCfg,/ip access-list extended NW_SEG_/);
+const cameraDnsV4=' permit udp 10.70.40.0 0.0.0.255 10.70.20.0 0.0.0.255 eq 53';
+const cameraServicesDenyV4=' deny ip 10.70.40.0 0.0.0.255 10.70.20.0 0.0.0.255';
+assert.ok(routerCfg.includes(cameraDnsV4),'Cámaras deben poder resolver DNS interno antes del aislamiento lateral');
+assert.ok(routerCfg.indexOf(cameraDnsV4)<routerCfg.indexOf(cameraServicesDenyV4),'El permit DNS de cámaras debe preceder al deny hacia servicios');
 assert.match(routerCfg,/^ipv6 unicast-routing$/m);
 assert.match(routerCfg,/ipv6 access-list FW_POLICY_V6/);
+const cameraDnsV6=' permit udp 2001:db8:70:40::/64 2001:db8:70:20::/64 eq 53';
+const cameraServicesDenyV6=' deny ipv6 2001:db8:70:40::/64 2001:db8:70:20::/64';
+assert.ok(routerCfg.includes(cameraDnsV6),'La excepción DNS interna debe conservar paridad IPv6');
+assert.ok(routerCfg.indexOf(cameraDnsV6)<routerCfg.indexOf(cameraServicesDenyV6),'El permit DNS IPv6 debe preceder al deny lateral IPv6');
 assert.match(generated.configs.retail_core,/interface Vlan160[\s\S]*ip address 10\.70\.60\.10 255\.255\.255\.0/);
 assert.match(generated.configs.retail_access,/interface Vlan160[\s\S]*ip address 10\.70\.60\.11 255\.255\.255\.0/);
 
