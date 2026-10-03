@@ -38,7 +38,12 @@ Mantenimiento:
   function isTrunk(p){ return lc(p && p.mode) === 'trunk'; }
   function isRouted(p){ return lc(p && p.mode) === 'routed' || clean(p && (p.l3Ip || p.routedIp)); }
   function isHostPort(p, hostsByPort){ return hostsByPort.has(p && p.id); }
-  function isUplinkCandidate(p){ return p && (p.uplink === true || p.isUplink === true || /uplink|trunk|core|dist|router|firewall|wan/i.test(clean(p.desc || p.role || p.name))); }
+  function isExplicitUplink(p){
+    if(!p) return false;
+    const role=lc(p.role);
+    return p.uplink === true || p.isUplink === true || /uplink|trunk|router|firewall|wan/.test(role) || /^(core|dist|distribution)$/.test(role);
+  }
+  function isUplinkCandidate(p){ return !!p && (isExplicitUplink(p) || /uplink|trunk|core|dist|router|firewall|wan/i.test(clean(p.desc || p.name))); }
   function allVlanIds(project){ return new Set(arr(project.vlans).map(v => num(v.vlanId, null)).filter(n => n != null)); }
 
   function allowedSet(port, project){
@@ -166,7 +171,10 @@ Mantenimiento:
       if(!isAccess(p)) continue;
       const label = portLabel(p, maps.devicesById);
       const hasHost = isHostPort(p, maps.hostsByPort);
-      const isUplink = isUplinkCandidate(p);
+      // Un binding de host es evidencia fuerte de puerto final: no dejes que palabras
+      // incidentales en nombres/descripciones (p. ej. APP-CORE-01) lo conviertan en uplink.
+      // Los marcadores explícitos siguen teniendo prioridad y deben avisar del conflicto.
+      const isUplink = isExplicitUplink(p) || (!hasHost && isUplinkCandidate(p));
       if(isUplink){ issues.push(mk('NW-L2-010','warning',`${label}: parece uplink pero está en modo access. Revisa si debería ser trunk o routed.`)); continue; }
       if(hasHost){
         if(p.portfast === false || p.portFast === false) issues.push(mk('NW-L2-011','info',`${label}: puerto access con host sin PortFast. Se recomienda PortFast en puertos finales.`));

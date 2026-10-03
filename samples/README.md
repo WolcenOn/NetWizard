@@ -98,3 +98,12 @@ La segmentación busca reducir el alcance del entorno de pago: POS no puede inic
 El Golden mantiene dual-stack IPv4/IPv6 con paridad de política, servicios DNS/NTP/Syslog/RADIUS redundantes, escenarios de fallo de WAN y miembro LACP, rack, PDU, patch panel, cableado Cat6A y BOM/presupuesto completamente valorados. Como en los demás Golden estrictos, AAA/SNMPv3/backup autenticado no se activan con secretos ficticios.
 
 El Asistente carga este JSON mediante **Retail / Comercio → Cargar ejemplo · Golden Path Retail / Comercio segmentado** y su contrato exige Production Gate estricto `READY` con cero warnings.
+
+
+## Golden Path Empresa mediana
+
+`golden-path-corp-modern.json` representa una sede corporativa de tamaño medio con collapsed-core deliberadamente simple: un edge Cisco con dos WAN independientes, core + acceso unidos por LACP 2×10G y segmentación por función. No activa OSPF en una topología donde no aporta convergencia adicional.
+
+Incluye Finanzas/RRHH, usuarios de Operaciones, servidores, voz, cámaras/IoT, invitados, gestión y una VLAN nativa blackhole; Wi-Fi corporativa WPA3-Enterprise con RADIUS, Wi-Fi de invitados aislada, IPv6 con paridad de política, servicios DNS/NTP/Syslog/RADIUS, hardening L2, management separado, escenarios de fallo WAN/LACP, rack, PDU, Cat6A y presupuesto completo.
+
+Su contrato exige Production Gate estricto `READY`, cero warnings y configuraciones privadas `apply-ready`. El ejemplo se carga desde el escenario **Empresa mediana** del Asistente.

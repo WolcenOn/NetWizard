@@ -1,0 +1,2125 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-03T16:10:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path · Empresa mediana moderna",
+    "workflow": {
+      "mode": "design"
+    },
+    "customDeviceModels": [],
+    "devices": [
+      {
+        "id": "corp_rtr",
+        "name": "RTR-EDGE-HQ-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 8200L",
+        "modelSource": "manual",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Empresa mediana · Rack",
+        "mgmtIp": "10.80.60.1",
+        "powerDrawWatts": 95,
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "corp_rack01",
+        "rackUnit": 15,
+        "originRef": "corp_rtr",
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
+      },
+      {
+        "id": "corp_core",
+        "name": "SW-CORE-HQ-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L",
+        "modelSource": "manual",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Empresa mediana · Rack",
+        "mgmtIp": "10.80.60.10",
+        "powerDrawWatts": 95,
+        "rackId": "corp_rack01",
+        "rackUnit": 12,
+        "originRef": "corp_core",
+        "designDisposition": "keep"
+      },
+      {
+        "id": "corp_access",
+        "name": "SW-ACCESS-HQ-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L-24UXG",
+        "modelSource": "manual",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Empresa mediana · Rack",
+        "mgmtIp": "10.80.60.11",
+        "powerDrawWatts": 120,
+        "poeBudgetW": 715,
+        "rackId": "corp_rack01",
+        "rackUnit": 9,
+        "originRef": "corp_access",
+        "designDisposition": "keep"
+      }
+    ],
+    "ports": [
+      {
+        "id": "corp_lan",
+        "deviceId": "corp_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "copper",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Trunk LAN sede principal",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "corp_core_rtr",
+        "deviceId": "corp_core",
+        "name": "GigabitEthernet1/0/48",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "copper",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-EDGE-HQ-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "corp_core_acc_1",
+        "deviceId": "corp_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "corp_acc_core_1",
+        "deviceId": "corp_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "corp_core_acc_2",
+        "deviceId": "corp_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "corp_acc_core_2",
+        "deviceId": "corp_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "corp_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "corp_acc_finance",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v110",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Puesto Finanzas / RRHH",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "corp_acc_hypervisor",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Servidor APP-CORE-01",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "corp_acc_voice",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v170",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "Telefono IP corporativo",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "corp_acc_camera",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "Camara IP PoE",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "corp_acc_services",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Servidor INFRA-SVC-02",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "corp_acc_ap1",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "corp_v160",
+        "allowedVlans": [
+          130,
+          150,
+          160
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP-HQ-01 tri-band",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "corp_acc_ap2",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "corp_v160",
+        "allowedVlans": [
+          130,
+          150,
+          160
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP-HQ-02 tri-band",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "corp_acc_admin",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v160",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Consola de administracion",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "corp_wan1",
+        "deviceId": "corp_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "198.51.100.2",
+        "l3Cidr": "198.51.100.0/30"
+      },
+      {
+        "id": "corp_wan2",
+        "deviceId": "corp_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 400,
+        "l3Ip": "203.0.113.2",
+        "l3Cidr": "203.0.113.0/30"
+      },
+      {
+        "id": "corp_acc_nvr",
+        "deviceId": "corp_access",
+        "name": "GigabitEthernet1/0/9",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "corp_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "speedMaxMbps": 2500,
+        "desc": "NVR-HQ-01"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "corp_v110",
+        "vlanId": 110,
+        "name": "CORP-Finanzas-RRHH",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 50,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "corp_v120",
+        "vlanId": 120,
+        "name": "CORP-Servidores",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 20,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "corp_v130",
+        "vlanId": 130,
+        "name": "CORP-Usuarios-Operaciones",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 70,
+          "growthHosts": 25,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "corp_v140",
+        "vlanId": 140,
+        "name": "CORP-Camaras-IoT",
+        "intent": {
+          "type": "cameras",
+          "expectedHosts": 50,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "corp_v170",
+        "vlanId": 170,
+        "name": "CORP-Voz",
+        "intent": {
+          "type": "voice",
+          "expectedHosts": 60,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "corp_v150",
+        "vlanId": 150,
+        "name": "CORP-Invitados",
+        "intent": {
+          "type": "guests",
+          "expectedHosts": 70,
+          "growthHosts": 25,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "corp_v160",
+        "vlanId": 160,
+        "name": "CORP-Gestion",
+        "intent": {
+          "type": "management",
+          "expectedHosts": 20,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "corp_v199",
+        "vlanId": 199,
+        "name": "CORP-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "corp_sn_finance",
+        "vlanRef": "corp_v110",
+        "cidr": "10.80.10.0/24",
+        "gateway": "10.80.10.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Finanzas/RRHH IPv4"
+      },
+      {
+        "id": "corp_sn_servers",
+        "vlanRef": "corp_v120",
+        "cidr": "10.80.20.0/24",
+        "gateway": "10.80.20.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Servidores IPv4"
+      },
+      {
+        "id": "corp_sn_operations",
+        "vlanRef": "corp_v130",
+        "cidr": "10.80.30.0/24",
+        "gateway": "10.80.30.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Operaciones IPv4"
+      },
+      {
+        "id": "corp_sn_cameras",
+        "vlanRef": "corp_v140",
+        "cidr": "10.80.40.0/24",
+        "gateway": "10.80.40.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Camaras/IoT IPv4"
+      },
+      {
+        "id": "corp_sn_guest",
+        "vlanRef": "corp_v150",
+        "cidr": "10.80.50.0/24",
+        "gateway": "10.80.50.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Invitados IPv4"
+      },
+      {
+        "id": "corp_sn_mgmt",
+        "vlanRef": "corp_v160",
+        "cidr": "10.80.60.0/24",
+        "gateway": "10.80.60.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Gestion IPv4"
+      },
+      {
+        "id": "corp_sn_voice",
+        "vlanRef": "corp_v170",
+        "cidr": "10.80.70.0/24",
+        "gateway": "10.80.70.1",
+        "gatewayDeviceRef": "corp_rtr",
+        "name": "Voz IPv4"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "corp_finance_user",
+        "name": "FIN-HR-WS-01",
+        "type": "pc",
+        "vlanRef": "corp_v110",
+        "portRef": "corp_acc_finance",
+        "ipMode": "static",
+        "staticIp": "10.80.10.20",
+        "locationId": "corp_office",
+        "physicalLocation": "Sede principal · Finanzas / RRHH"
+      },
+      {
+        "id": "corp_server",
+        "name": "APP-CORE-01",
+        "type": "server",
+        "vlanRef": "corp_v120",
+        "portRef": "corp_acc_hypervisor",
+        "ipMode": "static",
+        "staticIp": "10.80.20.10",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Sede principal · CPD / cuarto técnico"
+      },
+      {
+        "id": "corp_phone",
+        "name": "IP-PHONE-01",
+        "type": "phone",
+        "vlanRef": "corp_v170",
+        "portRef": "corp_acc_voice",
+        "ipMode": "dhcp",
+        "staticIp": "",
+        "locationId": "corp_office",
+        "physicalLocation": "Sede principal · Finanzas / RRHH",
+        "poeRequired": true,
+        "poeWatts": 8
+      },
+      {
+        "id": "corp_camera",
+        "name": "CAM-HQ-01",
+        "type": "camera",
+        "vlanRef": "corp_v140",
+        "portRef": "corp_acc_camera",
+        "ipMode": "static",
+        "staticIp": "10.80.40.20",
+        "locationId": "corp_living",
+        "physicalLocation": "Sede principal · Operaciones",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "corp_server2",
+        "name": "INFRA-SVC-02",
+        "type": "server",
+        "vlanRef": "corp_v120",
+        "portRef": "corp_acc_services",
+        "ipMode": "static",
+        "staticIp": "10.80.20.11",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Sede principal · CPD / cuarto técnico"
+      },
+      {
+        "id": "corp_admin",
+        "name": "MGMT-ADMIN-01",
+        "type": "pc",
+        "vlanRef": "corp_v160",
+        "portRef": "corp_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.80.60.20",
+        "locationId": "corp_office",
+        "physicalLocation": "Sede principal · Finanzas / RRHH"
+      },
+      {
+        "id": "corp_nvr",
+        "name": "NVR-HQ-01",
+        "type": "server",
+        "vlanRef": "corp_v140",
+        "portRef": "corp_acc_nvr",
+        "ipMode": "static",
+        "staticIp": "10.80.40.10",
+        "locationId": "corp_rack_room",
+        "physicalLocation": "Sede principal · CPD / cuarto técnico",
+        "poeRequired": false,
+        "poeWatts": null
+      }
+    ],
+    "links": [
+      {
+        "id": "corp_link_rtr_core",
+        "name": "Empresa router-core",
+        "aPortId": "corp_lan",
+        "bPortId": "corp_core_rtr",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 2,
+        "speed": "1G",
+        "capacityMbps": 1000
+      },
+      {
+        "id": "corp_lag_link_1",
+        "name": "Empresa LAG member 1",
+        "aPortId": "corp_core_acc_1",
+        "bPortId": "corp_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "corp_lag_link_2",
+        "name": "Empresa LAG member 2",
+        "aPortId": "corp_core_acc_2",
+        "bPortId": "corp_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      }
+    ],
+    "fwRules": [],
+    "vlanMatrix": {
+      "corp_v150_corp_v110": false,
+      "corp_v110_corp_v150": false,
+      "corp_v150_corp_v120": false,
+      "corp_v120_corp_v150": false,
+      "corp_v150_corp_v130": false,
+      "corp_v130_corp_v150": false,
+      "corp_v150_corp_v140": false,
+      "corp_v140_corp_v150": false,
+      "corp_v150_corp_v160": false,
+      "corp_v160_corp_v150": false,
+      "corp_v150_corp_v170": false,
+      "corp_v170_corp_v150": false,
+      "corp_v110_corp_v130": false,
+      "corp_v110_corp_v140": false,
+      "corp_v110_corp_v160": false,
+      "corp_v110_corp_v170": false,
+      "corp_v110_corp_v120": true,
+      "corp_v130_corp_v110": false,
+      "corp_v130_corp_v140": false,
+      "corp_v130_corp_v160": false,
+      "corp_v130_corp_v170": false,
+      "corp_v130_corp_v120": true,
+      "corp_v140_corp_v110": false,
+      "corp_v140_corp_v130": false,
+      "corp_v140_corp_v160": false,
+      "corp_v140_corp_v170": false,
+      "corp_v140_corp_v120": true,
+      "corp_v170_corp_v110": false,
+      "corp_v170_corp_v130": false,
+      "corp_v170_corp_v140": false,
+      "corp_v170_corp_v160": false,
+      "corp_v170_corp_v120": true,
+      "corp_v120_corp_v160": false,
+      "corp_v160_corp_v110": true,
+      "corp_v160_corp_v120": true,
+      "corp_v160_corp_v130": true,
+      "corp_v160_corp_v140": true,
+      "corp_v160_corp_v170": true
+    },
+    "dhcp": {
+      "110": {
+        "enabled": true,
+        "start": "10.80.10.50",
+        "end": "10.80.10.180",
+        "dns": "10.80.20.10,10.80.20.11",
+        "domain": "finance.corp.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "130": {
+        "enabled": true,
+        "start": "10.80.30.50",
+        "end": "10.80.30.230",
+        "dns": "10.80.20.10,10.80.20.11",
+        "domain": "users.corp.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "140": {
+        "enabled": true,
+        "start": "10.80.40.50",
+        "end": "10.80.40.170",
+        "dns": "10.80.20.10,10.80.20.11",
+        "domain": "iot.corp.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "150": {
+        "enabled": true,
+        "start": "10.80.50.50",
+        "end": "10.80.50.240",
+        "dns": "1.1.1.1,9.9.9.9",
+        "domain": "guest.corp.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "170": {
+        "enabled": true,
+        "start": "10.80.70.50",
+        "end": "10.80.70.190",
+        "dns": "10.80.20.10,10.80.20.11",
+        "domain": "voice.corp.example",
+        "lease": 2,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "998",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "997"
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-CORP",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "corp_core": "transparent",
+        "corp_access": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-03T11:30:00.000Z",
+      "vtpDevices": {
+        "corp_core": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        },
+        "corp_access": {
+          "domain": "NW-CORP",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        }
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
+    "physicalLocations": [
+      {
+        "id": "corp_site",
+        "name": "Sede principal",
+        "type": "site"
+      },
+      {
+        "id": "corp_rack_room",
+        "name": "Sede principal · CPD / cuarto técnico",
+        "type": "room",
+        "parentId": "corp_site"
+      },
+      {
+        "id": "corp_office",
+        "name": "Sede principal · Finanzas / RRHH",
+        "type": "room",
+        "parentId": "corp_site"
+      },
+      {
+        "id": "corp_living",
+        "name": "Sede principal · Operaciones",
+        "type": "room",
+        "parentId": "corp_site"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "corp_rack01",
+        "name": "RACK-HQ-01",
+        "locationId": "corp_rack_room",
+        "rackUnits": 24,
+        "widthMm": 600,
+        "depthMm": 800,
+        "maxLoadKg": 450,
+        "powerCapacityWatts": 3200,
+        "coolingCapacityWatts": 2500,
+        "numberingDirection": "bottom-up"
+      }
+    ],
+    "rackItems": [
+      {
+        "id": "rackitem_corp_patch01",
+        "rackId": "corp_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "corp_patch01",
+        "label": "PP-CORP-01",
+        "startUnit": 24,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "corp_cm01",
+        "rackId": "corp_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables sede principal",
+        "startUnit": 23,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
+    "patchPanels": [
+      {
+        "id": "corp_patch01",
+        "rackId": "corp_rack01",
+        "name": "PP-HQ-01",
+        "portCount": 48,
+        "category": "Cat6A",
+        "rackUnit": 24
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "corp_to_finance",
+        "locationId": "corp_office",
+        "name": "TO-HQ-FINANCE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_hypervisor",
+        "locationId": "corp_rack_room",
+        "name": "TO-HQ-APP01",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_voice",
+        "locationId": "corp_office",
+        "name": "TO-HQ-VOICE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_camera",
+        "locationId": "corp_living",
+        "name": "TO-HQ-CAMERA",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_services",
+        "locationId": "corp_rack_room",
+        "name": "TO-HQ-SVC02",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_admin",
+        "locationId": "corp_office",
+        "name": "TO-HQ-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_nvr",
+        "locationId": "corp_rack_room",
+        "name": "TO-HQ-NVR",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_ap1",
+        "locationId": "corp_office",
+        "name": "TO-HQ-AP1",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "corp_to_ap2",
+        "locationId": "corp_living",
+        "name": "TO-HQ-AP2",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "corp_run_finance",
+        "label": "FIN-HR-WS-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 1,
+        "outletId": "corp_to_finance",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Rack HQ → canalización → FIN-HR-WS-01",
+        "name": "FIN-HR-WS-01"
+      },
+      {
+        "id": "corp_run_hypervisor",
+        "label": "APP-CORE-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 2,
+        "outletId": "corp_to_hypervisor",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Rack HQ → APP-CORE-01",
+        "name": "APP-CORE-01"
+      },
+      {
+        "id": "corp_run_voice",
+        "label": "IP-PHONE-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 3,
+        "outletId": "corp_to_voice",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Rack HQ → canalización → IP-PHONE-01",
+        "name": "IP-PHONE-01"
+      },
+      {
+        "id": "corp_run_camera",
+        "label": "CAM-HQ-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 4,
+        "outletId": "corp_to_camera",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Rack HQ → canalización → CAM-HQ-01",
+        "name": "CAM-HQ-01"
+      },
+      {
+        "id": "corp_run_services",
+        "label": "INFRA-SVC-02",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 5,
+        "outletId": "corp_to_services",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Rack HQ → INFRA-SVC-02",
+        "name": "INFRA-SVC-02"
+      },
+      {
+        "id": "corp_run_admin",
+        "label": "MGMT-ADMIN-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 6,
+        "outletId": "corp_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Rack HQ → canalización → MGMT-ADMIN-01",
+        "name": "MGMT-ADMIN-01"
+      },
+      {
+        "id": "corp_run_nvr",
+        "name": "NVR-HQ-01",
+        "label": "NVR-HQ-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 7,
+        "outletId": "corp_to_nvr",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 4,
+        "route": "Rack HQ → NVR-HQ-01"
+      },
+      {
+        "id": "corp_run_ap1",
+        "name": "AP-HQ-01",
+        "label": "AP-HQ-01",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 8,
+        "outletId": "corp_to_ap1",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 18,
+        "route": "Rack HQ → techo Finanzas/RRHH"
+      },
+      {
+        "id": "corp_run_ap2",
+        "name": "AP-HQ-02",
+        "label": "AP-HQ-02",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 9,
+        "outletId": "corp_to_ap2",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 24,
+        "route": "Rack HQ → techo Operaciones"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "corp_patch_finance",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 1,
+        "switchPortId": "corp_acc_finance",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_hypervisor",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 2,
+        "switchPortId": "corp_acc_hypervisor",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_voice",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 3,
+        "switchPortId": "corp_acc_voice",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_camera",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 4,
+        "switchPortId": "corp_acc_camera",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_services",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 5,
+        "switchPortId": "corp_acc_services",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_admin",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 6,
+        "switchPortId": "corp_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_nvr",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 7,
+        "switchPortId": "corp_acc_nvr",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_ap1",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 8,
+        "switchPortId": "corp_acc_ap1",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "corp_patch_ap2",
+        "patchPanelId": "corp_patch01",
+        "patchPort": 9,
+        "switchPortId": "corp_acc_ap2",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "corp_hostcord_finance",
+        "hostId": "corp_finance_user",
+        "outletId": "corp_to_finance",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_hypervisor",
+        "hostId": "corp_server",
+        "outletId": "corp_to_hypervisor",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_voice",
+        "hostId": "corp_phone",
+        "outletId": "corp_to_voice",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_camera",
+        "hostId": "corp_camera",
+        "outletId": "corp_to_camera",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_services",
+        "hostId": "corp_server2",
+        "outletId": "corp_to_services",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_admin",
+        "hostId": "corp_admin",
+        "outletId": "corp_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "corp_hostcord_nvr",
+        "hostId": "corp_nvr",
+        "outletId": "corp_to_nvr",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      }
+    ],
+    "pdus": [
+      {
+        "id": "corp_pdu_a",
+        "rackId": "corp_rack01",
+        "name": "PDU-HQ-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 24
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "corp_pwr_corp_rtr",
+        "deviceId": "corp_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "corp_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "corp_pwr_corp_core",
+        "deviceId": "corp_core",
+        "powerSupplyIndex": 0,
+        "pduId": "corp_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "corp_pwr_corp_access",
+        "deviceId": "corp_access",
+        "powerSupplyIndex": 0,
+        "pduId": "corp_pdu_a",
+        "outlet": 3,
+        "feed": "A"
+      }
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_lab",
+          "name": "Empresa mediana",
+          "color": "#10233c",
+          "x": 180,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "corp_site"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "corp_rtr": "vloc_lab",
+          "corp_core": "vloc_lab",
+          "corp_access": "vloc_lab"
+        },
+        "hosts": {
+          "corp_finance_user": "vloc_lab",
+          "corp_server": "vloc_lab",
+          "corp_phone": "vloc_lab",
+          "corp_camera": "vloc_lab",
+          "corp_guest": "vloc_lab",
+          "corp_admin": "vloc_lab",
+          "corp_nvr": "vloc_lab"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "vrfs": [],
+    "wanCircuits": [
+      {
+        "id": "corp_wan_primary",
+        "name": "Fibra empresarial principal",
+        "siteRef": "corp_site",
+        "deviceId": "corp_rtr",
+        "portId": "corp_wan1",
+        "provider": "ISP-EMPRESA-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 1000,
+        "latencyTargetMs": 20,
+        "lossTargetPercent": 0.3,
+        "slaAvailability": 99.9,
+        "demarcLocation": "Sede principal · CPD",
+        "physicalPath": "Demarcación A → RTR-EDGE-HQ-01",
+        "expectedPeakMbps": 600
+      },
+      {
+        "id": "corp_wan_backup",
+        "name": "Acceso empresarial secundario",
+        "siteRef": "corp_site",
+        "deviceId": "corp_rtr",
+        "portId": "corp_wan2",
+        "provider": "ISP-EMPRESA-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 800,
+        "bandwidthUpMbps": 800,
+        "latencyTargetMs": 45,
+        "lossTargetPercent": 0.8,
+        "slaAvailability": 99.5,
+        "demarcLocation": "Sede principal · CPD",
+        "physicalPath": "Demarcación B independiente → RTR-EDGE-HQ-01",
+        "expectedPeakMbps": 600
+      }
+    ],
+    "linkAggregations": [
+      {
+        "id": "corp_lag_core_access",
+        "name": "Empresa Core-Access LACP",
+        "number": 1,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "corp_core_acc_1",
+          "corp_core_acc_2",
+          "corp_acc_core_1",
+          "corp_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 199,
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ]
+      }
+    ],
+    "trafficProfiles": [
+      {
+        "id": "traffic_corp_edge",
+        "name": "Carga corporativa hacia Internet",
+        "linkRef": "corp_link_rtr_core",
+        "averageMbps": 220,
+        "peakMbps": 600,
+        "criticalMbps": 420,
+        "latencyMaxMs": 30,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.8
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS interno corporativo",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.80.20.10",
+            "hostname": "dns1.corp.example"
+          },
+          {
+            "ip": "10.80.20.11",
+            "hostname": "dns2.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "radius",
+        "name": "RADIUS / 802.1X corporativo",
+        "type": "radius",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.80.20.10",
+            "hostname": "radius1.corp.example"
+          },
+          {
+            "ip": "10.80.20.11",
+            "hostname": "radius2.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP corporativo",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.80.20.10",
+            "hostname": "ntp1.corp.example"
+          },
+          {
+            "ip": "10.80.20.11",
+            "hostname": "ntp2.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Logging / SIEM corporativo",
+        "type": "syslog",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.80.20.10",
+            "hostname": "logs1.corp.example"
+          },
+          {
+            "ip": "10.80.20.11",
+            "hostname": "logs2.corp.example"
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "name": "Monitorización corporativa",
+        "type": "monitoring",
+        "critical": false,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.80.20.10",
+            "hostname": "monitor.corp.example"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [
+      {
+        "id": "wlan-corp-controller",
+        "name": "Control WLAN corporativo",
+        "critical": false,
+        "peerControllerRefs": []
+      }
+    ],
+    "wifiAccessPoints": [
+      {
+        "id": "ap_corp_1",
+        "name": "AP-HQ-01",
+        "uplinkPortRef": "corp_acc_ap1",
+        "controllerRef": "wlan-corp-controller",
+        "poeWatts": 28,
+        "locationRef": "corp_office",
+        "ssidRefs": [
+          "ssid_corp_staff",
+          "ssid_corp_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_corp_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_corp_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 15,
+            "expectedClients": 28,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_corp_1_6",
+            "band": "6GHz",
+            "channel": 5,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_corp_2",
+        "name": "AP-HQ-02",
+        "uplinkPortRef": "corp_acc_ap2",
+        "controllerRef": "wlan-corp-controller",
+        "poeWatts": 28,
+        "locationRef": "corp_living",
+        "ssidRefs": [
+          "ssid_corp_staff",
+          "ssid_corp_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_corp_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 10,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_corp_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 40,
+            "txPowerDbm": 15,
+            "expectedClients": 28,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_corp_2_6",
+            "band": "6GHz",
+            "channel": 37,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 20,
+            "maxClients": 128
+          }
+        ]
+      }
+    ],
+    "wifiSsids": [
+      {
+        "id": "ssid_corp_staff",
+        "name": "CORP-STAFF",
+        "vlanRef": "corp_v130",
+        "security": "wpa3-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_corp_guest",
+        "name": "CORP-GUEST",
+        "vlanRef": "corp_v150",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      }
+    ],
+    "ipv6Networks": [
+      {
+        "id": "corp_v6_finance",
+        "name": "Finanzas/RRHH IPv6",
+        "prefix": "2001:db8:80:10::/64",
+        "vlanRef": "corp_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:10::1"
+      },
+      {
+        "id": "corp_v6_servers",
+        "name": "Servidores IPv6",
+        "prefix": "2001:db8:80:20::/64",
+        "vlanRef": "corp_v120",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:20::1"
+      },
+      {
+        "id": "corp_v6_operations",
+        "name": "Operaciones IPv6",
+        "prefix": "2001:db8:80:30::/64",
+        "vlanRef": "corp_v130",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:30::1"
+      },
+      {
+        "id": "corp_v6_cameras",
+        "name": "Cámaras/IoT IPv6",
+        "prefix": "2001:db8:80:40::/64",
+        "vlanRef": "corp_v140",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:40::1"
+      },
+      {
+        "id": "corp_v6_guest",
+        "name": "Invitados IPv6",
+        "prefix": "2001:db8:80:50::/64",
+        "vlanRef": "corp_v150",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:50::1"
+      },
+      {
+        "id": "corp_v6_mgmt",
+        "name": "Gestión IPv6",
+        "prefix": "2001:db8:80:60::/64",
+        "vlanRef": "corp_v160",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:60::1"
+      },
+      {
+        "id": "corp_v6_voice",
+        "name": "Voz IPv6",
+        "prefix": "2001:db8:80:70::/64",
+        "vlanRef": "corp_v170",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:80:70::1"
+      }
+    ],
+    "failureScenarios": [
+      {
+        "id": "fail-corp-primary-wan",
+        "name": "Fallo WAN principal corporativa",
+        "events": [
+          {
+            "type": "circuit",
+            "targetRef": "corp_wan_primary"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "wan",
+            "ref": ""
+          }
+        ],
+        "requireWan": true
+      },
+      {
+        "id": "fail-corp-lag-member",
+        "name": "Fallo de un miembro LACP core/acceso",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "corp_lag_link_1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "link",
+            "ref": "corp_lag_link_2"
+          }
+        ],
+        "requireWan": true
+      }
+    ],
+    "stacks": [],
+    "mlagDomains": [],
+    "haGroups": [],
+    "diversityPolicies": [],
+    "routing": {
+      "strategy": "static",
+      "staticRoutesByDevice": {}
+    },
+    "highAvailability": {
+      "devices": {
+        "corp_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "198.51.100.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "corp_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.1",
+              "distance": 20,
+              "circuitRef": "corp_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "corp_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        }
+      }
+    },
+    "accessSecurity": {
+      "dhcpSnooping": true,
+      "arpInspection": true,
+      "portSecurity": true,
+      "maxMac": 2,
+      "violation": "restrict",
+      "sticky": true,
+      "dhcpRateLimit": 15
+    },
+    "management": {
+      "domain": "corp.example",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.80.60.0/24"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.80.20.10",
+        "10.80.20.11"
+      ],
+      "ntpServers": [
+        "10.80.20.10",
+        "10.80.20.11"
+      ],
+      "dnsServers": [
+        "10.80.20.10",
+        "10.80.20.11"
+      ],
+      "banner": "Infraestructura corporativa gestionada. Acceso administrativo restringido y registrado.",
+      "backup": false
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:corp_rack01": {
+          "unitCost": 650,
+          "unitPrice": 900,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Rack 24U sede principal"
+        },
+        "pdu:corp_pdu_a": {
+          "unitCost": 180,
+          "unitPrice": 250,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU rack 24 tomas"
+        },
+        "patchPanel:corp_patch01": {
+          "unitCost": 140,
+          "unitPrice": 210,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Patch panel Cat6A 48 puertos"
+        },
+        "telecomOutlet:corp_to_finance": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_hypervisor": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_voice": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_camera": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_services": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_admin": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_nvr": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_ap1": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:corp_to_ap2": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "cableRun:corp_run_finance": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_hypervisor": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_voice": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_camera": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_services": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_nvr": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_ap1": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:corp_run_ap2": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "patchConnection:corp_patch_finance": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_hypervisor": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_voice": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_camera": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_services": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_nvr": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_ap1": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:corp_patch_ap2": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_finance": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_hypervisor": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_voice": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_camera": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_services": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:corp_hostcord_nvr": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "link:corp_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "link:corp_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "wanCircuit:corp_wan_primary": {
+          "unitCost": 180,
+          "unitPrice": 240,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Fibra empresarial principal"
+        },
+        "wanCircuit:corp_wan_backup": {
+          "unitCost": 95,
+          "unitPrice": 130,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Acceso empresarial secundario"
+        },
+        "rackItem:corp_cm01": {
+          "unitCost": 28,
+          "unitPrice": 42,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Pasacables horizontal 1U"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|catalyst 8200l|": {
+          "unitCost": 1200,
+          "unitPrice": 1600,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Router edge de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l|": {
+          "unitCost": 2100,
+          "unitPrice": 2800,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Core 10G de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l-24uxg|": {
+          "unitCost": 2300,
+          "unitPrice": 3050,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Acceso PoE multigig de referencia / reacondicionado"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-design",
+          "description": "Diseño de red corporativa, segmentación, direccionamiento y hardening",
+          "quantity": 24,
+          "unit": "h",
+          "unitCost": 50,
+          "unitPrice": 85,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-install",
+          "description": "Instalación, configuración y pruebas de continuidad",
+          "quantity": 32,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-doc",
+          "description": "Documentación As-Built, runbook y entrega operativa",
+          "quantity": 12,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 75,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        }
+      ]
+    }
+  }
+}

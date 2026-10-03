@@ -947,6 +947,23 @@ test('L2 audit valida continuidad desde host hasta gateway por trunk', () => {
   assert.ok(!audit.issues.some(i => i.code === 'NW-L2-042'));
 });
 
+test('L2 no confunde un endpoint APP-CORE con uplink textual y conserva señales explícitas', () => {
+  const project = {
+    devices:[{id:'sw1',name:'SW-ACCESS-01',type:'switch'}],
+    vlans:[{id:'v10',vlanId:10,name:'Servers'}],
+    subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1'}],
+    ports:[{id:'p1',deviceId:'sw1',name:'Gi0/2',mode:'access',accessVlanRef:'v10',desc:'Servidor APP-CORE-01',portFast:true,bpduGuard:true}],
+    hosts:[{id:'h1',name:'APP-CORE-01',type:'server',vlanRef:'v10',portRef:'p1',staticIp:'10.10.10.20'}],
+    links:[]
+  };
+  const endpointAudit = NWL2.auditL2(project);
+  assert.ok(!endpointAudit.issues.some(i => i.code === 'NW-L2-010'),'Un nombre de aplicación no debe convertir un endpoint enlazado en uplink');
+
+  project.ports[0].uplink=true;
+  const explicitAudit = NWL2.auditL2(project);
+  assert.ok(explicitAudit.issues.some(i => i.code === 'NW-L2-010'),'Un marcador uplink explícito sí debe señalar el conflicto access/uplink');
+});
+
 console.log('\nTests L2 avanzado v3.26 completados.');
 
 
