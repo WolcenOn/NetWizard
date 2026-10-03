@@ -1,0 +1,2080 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-03T11:45:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path · Home Lab moderno y segmentado",
+    "workflow": {
+      "mode": "design"
+    },
+    "customDeviceModels": [],
+    "devices": [
+      {
+        "id": "lab_rtr",
+        "name": "RTR-LAB-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 8200L",
+        "modelSource": "manual",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack",
+        "mgmtIp": "10.60.60.1",
+        "powerDrawWatts": 95,
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "lab_rack01",
+        "rackUnit": 15,
+        "originRef": "lab_rtr",
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
+      },
+      {
+        "id": "lab_core",
+        "name": "SW-CORE-LAB-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L",
+        "modelSource": "manual",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack",
+        "mgmtIp": "10.60.60.10",
+        "powerDrawWatts": 95,
+        "rackId": "lab_rack01",
+        "rackUnit": 12,
+        "originRef": "lab_core",
+        "designDisposition": "keep"
+      },
+      {
+        "id": "lab_access",
+        "name": "SW-ACCESS-LAB-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L-24UXG",
+        "modelSource": "manual",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack",
+        "mgmtIp": "10.60.60.11",
+        "powerDrawWatts": 120,
+        "poeBudgetW": 715,
+        "rackId": "lab_rack01",
+        "rackUnit": 9,
+        "originRef": "lab_access",
+        "designDisposition": "keep"
+      }
+    ],
+    "ports": [
+      {
+        "id": "lab_lan",
+        "deviceId": "lab_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "copper",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Trunk LAN Home Lab",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "lab_core_rtr",
+        "deviceId": "lab_core",
+        "name": "GigabitEthernet1/0/48",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "copper",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-LAB-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "lab_core_acc_1",
+        "deviceId": "lab_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "lab_acc_core_1",
+        "deviceId": "lab_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "lab_core_acc_2",
+        "deviceId": "lab_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "lab_acc_core_2",
+        "deviceId": "lab_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "lab_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "lab_acc_trusted",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v110",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "CLIENT-TRUSTED-01",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "lab_acc_hypervisor",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "HYPERVISOR-01",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "lab_acc_labnode",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v130",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "LAB-NODE-01",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "lab_acc_iot",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "IOT-HUB-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "lab_acc_services",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "SVC-LAB-02",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "lab_acc_ap1",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "lab_v160",
+        "allowedVlans": [
+          110,
+          140,
+          150,
+          160
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP trunk 1",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "lab_acc_ap2",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "lab_v160",
+        "allowedVlans": [
+          110,
+          140,
+          150,
+          160
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP trunk 2",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "lab_acc_admin",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v160",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "ADMIN-CONSOLE-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "lab_wan1",
+        "deviceId": "lab_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "198.51.100.2",
+        "l3Cidr": "198.51.100.0/30"
+      },
+      {
+        "id": "lab_wan2",
+        "deviceId": "lab_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 400,
+        "l3Ip": "203.0.113.2",
+        "l3Cidr": "203.0.113.0/30"
+      },
+      {
+        "id": "lab_acc_backup",
+        "deviceId": "lab_access",
+        "name": "GigabitEthernet1/0/9",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "lab_v170",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "speedMaxMbps": 2500,
+        "desc": "BACKUP-NODE-01"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "lab_v110",
+        "vlanId": 110,
+        "name": "LAB-Trusted",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 20,
+          "growthHosts": 10,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "lab_v120",
+        "vlanId": 120,
+        "name": "LAB-Servers",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 12,
+          "growthHosts": 8,
+          "dhcp": false,
+          "internet": true,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "lab_v130",
+        "vlanId": 130,
+        "name": "LAB-Experimentos",
+        "intent": {
+          "type": "lab",
+          "expectedHosts": 30,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "restricted",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "lab_v140",
+        "vlanId": 140,
+        "name": "LAB-IoT",
+        "intent": {
+          "type": "iot",
+          "expectedHosts": 40,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "lab_v170",
+        "vlanId": 170,
+        "name": "LAB-Storage-Backup",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 8,
+          "growthHosts": 8,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "lab_v150",
+        "vlanId": 150,
+        "name": "LAB-Invitados",
+        "intent": {
+          "type": "guests",
+          "expectedHosts": 20,
+          "growthHosts": 10,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "lab_v160",
+        "vlanId": 160,
+        "name": "LAB-Gestion",
+        "intent": {
+          "type": "management",
+          "expectedHosts": 10,
+          "growthHosts": 5,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "lab_v199",
+        "vlanId": 199,
+        "name": "LAB-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "lab_sn_users",
+        "vlanRef": "lab_v110",
+        "cidr": "10.60.10.0/24",
+        "gateway": "10.60.10.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_servers",
+        "vlanRef": "lab_v120",
+        "cidr": "10.60.20.0/24",
+        "gateway": "10.60.20.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_lab",
+        "vlanRef": "lab_v130",
+        "cidr": "10.60.30.0/24",
+        "gateway": "10.60.30.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_iot",
+        "vlanRef": "lab_v140",
+        "cidr": "10.60.40.0/24",
+        "gateway": "10.60.40.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_guest",
+        "vlanRef": "lab_v150",
+        "cidr": "10.60.50.0/24",
+        "gateway": "10.60.50.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_mgmt",
+        "vlanRef": "lab_v160",
+        "cidr": "10.60.60.0/24",
+        "gateway": "10.60.60.1",
+        "gatewayDeviceRef": "lab_rtr"
+      },
+      {
+        "id": "lab_sn_storage",
+        "vlanRef": "lab_v170",
+        "cidr": "10.60.70.0/24",
+        "gateway": "10.60.70.1",
+        "gatewayDeviceRef": "lab_rtr"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "lab_user",
+        "name": "CLIENT-TRUSTED-01",
+        "type": "pc",
+        "vlanRef": "lab_v110",
+        "portRef": "lab_acc_trusted",
+        "ipMode": "dhcp",
+        "staticIp": "",
+        "locationId": "lab_office",
+        "physicalLocation": "Home Lab · Despacho"
+      },
+      {
+        "id": "lab_server",
+        "name": "HYPERVISOR-01",
+        "type": "server",
+        "vlanRef": "lab_v120",
+        "portRef": "lab_acc_hypervisor",
+        "ipMode": "static",
+        "staticIp": "10.60.20.10",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack"
+      },
+      {
+        "id": "lab_phone",
+        "name": "LAB-NODE-01",
+        "type": "server",
+        "vlanRef": "lab_v130",
+        "portRef": "lab_acc_labnode",
+        "ipMode": "dhcp",
+        "staticIp": "",
+        "locationId": "lab_office",
+        "physicalLocation": "Home Lab · Despacho",
+        "poeRequired": false,
+        "poeWatts": null
+      },
+      {
+        "id": "lab_camera",
+        "name": "IOT-HUB-01",
+        "type": "iot",
+        "vlanRef": "lab_v140",
+        "portRef": "lab_acc_iot",
+        "ipMode": "static",
+        "staticIp": "10.60.40.20",
+        "locationId": "lab_living",
+        "physicalLocation": "Home Lab · Zona común",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "lab_guest",
+        "name": "SVC-LAB-02",
+        "type": "server",
+        "vlanRef": "lab_v120",
+        "portRef": "lab_acc_services",
+        "ipMode": "static",
+        "staticIp": "10.60.20.11",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack"
+      },
+      {
+        "id": "lab_admin",
+        "name": "ADMIN-CONSOLE-01",
+        "type": "pc",
+        "vlanRef": "lab_v160",
+        "portRef": "lab_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.60.60.20",
+        "locationId": "lab_office",
+        "physicalLocation": "Home Lab · Despacho"
+      },
+      {
+        "id": "lab_backup",
+        "name": "BACKUP-NODE-01",
+        "type": "server",
+        "vlanRef": "lab_v170",
+        "portRef": "lab_acc_backup",
+        "ipMode": "static",
+        "staticIp": "10.60.70.20",
+        "locationId": "lab_rack_room",
+        "physicalLocation": "Home Lab · Rack",
+        "poeRequired": false,
+        "poeWatts": null
+      }
+    ],
+    "links": [
+      {
+        "id": "lab_link_rtr_core",
+        "name": "LAB router-core",
+        "aPortId": "lab_lan",
+        "bPortId": "lab_core_rtr",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 2,
+        "speed": "1G",
+        "capacityMbps": 1000
+      },
+      {
+        "id": "lab_lag_link_1",
+        "name": "LAB LAG member 1",
+        "aPortId": "lab_core_acc_1",
+        "bPortId": "lab_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "lab_lag_link_2",
+        "name": "LAB LAG member 2",
+        "aPortId": "lab_core_acc_2",
+        "bPortId": "lab_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      }
+    ],
+    "fwRules": [],
+    "vlanMatrix": {
+      "lab_v150_lab_v110": false,
+      "lab_v110_lab_v150": false,
+      "lab_v150_lab_v120": false,
+      "lab_v120_lab_v150": false,
+      "lab_v150_lab_v130": false,
+      "lab_v130_lab_v150": false,
+      "lab_v150_lab_v140": false,
+      "lab_v140_lab_v150": false,
+      "lab_v150_lab_v160": false,
+      "lab_v160_lab_v150": false,
+      "lab_v150_lab_v170": false,
+      "lab_v170_lab_v150": false,
+      "lab_v140_lab_v110": false,
+      "lab_v140_lab_v120": false,
+      "lab_v140_lab_v130": false,
+      "lab_v140_lab_v160": false,
+      "lab_v140_lab_v170": false,
+      "lab_v110_lab_v160": false,
+      "lab_v110_lab_v170": false,
+      "lab_v130_lab_v110": false,
+      "lab_v130_lab_v160": false,
+      "lab_v130_lab_v170": false,
+      "lab_v130_lab_v120": true,
+      "lab_v120_lab_v160": false,
+      "lab_v120_lab_v170": true,
+      "lab_v160_lab_v170": true
+    },
+    "dhcp": {
+      "110": {
+        "enabled": true,
+        "start": "10.60.10.50",
+        "end": "10.60.10.219",
+        "dns": "10.60.20.10,10.60.20.11",
+        "domain": "lab.home.arpa",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "130": {
+        "enabled": true,
+        "start": "10.60.30.50",
+        "end": "10.60.30.219",
+        "dns": "10.60.20.10,10.60.20.11",
+        "domain": "lab.home.arpa",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "140": {
+        "enabled": true,
+        "start": "10.60.40.50",
+        "end": "10.60.40.229",
+        "dns": "1.1.1.1,9.9.9.9",
+        "domain": "iot.home.arpa",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "150": {
+        "enabled": true,
+        "start": "10.60.50.50",
+        "end": "10.60.50.219",
+        "dns": "1.1.1.1,9.9.9.9",
+        "domain": "guest.home.arpa",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "998",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "997"
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-HOMELAB",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "lab_core": "transparent",
+        "lab_access": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-03T11:30:00.000Z",
+      "vtpDevices": {
+        "lab_core": {
+          "domain": "NW-HOMELAB",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        },
+        "lab_access": {
+          "domain": "NW-HOMELAB",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        }
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
+    "physicalLocations": [
+      {
+        "id": "lab_site",
+        "name": "Home Lab",
+        "type": "site"
+      },
+      {
+        "id": "lab_rack_room",
+        "name": "Home Lab · Rack",
+        "type": "room",
+        "parentId": "lab_site"
+      },
+      {
+        "id": "lab_office",
+        "name": "Home Lab · Despacho",
+        "type": "room",
+        "parentId": "lab_site"
+      },
+      {
+        "id": "lab_living",
+        "name": "Home Lab · Zona común",
+        "type": "room",
+        "parentId": "lab_site"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "lab_rack01",
+        "name": "RACK-LAB-01",
+        "locationId": "lab_rack_room",
+        "rackUnits": 18,
+        "widthMm": 600,
+        "depthMm": 800,
+        "maxLoadKg": 300,
+        "powerCapacityWatts": 2500,
+        "coolingCapacityWatts": 1800,
+        "numberingDirection": "bottom-up"
+      }
+    ],
+    "rackItems": [
+      {
+        "id": "rackitem_lab_patch01",
+        "rackId": "lab_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "lab_patch01",
+        "label": "PP-LAB-01",
+        "startUnit": 18,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "lab_cm01",
+        "rackId": "lab_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Home Lab",
+        "startUnit": 17,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
+    "patchPanels": [
+      {
+        "id": "lab_patch01",
+        "rackId": "lab_rack01",
+        "name": "PP-LAB-01",
+        "portCount": 24,
+        "category": "Cat6A",
+        "rackUnit": 18
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "lab_to_trusted",
+        "locationId": "lab_office",
+        "name": "TO-LAB-TRUSTED",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_hypervisor",
+        "locationId": "lab_rack_room",
+        "name": "TO-LAB-HYPERVISOR",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_labnode",
+        "locationId": "lab_office",
+        "name": "TO-LAB-NODE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_iot",
+        "locationId": "lab_living",
+        "name": "TO-LAB-IOT",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_services",
+        "locationId": "lab_rack_room",
+        "name": "TO-LAB-SERVICES",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_admin",
+        "locationId": "lab_office",
+        "name": "TO-LAB-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_backup",
+        "locationId": "lab_rack_room",
+        "name": "TO-LAB-BACKUP",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_ap1",
+        "locationId": "lab_office",
+        "name": "TO-LAB-AP1",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "lab_to_ap2",
+        "locationId": "lab_living",
+        "name": "TO-LAB-AP2",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "lab_run_trusted",
+        "label": "CLIENT-TRUSTED-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 1,
+        "outletId": "lab_to_trusted",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Rack Home Lab → canalización → CLIENT-TRUSTED-01",
+        "name": "CLIENT-TRUSTED-01"
+      },
+      {
+        "id": "lab_run_hypervisor",
+        "label": "HYPERVISOR-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 2,
+        "outletId": "lab_to_hypervisor",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Rack Home Lab → canalización → HYPERVISOR-01",
+        "name": "HYPERVISOR-01"
+      },
+      {
+        "id": "lab_run_labnode",
+        "label": "LAB-NODE-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 3,
+        "outletId": "lab_to_labnode",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Rack Home Lab → canalización → LAB-NODE-01",
+        "name": "LAB-NODE-01"
+      },
+      {
+        "id": "lab_run_iot",
+        "label": "IOT-HUB-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 4,
+        "outletId": "lab_to_iot",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Rack Home Lab → canalización → IOT-HUB-01",
+        "name": "IOT-HUB-01"
+      },
+      {
+        "id": "lab_run_services",
+        "label": "SVC-LAB-02",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 5,
+        "outletId": "lab_to_services",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Rack Home Lab → canalización → SVC-LAB-02",
+        "name": "SVC-LAB-02"
+      },
+      {
+        "id": "lab_run_admin",
+        "label": "ADMIN-CONSOLE-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 6,
+        "outletId": "lab_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Rack Home Lab → canalización → ADMIN-CONSOLE-01",
+        "name": "ADMIN-CONSOLE-01"
+      },
+      {
+        "id": "lab_run_backup",
+        "name": "BACKUP-NODE-01",
+        "label": "BACKUP-NODE-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 7,
+        "outletId": "lab_to_backup",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 4,
+        "route": "Rack Home Lab → BACKUP-NODE-01"
+      },
+      {
+        "id": "lab_run_ap1",
+        "name": "AP-LAB-01",
+        "label": "AP-LAB-01",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 8,
+        "outletId": "lab_to_ap1",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 18,
+        "route": "Rack Home Lab → techo despacho"
+      },
+      {
+        "id": "lab_run_ap2",
+        "name": "AP-LAB-02",
+        "label": "AP-LAB-02",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 9,
+        "outletId": "lab_to_ap2",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 24,
+        "route": "Rack Home Lab → techo zona común"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "lab_patch_trusted",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 1,
+        "switchPortId": "lab_acc_trusted",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_hypervisor",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 2,
+        "switchPortId": "lab_acc_hypervisor",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_labnode",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 3,
+        "switchPortId": "lab_acc_labnode",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_iot",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 4,
+        "switchPortId": "lab_acc_iot",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_services",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 5,
+        "switchPortId": "lab_acc_services",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_admin",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 6,
+        "switchPortId": "lab_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_backup",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 7,
+        "switchPortId": "lab_acc_backup",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_ap1",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 8,
+        "switchPortId": "lab_acc_ap1",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "lab_patch_ap2",
+        "patchPanelId": "lab_patch01",
+        "patchPort": 9,
+        "switchPortId": "lab_acc_ap2",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "lab_hostcord_trusted",
+        "hostId": "lab_user",
+        "outletId": "lab_to_trusted",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_hypervisor",
+        "hostId": "lab_server",
+        "outletId": "lab_to_hypervisor",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_labnode",
+        "hostId": "lab_phone",
+        "outletId": "lab_to_labnode",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_iot",
+        "hostId": "lab_camera",
+        "outletId": "lab_to_iot",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_services",
+        "hostId": "lab_guest",
+        "outletId": "lab_to_services",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_admin",
+        "hostId": "lab_admin",
+        "outletId": "lab_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "lab_hostcord_backup",
+        "hostId": "lab_backup",
+        "outletId": "lab_to_backup",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      }
+    ],
+    "pdus": [
+      {
+        "id": "lab_pdu_a",
+        "rackId": "lab_rack01",
+        "name": "PDU-LAB-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 12
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "lab_pwr_lab_rtr",
+        "deviceId": "lab_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "lab_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "lab_pwr_lab_core",
+        "deviceId": "lab_core",
+        "powerSupplyIndex": 0,
+        "pduId": "lab_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "lab_pwr_lab_access",
+        "deviceId": "lab_access",
+        "powerSupplyIndex": 0,
+        "pduId": "lab_pdu_a",
+        "outlet": 3,
+        "feed": "A"
+      }
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_lab",
+          "name": "Home Lab",
+          "color": "#10233c",
+          "x": 180,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "lab_site"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "lab_rtr": "vloc_lab",
+          "lab_core": "vloc_lab",
+          "lab_access": "vloc_lab"
+        },
+        "hosts": {
+          "lab_user": "vloc_lab",
+          "lab_server": "vloc_lab",
+          "lab_phone": "vloc_lab",
+          "lab_camera": "vloc_lab",
+          "lab_guest": "vloc_lab",
+          "lab_admin": "vloc_lab",
+          "lab_backup": "vloc_lab"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "vrfs": [],
+    "wanCircuits": [
+      {
+        "id": "lab_wan_primary",
+        "name": "Fibra principal Home Lab",
+        "siteRef": "lab_site",
+        "deviceId": "lab_rtr",
+        "portId": "lab_wan1",
+        "provider": "ISP-FIBRA-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 1000,
+        "latencyTargetMs": 20,
+        "lossTargetPercent": 0.3,
+        "slaAvailability": 99.9,
+        "demarcLocation": "Home Lab · Rack",
+        "physicalPath": "ONT principal → RTR-LAB-01",
+        "expectedPeakMbps": 250
+      },
+      {
+        "id": "lab_wan_backup",
+        "name": "Backup Internet independiente",
+        "siteRef": "lab_site",
+        "deviceId": "lab_rtr",
+        "portId": "lab_wan2",
+        "provider": "ISP-BACKUP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 400,
+        "bandwidthUpMbps": 400,
+        "latencyTargetMs": 45,
+        "lossTargetPercent": 0.8,
+        "slaAvailability": 99.5,
+        "demarcLocation": "Home Lab · Rack",
+        "physicalPath": "Demarcación secundaria → RTR-LAB-01",
+        "expectedPeakMbps": 250
+      }
+    ],
+    "linkAggregations": [
+      {
+        "id": "lab_lag_core_access",
+        "name": "LAB Core-Access LACP",
+        "number": 1,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "lab_core_acc_1",
+          "lab_core_acc_2",
+          "lab_acc_core_1",
+          "lab_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 199,
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ]
+      }
+    ],
+    "trafficProfiles": [
+      {
+        "id": "traffic_lab_edge",
+        "name": "Carga Home Lab hacia Internet",
+        "linkRef": "lab_link_rtr_core",
+        "averageMbps": 70,
+        "peakMbps": 250,
+        "criticalMbps": 140,
+        "latencyMaxMs": 30,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.8
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS filtrado / resolver local",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.60.20.10",
+            "hostname": "dns1.lab.home.arpa"
+          },
+          {
+            "ip": "10.60.20.11",
+            "hostname": "dns2.lab.home.arpa"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP del laboratorio",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.60.20.10",
+            "hostname": "ntp1.lab.home.arpa"
+          },
+          {
+            "ip": "10.60.20.11",
+            "hostname": "ntp2.lab.home.arpa"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Syslog central",
+        "type": "syslog",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.60.20.10",
+            "hostname": "logs1.lab.home.arpa"
+          },
+          {
+            "ip": "10.60.20.11",
+            "hostname": "logs2.lab.home.arpa"
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "name": "Monitoring y métricas",
+        "type": "monitoring",
+        "critical": false,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.60.20.10",
+            "hostname": "monitor.lab.home.arpa"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [
+      {
+        "id": "wlan-lab-controller",
+        "name": "Control WLAN local/cloud",
+        "critical": false,
+        "peerControllerRefs": []
+      }
+    ],
+    "wifiAccessPoints": [
+      {
+        "id": "ap_lab_1",
+        "name": "AP-LAB-01",
+        "uplinkPortRef": "lab_acc_ap1",
+        "controllerRef": "wlan-lab-controller",
+        "poeWatts": 28,
+        "locationRef": "lab_office",
+        "ssidRefs": [
+          "ssid_lab_trusted",
+          "ssid_lab_iot",
+          "ssid_lab_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_lab_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 5,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_lab_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 10,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_lab_1_6",
+            "band": "6GHz",
+            "channel": 5,
+            "channelWidthMHz": 160,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_lab_2",
+        "name": "AP-LAB-02",
+        "uplinkPortRef": "lab_acc_ap2",
+        "controllerRef": "wlan-lab-controller",
+        "poeWatts": 28,
+        "locationRef": "lab_living",
+        "ssidRefs": [
+          "ssid_lab_trusted",
+          "ssid_lab_iot",
+          "ssid_lab_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_lab_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 5,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_lab_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 10,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_lab_2_6",
+            "band": "6GHz",
+            "channel": 37,
+            "channelWidthMHz": 160,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      }
+    ],
+    "wifiSsids": [
+      {
+        "id": "ssid_lab_trusted",
+        "name": "LAB-TRUSTED",
+        "vlanRef": "lab_v110",
+        "security": "wpa3-personal",
+        "clientIsolation": false,
+        "purpose": "trusted"
+      },
+      {
+        "id": "ssid_lab_iot",
+        "name": "LAB-IOT",
+        "vlanRef": "lab_v140",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "iot"
+      },
+      {
+        "id": "ssid_lab_guest",
+        "name": "LAB-GUEST",
+        "vlanRef": "lab_v150",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      }
+    ],
+    "ipv6Networks": [
+      {
+        "id": "lab_v6_trusted",
+        "name": "Trusted IPv6",
+        "prefix": "2001:db8:60:10::/64",
+        "vlanRef": "lab_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:10::1"
+      },
+      {
+        "id": "lab_v6_servers",
+        "name": "Servers IPv6",
+        "prefix": "2001:db8:60:20::/64",
+        "vlanRef": "lab_v120",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:20::1"
+      },
+      {
+        "id": "lab_v6_experiments",
+        "name": "Lab IPv6",
+        "prefix": "2001:db8:60:30::/64",
+        "vlanRef": "lab_v130",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:30::1"
+      },
+      {
+        "id": "lab_v6_iot",
+        "name": "IoT IPv6",
+        "prefix": "2001:db8:60:40::/64",
+        "vlanRef": "lab_v140",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:40::1"
+      },
+      {
+        "id": "lab_v6_guest",
+        "name": "Guest IPv6",
+        "prefix": "2001:db8:60:50::/64",
+        "vlanRef": "lab_v150",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:50::1"
+      },
+      {
+        "id": "lab_v6_mgmt",
+        "name": "Management IPv6",
+        "prefix": "2001:db8:60:60::/64",
+        "vlanRef": "lab_v160",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:60::1"
+      },
+      {
+        "id": "lab_v6_storage",
+        "name": "Storage IPv6",
+        "prefix": "2001:db8:60:70::/64",
+        "vlanRef": "lab_v170",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:60:70::1"
+      }
+    ],
+    "failureScenarios": [
+      {
+        "id": "fail-lab-primary-wan",
+        "name": "Fallo WAN principal",
+        "events": [
+          {
+            "type": "circuit",
+            "targetRef": "lab_wan_primary"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "wan",
+            "ref": ""
+          }
+        ],
+        "requireWan": true
+      },
+      {
+        "id": "fail-lab-lag-member",
+        "name": "Fallo de un miembro LACP",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "lab_lag_link_1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "link",
+            "ref": "lab_lag_link_2"
+          }
+        ],
+        "requireWan": true
+      }
+    ],
+    "stacks": [],
+    "mlagDomains": [],
+    "haGroups": [],
+    "diversityPolicies": [],
+    "routing": {
+      "strategy": "static",
+      "staticRoutesByDevice": {}
+    },
+    "highAvailability": {
+      "devices": {
+        "lab_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "198.51.100.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "lab_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.1",
+              "distance": 20,
+              "circuitRef": "lab_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "lab_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        }
+      }
+    },
+    "accessSecurity": {
+      "dhcpSnooping": true,
+      "arpInspection": true,
+      "portSecurity": true,
+      "maxMac": 2,
+      "violation": "restrict",
+      "sticky": true,
+      "dhcpRateLimit": 15
+    },
+    "management": {
+      "domain": "lab.home.arpa",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.60.60.0/24"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.60.20.10",
+        "10.60.20.11"
+      ],
+      "ntpServers": [
+        "10.60.20.10",
+        "10.60.20.11"
+      ],
+      "dnsServers": [
+        "10.60.20.10",
+        "10.60.20.11"
+      ],
+      "banner": "Home Lab gestionado. Acceso administrativo restringido y registrado.",
+      "backup": false
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:lab_rack01": {
+          "unitCost": 420,
+          "unitPrice": 590,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Rack 18U Home Lab"
+        },
+        "pdu:lab_pdu_a": {
+          "unitCost": 120,
+          "unitPrice": 165,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU rack protegida"
+        },
+        "patchPanel:lab_patch01": {
+          "unitCost": 85,
+          "unitPrice": 125,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Patch panel Cat6A 24 puertos"
+        },
+        "telecomOutlet:lab_to_trusted": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_hypervisor": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_labnode": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_iot": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_services": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_admin": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_backup": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_ap1": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:lab_to_ap2": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "cableRun:lab_run_trusted": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_hypervisor": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_labnode": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_iot": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_services": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_backup": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_ap1": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:lab_run_ap2": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "patchConnection:lab_patch_trusted": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_hypervisor": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_labnode": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_iot": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_services": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_backup": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_ap1": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:lab_patch_ap2": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_trusted": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_hypervisor": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_labnode": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_iot": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_services": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:lab_hostcord_backup": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "link:lab_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "link:lab_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "wanCircuit:lab_wan_primary": {
+          "unitCost": 55,
+          "unitPrice": 75,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Fibra principal"
+        },
+        "wanCircuit:lab_wan_backup": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Backup Internet"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|catalyst 8200l|": {
+          "unitCost": 1200,
+          "unitPrice": 1600,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Router edge de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l|": {
+          "unitCost": 2100,
+          "unitPrice": 2800,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Core 10G de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l-24uxg|": {
+          "unitCost": 2300,
+          "unitPrice": 3050,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Acceso PoE multigig de referencia / reacondicionado"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-design",
+          "description": "Diseño, segmentación y plan de direccionamiento Home Lab",
+          "quantity": 8,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 70,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-install",
+          "description": "Instalación, configuración y pruebas del laboratorio",
+          "quantity": 12,
+          "unit": "h",
+          "unitCost": 40,
+          "unitPrice": 65,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-doc",
+          "description": "Runbook, inventario y documentación As-Built",
+          "quantity": 5,
+          "unit": "h",
+          "unitCost": 40,
+          "unitPrice": 65,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        }
+      ]
+    }
+  }
+}
