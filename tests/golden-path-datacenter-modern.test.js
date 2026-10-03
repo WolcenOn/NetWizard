@@ -60,8 +60,8 @@ assert.strictEqual(p.routing.strategy,'ospf');
 assert.strictEqual(p.routing.protocol,'ospf');
 assert.strictEqual(p.links.length,4);
 assert.ok(p.links.every(l=>l.speed==='40G'&&String(l.medium).toLowerCase()==='fiber'&&String(l.cableType).toLowerCase()==='om4'));
-assert.strictEqual(p.vlans.length,10);
-assert.strictEqual(p.subnets.length,9);
+assert.strictEqual(p.vlans.length,14);
+assert.strictEqual(p.subnets.length,13);
 assert.strictEqual(p.ipv6Networks.length,9);
 assert.strictEqual(p.hosts.length,9);
 assert.strictEqual(p.wanCircuits.length,0,'El Golden DC no inventa una WAN/edge fuera de su alcance');
@@ -74,6 +74,8 @@ for(const id of ['dc_spine1','dc_spine2','dc_leaf1','dc_leaf2']){
   assert.ok(p.ports.some(pt=>pt.deviceId===id&&pt.name==='Loopback0'&&pt.mode==='routed'),id+' debe tener loopback OSPF');
 }
 assert.strictEqual(p.ports.filter(pt=>pt.role==='transit'&&pt.mode==='routed').length,8,'Cuatro enlaces underlay tienen dos extremos L3');
+assert.strictEqual(p.vlans.filter(v=>v.intent&&v.intent.type==='transit').length,5,'Cuatro tránsitos underlay más la VLAN native/blackhole');
+for(const id of ['dc_t901','dc_t902','dc_t903','dc_t904'])assert.ok(p.subnets.some(sn=>sn.vlanRef===id&&/\/30$/.test(sn.cidr)),id+' debe tener subnet /30 canónica');
 assert.strictEqual(p.racks.length,2);
 assert.strictEqual(p.pdus.length,4);
 assert.strictEqual(p.powerConnections.length,8);
