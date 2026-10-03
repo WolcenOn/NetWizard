@@ -62,12 +62,14 @@ function ensurePanel(){
     const actions=root.document.createElement('div');actions.className='brow';actions.style.marginTop='8px';
     const run=root.document.createElement('button');run.id='nwWanResilienceRun';run.type='button';run.className='btn bp';run.textContent='▶ Analizar resiliencia WAN';
     const status=text('span','Pendiente de análisis','hint');status.id='nwWanResilienceStatus';
-    actions.append(run,status);panel.append(head,hint,actions);
+    const results=root.document.createElement('div');results.id='nwWanResilienceResults';results.style.marginTop='10px';
+    actions.append(run,status);panel.append(head,hint,actions,results);
     host.appendChild(panel);
     run.onclick=()=>{
       status.textContent='Analizando…';
-      const report=renderInto(panel,projectSnapshot());
+      const report=renderInto(results,projectSnapshot());
       root.NetWizardLastWanResilienceReport=report;
+      status.textContent='Análisis actualizado';
     };
   }
   return panel;
