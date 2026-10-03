@@ -404,8 +404,8 @@
         "name": "CORP-Usuarios-Operaciones",
         "intent": {
           "type": "users",
-          "expectedHosts": 120,
-          "growthHosts": 50,
+          "expectedHosts": 70,
+          "growthHosts": 25,
           "dhcp": true,
           "internet": true,
           "isolation": "standard",
@@ -432,8 +432,8 @@
         "name": "CORP-Voz",
         "intent": {
           "type": "voice",
-          "expectedHosts": 90,
-          "growthHosts": 30,
+          "expectedHosts": 60,
+          "growthHosts": 20,
           "dhcp": true,
           "internet": false,
           "isolation": "restricted",
@@ -446,8 +446,8 @@
         "name": "CORP-Invitados",
         "intent": {
           "type": "guests",
-          "expectedHosts": 120,
-          "growthHosts": 60,
+          "expectedHosts": 70,
+          "growthHosts": 25,
           "dhcp": true,
           "internet": true,
           "isolation": "isolated",
