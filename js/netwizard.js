@@ -51,7 +51,7 @@ const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f9731
 
 const SCENARIOS=[
   {id:'home',ico:'🏠',name:'Home Lab',desc:'Router + switch + PCs',vlans:[{id:10,n:'LAN',c:'#3b82f6'},{id:20,n:'IoT',c:'#10b981'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
-  {id:'office',ico:'🏢',name:'Oficina pequeña',desc:'< 50 usuarios',examplePresetId:'production-small-office',exampleLabel:'Golden Path · Oficina pequeña',certified:true,vlans:[{id:10,n:'Usuarios',c:'#3b82f6'},{id:20,n:'Servidores',c:'#10b981'},{id:30,n:'WiFi',c:'#f59e0b'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
+  {id:'office',ico:'🏢',name:'Oficina pequeña',desc:'< 50 usuarios',examplePresetId:'golden-office-modern',exampleLabel:'Golden Path · Oficina pequeña segura',certified:true,vlans:[{id:10,n:'Usuarios',c:'#3b82f6'},{id:20,n:'Servidores',c:'#10b981'},{id:30,n:'WiFi',c:'#f59e0b'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
   {id:'corp',ico:'🏙',name:'Empresa mediana',desc:'Departamentos + servidores',vlans:[{id:10,n:'Dirección',c:'#ef4444'},{id:20,n:'Ventas',c:'#3b82f6'},{id:30,n:'IT',c:'#10b981'},{id:40,n:'RRHH',c:'#f59e0b'},{id:50,n:'Servidores',c:'#8b5cf6'},{id:60,n:'WiFi',c:'#06b6d4'},{id:70,n:'Cámaras',c:'#f97316'},{id:99,n:'Gestión',c:'#e879f9'}]},
   {id:'dc',ico:'🗄',name:'Datacenter',desc:'Frontend/Backend/DB/Storage',vlans:[{id:10,n:'Frontend',c:'#3b82f6'},{id:20,n:'Backend',c:'#10b981'},{id:30,n:'DB',c:'#ef4444'},{id:40,n:'Storage',c:'#f59e0b'},{id:50,n:'Management',c:'#8b5cf6'}]},
   {id:'retail',ico:'🏪',name:'Retail / Comercio',desc:'POS, cámaras, WiFi clientes',vlans:[{id:10,n:'POS',c:'#10b981'},{id:20,n:'Cámaras',c:'#ef4444'},{id:30,n:'WiFi-Público',c:'#f59e0b'},{id:40,n:'Empleados',c:'#3b82f6'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
@@ -867,9 +867,18 @@ function updateWizPreview(){
 $('wNewScenario').onclick=()=>{
   $('wModeCard').style.display='none';$('wStep2Card').style.display='';renderDevPicker();updateWizPreview();
 };
-$('wLoadExample').onclick=()=>{
+$('wLoadExample').onclick=async()=>{
   const sc=SCENARIOS.find(x=>x.id===wScene);if(!sc?.examplePresetId)return;
-  const preset=window.NetWizardWizardPresets&&window.NetWizardWizardPresets.get?window.NetWizardWizardPresets.get(sc.examplePresetId):null;
+  const registry=window.NetWizardWizardPresets;
+  let preset=null;
+  try{
+    preset=registry&&typeof registry.load==='function'
+      ?await registry.load(sc.examplePresetId)
+      :(registry&&typeof registry.get==='function'?registry.get(sc.examplePresetId):null);
+  }catch(err){
+    console.error('NetWizard wizard example',err);
+    return alert('No se pudo cargar el ejemplo Golden.');
+  }
   if(!preset)return alert('El ejemplo Golden no está disponible.');
   if(!confirm(`¿Cargar "${sc.exampleLabel||sc.name}"? Reemplazará el proyecto actual por un ejemplo completo y editable.`))return;
   window.NetWizardState.replaceProject(preset,{source:'wizard-scenario-example'});

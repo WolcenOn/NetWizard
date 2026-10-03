@@ -57,3 +57,16 @@ La seguridad demostrable incluye DHCP Snooping, DAI y port-security en acceso, t
 El test `tests/golden-path-multisite-clean.test.js` exige Production Gate `ready` con 0 warnings, OSPF Observed FULL, reachability entre sedes, supervivencia ante fallo de cualquiera de los cuatro enlaces y bloqueos de segmentación. `tests/e2e/golden-path-multisite-clean.spec.js` repite el contrato cargando exactamente el mismo JSON desde el navegador.
 
 En Importar/Exportar aparece **✅ Cargar Golden Multisede limpio** junto con **⬇ JSON Golden limpio**.
+
+## Golden Path Oficina pequeña segura
+
+`golden-path-office-modern.json` es la arquitectura de referencia moderna para el escenario **Oficina pequeña** del Asistente. Está pensada para una oficina de hasta unas decenas de usuarios y evita sobredimensionar la solución: un único borde gestionado, core + acceso PoE, LACP en la LAN y doble acceso WAN con tracking y ruta flotante.
+
+El diseño aplica separación funcional para usuarios cableados, servicios, voz, cámaras/IoT, invitados, Wi-Fi corporativa, gestión y VLAN nativa/blackhole. La matriz inter-VLAN se usa como autoridad de mínimo privilegio: invitados quedan aislados de redes internas, cámaras solo alcanzan servicios autorizados y usuarios/voz/Wi-Fi corporativa no pueden administrar infraestructura. El acceso de gestión usa SSH restringido a la red de administración, logging/NTP/DNS centralizados y hardening L2 con DHCP Snooping, DAI y port-security.
+
+La WLAN modela dos AP PoE gestionados, radios 2.4/5/6 GHz, SSID corporativo WPA3-Enterprise con RADIUS y SSID de invitados WPA3 con client isolation. El proyecto incluye además IPv6 dual-stack en usuarios, Wi-Fi corporativa y gestión, dos circuitos WAN independientes, perfiles de capacidad, escenarios de fallo, rack/PDU/cableado estructurado y BOM/presupuesto completos.
+
+La Golden debe mantenerse en Production Gate estricto `READY` con cero warnings. No activa AAA, SNMPv3 ni backup autenticado dentro del proyecto porque esas funciones requieren aliases de secretos que el runtime actual todavía no resuelve de forma separada; no se introducen secretos falsos para conseguir un estado verde.
+
+El Asistente carga este JSON como fuente canónica mediante **Oficina pequeña → Cargar ejemplo · Golden Path Oficina pequeña segura**.
+

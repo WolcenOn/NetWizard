@@ -17,7 +17,7 @@ test('Oficina pequeña ofrece Nuevo o Golden Path y el ejemplo queda READY', asy
   await expect(page.locator('#wModeCard')).toBeVisible();
   await expect(page.locator('#wNewScenario')).toBeVisible();
   await expect(page.locator('#wLoadExample')).toBeVisible();
-  await expect(page.locator('#wLoadExample')).toContainText('Golden Path · Oficina pequeña');
+  await expect(page.locator('#wLoadExample')).toContainText('Golden Path · Oficina pequeña segura');
   await expect(page.locator('#wStep2Card')).toBeHidden();
 
   await page.click('#wLoadExample');
@@ -33,17 +33,26 @@ test('Oficina pequeña ofrece Nuevo o Golden Path y el ejemplo queda READY', asy
       links:p.links.length,
       status:gate.status,
       warnings:gate.counts.warnings,
-      blocking:gate.counts.blocking
+      blocking:gate.counts.blocking,
+      wan:p.wanCircuits.length,
+      wifi:p.wifiSsids.map(x=>({id:x.id,security:x.security,clientIsolation:x.clientIsolation})),
+      ipv6:p.ipv6Networks.length
     };
   });
 
-  expect(result.name).toBe('Sample · Small Office');
-  expect(result.devices).toBeGreaterThanOrEqual(3);
-  expect(result.vlans).toBeGreaterThanOrEqual(3);
-  expect(result.links).toBeGreaterThanOrEqual(2);
+  expect(result.name).toBe('Golden Path · Oficina pequeña segura');
+  expect(result.devices).toBe(3);
+  expect(result.vlans).toBe(8);
+  expect(result.links).toBe(3);
   expect(result.status).toBe('ready');
   expect(result.warnings).toBe(0);
   expect(result.blocking).toBe(0);
+  expect(result.wan).toBe(2);
+  expect(result.ipv6).toBe(3);
+  expect(result.wifi).toEqual(expect.arrayContaining([
+    expect.objectContaining({id:'ssid_office_corp',security:'wpa3-enterprise'}),
+    expect.objectContaining({id:'ssid_office_guest',security:'wpa3-personal',clientIsolation:true})
+  ]));
 });
 
 test('Oficina pequeña mantiene el flujo Nuevo del asistente', async ({page})=>{
