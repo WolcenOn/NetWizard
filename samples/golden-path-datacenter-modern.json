@@ -480,12 +480,12 @@
         "name": "DC-TRANSIT-S1-L1",
         "intent": {
           "type": "transit",
-          "expectedHosts": 0,
+          "expectedHosts": 2,
           "growthHosts": 0,
           "dhcp": false,
           "internet": false,
-          "isolation": "isolated",
-          "criticality": "high"
+          "isolation": "restricted",
+          "criticality": "critical"
         }
       },
       {
@@ -494,12 +494,12 @@
         "name": "DC-TRANSIT-S2-L1",
         "intent": {
           "type": "transit",
-          "expectedHosts": 0,
+          "expectedHosts": 2,
           "growthHosts": 0,
           "dhcp": false,
           "internet": false,
-          "isolation": "isolated",
-          "criticality": "high"
+          "isolation": "restricted",
+          "criticality": "critical"
         }
       },
       {
@@ -508,12 +508,12 @@
         "name": "DC-TRANSIT-S1-L2",
         "intent": {
           "type": "transit",
-          "expectedHosts": 0,
+          "expectedHosts": 2,
           "growthHosts": 0,
           "dhcp": false,
           "internet": false,
-          "isolation": "isolated",
-          "criticality": "high"
+          "isolation": "restricted",
+          "criticality": "critical"
         }
       },
       {
@@ -522,12 +522,12 @@
         "name": "DC-TRANSIT-S2-L2",
         "intent": {
           "type": "transit",
-          "expectedHosts": 0,
+          "expectedHosts": 2,
           "growthHosts": 0,
           "dhcp": false,
           "internet": false,
-          "isolation": "isolated",
-          "criticality": "high"
+          "isolation": "restricted",
+          "criticality": "critical"
         }
       }
     ],
@@ -598,22 +598,26 @@
       {
         "id": "dc_ts901",
         "vlanRef": "dc_t901",
-        "cidr": "10.255.90.0/30"
+        "cidr": "10.255.90.0/30",
+        "gateway": "10.255.90.1"
       },
       {
         "id": "dc_ts902",
         "vlanRef": "dc_t902",
-        "cidr": "10.255.90.4/30"
+        "cidr": "10.255.90.4/30",
+        "gateway": "10.255.90.5"
       },
       {
         "id": "dc_ts903",
         "vlanRef": "dc_t903",
-        "cidr": "10.255.90.8/30"
+        "cidr": "10.255.90.8/30",
+        "gateway": "10.255.90.9"
       },
       {
         "id": "dc_ts904",
         "vlanRef": "dc_t904",
-        "cidr": "10.255.90.12/30"
+        "cidr": "10.255.90.12/30",
+        "gateway": "10.255.90.13"
       }
     ],
     "hosts": [
