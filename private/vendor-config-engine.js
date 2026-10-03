@@ -107,10 +107,17 @@ function managementBinding(project,device){
   return vlan&&subnet?{vlan,subnet,ip}:null;
 }
 function interfaceBlock(text,name){
-  const source=String(text||''),needle='interface '+clean(name,120),start=source.indexOf(needle);
-  if(start<0)return'';
-  const next=source.indexOf('\ninterface ',start+needle.length);
-  return source.slice(start,next<0?source.length:next);
+  const lines=String(text||'').replace(/\r/g,'').split('\n'),needle='interface '+clean(name,120),blocks=[];
+  for(let i=0;i<lines.length;i++){
+    if(lines[i].trim()!==needle)continue;
+    const block=[lines[i]];
+    for(let j=i+1;j<lines.length;j++){
+      if(/^interface\s+/i.test(lines[j].trim()))break;
+      block.push(lines[j]);
+    }
+    blocks.push(block.join('\n'));
+  }
+  return blocks.join('\n');
 }
 function ipv6NetworkForVlan(project,vlanRef){
   return arr(project&&project.ipv6Networks).find(n=>n&&n.vlanRef===vlanRef)||null;
