@@ -361,9 +361,12 @@ function firewallIpv6Acl(project,deviceId){
   }
   for(const rule of rules){
     const sourceVlan=policyRuleVlanRef(p,rule);
+    const sourceNetwork=sourceVlan?ipv6NetworkForVlan(p,sourceVlan):null;
+    if(sourceVlan&&!sourceNetwork)continue;
     if(sourceVlan)vlanRefs.add(sourceVlan);
     const src=ipv6Endpoint(p,rule.src,sourceVlan);
     const dstSubnet=arr(p.subnets).find(s=>s&&clean(s.cidr,160)===clean(rule.dst,160));
+    if(dstSubnet&&!ipv6NetworkForVlan(p,dstSubnet.vlanRef))continue;
     const dst=ipv6Endpoint(p,rule.dst,clean(dstSubnet&&dstSubnet.vlanRef,256));
     if(!src||!dst){
       unsupported.push({ruleId:clean(rule.id,120),name:clean(rule.name,120),src:clean(rule.src,160),dst:clean(rule.dst,160)});
