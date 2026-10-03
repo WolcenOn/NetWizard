@@ -32,7 +32,53 @@ Mantenimiento:
   function mkRule(fields){ const r=Object.assign({id:'',name:'',action:'deny',src:'any',dst:'any',proto:'any',port:'any',dir:'out',prio:500,enabled:true,generatedFromIntent:true,source:'intent',code:'NW-POL-GEN'}, fields||{}); r.name=clean(r.name||`${r.action} ${r.src} ${r.dst}`,100); r.action=['allow','deny','log'].includes(lower(r.action))?lower(r.action):'deny'; r.src=clean(r.src||'any',120); r.dst=clean(r.dst||'any',120); r.proto=clean(r.proto||'any',20); r.port=clean(r.port||'any',80); r.dir=clean(r.dir||'out',20); r.prio=Math.max(1,Math.min(9999,parseInt(r.prio,10)||500)); r.enabled=r.enabled!==false; r.generatedFromIntent=true; return r; }
   function serviceRules(base, services, options){ const opts=options||{}; return arr(services).map((svc,idx)=>mkRule({name:`${opts.prefix||'Permitir'} ${svc.name||svc.port} desde ${base.label}`,action:'allow',src:base.src,dst:svc.dst||opts.dst||'any',proto:svc.proto||'tcp',port:svc.port||'any',dir:opts.dir||'out',prio:(opts.prio||500)+idx,code:opts.code||'NW-POL-ALLOW',reason:opts.reason||''})); }
   function denyInternalRules(project, base, prio, reason){ const cidrs=internalCidrs(project).filter(c=>c!==base.src); return cidrs.map((dst,idx)=>mkRule({name:`Bloquear ${base.label} hacia red interna ${idx+1}`,action:'deny',src:base.src,dst,proto:'any',port:'any',dir:'out',prio:(prio||100)+idx,code:'NW-POL-DENY-INTERNAL',reason:reason||'Aislamiento por intención de VLAN'})); }
-  function buildRulesForVlan(project, vlan){ const intent=normalizeIntent(vlan); const type=intent.type; if(type==='transit') return []; const src=endpointForVlan(project,vlan); const base={vlanRef:vlan.id,vlanId:vlan.vlanId,label:vlanLabel(vlan),src}; const out=[]; const isolated=intent.isolation==='isolated'||['guests','iot','cameras','dmz'].includes(type); const restricted=intent.isolation==='restricted'||['management','servers'].includes(type); if(isolated) out.push(...denyInternalRules(project,base,100,`Aislamiento ${vlanName(vlan)}`)); if(type==='guests'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'DHCP',proto:'udp',port:'67,68'}],{prio:210,code:'NW-POL-GUEST-SVC'})); if(intent.internet) out.push(mkRule({name:`Permitir Internet desde ${base.label} invitados`,action:'allow',src,dst:'any',proto:'tcp',port:'80,443',dir:'out',prio:230,code:'NW-POL-GUEST-INET'})); } else if(type==='iot'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'NTP',proto:'udp',port:'123'},{name:'MQTT',proto:'tcp',port:'1883,8883'}],{prio:220,code:'NW-POL-IOT-SVC'})); if(intent.internet) out.push(mkRule({name:`Permitir salida controlada IoT ${base.label}`,action:'allow',src,dst:'any',proto:'tcp',port:'443',dir:'out',prio:260,code:'NW-POL-IOT-INET'})); } else if(type==='cameras'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'NTP',proto:'udp',port:'123'},{name:'Vídeo/NVR',proto:'tcp',port:'554,8000,443'}],{prio:220,code:'NW-POL-CAM-SVC'})); } else if(type==='dmz'){ if(intent.internet) out.push(mkRule({name:`Permitir actualizaciones desde DMZ ${base.label}`,action:'allow',src,dst:'any',proto:'tcp',port:'80,443',dir:'out',prio:240,code:'NW-POL-DMZ-INET'})); out.push(mkRule({name:`Registrar tráfico DMZ ${base.label}`,action:'log',src,dst:'any',proto:'any',port:'any',dir:'out',prio:900,code:'NW-POL-DMZ-LOG'})); } else if(type==='management'){ out.push(...serviceRules(base,[{name:'SSH',proto:'tcp',port:'22'},{name:'HTTPS gestión',proto:'tcp',port:'443'},{name:'SNMP',proto:'udp',port:'161'}],{prio:180,code:'NW-POL-MGMT-SVC',prefix:'Permitir gestión'})); } else if(type==='servers'){ if(restricted) out.push(mkRule({name:`Registrar acceso a servidores ${base.label}`,action:'log',src:'any',dst:src,proto:'any',port:'any',dir:'in',prio:850,code:'NW-POL-SRV-LOG'})); } else if(type==='voice'){ out.push(...serviceRules(base,[{name:'SIP',proto:'udp',port:'5060'},{name:'RTP',proto:'udp',port:'16384-32767'}],{prio:250,code:'NW-POL-VOICE-SVC'})); } else if(restricted){ out.push(mkRule({name:`Registrar tráfico restringido ${base.label}`,action:'log',src,dst:'any',proto:'any',port:'any',dir:'out',prio:900,code:'NW-POL-RESTRICTED-LOG'})); } return out.map((r,idx)=>Object.assign(r,{id:r.id||`pol_${vlan.id}_${idx+1}`,vlanRef:vlan.id,vlanId:vlan.vlanId})); }
+  function isIpv4(value){ const parts=clean(value,80).split('.').map(Number); return parts.length===4&&parts.every(n=>Number.isInteger(n)&&n>=0&&n<=255); }
+  function internalSubnetForIpv4(project,ip){
+    if(!isIpv4(ip))return '';
+    const host=parseCidrLocal(ip+'/32');if(!host)return '';
+    const subnet=arr(obj(project).subnets).find(s=>{
+      const net=parseCidrLocal(s&&s.cidr);
+      return net&&((host.net&net.mask)===net.net);
+    });
+    return subnet&&subnet.cidr?clean(subnet.cidr,80):'';
+  }
+  function isInternalIpv4(project,ip){ return !!internalSubnetForIpv4(project,ip); }
+  function serviceEndpointIps(project,type){
+    const p=obj(project),wanted=lower(type),out=[];
+    for(const svc of arr(p.internalServices)){
+      if(lower(svc&&svc.type)!==wanted)continue;
+      for(const endpoint of arr(svc&&svc.endpoints)){
+        const ip=clean(endpoint&&endpoint.ip,80);
+        if(isIpv4(ip))out.push(ip);
+      }
+    }
+    return Array.from(new Set(out));
+  }
+  function dhcpDnsIps(project,vlan){
+    const cfg=obj(obj(project).dhcp)[String(vlan&&vlan.vlanId||'')];
+    return clean(cfg&&cfg.dns,400).split(',').map(x=>clean(x,80)).filter(isIpv4);
+  }
+  function explicitInternalServiceRules(project,base,vlan,type){
+    const specs=[],seen=new Set();
+    function add(ip,proto,port,name,code){
+      const dst=internalSubnetForIpv4(project,ip);if(!dst)return;
+      const key=[dst,proto,port].join('|');if(seen.has(key))return;seen.add(key);
+      specs.push({dst,proto,port,name,code});
+    }
+    for(const ip of [...serviceEndpointIps(project,'dns'),...dhcpDnsIps(project,vlan)]){
+      add(ip,'udp','53','DNS interno','NW-POL-INTERNAL-DNS');
+      add(ip,'tcp','53','DNS interno TCP','NW-POL-INTERNAL-DNS');
+    }
+    if(type==='iot'||type==='cameras'){
+      for(const ip of serviceEndpointIps(project,'ntp'))add(ip,'udp','123','NTP interno','NW-POL-INTERNAL-NTP');
+    }
+    return specs.map((svc,idx)=>mkRule({
+      name:`Permitir ${svc.name} desde ${base.label}`,action:'allow',src:base.src,dst:svc.dst,
+      proto:svc.proto,port:svc.port,dir:'out',prio:60+idx,code:svc.code,
+      reason:'Servicio interno permitido hacia su subnet canónica antes del aislamiento lateral'
+    }));
+  }
+  function buildRulesForVlan(project, vlan){ const intent=normalizeIntent(vlan); const type=intent.type; if(type==='transit') return []; const src=endpointForVlan(project,vlan); const base={vlanRef:vlan.id,vlanId:vlan.vlanId,label:vlanLabel(vlan),src}; const out=[]; const isolated=intent.isolation==='isolated'||['guests','iot','cameras','dmz'].includes(type); const restricted=intent.isolation==='restricted'||['management','servers'].includes(type); if(isolated) out.push(...explicitInternalServiceRules(project,base,vlan,type)); if(isolated) out.push(...denyInternalRules(project,base,100,`Aislamiento ${vlanName(vlan)}`)); if(type==='guests'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'DHCP',proto:'udp',port:'67,68'}],{prio:210,code:'NW-POL-GUEST-SVC'})); if(intent.internet) out.push(mkRule({name:`Permitir Internet desde ${base.label} invitados`,action:'allow',src,dst:'any',proto:'tcp',port:'80,443',dir:'out',prio:230,code:'NW-POL-GUEST-INET'})); } else if(type==='iot'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'NTP',proto:'udp',port:'123'},{name:'MQTT',proto:'tcp',port:'1883,8883'}],{prio:220,code:'NW-POL-IOT-SVC'})); if(intent.internet) out.push(mkRule({name:`Permitir salida controlada IoT ${base.label}`,action:'allow',src,dst:'any',proto:'tcp',port:'443',dir:'out',prio:260,code:'NW-POL-IOT-INET'})); } else if(type==='cameras'){ out.push(...serviceRules(base,[{name:'DNS',proto:'udp',port:'53'},{name:'NTP',proto:'udp',port:'123'},{name:'Vídeo/NVR',proto:'tcp',port:'554,8000,443'}],{prio:220,code:'NW-POL-CAM-SVC'})); } else if(type==='dmz'){ if(intent.internet) out.push(mkRule({name:`Permitir actualizaciones desde DMZ ${base.label}`,action:'allow',src,dst:'any',proto:'tcp',port:'80,443',dir:'out',prio:240,code:'NW-POL-DMZ-INET'})); out.push(mkRule({name:`Registrar tráfico DMZ ${base.label}`,action:'log',src,dst:'any',proto:'any',port:'any',dir:'out',prio:900,code:'NW-POL-DMZ-LOG'})); } else if(type==='management'){ out.push(...serviceRules(base,[{name:'SSH',proto:'tcp',port:'22'},{name:'HTTPS gestión',proto:'tcp',port:'443'},{name:'SNMP',proto:'udp',port:'161'}],{prio:180,code:'NW-POL-MGMT-SVC',prefix:'Permitir gestión'})); } else if(type==='servers'){ if(restricted) out.push(mkRule({name:`Registrar acceso a servidores ${base.label}`,action:'log',src:'any',dst:src,proto:'any',port:'any',dir:'in',prio:850,code:'NW-POL-SRV-LOG'})); } else if(type==='voice'){ out.push(...serviceRules(base,[{name:'SIP',proto:'udp',port:'5060'},{name:'RTP',proto:'udp',port:'16384-32767'}],{prio:250,code:'NW-POL-VOICE-SVC'})); } else if(restricted){ out.push(mkRule({name:`Registrar tráfico restringido ${base.label}`,action:'log',src,dst:'any',proto:'any',port:'any',dir:'out',prio:900,code:'NW-POL-RESTRICTED-LOG'})); } return out.map((r,idx)=>Object.assign(r,{id:r.id||`pol_${vlan.id}_${idx+1}`,vlanRef:vlan.id,vlanId:vlan.vlanId})); }
   function buildIntentPolicyRules(project){ const p=obj(project); return arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).flatMap(v=>buildRulesForVlan(p,v)); }
   function manualRuleKey(r){ return [lower(r.action),lower(r.src),lower(r.dst),lower(r.proto),lower(r.port)].join('|'); }
   function ruleComparable(r){

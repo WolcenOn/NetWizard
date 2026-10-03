@@ -86,3 +86,15 @@ Como en las demás Golden Paths estrictas, AAA/SNMPv3/backup autenticado no se a
 
 El Asistente carga este JSON mediante **Home Lab → Cargar ejemplo · Golden Path Home Lab moderno y segmentado**.
 
+
+## Golden Path Retail / Comercio segmentado
+
+`golden-path-retail-modern.json` es la arquitectura de referencia para el escenario **Retail / Comercio** del Asistente. Representa una tienda con terminales POS, servicios locales, puestos de empleados, cámaras y NVR, IoT, Wi-Fi de clientes, red de gestión y una VLAN nativa/blackhole, sin convertir una tienda individual en una arquitectura empresarial sobredimensionada.
+
+El diseño usa un router de borde, core + acceso PoE, LACP en la LAN, dos accesos WAN independientes con tracking y ruta flotante, y dos AP tri-band. La WLAN de empleados usa WPA3-Enterprise con RADIUS; las WLAN de IoT e invitados usan WPA3-Personal con client isolation. La red de gestión queda restringida a su subnet administrativa y el acceso incorpora DHCP Snooping, DAI, port-security y protecciones BPDU.
+
+La segmentación busca reducir el alcance del entorno de pago: POS no puede iniciar tráfico hacia empleados, cámaras/NVR, IoT, invitados ni gestión; invitados quedan aislados de todas las redes internas; cámaras e IoT solo reciben la conectividad inter-VLAN explícitamente necesaria. Esta arquitectura está **inspirada en prácticas de segmentación apropiadas para entornos de pago**, pero NetWizard no declara ni certifica cumplimiento PCI DSS completo.
+
+El Golden mantiene dual-stack IPv4/IPv6 con paridad de política, servicios DNS/NTP/Syslog/RADIUS redundantes, escenarios de fallo de WAN y miembro LACP, rack, PDU, patch panel, cableado Cat6A y BOM/presupuesto completamente valorados. Como en los demás Golden estrictos, AAA/SNMPv3/backup autenticado no se activan con secretos ficticios.
+
+El Asistente carga este JSON mediante **Retail / Comercio → Cargar ejemplo · Golden Path Retail / Comercio segmentado** y su contrato exige Production Gate estricto `READY` con cero warnings.
