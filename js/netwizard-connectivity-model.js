@@ -192,8 +192,18 @@
 
   function firewallDecision(project,a,b,serviceId){
     const profile=serviceProfile(serviceId);
+    const matrix=project&&project.vlanMatrix||{};
+    const matrixKey=a&&a.vlanRef&&b&&b.vlanRef?`${a.vlanRef}_${b.vlanRef}`:'';
+    const hasMatrix=!!matrixKey&&Object.prototype.hasOwnProperty.call(matrix,matrixKey);
+    if(hasMatrix&&matrix[matrixKey]===false){
+      return{allowed:false,matched:{id:matrixKey,source:'vlanMatrix',action:'deny'},profile,reason:'La matriz inter-VLAN bloquea explícitamente este flujo.'};
+    }
     const rules=arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false).slice().sort((x,y)=>Number(x.prio||100)-Number(y.prio||100));
-    if(!rules.length)return{allowed:true,matched:null,profile,reason:'Sin reglas firewall explícitas.'};
+    if(!rules.length){
+      return hasMatrix
+        ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.'}
+        :{allowed:true,matched:null,profile,reason:'Sin reglas firewall explícitas.'};
+    }
     for(const rule of rules){
       if(!protocolMatches(rule.proto,profile))continue;
       if(!portExpressionMatches(rule.port,profile.port))continue;
@@ -202,7 +212,9 @@
       const allowed=action!=='deny'&&action!=='reject';
       return{allowed,matched:rule,profile,reason:`Regla ${rule.name||rule.id||'sin nombre'}: ${action||'allow'}.`};
     }
-    return{allowed:true,matched:null,profile,reason:'No hay una regla coincidente; el simulador no detecta bloqueo explícito.'};
+    return hasMatrix
+      ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.'}
+      :{allowed:true,matched:null,profile,reason:'No hay una regla coincidente; el simulador no detecta bloqueo explícito.'};
   }
 
   function buildDeviceGraph(project){
