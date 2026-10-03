@@ -227,6 +227,6 @@ assert.ok(leaf1.includes(feDbDeny),'FW_POLICY debe contener el bloqueo Frontend�
 assert.ok(leaf1.includes(feCatchRemark),'FW_POLICY debe documentar el permit final con remark IOS');
 assert.ok(leaf1.includes(feCatchAll),'FW_POLICY debe conservar el permit final de Frontend');
 assert.ok(leaf1.indexOf(feDbDeny)<leaf1.indexOf(feCatchAll),'El deny east-west debe preceder al permit final');
-assert.doesNotMatch(leaf1,/^\s*(?:permit|deny)\s+.*\s!\s+/m,'Las ACE Cisco no deben llevar comentarios inline con !');
+assert.doesNotMatch(leaf1,/^[ \t]*(?:permit|deny)[ \t]+[^\r\n]*[ \t]![ \t]+/m,'Las ACE Cisco no deben llevar comentarios inline con !');
 
 console.log('✓ Golden Datacenter: leaf-spine L3, OSPF redundante, east-west dual-stack, físico A/B y Production Gate READY');
