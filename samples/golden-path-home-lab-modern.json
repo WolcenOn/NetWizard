@@ -2012,6 +2012,14 @@
           "capexOpex": "opex",
           "billingPeriodMonths": 1,
           "note": "Backup Internet"
+        },
+        "rackItem:lab_cm01": {
+          "unitCost": 28,
+          "unitPrice": 42,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Pasacables horizontal 1U"
         }
       },
       "modelPricing": {
