@@ -291,7 +291,7 @@ test('Readiness acepta un fabric L3 puro con tránsitos canónicos sin exigir tr
     ],
     subnets:[
       {id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'l1'},
-      {id:'st',vlanRef:'t901',cidr:'10.255.1.0/30'}
+      {id:'st',vlanRef:'t901',cidr:'10.255.1.0/30',gateway:'10.255.1.1'}
     ],
     hosts:[{id:'h1',name:'SRV1',vlanRef:'v10',portRef:'l1-host',ipMode:'static',staticIp:'10.10.10.10'}],
     fwRules:[],dhcp:{},iot:{accessNodes:[],devices:[],map:{show:{}}}
