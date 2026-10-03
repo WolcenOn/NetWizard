@@ -389,7 +389,8 @@ function firewallAcl(project,deviceId){
   const lines=['!','! FW Policy ACL unified (intent/manual + vlanMatrix)','ip access-list extended FW_POLICY'];
   for(const policy of matrixPolicies){
     for(const dst of arr(policy.blocked)){
-      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);\n      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard);
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);
+      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard);
     }
   }
   for(const rule of rules){
@@ -409,7 +410,8 @@ function firewallAcl(project,deviceId){
       }
     }
   }
-  lines.push(' remark Implicit deny');\n  lines.push(' deny ip any any log');
+  lines.push(' remark Implicit deny');
+  lines.push(' deny ip any any log');
   return lines.join('\n');
 }
 function firewallIpv6Acl(project,deviceId){
@@ -429,7 +431,8 @@ function firewallIpv6Acl(project,deviceId){
     for(const dstPolicy of arr(policy.blocked)){
       const dstNet=ipv6NetworkForVlan(p,dstPolicy.vlanRef);
       if(!dstNet||!clean(dstNet.prefix,160))continue;
-      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);\n      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160));
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);
+      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160));
     }
   }
   for(const rule of rules){
@@ -458,7 +461,8 @@ function firewallIpv6Acl(project,deviceId){
       }
     }
   }
-  lines.push(' remark Implicit deny');\n  lines.push(' deny ipv6 any any log');
+  lines.push(' remark Implicit deny');
+  lines.push(' deny ipv6 any any log');
   return{text:lines.join('\n'),unsupported,vlanRefs:Array.from(vlanRefs)};
 }
 function extension(vendor){
