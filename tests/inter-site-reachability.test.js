@@ -61,6 +61,20 @@ assert.strictEqual(res.policy.matched.id,'deny1');
 
 
 p=fixture();
+p.vlanMatrix={'v20_v30':false};
+p.fwRules=[{id:'allow-all',name:'Permiso general posterior',src:'10.20.0.0/24',dst:'any',proto:'any',port:'any',action:'allow',prio:900,enabled:true}];
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,false,'vlanMatrix deny debe prevalecer sobre un permit firewall posterior');
+assert.strictEqual(res.policy.explicit,true);
+assert.strictEqual(res.policy.matched.source,'vlanMatrix');
+
+p=fixture();
+p.vlanMatrix={'v20_v30':true};
+res=Reach.analyze(p,'s20','s30','icmp');
+assert.strictEqual(res.reachable,true,res.reason);
+assert.strictEqual(res.policy.explicit,true,'Un allow explícito de vlanMatrix debe conservarse como decisión explícita');
+
+p=fixture();
 p.ports.push(
   {id:'r2-inet',deviceId:'r2',name:'Gi0/9',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.2/30'},
   {id:'r3-inet',deviceId:'r3',name:'Gi0/9',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.2/30'}
