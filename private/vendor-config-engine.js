@@ -89,6 +89,9 @@ function canonicalWanContext(project,device){
   const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
   return{primary,port,route};
 }
+function aclRemark(value){
+  return clean(value,160).replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim();
+}
 function formatWild(cidr){
   const parsed=Network.parseCidr(cidr);
   if(!parsed)return clean(cidr,120);
@@ -386,7 +389,7 @@ function firewallAcl(project,deviceId){
   const lines=['!','! FW Policy ACL unified (intent/manual + vlanMatrix)','ip access-list extended FW_POLICY'];
   for(const policy of matrixPolicies){
     for(const dst of arr(policy.blocked)){
-      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard+' ! vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);\n      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard);
     }
   }
   for(const rule of rules){
@@ -397,15 +400,16 @@ function firewallAcl(project,deviceId){
     const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
     for(const portValue of ports){
       const port=portValue?' eq '+portValue:'';
-      const label=clean(rule.name,80);
-      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':'')+' ! '+label);
+      const label=aclRemark(rule.name);
+      if(label)lines.push(' remark '+label);
+      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':''));
       else{
-        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
-        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+        lines.push(' '+action+' tcp '+src+' '+dst+port);
+        lines.push(' '+action+' udp '+src+' '+dst+port);
       }
     }
   }
-  lines.push(' deny ip any any log ! Implicit deny');
+  lines.push(' remark Implicit deny');\n  lines.push(' deny ip any any log');
   return lines.join('\n');
 }
 function firewallIpv6Acl(project,deviceId){
@@ -425,7 +429,7 @@ function firewallIpv6Acl(project,deviceId){
     for(const dstPolicy of arr(policy.blocked)){
       const dstNet=ipv6NetworkForVlan(p,dstPolicy.vlanRef);
       if(!dstNet||!clean(dstNet.prefix,160))continue;
-      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160)+' ! vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);\n      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160));
     }
   }
   for(const rule of rules){
@@ -445,15 +449,16 @@ function firewallIpv6Acl(project,deviceId){
     const proto=rule.proto==='any'?'ipv6':(rule.proto==='tcp_udp'?null:rule.proto);
     const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
     for(const portValue of ports){
-      const port=portValue?' eq '+portValue:'',label=clean(rule.name,80),log=rule.action==='log'?' log':'';
-      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+log+' ! '+label);
+      const port=portValue?' eq '+portValue:'',label=aclRemark(rule.name),log=rule.action==='log'?' log':'';
+      if(label)lines.push(' remark '+label);
+      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+log);
       else{
-        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
-        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+        lines.push(' '+action+' tcp '+src+' '+dst+port);
+        lines.push(' '+action+' udp '+src+' '+dst+port);
       }
     }
   }
-  lines.push(' deny ipv6 any any log ! Implicit deny');
+  lines.push(' remark Implicit deny');\n  lines.push(' deny ipv6 any any log');
   return{text:lines.join('\n'),unsupported,vlanRefs:Array.from(vlanRefs)};
 }
 function extension(vendor){
