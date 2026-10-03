@@ -19,13 +19,28 @@
     const mask=pfx===0?0:(0xffffffff<<(32-pfx))>>>0;
     return [24,16,8,0].map(b=>(mask>>>b)&255).join('.');
   }
+  function ip4num(value){
+    const parts=clean(value).split('.').map(Number);
+    if(parts.length!==4||parts.some(n=>!Number.isInteger(n)||n<0||n>255))return null;
+    return (((parts[0]<<24)>>>0)+(parts[1]<<16)+(parts[2]<<8)+parts[3])>>>0;
+  }
+  function subnetContains(cidr,ip){
+    const m=clean(cidr).match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d|[12]\d|3[0-2])$/);
+    if(!m)return false;
+    const netIp=ip4num(m[1]),candidate=ip4num(ip);if(netIp==null||candidate==null)return false;
+    const pfx=Number(m[2]),mask=pfx===0?0:(0xffffffff<<(32-pfx))>>>0;
+    return (netIp&mask)===(candidate&mask);
+  }
   function management(project,d){
-    if(!clean(d&&d.mgmtIp))return null;
-    const v=arr(project&&project.vlans).find(x=>clean(x&&x.intent&&x.intent.type).toLowerCase()==='management');
-    if(!v)return null;
-    const sn=arr(project&&project.subnets).find(x=>x&&x.vlanRef===v.id);
-    if(!sn||!clean(sn.cidr)||!clean(sn.gateway))return null;
-    return{vlan:v,subnet:sn,ip:clean(d.mgmtIp)};
+    const ip=clean(d&&d.mgmtIp);if(!ip)return null;
+    let v=arr(project&&project.vlans).find(x=>clean(x&&x.intent&&x.intent.type).toLowerCase()==='management')||null;
+    let sn=v?arr(project&&project.subnets).find(x=>x&&x.vlanRef===v.id):null;
+    if(!sn){
+      sn=arr(project&&project.subnets).find(x=>x&&subnetContains(x.cidr,ip))||null;
+      v=sn?vlan(project,sn.vlanRef):null;
+    }
+    if(!v||!sn||!clean(sn.cidr)||!clean(sn.gateway))return null;
+    return{vlan:v,subnet:sn,ip};
   }
   function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
   function isSwitch(d){ const model=deviceModel(); return !!d && (model ? model.isSwitching(d) : /switch/i.test(clean(d.kind||d.type))); }
