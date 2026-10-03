@@ -109,7 +109,8 @@
         "l3Ip": "10.255.90.1",
         "l3Cidr": "10.255.90.0/30",
         "desc": "OSPF underlay a DC-LEAF-01",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t901"
       },
       {
         "id": "dc_s1_l2",
@@ -121,7 +122,8 @@
         "l3Ip": "10.255.90.9",
         "l3Cidr": "10.255.90.8/30",
         "desc": "OSPF underlay a DC-LEAF-02",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t903"
       },
       {
         "id": "dc_spine2_loop0",
@@ -143,7 +145,8 @@
         "l3Ip": "10.255.90.5",
         "l3Cidr": "10.255.90.4/30",
         "desc": "OSPF underlay a DC-LEAF-01",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t902"
       },
       {
         "id": "dc_s2_l2",
@@ -155,7 +158,8 @@
         "l3Ip": "10.255.90.13",
         "l3Cidr": "10.255.90.12/30",
         "desc": "OSPF underlay a DC-LEAF-02",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t904"
       },
       {
         "id": "dc_leaf1_loop0",
@@ -177,7 +181,8 @@
         "l3Ip": "10.255.90.2",
         "l3Cidr": "10.255.90.0/30",
         "desc": "OSPF underlay a DC-SPINE-01",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t901"
       },
       {
         "id": "dc_l1_s2",
@@ -189,7 +194,8 @@
         "l3Ip": "10.255.90.6",
         "l3Cidr": "10.255.90.4/30",
         "desc": "OSPF underlay a DC-SPINE-02",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t902"
       },
       {
         "id": "dc_l1_fe",
@@ -266,7 +272,8 @@
         "l3Ip": "10.255.90.10",
         "l3Cidr": "10.255.90.8/30",
         "desc": "OSPF underlay a DC-SPINE-01",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t903"
       },
       {
         "id": "dc_l2_s2",
@@ -278,7 +285,8 @@
         "l3Ip": "10.255.90.14",
         "l3Cidr": "10.255.90.12/30",
         "desc": "OSPF underlay a DC-SPINE-02",
-        "transceiver": "QSFP-40G-SR4"
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t904"
       },
       {
         "id": "dc_l2_fe",
@@ -465,6 +473,62 @@
           "isolation": "isolated",
           "criticality": "low"
         }
+      },
+      {
+        "id": "dc_t901",
+        "vlanId": 901,
+        "name": "DC-TRANSIT-S1-L1",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_t902",
+        "vlanId": 902,
+        "name": "DC-TRANSIT-S2-L1",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_t903",
+        "vlanId": 903,
+        "name": "DC-TRANSIT-S1-L2",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_t904",
+        "vlanId": 904,
+        "name": "DC-TRANSIT-S2-L2",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
       }
     ],
     "subnets": [
@@ -530,6 +594,26 @@
         "cidr": "10.90.60.0/27",
         "gateway": "10.90.60.1",
         "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_ts901",
+        "vlanRef": "dc_t901",
+        "cidr": "10.255.90.0/30"
+      },
+      {
+        "id": "dc_ts902",
+        "vlanRef": "dc_t902",
+        "cidr": "10.255.90.4/30"
+      },
+      {
+        "id": "dc_ts903",
+        "vlanRef": "dc_t903",
+        "cidr": "10.255.90.8/30"
+      },
+      {
+        "id": "dc_ts904",
+        "vlanRef": "dc_t904",
+        "cidr": "10.255.90.12/30"
       }
     ],
     "hosts": [
@@ -644,7 +728,8 @@
         "lengthM": 22,
         "speed": "40G",
         "capacityMbps": 40000,
-        "physicalPath": "Sala A · OM4"
+        "physicalPath": "Sala A · OM4",
+        "transitVlanRef": "dc_t901"
       },
       {
         "id": "dc_link_s2_l1",
@@ -656,7 +741,8 @@
         "lengthM": 34,
         "speed": "40G",
         "capacityMbps": 40000,
-        "physicalPath": "Sala B → Sala A · OM4"
+        "physicalPath": "Sala B → Sala A · OM4",
+        "transitVlanRef": "dc_t902"
       },
       {
         "id": "dc_link_s1_l2",
@@ -668,7 +754,8 @@
         "lengthM": 34,
         "speed": "40G",
         "capacityMbps": 40000,
-        "physicalPath": "Sala A → Sala B · OM4"
+        "physicalPath": "Sala A → Sala B · OM4",
+        "transitVlanRef": "dc_t903"
       },
       {
         "id": "dc_link_s2_l2",
@@ -680,7 +767,8 @@
         "lengthM": 22,
         "speed": "40G",
         "capacityMbps": 40000,
-        "physicalPath": "Sala B · OM4"
+        "physicalPath": "Sala B · OM4",
+        "transitVlanRef": "dc_t904"
       }
     ],
     "fwRules": [
