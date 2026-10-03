@@ -173,7 +173,12 @@ Mantenimiento:
     const hasMultipleVlans = vlans.length > 1;
     if(hasMultipleVlans && !hasInterVlanCapable) issues.push(mk('NW-L3-001', 'warning', 'routing', 'Hay varias VLANs, pero no se identifica router/firewall/switch L3 para routing inter-VLAN.'));
     const trunkCount = ports.filter(p=>p.mode==='trunk').length;
-    if(hasMultipleVlans && links.length && trunkCount===0) issues.push(mk('NW-L2-001', 'warning', 'switching', 'Hay varias VLANs y enlaces físicos, pero no hay puertos trunk definidos.'));
+    const hasLayer2InterDeviceLinks = links.some(l=>{
+      const a=portById(p,l.aPortId),b=portById(p,l.bPortId);
+      const da=a?devById(p,a.deviceId):null,db=b?devById(p,b.deviceId):null;
+      return !(a&&b&&da&&db&&isLayer3TransitLink(l,a,b,da,db));
+    });
+    if(hasMultipleVlans && hasLayer2InterDeviceLinks && trunkCount===0) issues.push(mk('NW-L2-001', 'warning', 'switching', 'Hay varias VLANs y enlaces L2 físicos, pero no hay puertos trunk definidos.'));
     for(const l of links){
       const a = portById(p, l.aPortId), b = portById(p, l.bPortId);
       const da = a ? devById(p, a.deviceId) : null, db = b ? devById(p, b.deviceId) : null;
