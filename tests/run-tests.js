@@ -273,6 +273,34 @@ test('Un trunk de servicio switch-router no se confunde con tránsito L3', () =>
   assert.ok(!audit.issues.some(i => ['NW-L3-010','NW-L1-100'].includes(i.code) && /tránsito|transito/.test(i.message)));
 });
 
+test('Readiness acepta un fabric L3 puro con tránsitos canónicos sin exigir trunks L2', () => {
+  const project = {
+    devices:[
+      {id:'s1',name:'SPINE-01',type:'l3switch',kind:'switch',l3Capable:'yes'},
+      {id:'l1',name:'LEAF-01',type:'l3switch',kind:'switch',l3Capable:'yes'}
+    ],
+    ports:[
+      {id:'s1-l1',deviceId:'s1',name:'Te1/0/1',mode:'routed',role:'transit',l3Ip:'10.255.1.1',l3Cidr:'10.255.1.0/30',transitVlanRef:'t901'},
+      {id:'l1-s1',deviceId:'l1',name:'Te1/0/1',mode:'routed',role:'transit',l3Ip:'10.255.1.2',l3Cidr:'10.255.1.0/30',transitVlanRef:'t901'},
+      {id:'l1-host',deviceId:'l1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10'}
+    ],
+    links:[{id:'fabric',aPortId:'s1-l1',bPortId:'l1-s1',transitVlanRef:'t901'}],
+    vlans:[
+      {id:'v10',vlanId:10,name:'Servers'},
+      {id:'t901',vlanId:901,name:'Transit',intent:{type:'transit'}}
+    ],
+    subnets:[
+      {id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'l1'},
+      {id:'st',vlanRef:'t901',cidr:'10.255.1.0/30'}
+    ],
+    hosts:[{id:'h1',name:'SRV1',vlanRef:'v10',portRef:'l1-host',ipMode:'static',staticIp:'10.10.10.10'}],
+    fwRules:[],dhcp:{},iot:{accessNodes:[],devices:[],map:{show:{}}}
+  };
+  const audit=NWP.readinessAudit(project,{productionMode:true});
+  assert.ok(!audit.issues.some(i=>i.code==='NW-L2-001'),'Un fabric puramente routed no debe exigir un trunk L2');
+  assert.ok(!audit.issues.some(i=>['NW-L3-010','NW-L3-013','NW-L1-100'].includes(i.code)&&/tránsito|transito/.test(i.message)));
+});
+
 test('La identidad IP de un dispositivo gestionado puede referenciar su trunk PoE', () => {
   const project = {
     devices:[{id:'sw1',name:'SW1',type:'switch',poeBudgetW:120},{id:'ap1',name:'AP1',type:'access_point'}],
@@ -945,6 +973,19 @@ test('L2 audit valida continuidad desde host hasta gateway por trunk', () => {
   };
   const audit = NWL2.auditL2(project);
   assert.ok(!audit.issues.some(i => i.code === 'NW-L2-042'));
+});
+
+test('L2 reconoce l3Capable yes como gateway local para hosts en access', () => {
+  const project={
+    devices:[{id:'leaf1',name:'LEAF-01',type:'switch',kind:'switch',l3Capable:'yes'}],
+    vlans:[{id:'v10',vlanId:10,name:'Servers'}],
+    subnets:[{id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'leaf1'}],
+    ports:[{id:'p1',deviceId:'leaf1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10',portFast:true,bpduGuard:true}],
+    hosts:[{id:'h1',name:'SRV1',vlanRef:'v10',portRef:'p1',staticIp:'10.10.10.10'}],
+    links:[]
+  };
+  const audit=NWL2.auditL2(project);
+  assert.ok(!audit.issues.some(i=>i.code==='NW-L2-041'||i.code==='NW-L2-042'),JSON.stringify(audit.issues));
 });
 
 test('L2 no confunde un endpoint APP-CORE con uplink textual y conserva señales explícitas', () => {
