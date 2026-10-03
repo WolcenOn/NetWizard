@@ -89,12 +89,6 @@ function maskForCidr(cidr){
   const parsed=Network.parseCidr(cidr);
   return parsed?Network.ip4s(parsed.mask):'255.255.255.0';
 }
-function escapeRe(value){return String(value||'').replace(/[.*+?^{}()|[\]\\]/g,'\\function formatWild(cidr){
-  const parsed=Network.parseCidr(cidr);
-  if(!parsed)return clean(cidr,120);
-  return Network.ip4s(parsed.net)+' '+Network.ip4s((~parsed.mask)>>>0);
-}
-function splitPorts(value){return String(value||'any').split(',').map(x=>x.trim()).filter(Boolean);}');}
 function interfaceBlock(text,name){
   const source=String(text||''),needle='interface '+clean(name,120),start=source.indexOf(needle);
   if(start<0)return'';
