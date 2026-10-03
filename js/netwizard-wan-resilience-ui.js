@@ -42,25 +42,56 @@ function renderInto(container,project){
   root.NetWizardLastWanResilienceReport=report;
   return report;
 }
-function inject(){
+function projectSnapshot(){
+  const state=root.NetWizardState;
+  return state&&state.getSnapshot?state.getSnapshot():root.S||{};
+}
+function ensurePanel(){
   if(!root.document||!root.NetWizardWanResilience)return null;
   const host=root.document.getElementById('pg-validate');if(!host)return null;
-  const state=root.NetWizardState,project=state&&state.getSnapshot?state.getSnapshot():root.S||{};
+  const project=projectSnapshot();
   if(!arr(project.wanCircuits).length&&!arr(project.routing&&project.routing.siteToSiteVpns).length){
     root.document.getElementById('nwWanResiliencePanel')?.remove();return null;
   }
   let panel=root.document.getElementById('nwWanResiliencePanel');
-  if(!panel){panel=root.document.createElement('div');panel.id='nwWanResiliencePanel';panel.className='card';panel.style.marginTop='12px';host.appendChild(panel);}
-  return renderInto(panel,project);
+  if(!panel){
+    panel=root.document.createElement('div');panel.id='nwWanResiliencePanel';panel.className='card';panel.style.marginTop='12px';
+    const head=root.document.createElement('div');head.className='card-h';
+    head.append(text('div','🛡 Resiliencia WAN','card-t'),text('span','On demand','b bac'));
+    const hint=text('div','El análisis de fallos WAN puede ser costoso en proyectos grandes. Se ejecuta únicamente bajo demanda y el resultado queda marcado como obsoleto cuando cambia el proyecto.','hint');
+    const actions=root.document.createElement('div');actions.className='brow';actions.style.marginTop='8px';
+    const run=root.document.createElement('button');run.id='nwWanResilienceRun';run.type='button';run.className='btn bp';run.textContent='▶ Analizar resiliencia WAN';
+    const status=text('span','Pendiente de análisis','hint');status.id='nwWanResilienceStatus';
+    actions.append(run,status);panel.append(head,hint,actions);
+    host.appendChild(panel);
+    run.onclick=()=>{
+      status.textContent='Analizando…';
+      const report=renderInto(panel,projectSnapshot());
+      root.NetWizardLastWanResilienceReport=report;
+    };
+  }
+  return panel;
+}
+function markStale(){
+  root.NetWizardLastWanResilienceReport=null;
+  const panel=root.document&&root.document.getElementById('nwWanResiliencePanel');
+  if(!panel)return;
+  const status=root.document.getElementById('nwWanResilienceStatus');
+  if(status)status.textContent='Proyecto modificado · análisis pendiente';
+}
+function inject(){
+  return ensurePanel();
 }
 function install(){
   if(!root.document)return false;
-  root.document.addEventListener('nw:project:changed',inject);
-  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(inject,100));
-  else root.setTimeout(inject,0);
+  const active=()=>root.document.getElementById('pg-validate')?.classList.contains('on');
+  root.document.addEventListener('nw:project:changed',()=>{markStale();if(active())ensurePanel();});
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='validate')ensurePanel();});
+  if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(()=>{if(active())ensurePanel();},100));
+  else root.setTimeout(()=>{if(active())ensurePanel();},0);
   return true;
 }
-const api={version:'netwizard-wan-resilience-ui-v1',renderInto,inject,install};
+const api={version:'netwizard-wan-resilience-ui-v2',renderInto,inject,install,ensurePanel,markStale};
 root.NetWizardWanResilienceUi=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(root.document)install();
