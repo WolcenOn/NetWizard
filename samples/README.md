@@ -70,3 +70,19 @@ La Golden debe mantenerse en Production Gate estricto `READY` con cero warnings.
 
 El Asistente carga este JSON como fuente canónica mediante **Oficina pequeña → Cargar ejemplo · Golden Path Oficina pequeña segura**.
 
+## Golden Path Home Lab moderno y segmentado
+
+`golden-path-home-lab-modern.json` es la arquitectura de referencia para **Home Lab**. Está pensada para un laboratorio doméstico serio y actual, con separación entre uso personal, servicios, experimentación, IoT, invitados, almacenamiento/backup y administración, sin convertir el escenario en una empresa en miniatura.
+
+El diseño usa un edge router, core y acceso PoE/multigig gestionados, un LACP de 2×10G entre core y acceso, dos circuitos WAN independientes y dos AP tri-band con 2.4/5/6 GHz. Las WLAN `LAB-TRUSTED`, `LAB-IOT` y `LAB-GUEST` usan WPA3-Personal; IoT e invitados activan client isolation. La VLAN nativa se reserva como blackhole y la gestión solo se permite desde la red de administración.
+
+Las políticas de segmentación bloquean invitados e IoT frente a las redes internas, separan la zona de experimentación de Trusted/Management y limitan Storage/Backup a Servers y Management. DHCP Snooping, DAI, port-security y BPDU protections se mantienen activos en acceso. DNS, NTP y Syslog tienen endpoints redundantes y el laboratorio incluye monitoring, failover WAN, fallo de miembro LACP y perfiles de capacidad.
+
+El ejemplo representa dual-stack en todas las redes útiles. La misma separación lógica se mantiene para IPv4 e IPv6; los prefijos `2001:db8::/32` son de documentación y deben sustituirse por prefijos reales antes de un despliegue externo.
+
+El modelo físico incluye rack 18U, PDU, patch panel Cat6A, nueve tendidos —incluidos ambos AP—, patching y conexiones de host. BOM y presupuesto deben quedar completamente valorados.
+
+Como en las demás Golden Paths estrictas, AAA/SNMPv3/backup autenticado no se activan con secretos ficticios: esas funciones se incorporarán cuando el runtime pueda resolver aliases de secretos sin persistir credenciales en el proyecto.
+
+El Asistente carga este JSON mediante **Home Lab → Cargar ejemplo · Golden Path Home Lab moderno y segmentado**.
+
