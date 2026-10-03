@@ -309,6 +309,15 @@ assert.match(dualStackResult.configs.r6,/interface GigabitEthernet0\/1\.40[\s\S]
 assert.match(dualStackResult.configs.r6,/ip access-list extended FW_POLICY/);
 assert.doesNotMatch(dualStackResult.configs.r6,/ip access-list extended NW_SEG_V40/);
 
+const dualStackHostPolicy=JSON.parse(JSON.stringify(dualStackProject));
+dualStackHostPolicy.fwRules=[{
+  id:'dns-host',name:'DNS interno explícito',src:'10.6.40.0/24',dst:'10.6.10.20',
+  proto:'udp',port:'53',action:'allow',dir:'out',prio:60,enabled:true,vlanRef:'v40'
+}];
+const dualStackHostAcl=Engine.firewallIpv6Acl(dualStackHostPolicy,'r6');
+assert.deepStrictEqual(dualStackHostAcl.unsupported,[]);
+assert.match(dualStackHostAcl.text,/permit udp 2001:db8:6:40::\/64 2001:db8:6:10::\/64 eq 53/);
+
 const vpnProject={
   _schemaVersion:'3.50.0',
   projName:'Private VPN generation',
