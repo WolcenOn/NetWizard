@@ -108,7 +108,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.1",
         "l3Cidr": "10.255.90.0/30",
-        "desc": "OSPF underlay a DC-LEAF-01"
+        "desc": "OSPF underlay a DC-LEAF-01",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_s1_l2",
@@ -119,7 +120,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.9",
         "l3Cidr": "10.255.90.8/30",
-        "desc": "OSPF underlay a DC-LEAF-02"
+        "desc": "OSPF underlay a DC-LEAF-02",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_spine2_loop0",
@@ -140,7 +142,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.5",
         "l3Cidr": "10.255.90.4/30",
-        "desc": "OSPF underlay a DC-LEAF-01"
+        "desc": "OSPF underlay a DC-LEAF-01",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_s2_l2",
@@ -151,7 +154,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.13",
         "l3Cidr": "10.255.90.12/30",
-        "desc": "OSPF underlay a DC-LEAF-02"
+        "desc": "OSPF underlay a DC-LEAF-02",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_leaf1_loop0",
@@ -172,7 +176,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.2",
         "l3Cidr": "10.255.90.0/30",
-        "desc": "OSPF underlay a DC-SPINE-01"
+        "desc": "OSPF underlay a DC-SPINE-01",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_l1_s2",
@@ -183,7 +188,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.6",
         "l3Cidr": "10.255.90.4/30",
-        "desc": "OSPF underlay a DC-SPINE-02"
+        "desc": "OSPF underlay a DC-SPINE-02",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_l1_fe",
@@ -259,7 +265,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.10",
         "l3Cidr": "10.255.90.8/30",
-        "desc": "OSPF underlay a DC-SPINE-01"
+        "desc": "OSPF underlay a DC-SPINE-01",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_l2_s2",
@@ -270,7 +277,8 @@
         "media": "QSFP",
         "l3Ip": "10.255.90.14",
         "l3Cidr": "10.255.90.12/30",
-        "desc": "OSPF underlay a DC-SPINE-02"
+        "desc": "OSPF underlay a DC-SPINE-02",
+        "transceiver": "QSFP-40G-SR4"
       },
       {
         "id": "dc_l2_fe",
@@ -2380,38 +2388,6 @@
           "billingPeriodMonths": 1,
           "note": "Latiguillo servidor Cat6A"
         },
-        "link:dc_link_s1_l1": {
-          "unitCost": 180,
-          "unitPrice": 260,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Par óptico OM4 40G + ópticas"
-        },
-        "link:dc_link_s2_l1": {
-          "unitCost": 180,
-          "unitPrice": 260,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Par óptico OM4 40G + ópticas"
-        },
-        "link:dc_link_s1_l2": {
-          "unitCost": 180,
-          "unitPrice": 260,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Par óptico OM4 40G + ópticas"
-        },
-        "link:dc_link_s2_l2": {
-          "unitCost": 180,
-          "unitPrice": 260,
-          "chargeType": "one-time",
-          "capexOpex": "capex",
-          "billingPeriodMonths": 1,
-          "note": "Par óptico OM4 40G + ópticas"
-        },
         "rackItem:dc_cm_a": {
           "unitCost": 35,
           "unitPrice": 55,
@@ -2427,6 +2403,70 @@
           "capexOpex": "capex",
           "billingPeriodMonths": 1,
           "note": "Pasacables 1U"
+        },
+        "port:dc_s1_l1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s1_l2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s2_l1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s2_l2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l1_s1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l1_s2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l2_s1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l2_s2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
         }
       },
       "modelPricing": {
