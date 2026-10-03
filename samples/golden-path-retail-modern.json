@@ -1,0 +1,2137 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-03T13:10:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path · Retail / Comercio segmentado",
+    "workflow": {
+      "mode": "design"
+    },
+    "customDeviceModels": [],
+    "devices": [
+      {
+        "id": "retail_rtr",
+        "name": "RTR-STORE-01",
+        "type": "router",
+        "kind": "router",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 8200L",
+        "modelSource": "manual",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Retail / Comercio · Rack",
+        "mgmtIp": "10.70.60.1",
+        "powerDrawWatts": 95,
+        "lanIf": "GigabitEthernet0/1",
+        "rackId": "retail_rack01",
+        "rackUnit": 15,
+        "originRef": "retail_rtr",
+        "designDisposition": "keep",
+        "internetEdge": "yes",
+        "wanIf": "GigabitEthernet0/0"
+      },
+      {
+        "id": "retail_core",
+        "name": "SW-CORE-STORE-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L",
+        "modelSource": "manual",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Retail / Comercio · Rack",
+        "mgmtIp": "10.70.60.10",
+        "powerDrawWatts": 95,
+        "rackId": "retail_rack01",
+        "rackUnit": 12,
+        "originRef": "retail_core",
+        "designDisposition": "keep"
+      },
+      {
+        "id": "retail_access",
+        "name": "SW-ACCESS-STORE-01",
+        "type": "switch",
+        "kind": "switch",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300L-24UXG",
+        "modelSource": "manual",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Retail / Comercio · Rack",
+        "mgmtIp": "10.70.60.11",
+        "powerDrawWatts": 120,
+        "poeBudgetW": 715,
+        "rackId": "retail_rack01",
+        "rackUnit": 9,
+        "originRef": "retail_access",
+        "designDisposition": "keep"
+      }
+    ],
+    "ports": [
+      {
+        "id": "retail_lan",
+        "deviceId": "retail_rtr",
+        "name": "GigabitEthernet0/1",
+        "mode": "trunk",
+        "role": "lan",
+        "media": "copper",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Trunk LAN Retail / Comercio",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "retail_core_rtr",
+        "deviceId": "retail_core",
+        "name": "GigabitEthernet1/0/48",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "copper",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "Uplink a RTR-RETAIL-01",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "retail_core_acc_1",
+        "deviceId": "retail_core",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "retail_acc_core_1",
+        "deviceId": "retail_access",
+        "name": "TenGigabitEthernet1/1/1",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "retail_core_acc_2",
+        "deviceId": "retail_core",
+        "name": "TenGigabitEthernet1/1/3",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-ACCESS-HQ-01"
+      },
+      {
+        "id": "retail_acc_core_2",
+        "deviceId": "retail_access",
+        "name": "TenGigabitEthernet1/1/2",
+        "mode": "trunk",
+        "role": "uplink",
+        "media": "10GE",
+        "nativeVlanRef": "retail_v199",
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ],
+        "uplink": true,
+        "desc": "LACP a SW-CORE-HQ-01"
+      },
+      {
+        "id": "retail_acc_trusted",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v110",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Terminal POS cableado",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "retail_acc_hypervisor",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Servicios locales 1",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "retail_acc_labnode",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v130",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Puesto empleados",
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "retail_acc_iot",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "at",
+        "poeWattsMax": 30,
+        "desc": "Camara IP PoE",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "retail_acc_services",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v120",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Servicios locales 2",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "retail_acc_ap1",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/6",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "retail_v160",
+        "allowedVlans": [
+          130,
+          150,
+          160,
+          170
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP retail tri-band",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "retail_acc_ap2",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/7",
+        "mode": "trunk",
+        "role": "ap",
+        "media": "copper",
+        "nativeVlanRef": "retail_v160",
+        "allowedVlans": [
+          130,
+          150,
+          160,
+          170
+        ],
+        "uplink": false,
+        "poeMode": "bt",
+        "poeWattsMax": 60,
+        "desc": "AP retail tri-band",
+        "dhcpTrusted": false,
+        "securityTrusted": false,
+        "speedMaxMbps": 2500
+      },
+      {
+        "id": "retail_acc_admin",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/8",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v160",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "desc": "Consola administracion",
+        "speedMaxMbps": 1000
+      },
+      {
+        "id": "retail_wan1",
+        "deviceId": "retail_rtr",
+        "name": "GigabitEthernet0/0",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 1000,
+        "l3Ip": "198.51.100.2",
+        "l3Cidr": "198.51.100.0/30"
+      },
+      {
+        "id": "retail_wan2",
+        "deviceId": "retail_rtr",
+        "name": "GigabitEthernet0/4",
+        "mode": "routed",
+        "role": "wan",
+        "media": "GE",
+        "speedMbps": 400,
+        "l3Ip": "203.0.113.2",
+        "l3Cidr": "203.0.113.0/30"
+      },
+      {
+        "id": "retail_acc_backup",
+        "deviceId": "retail_access",
+        "name": "GigabitEthernet1/0/9",
+        "mode": "access",
+        "role": "edge",
+        "media": "copper",
+        "accessVlanRef": "retail_v140",
+        "portFast": true,
+        "bpduGuard": true,
+        "poeMode": "off",
+        "poeWattsMax": 0,
+        "speedMaxMbps": 2500,
+        "desc": "NVR local"
+      }
+    ],
+    "vlans": [
+      {
+        "id": "retail_v110",
+        "vlanId": 110,
+        "name": "RETAIL-POS",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 12,
+          "growthHosts": 8,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "retail_v120",
+        "vlanId": 120,
+        "name": "RETAIL-Servicios",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 8,
+          "growthHosts": 4,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "retail_v130",
+        "vlanId": 130,
+        "name": "RETAIL-Empleados",
+        "intent": {
+          "type": "users",
+          "expectedHosts": 25,
+          "growthHosts": 15,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "standard",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "retail_v140",
+        "vlanId": 140,
+        "name": "RETAIL-Camaras-NVR",
+        "intent": {
+          "type": "cameras",
+          "expectedHosts": 24,
+          "growthHosts": 12,
+          "dhcp": true,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "retail_v170",
+        "vlanId": 170,
+        "name": "RETAIL-IoT",
+        "intent": {
+          "type": "iot",
+          "expectedHosts": 30,
+          "growthHosts": 20,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "normal"
+        }
+      },
+      {
+        "id": "retail_v150",
+        "vlanId": 150,
+        "name": "RETAIL-Invitados",
+        "intent": {
+          "type": "guests",
+          "expectedHosts": 60,
+          "growthHosts": 30,
+          "dhcp": true,
+          "internet": true,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "retail_v160",
+        "vlanId": 160,
+        "name": "RETAIL-Gestion",
+        "intent": {
+          "type": "management",
+          "expectedHosts": 10,
+          "growthHosts": 5,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "retail_v199",
+        "vlanId": 199,
+        "name": "RETAIL-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "retail_sn_users",
+        "vlanRef": "retail_v110",
+        "cidr": "10.70.10.0/24",
+        "gateway": "10.70.10.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "POS IPv4"
+      },
+      {
+        "id": "retail_sn_servers",
+        "vlanRef": "retail_v120",
+        "cidr": "10.70.20.0/24",
+        "gateway": "10.70.20.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "Servicios IPv4"
+      },
+      {
+        "id": "retail_sn_lab",
+        "vlanRef": "retail_v130",
+        "cidr": "10.70.30.0/24",
+        "gateway": "10.70.30.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "Empleados IPv4"
+      },
+      {
+        "id": "retail_sn_iot",
+        "vlanRef": "retail_v140",
+        "cidr": "10.70.40.0/24",
+        "gateway": "10.70.40.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "Camaras/NVR IPv4"
+      },
+      {
+        "id": "retail_sn_guest",
+        "vlanRef": "retail_v150",
+        "cidr": "10.70.50.0/24",
+        "gateway": "10.70.50.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "Invitados IPv4"
+      },
+      {
+        "id": "retail_sn_mgmt",
+        "vlanRef": "retail_v160",
+        "cidr": "10.70.60.0/24",
+        "gateway": "10.70.60.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "Gestion IPv4"
+      },
+      {
+        "id": "retail_sn_storage",
+        "vlanRef": "retail_v170",
+        "cidr": "10.70.70.0/24",
+        "gateway": "10.70.70.1",
+        "gatewayDeviceRef": "retail_rtr",
+        "name": "IoT IPv4"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "retail_user",
+        "name": "POS-TERMINAL-01",
+        "type": "pc",
+        "vlanRef": "retail_v110",
+        "portRef": "retail_acc_trusted",
+        "ipMode": "static",
+        "staticIp": "10.70.10.20",
+        "locationId": "retail_office",
+        "physicalLocation": "Tienda · Caja principal"
+      },
+      {
+        "id": "retail_server",
+        "name": "SRV-RETAIL-01",
+        "type": "server",
+        "vlanRef": "retail_v120",
+        "portRef": "retail_acc_hypervisor",
+        "ipMode": "static",
+        "staticIp": "10.70.20.10",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Tienda · Cuarto técnico"
+      },
+      {
+        "id": "retail_phone",
+        "name": "EMPLOYEE-WS-01",
+        "type": "pc",
+        "vlanRef": "retail_v130",
+        "portRef": "retail_acc_labnode",
+        "ipMode": "dhcp",
+        "staticIp": "",
+        "locationId": "retail_office",
+        "physicalLocation": "Tienda · Backoffice",
+        "poeRequired": false,
+        "poeWatts": null
+      },
+      {
+        "id": "retail_camera",
+        "name": "CAM-RETAIL-01",
+        "type": "camera",
+        "vlanRef": "retail_v140",
+        "portRef": "retail_acc_iot",
+        "ipMode": "static",
+        "staticIp": "10.70.40.20",
+        "locationId": "retail_living",
+        "physicalLocation": "Tienda · Sala de ventas",
+        "poeRequired": true,
+        "poeWatts": 12
+      },
+      {
+        "id": "retail_guest",
+        "name": "SRV-RETAIL-02",
+        "type": "server",
+        "vlanRef": "retail_v120",
+        "portRef": "retail_acc_services",
+        "ipMode": "static",
+        "staticIp": "10.70.20.11",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Tienda · Cuarto técnico"
+      },
+      {
+        "id": "retail_admin",
+        "name": "ADMIN-RETAIL-01",
+        "type": "pc",
+        "vlanRef": "retail_v160",
+        "portRef": "retail_acc_admin",
+        "ipMode": "static",
+        "staticIp": "10.70.60.20",
+        "locationId": "retail_office",
+        "physicalLocation": "Tienda · Backoffice"
+      },
+      {
+        "id": "retail_backup",
+        "name": "NVR-RETAIL-01",
+        "type": "server",
+        "vlanRef": "retail_v140",
+        "portRef": "retail_acc_backup",
+        "ipMode": "static",
+        "staticIp": "10.70.40.10",
+        "locationId": "retail_rack_room",
+        "physicalLocation": "Tienda · Cuarto técnico",
+        "poeRequired": false,
+        "poeWatts": null
+      }
+    ],
+    "links": [
+      {
+        "id": "retail_link_rtr_core",
+        "name": "LAB router-core",
+        "aPortId": "retail_lan",
+        "bPortId": "retail_core_rtr",
+        "medium": "copper",
+        "cableType": "cat6a",
+        "lengthM": 2,
+        "speed": "1G",
+        "capacityMbps": 1000
+      },
+      {
+        "id": "retail_lag_link_1",
+        "name": "LAB LAG member 1",
+        "aPortId": "retail_core_acc_1",
+        "bPortId": "retail_acc_core_1",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      },
+      {
+        "id": "retail_lag_link_2",
+        "name": "LAB LAG member 2",
+        "aPortId": "retail_core_acc_2",
+        "bPortId": "retail_acc_core_2",
+        "medium": "dac",
+        "cableType": "dac",
+        "lengthM": 2,
+        "speed": "10G",
+        "capacityMbps": 10000
+      }
+    ],
+    "fwRules": [],
+    "vlanMatrix": {
+      "retail_v150_retail_v110": false,
+      "retail_v110_retail_v150": false,
+      "retail_v150_retail_v120": false,
+      "retail_v120_retail_v150": false,
+      "retail_v150_retail_v130": false,
+      "retail_v130_retail_v150": false,
+      "retail_v150_retail_v140": false,
+      "retail_v140_retail_v150": false,
+      "retail_v150_retail_v160": false,
+      "retail_v160_retail_v150": false,
+      "retail_v150_retail_v170": false,
+      "retail_v170_retail_v150": false,
+      "retail_v110_retail_v130": false,
+      "retail_v110_retail_v140": false,
+      "retail_v110_retail_v160": false,
+      "retail_v110_retail_v170": false,
+      "retail_v110_retail_v120": true,
+      "retail_v130_retail_v110": false,
+      "retail_v130_retail_v140": false,
+      "retail_v130_retail_v160": false,
+      "retail_v130_retail_v170": false,
+      "retail_v130_retail_v120": true,
+      "retail_v140_retail_v110": false,
+      "retail_v140_retail_v130": false,
+      "retail_v140_retail_v160": false,
+      "retail_v140_retail_v170": false,
+      "retail_v140_retail_v120": true,
+      "retail_v170_retail_v110": false,
+      "retail_v170_retail_v130": false,
+      "retail_v170_retail_v140": false,
+      "retail_v170_retail_v160": false,
+      "retail_v170_retail_v120": true,
+      "retail_v120_retail_v160": false,
+      "retail_v160_retail_v110": true,
+      "retail_v160_retail_v120": true,
+      "retail_v160_retail_v130": true,
+      "retail_v160_retail_v140": true,
+      "retail_v160_retail_v170": true
+    },
+    "dhcp": {
+      "110": {
+        "enabled": true,
+        "start": "10.70.10.50",
+        "end": "10.70.10.120",
+        "dns": "10.70.20.10,10.70.20.11",
+        "domain": "pos.store.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "130": {
+        "enabled": true,
+        "start": "10.70.30.50",
+        "end": "10.70.30.180",
+        "dns": "10.70.20.10,10.70.20.11",
+        "domain": "staff.store.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "140": {
+        "enabled": true,
+        "start": "10.70.40.50",
+        "end": "10.70.40.180",
+        "dns": "10.70.20.10,10.70.20.11",
+        "domain": "cameras.store.example",
+        "lease": 3,
+        "exclusions": [],
+        "reservations": []
+      },
+      "150": {
+        "enabled": true,
+        "start": "10.70.50.50",
+        "end": "10.70.50.220",
+        "dns": "1.1.1.1,9.9.9.9",
+        "domain": "guest.store.example",
+        "lease": 1,
+        "exclusions": [],
+        "reservations": []
+      },
+      "170": {
+        "enabled": true,
+        "start": "10.70.70.50",
+        "end": "10.70.70.210",
+        "dns": "10.70.20.10,10.70.20.11",
+        "domain": "iot.store.example",
+        "lease": 2,
+        "exclusions": [],
+        "reservations": []
+      }
+    },
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "yes",
+      "dsV": "998",
+      "dai": "yes",
+      "ipsg": "yes",
+      "qV": "997"
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-HOMELAB",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "retail_core": "transparent",
+        "retail_access": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-03T11:30:00.000Z",
+      "vtpDevices": {
+        "retail_core": {
+          "domain": "NW-HOMELAB",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        },
+        "retail_access": {
+          "domain": "NW-HOMELAB",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T11:30:00.000Z"
+        }
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
+    "physicalLocations": [
+      {
+        "id": "retail_site",
+        "name": "Retail / Comercio",
+        "type": "site"
+      },
+      {
+        "id": "retail_rack_room",
+        "name": "Tienda · Cuarto técnico",
+        "type": "room",
+        "parentId": "retail_site"
+      },
+      {
+        "id": "retail_office",
+        "name": "Tienda · Backoffice",
+        "type": "room",
+        "parentId": "retail_site"
+      },
+      {
+        "id": "retail_living",
+        "name": "Tienda · Sala de ventas",
+        "type": "room",
+        "parentId": "retail_site"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "retail_rack01",
+        "name": "RACK-RETAIL-01",
+        "locationId": "retail_rack_room",
+        "rackUnits": 18,
+        "widthMm": 600,
+        "depthMm": 800,
+        "maxLoadKg": 300,
+        "powerCapacityWatts": 2500,
+        "coolingCapacityWatts": 1800,
+        "numberingDirection": "bottom-up"
+      }
+    ],
+    "rackItems": [
+      {
+        "id": "rackitem_retail_patch01",
+        "rackId": "retail_rack01",
+        "type": "patch-panel",
+        "patchPanelId": "retail_patch01",
+        "label": "PP-RETAIL-01",
+        "startUnit": 18,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "retail_cm01",
+        "rackId": "retail_rack01",
+        "type": "cable-manager",
+        "label": "Pasacables Retail / Comercio",
+        "startUnit": 17,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
+    "patchPanels": [
+      {
+        "id": "retail_patch01",
+        "rackId": "retail_rack01",
+        "name": "PP-RETAIL-01",
+        "portCount": 24,
+        "category": "Cat6A",
+        "rackUnit": 18
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "retail_to_trusted",
+        "locationId": "retail_office",
+        "name": "TO-RETAIL-TRUSTED",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_hypervisor",
+        "locationId": "retail_rack_room",
+        "name": "TO-RETAIL-HYPERVISOR",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_labnode",
+        "locationId": "retail_office",
+        "name": "TO-RETAIL-NODE",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_iot",
+        "locationId": "retail_living",
+        "name": "TO-RETAIL-IOT",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_services",
+        "locationId": "retail_rack_room",
+        "name": "TO-RETAIL-SERVICES",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_admin",
+        "locationId": "retail_office",
+        "name": "TO-RETAIL-ADMIN",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_backup",
+        "locationId": "retail_rack_room",
+        "name": "TO-RETAIL-BACKUP",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_ap1",
+        "locationId": "retail_office",
+        "name": "TO-RETAIL-AP1",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "retail_to_ap2",
+        "locationId": "retail_living",
+        "name": "TO-RETAIL-AP2",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "retail_run_trusted",
+        "label": "CLIENT-TRUSTED-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 1,
+        "outletId": "retail_to_trusted",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 33,
+        "route": "Rack Retail / Comercio → canalización → CLIENT-TRUSTED-01",
+        "name": "CLIENT-TRUSTED-01"
+      },
+      {
+        "id": "retail_run_hypervisor",
+        "label": "HYPERVISOR-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 2,
+        "outletId": "retail_to_hypervisor",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 36,
+        "route": "Rack Retail / Comercio → canalización → HYPERVISOR-01",
+        "name": "HYPERVISOR-01"
+      },
+      {
+        "id": "retail_run_labnode",
+        "label": "RETAIL-NODE-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 3,
+        "outletId": "retail_to_labnode",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 39,
+        "route": "Rack Retail / Comercio → canalización → RETAIL-NODE-01",
+        "name": "RETAIL-NODE-01"
+      },
+      {
+        "id": "retail_run_iot",
+        "label": "IOT-HUB-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 4,
+        "outletId": "retail_to_iot",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 42,
+        "route": "Rack Retail / Comercio → canalización → IOT-HUB-01",
+        "name": "IOT-HUB-01"
+      },
+      {
+        "id": "retail_run_services",
+        "label": "SVC-RETAIL-02",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 5,
+        "outletId": "retail_to_services",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 45,
+        "route": "Rack Retail / Comercio → canalización → SVC-RETAIL-02",
+        "name": "SVC-RETAIL-02"
+      },
+      {
+        "id": "retail_run_admin",
+        "label": "ADMIN-CONSOLE-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 6,
+        "outletId": "retail_to_admin",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 48,
+        "route": "Rack Retail / Comercio → canalización → ADMIN-CONSOLE-01",
+        "name": "ADMIN-CONSOLE-01"
+      },
+      {
+        "id": "retail_run_backup",
+        "name": "BACKUP-NODE-01",
+        "label": "BACKUP-NODE-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 7,
+        "outletId": "retail_to_backup",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 4,
+        "route": "Rack Retail / Comercio → BACKUP-NODE-01"
+      },
+      {
+        "id": "retail_run_ap1",
+        "name": "AP-RETAIL-01",
+        "label": "AP-RETAIL-01",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 8,
+        "outletId": "retail_to_ap1",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 18,
+        "route": "Rack Retail / Comercio → techo despacho"
+      },
+      {
+        "id": "retail_run_ap2",
+        "name": "AP-RETAIL-02",
+        "label": "AP-RETAIL-02",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 9,
+        "outletId": "retail_to_ap2",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 24,
+        "route": "Rack Retail / Comercio → techo zona común"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "retail_patch_trusted",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 1,
+        "switchPortId": "retail_acc_trusted",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_hypervisor",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 2,
+        "switchPortId": "retail_acc_hypervisor",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_labnode",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 3,
+        "switchPortId": "retail_acc_labnode",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_iot",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 4,
+        "switchPortId": "retail_acc_iot",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_services",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 5,
+        "switchPortId": "retail_acc_services",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_admin",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 6,
+        "switchPortId": "retail_acc_admin",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_backup",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 7,
+        "switchPortId": "retail_acc_backup",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_ap1",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 8,
+        "switchPortId": "retail_acc_ap1",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "retail_patch_ap2",
+        "patchPanelId": "retail_patch01",
+        "patchPort": 9,
+        "switchPortId": "retail_acc_ap2",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "retail_hostcord_trusted",
+        "hostId": "retail_user",
+        "outletId": "retail_to_trusted",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_hypervisor",
+        "hostId": "retail_server",
+        "outletId": "retail_to_hypervisor",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_labnode",
+        "hostId": "retail_phone",
+        "outletId": "retail_to_labnode",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_iot",
+        "hostId": "retail_camera",
+        "outletId": "retail_to_iot",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_services",
+        "hostId": "retail_guest",
+        "outletId": "retail_to_services",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_admin",
+        "hostId": "retail_admin",
+        "outletId": "retail_to_admin",
+        "outletPort": 1,
+        "patchCordLengthM": 2
+      },
+      {
+        "id": "retail_hostcord_backup",
+        "hostId": "retail_backup",
+        "outletId": "retail_to_backup",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      }
+    ],
+    "pdus": [
+      {
+        "id": "retail_pdu_a",
+        "rackId": "retail_rack01",
+        "name": "PDU-RETAIL-A",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 16,
+        "maxPowerWatts": 3680,
+        "outletCount": 12
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "retail_pwr_retail_rtr",
+        "deviceId": "retail_rtr",
+        "powerSupplyIndex": 0,
+        "pduId": "retail_pdu_a",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "retail_pwr_retail_core",
+        "deviceId": "retail_core",
+        "powerSupplyIndex": 0,
+        "pduId": "retail_pdu_a",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "retail_pwr_retail_access",
+        "deviceId": "retail_access",
+        "powerSupplyIndex": 0,
+        "pduId": "retail_pdu_a",
+        "outlet": 3,
+        "feed": "A"
+      }
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_lab",
+          "name": "Retail / Comercio",
+          "color": "#10233c",
+          "x": 180,
+          "y": 120,
+          "type": "site",
+          "physicalLocationId": "retail_site"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "retail_rtr": "vloc_lab",
+          "retail_core": "vloc_lab",
+          "retail_access": "vloc_lab"
+        },
+        "hosts": {
+          "retail_user": "vloc_lab",
+          "retail_server": "vloc_lab",
+          "retail_phone": "vloc_lab",
+          "retail_camera": "vloc_lab",
+          "retail_guest": "vloc_lab",
+          "retail_admin": "vloc_lab",
+          "retail_backup": "vloc_lab"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "vrfs": [],
+    "wanCircuits": [
+      {
+        "id": "retail_wan_primary",
+        "name": "Fibra principal tienda",
+        "siteRef": "retail_site",
+        "deviceId": "retail_rtr",
+        "portId": "retail_wan1",
+        "provider": "ISP-FIBRA-A",
+        "role": "primary",
+        "enabled": true,
+        "bandwidthDownMbps": 1000,
+        "bandwidthUpMbps": 1000,
+        "latencyTargetMs": 20,
+        "lossTargetPercent": 0.3,
+        "slaAvailability": 99.9,
+        "demarcLocation": "Retail / Comercio · Rack",
+        "physicalPath": "ONT principal → RTR-RETAIL-01",
+        "expectedPeakMbps": 220
+      },
+      {
+        "id": "retail_wan_backup",
+        "name": "Acceso secundario independiente",
+        "siteRef": "retail_site",
+        "deviceId": "retail_rtr",
+        "portId": "retail_wan2",
+        "provider": "ISP-BACKUP-B",
+        "role": "backup",
+        "enabled": true,
+        "bandwidthDownMbps": 400,
+        "bandwidthUpMbps": 400,
+        "latencyTargetMs": 45,
+        "lossTargetPercent": 0.8,
+        "slaAvailability": 99.5,
+        "demarcLocation": "Retail / Comercio · Rack",
+        "physicalPath": "Demarcación secundaria → RTR-RETAIL-01",
+        "expectedPeakMbps": 220
+      }
+    ],
+    "linkAggregations": [
+      {
+        "id": "retail_lag_core_access",
+        "name": "LAB Core-Access LACP",
+        "number": 1,
+        "protocol": "lacp",
+        "mode": "active",
+        "memberPortIds": [
+          "retail_core_acc_1",
+          "retail_core_acc_2",
+          "retail_acc_core_1",
+          "retail_acc_core_2"
+        ],
+        "trunk": true,
+        "nativeVlan": 199,
+        "allowedVlans": [
+          110,
+          120,
+          130,
+          140,
+          150,
+          160,
+          170,
+          199
+        ]
+      }
+    ],
+    "trafficProfiles": [
+      {
+        "id": "traffic_retail_edge",
+        "name": "Carga tienda hacia Internet",
+        "linkRef": "retail_link_rtr_core",
+        "averageMbps": 55,
+        "peakMbps": 220,
+        "criticalMbps": 120,
+        "latencyMaxMs": 30,
+        "jitterMaxMs": 15,
+        "lossMaxPercent": 0.8
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS interno Retail",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.70.20.10",
+            "hostname": "dns1.store.example"
+          },
+          {
+            "ip": "10.70.20.11",
+            "hostname": "dns2.store.example"
+          }
+        ]
+      },
+      {
+        "id": "radius",
+        "name": "RADIUS / 802.1X empleados",
+        "type": "radius",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.70.20.10",
+            "hostname": "radius1.store.example"
+          },
+          {
+            "ip": "10.70.20.11",
+            "hostname": "radius2.store.example"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP Retail",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.70.20.10",
+            "hostname": "ntp1.store.example"
+          },
+          {
+            "ip": "10.70.20.11",
+            "hostname": "ntp2.store.example"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Logging / SIEM Retail",
+        "type": "syslog",
+        "critical": true,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.70.20.10",
+            "hostname": "logs1.store.example"
+          },
+          {
+            "ip": "10.70.20.11",
+            "hostname": "logs2.store.example"
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "name": "Monitoring de tienda",
+        "type": "monitoring",
+        "critical": false,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.70.20.10",
+            "hostname": "monitor.store.example"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [
+      {
+        "id": "wlan-retail-controller",
+        "name": "Control WLAN local/cloud",
+        "critical": false,
+        "peerControllerRefs": []
+      }
+    ],
+    "wifiAccessPoints": [
+      {
+        "id": "ap_retail_1",
+        "name": "AP-STORE-01",
+        "uplinkPortRef": "retail_acc_ap1",
+        "controllerRef": "wlan-retail-controller",
+        "poeWatts": 28,
+        "locationRef": "retail_office",
+        "ssidRefs": [
+          "ssid_retail_staff",
+          "ssid_retail_iot",
+          "ssid_retail_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_retail_1_24",
+            "band": "2.4GHz",
+            "channel": 1,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 5,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_retail_1_5",
+            "band": "5GHz",
+            "channel": 36,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 10,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_retail_1_6",
+            "band": "6GHz",
+            "channel": 5,
+            "channelWidthMHz": 160,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      },
+      {
+        "id": "ap_retail_2",
+        "name": "AP-STORE-02",
+        "uplinkPortRef": "retail_acc_ap2",
+        "controllerRef": "wlan-retail-controller",
+        "poeWatts": 28,
+        "locationRef": "retail_living",
+        "ssidRefs": [
+          "ssid_retail_staff",
+          "ssid_retail_iot",
+          "ssid_retail_guest"
+        ],
+        "radios": [
+          {
+            "id": "ap_retail_2_24",
+            "band": "2.4GHz",
+            "channel": 6,
+            "channelWidthMHz": 20,
+            "txPowerDbm": 12,
+            "expectedClients": 5,
+            "maxClients": 64
+          },
+          {
+            "id": "ap_retail_2_5",
+            "band": "5GHz",
+            "channel": 44,
+            "channelWidthMHz": 80,
+            "txPowerDbm": 15,
+            "expectedClients": 10,
+            "maxClients": 128
+          },
+          {
+            "id": "ap_retail_2_6",
+            "band": "6GHz",
+            "channel": 37,
+            "channelWidthMHz": 160,
+            "txPowerDbm": 15,
+            "expectedClients": 8,
+            "maxClients": 128
+          }
+        ]
+      }
+    ],
+    "wifiSsids": [
+      {
+        "id": "ssid_retail_staff",
+        "name": "RETAIL-STAFF",
+        "vlanRef": "retail_v130",
+        "security": "wpa3-enterprise",
+        "radiusServiceRef": "radius",
+        "clientIsolation": false,
+        "purpose": "corporate"
+      },
+      {
+        "id": "ssid_retail_iot",
+        "name": "RETAIL-IOT",
+        "vlanRef": "retail_v170",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "iot"
+      },
+      {
+        "id": "ssid_retail_guest",
+        "name": "RETAIL-GUEST",
+        "vlanRef": "retail_v150",
+        "security": "wpa3-personal",
+        "clientIsolation": true,
+        "purpose": "guest"
+      }
+    ],
+    "ipv6Networks": [
+      {
+        "id": "retail_v6_trusted",
+        "name": "POS IPv6",
+        "prefix": "2001:db8:70:10::/64",
+        "vlanRef": "retail_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:10::1"
+      },
+      {
+        "id": "retail_v6_servers",
+        "name": "Servicios IPv6",
+        "prefix": "2001:db8:70:20::/64",
+        "vlanRef": "retail_v120",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:20::1"
+      },
+      {
+        "id": "retail_v6_experiments",
+        "name": "Empleados IPv6",
+        "prefix": "2001:db8:70:30::/64",
+        "vlanRef": "retail_v130",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:30::1"
+      },
+      {
+        "id": "retail_v6_iot",
+        "name": "Camaras/NVR IPv6",
+        "prefix": "2001:db8:70:40::/64",
+        "vlanRef": "retail_v140",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:40::1"
+      },
+      {
+        "id": "retail_v6_guest",
+        "name": "Invitados IPv6",
+        "prefix": "2001:db8:70:50::/64",
+        "vlanRef": "retail_v150",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:50::1"
+      },
+      {
+        "id": "retail_v6_mgmt",
+        "name": "Gestion IPv6",
+        "prefix": "2001:db8:70:60::/64",
+        "vlanRef": "retail_v160",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:60::1"
+      },
+      {
+        "id": "retail_v6_storage",
+        "name": "IoT IPv6",
+        "prefix": "2001:db8:70:70::/64",
+        "vlanRef": "retail_v170",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:70:70::1"
+      }
+    ],
+    "failureScenarios": [
+      {
+        "id": "fail-retail-primary-wan",
+        "name": "Fallo WAN principal",
+        "events": [
+          {
+            "type": "circuit",
+            "targetRef": "retail_wan_primary"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "wan",
+            "ref": ""
+          }
+        ],
+        "requireWan": true
+      },
+      {
+        "id": "fail-retail-lag-member",
+        "name": "Fallo de un miembro LACP",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "retail_lag_link_1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "link",
+            "ref": "retail_lag_link_2"
+          }
+        ],
+        "requireWan": true
+      }
+    ],
+    "stacks": [],
+    "mlagDomains": [],
+    "haGroups": [],
+    "diversityPolicies": [],
+    "routing": {
+      "strategy": "static",
+      "staticRoutesByDevice": {}
+    },
+    "highAvailability": {
+      "devices": {
+        "retail_rtr": {
+          "defaultRoutes": [
+            {
+              "nextHop": "198.51.100.1",
+              "distance": 1,
+              "trackId": "1",
+              "circuitRef": "retail_wan_primary",
+              "description": "Internet principal"
+            },
+            {
+              "nextHop": "203.0.113.1",
+              "distance": 20,
+              "circuitRef": "retail_wan_backup",
+              "description": "Internet backup flotante"
+            }
+          ],
+          "tracking": [
+            {
+              "id": "1",
+              "target": "1.1.1.1",
+              "sourceInterface": "GigabitEthernet0/0",
+              "circuitRef": "retail_wan_primary",
+              "frequency": 5,
+              "timeout": 1000
+            }
+          ],
+          "dhcpRelays": [],
+          "firstHopGroups": []
+        }
+      }
+    },
+    "accessSecurity": {
+      "dhcpSnooping": true,
+      "arpInspection": true,
+      "portSecurity": true,
+      "maxMac": 2,
+      "violation": "restrict",
+      "sticky": true,
+      "dhcpRateLimit": 15
+    },
+    "management": {
+      "domain": "store.example",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.70.60.0/24"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.70.20.10",
+        "10.70.20.11"
+      ],
+      "ntpServers": [
+        "10.70.20.10",
+        "10.70.20.11"
+      ],
+      "dnsServers": [
+        "10.70.20.10",
+        "10.70.20.11"
+      ],
+      "banner": "Infraestructura Retail gestionada. Acceso administrativo restringido y registrado.",
+      "backup": false
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:retail_rack01": {
+          "unitCost": 420,
+          "unitPrice": 590,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Rack 18U Retail / Comercio"
+        },
+        "pdu:retail_pdu_a": {
+          "unitCost": 120,
+          "unitPrice": 165,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU rack protegida"
+        },
+        "patchPanel:retail_patch01": {
+          "unitCost": 85,
+          "unitPrice": 125,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Patch panel Cat6A 24 puertos"
+        },
+        "telecomOutlet:retail_to_trusted": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_hypervisor": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_labnode": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_iot": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_services": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_admin": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_backup": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_ap1": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "telecomOutlet:retail_to_ap2": {
+          "unitCost": 14,
+          "unitPrice": 22,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Toma Cat6A"
+        },
+        "cableRun:retail_run_trusted": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_hypervisor": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_labnode": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_iot": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_services": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_admin": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_backup": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_ap1": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "cableRun:retail_run_ap2": {
+          "unitCost": 0.65,
+          "unitPrice": 1.15,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable horizontal Cat6A por metro"
+        },
+        "patchConnection:retail_patch_trusted": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_hypervisor": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_labnode": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_iot": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_services": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_admin": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_backup": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_ap1": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:retail_patch_ap2": {
+          "unitCost": 4.5,
+          "unitPrice": 7.5,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_trusted": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_hypervisor": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_labnode": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_iot": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_services": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_admin": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "hostOutletConnection:retail_hostcord_backup": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo de equipo Cat6A"
+        },
+        "link:retail_lag_link_1": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "link:retail_lag_link_2": {
+          "unitCost": 55,
+          "unitPrice": 80,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "DAC 10G LACP"
+        },
+        "wanCircuit:retail_wan_primary": {
+          "unitCost": 55,
+          "unitPrice": 75,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Fibra principal"
+        },
+        "wanCircuit:retail_wan_backup": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "recurring",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1,
+          "note": "Backup Internet"
+        },
+        "rackItem:retail_cm01": {
+          "unitCost": 28,
+          "unitPrice": 42,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Pasacables horizontal 1U"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|catalyst 8200l|": {
+          "unitCost": 1200,
+          "unitPrice": 1600,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Router edge de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l|": {
+          "unitCost": 2100,
+          "unitPrice": 2800,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Core 10G de referencia / reacondicionado"
+        },
+        "manual:cisco|catalyst 9300l-24uxg|": {
+          "unitCost": 2300,
+          "unitPrice": 3050,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Acceso PoE multigig de referencia / reacondicionado"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-design",
+          "description": "Diseño Retail, segmentación, hardening y plan de direccionamiento",
+          "quantity": 8,
+          "unit": "h",
+          "unitCost": 45,
+          "unitPrice": 70,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-install",
+          "description": "Instalación, configuración y pruebas de continuidad de tienda",
+          "quantity": 12,
+          "unit": "h",
+          "unitCost": 40,
+          "unitPrice": 65,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-doc",
+          "description": "Documentación As-Built, runbook y entrega Retail",
+          "quantity": 5,
+          "unit": "h",
+          "unitCost": 40,
+          "unitPrice": 65,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        }
+      ]
+    }
+  }
+}
