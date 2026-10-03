@@ -134,7 +134,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-ACCESS-HQ-01"
+        "desc": "LACP a SW-ACCESS-STORE-01"
       },
       {
         "id": "retail_acc_core_1",
@@ -155,7 +155,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-CORE-HQ-01"
+        "desc": "LACP a SW-CORE-STORE-01"
       },
       {
         "id": "retail_core_acc_2",
@@ -176,7 +176,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-ACCESS-HQ-01"
+        "desc": "LACP a SW-ACCESS-STORE-01"
       },
       {
         "id": "retail_acc_core_2",
@@ -197,7 +197,7 @@
           199
         ],
         "uplink": true,
-        "desc": "LACP a SW-CORE-HQ-01"
+        "desc": "LACP a SW-CORE-STORE-01"
       },
       {
         "id": "retail_acc_trusted",
