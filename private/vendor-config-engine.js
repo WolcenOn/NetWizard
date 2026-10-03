@@ -89,6 +89,23 @@ function maskForCidr(cidr){
   const parsed=Network.parseCidr(cidr);
   return parsed?Network.ip4s(parsed.mask):'255.255.255.0';
 }
+function subnetContainsIp(cidr,ip){
+  const parsed=Network.parseCidr(cidr);if(!parsed)return false;
+  const parts=clean(ip,80).split('.').map(Number);
+  if(parts.length!==4||parts.some(n=>!Number.isInteger(n)||n<0||n>255))return false;
+  const value=(((parts[0]<<24)>>>0)+(parts[1]<<16)+(parts[2]<<8)+parts[3])>>>0;
+  return (value&parsed.mask)===parsed.net;
+}
+function managementBinding(project,device){
+  const p=obj(project),d=obj(device),ip=clean(d.mgmtIp,80);if(!ip)return null;
+  let vlan=arr(p.vlans).find(v=>clean(v&&v.intent&&v.intent.type,40).toLowerCase()==='management')||null;
+  let subnet=vlan?arr(p.subnets).find(s=>s&&s.vlanRef===vlan.id):null;
+  if(!subnet){
+    subnet=arr(p.subnets).find(s=>s&&subnetContainsIp(s.cidr,ip))||null;
+    vlan=subnet?arr(p.vlans).find(v=>v&&v.id===subnet.vlanRef)||null:null;
+  }
+  return vlan&&subnet?{vlan,subnet,ip}:null;
+}
 function interfaceBlock(text,name){
   const source=String(text||''),needle='interface '+clean(name,120),start=source.indexOf(needle);
   if(start<0)return'';
@@ -233,16 +250,15 @@ function configReadiness(project,device,output){
     const vtpCheck=VtpVerification.evaluateDevice(p,d.id);
     if(vtpCheck&&!vtpCheck.ok)reasons.push(...arr(vtpCheck.reasons));
     if(clean(d.mgmtIp,80)){
-      const mgmtVlan=arr(p.vlans).find(v=>clean(v&&v.intent&&v.intent.type,40).toLowerCase()==='management');
-      const mgmtSubnet=mgmtVlan?arr(p.subnets).find(s=>s&&s.vlanRef===mgmtVlan.id):null;
-      if(!mgmtVlan||!mgmtSubnet||!clean(mgmtSubnet.cidr,80)||!clean(mgmtSubnet.gateway,80)){
-        reasons.push('El switch tiene mgmtIp pero no existe una VLAN/subnet de gestión canónica con gateway.');
+      const mgmt=managementBinding(p,d);
+      if(!mgmt||!clean(mgmt.subnet.cidr,80)||!clean(mgmt.subnet.gateway,80)){
+        reasons.push('El switch tiene mgmtIp pero no existe una subnet canónica que contenga esa dirección y tenga gateway.');
       }else{
-        const block=interfaceBlock(text,'Vlan'+mgmtVlan.vlanId);
-        if(!block||!block.includes('ip address '+clean(d.mgmtIp,80)+' '+maskForCidr(mgmtSubnet.cidr))){
+        const block=interfaceBlock(text,'Vlan'+mgmt.vlan.vlanId);
+        if(!block||!block.includes('ip address '+mgmt.ip+' '+maskForCidr(mgmt.subnet.cidr))){
           reasons.push('El switch no configura su SVI de gestión con la mgmtIp declarada.');
         }
-        if(!text.includes('ip default-gateway '+clean(mgmtSubnet.gateway,80))){
+        if(!text.includes('ip default-gateway '+clean(mgmt.subnet.gateway,80))){
           reasons.push('El switch no configura el gateway de la red de gestión.');
         }
       }
