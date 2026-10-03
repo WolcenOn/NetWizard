@@ -307,13 +307,19 @@ function configReadiness(project,device,output){
   return{status:reasons.length?'review-required':'apply-ready',reasons};
 }
 function firewallAcl(project,deviceId){
+  const p=obj(project);
   let rules=deviceId
-    ?effectivePolicyRulesForDevice(project,deviceId)
-    :Policy.mergeWithManualRules(project).filter(x=>x&&x.enabled!==false);
-  rules=rules.sort((a,b)=>(a.prio||100)-(b.prio||100));
-  rules=Policy.enrichPolicyRules(project,rules);
-  if(!rules.length)return'';
-  const lines=['!','! FW Policy ACL','ip access-list extended FW_POLICY'];
+    ?effectivePolicyRulesForDevice(p,deviceId)
+    :Policy.mergeWithManualRules(p).filter(x=>x&&x.enabled!==false);
+  rules=Policy.enrichPolicyRules(p,rules.sort((a,b)=>(a.prio||100)-(b.prio||100)));
+  const matrixPolicies=deviceId?arr(CiscoSegmentation.sourcePolicies(p,deviceId)):[];
+  if(!rules.length&&!matrixPolicies.length)return'';
+  const lines=['!','! FW Policy ACL unified (intent/manual + vlanMatrix)','ip access-list extended FW_POLICY'];
+  for(const policy of matrixPolicies){
+    for(const dst of arr(policy.blocked)){
+      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard+' ! vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);
+    }
+  }
   for(const rule of rules){
     const action=rule.action==='deny'?'deny':'permit';
     const proto=rule.proto==='any'?'ip':(rule.proto==='tcp_udp'?null:rule.proto);
@@ -340,8 +346,19 @@ function firewallIpv6Acl(project,deviceId){
     ?effectivePolicyRulesForDevice(p,deviceId)
     :Policy.mergeWithManualRules(p).filter(x=>x&&x.enabled!==false);
   rules=Policy.enrichPolicyRules(p,rules.sort((a,b)=>(a.prio||100)-(b.prio||100)));
-  if(!rules.length)return{text:'',unsupported:[],vlanRefs:[]};
-  const lines=['!','! FW Policy ACL IPv6','ipv6 access-list FW_POLICY_V6'],unsupported=[],vlanRefs=new Set();
+  const matrixPolicies=deviceId?arr(CiscoSegmentation.sourcePolicies(p,deviceId)):[];
+  if(!rules.length&&!matrixPolicies.length)return{text:'',unsupported:[],vlanRefs:[]};
+  const lines=['!','! FW Policy ACL IPv6 unified (intent/manual + vlanMatrix)','ipv6 access-list FW_POLICY_V6'],unsupported=[],vlanRefs=new Set();
+  for(const policy of matrixPolicies){
+    const srcNet=ipv6NetworkForVlan(p,policy.sourceVlanRef);
+    if(!srcNet||!clean(srcNet.prefix,160))continue;
+    vlanRefs.add(policy.sourceVlanRef);
+    for(const dstPolicy of arr(policy.blocked)){
+      const dstNet=ipv6NetworkForVlan(p,dstPolicy.vlanRef);
+      if(!dstNet||!clean(dstNet.prefix,160))continue;
+      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160)+' ! vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);
+    }
+  }
   for(const rule of rules){
     const sourceVlan=policyRuleVlanRef(p,rule);
     if(sourceVlan)vlanRefs.add(sourceVlan);
@@ -392,7 +409,10 @@ function create(project){
         text:firewallAcl(p,deviceId),
         ipv6Text:ipv6.text,
         ipv6Unsupported:ipv6.unsupported,
-        vlanRefs:[...new Set(effectivePolicyRulesForDevice(p,deviceId).map(rule=>policyRuleVlanRef(p,rule)).filter(Boolean))]
+        vlanRefs:[...new Set([
+          ...effectivePolicyRulesForDevice(p,deviceId).map(rule=>policyRuleVlanRef(p,rule)).filter(Boolean),
+          ...arr(CiscoSegmentation.sourcePolicies(p,deviceId)).map(x=>x.sourceVlanRef).filter(Boolean)
+        ])]
       };
     },
     netUtils:Network
@@ -430,7 +450,10 @@ function create(project){
   pipeline.registerStage({
     id:'segmentation.cisco',order:130,
     supports(ctx){return ctx.vendor==='cisco_ios'&&!isSwitch(ctx.device);},
-    apply(config,ctx){return CiscoSegmentation.append(config,ctx.project,ctx.deviceId);}
+    apply(config,ctx){
+      if(String(config||'').includes('FW Policy ACL unified (intent/manual + vlanMatrix)'))return config;
+      return CiscoSegmentation.append(config,ctx.project,ctx.deviceId);
+    }
   });
   pipeline.registerStage({
     id:'vpn.site-to-site',order:150,
