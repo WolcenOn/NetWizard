@@ -388,7 +388,7 @@ function firewallIpv6Acl(project,deviceId){
     if(sourceVlan&&!sourceNetwork)continue;
     if(sourceVlan)vlanRefs.add(sourceVlan);
     const src=ipv6Endpoint(p,rule.src,sourceVlan);
-    const dstSubnet=arr(p.subnets).find(s=>s&&clean(s.cidr,160)===clean(rule.dst,160));
+    const dstSubnet=arr(p.subnets).find(s=>s&&(clean(s.cidr,160)===clean(rule.dst,160)||subnetContainsIp(s.cidr,clean(rule.dst,160))));
     if(dstSubnet&&!ipv6NetworkForVlan(p,dstSubnet.vlanRef))continue;
     const dst=ipv6Endpoint(p,rule.dst,clean(dstSubnet&&dstSubnet.vlanRef,256));
     if(!src||!dst){
