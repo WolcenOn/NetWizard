@@ -218,10 +218,15 @@ for(const id of ['dc_leaf1','dc_leaf2']){
 assert.match(generated.configs.dc_leaf1,/interface Vlan110[\s\S]*ip address 10\.90\.10\.1 255\.255\.255\.128[\s\S]*ipv6 address 2001:db8:90:110::1\/64[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
 assert.match(generated.configs.dc_leaf2,/interface Vlan131[\s\S]*ip address 10\.90\.31\.1 255\.255\.255\.192[\s\S]*ipv6 address 2001:db8:90:131::1\/64[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
 const leaf1=generated.configs.dc_leaf1;
-const feDbDeny=' deny ip 10.90.10.0 0.0.0.127 10.90.31.0 0.0.0.63 ! vlanMatrix 110->131';
-const feCatchAll=' permit ip 10.90.10.0 0.0.0.127 any ! Permitir tráfico no bloqueado desde dc_v110';
+const feDbRemark=' remark vlanMatrix 110->131';
+const feDbDeny=' deny ip 10.90.10.0 0.0.0.127 10.90.31.0 0.0.0.63';
+const feCatchRemark=' remark Permitir tráfico no bloqueado desde dc_v110';
+const feCatchAll=' permit ip 10.90.10.0 0.0.0.127 any';
+assert.ok(leaf1.includes(feDbRemark),'FW_POLICY debe documentar el bloqueo Frontend→Database con remark IOS');
 assert.ok(leaf1.includes(feDbDeny),'FW_POLICY debe contener el bloqueo Frontend→Database');
+assert.ok(leaf1.includes(feCatchRemark),'FW_POLICY debe documentar el permit final con remark IOS');
 assert.ok(leaf1.includes(feCatchAll),'FW_POLICY debe conservar el permit final de Frontend');
 assert.ok(leaf1.indexOf(feDbDeny)<leaf1.indexOf(feCatchAll),'El deny east-west debe preceder al permit final');
+assert.doesNotMatch(leaf1,/^\s*(?:permit|deny)\s+.*\s!\s+/m,'Las ACE Cisco no deben llevar comentarios inline con !');
 
 console.log('✓ Golden Datacenter: leaf-spine L3, OSPF redundante, east-west dual-stack, físico A/B y Production Gate READY');
