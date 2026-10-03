@@ -4,6 +4,15 @@ const G=require('../js/netwizard-switching-generator.js');
 function test(name,fn){try{fn();console.log(`✓ ${name}`);}catch(e){console.error(`✗ ${name}`);throw e;}}
 function project(vendor){return {devices:[{id:'sw1',name:'SW-ACCESS-01',type:'switch',vendorOs:vendor}],vlans:[{id:'v10',vlanId:10,name:'Users'},{id:'v20',vlanId:20,name:'Voice'},{id:'v999',vlanId:999,name:'Native'}],ports:[{id:'p1',deviceId:'sw1',name:'Gi1/0/1',mode:'access',accessVlanRef:'v10',desc:'User desk'},{id:'p2',deviceId:'sw1',name:'Gi1/0/48',mode:'trunk',allowedVlans:[10,20,999],nativeVlanRef:'v999',desc:'Uplink'}]};}
 test('Cisco genera VLANs, trunk mínimo, RSTP y protección de acceso',()=>{const out=G.render(project('cisco_ios'),'sw1');assert.ok(out.includes('spanning-tree mode rapid-pvst'));assert.ok(out.includes('switchport trunk allowed vlan 10,20,999'));assert.ok(out.includes('switchport trunk native vlan 999'));assert.ok(out.includes('spanning-tree bpduguard enable'));assert.ok(out.includes('storm-control broadcast'));});
+test('Cisco materializa SVI y gateway de gestión cuando existe mgmtIp',()=>{
+  const p=project('cisco_ios');
+  p.devices[0].mgmtIp='10.10.99.10';
+  p.vlans.push({id:'v99',vlanId:99,name:'Management',intent:{type:'management'}});
+  p.subnets=[{id:'s99',vlanRef:'v99',cidr:'10.10.99.0/24',gateway:'10.10.99.1'}];
+  const out=G.render(p,'sw1');
+  assert.match(out,/interface Vlan99[\s\S]*ip address 10\.10\.99\.10 255\.255\.255\.0[\s\S]*no shutdown/);
+  assert.match(out,/ip default-gateway 10\.10\.99\.1/);
+});
 test('Cisco VTP server usa placeholder de secreto y conserva creación local de VLANs',()=>{
   const p=project('cisco_ios');
   p.vtp={domain:'EMPRESA',password:'super-secret-plain',version:'2',pruning:'yes',roles:{sw1:'server'}};

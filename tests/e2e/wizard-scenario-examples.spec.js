@@ -71,3 +71,53 @@ test('Oficina pequeña mantiene el flujo Nuevo del asistente', async ({page})=>{
   await expect(page.locator('#wModeCard')).toBeVisible();
   await expect(page.locator('#wStep2Card')).toBeHidden();
 });
+
+test('Home Lab carga una Golden moderna, segmentada y READY', async ({page})=>{
+  await resetStorage(page);
+  page.on('dialog',dialog=>dialog.accept());
+
+  await page.click('[data-step="wiz"]');
+  await page.click('[data-sc="home"]');
+
+  await expect(page.locator('#wModeCard')).toBeVisible();
+  await expect(page.locator('#wLoadExample')).toBeVisible();
+  await expect(page.locator('#wLoadExample')).toContainText('Golden Path · Home Lab moderno y segmentado');
+
+  await page.click('#wLoadExample');
+  await expect(page.locator('#pg-dash')).toBeVisible();
+
+  const result=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    const gate=window.NetWizardProductionGate.runProductionGate(p,{productionMode:true,strict:true});
+    return{
+      name:p.projName,
+      devices:p.devices.length,
+      vlans:p.vlans.length,
+      hosts:p.hosts.length,
+      wan:p.wanCircuits.length,
+      wifi:p.wifiSsids.map(x=>({id:x.id,security:x.security,clientIsolation:x.clientIsolation})),
+      ipv6:p.ipv6Networks.length,
+      cableRuns:p.cableRuns.length,
+      status:gate.status,
+      warnings:gate.counts.warnings,
+      blocking:gate.counts.blocking
+    };
+  });
+
+  expect(result.name).toBe('Golden Path · Home Lab moderno y segmentado');
+  expect(result.devices).toBe(3);
+  expect(result.vlans).toBe(8);
+  expect(result.hosts).toBe(7);
+  expect(result.wan).toBe(2);
+  expect(result.ipv6).toBe(7);
+  expect(result.cableRuns).toBe(9);
+  expect(result.status).toBe('ready');
+  expect(result.warnings).toBe(0);
+  expect(result.blocking).toBe(0);
+  expect(result.wifi).toEqual(expect.arrayContaining([
+    expect.objectContaining({id:'ssid_lab_trusted',security:'wpa3-personal'}),
+    expect.objectContaining({id:'ssid_lab_iot',security:'wpa3-personal',clientIsolation:true}),
+    expect.objectContaining({id:'ssid_lab_guest',security:'wpa3-personal',clientIsolation:true})
+  ]));
+});
+

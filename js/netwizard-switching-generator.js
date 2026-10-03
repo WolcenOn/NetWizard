@@ -14,6 +14,34 @@
   function allowed(project,p){ const explicit=vids(p.allowedVlans); return explicit.length?explicit:arr(project&&project.vlans).map(v=>Number(v.vlanId)).filter(Number.isFinite).sort((a,b)=>a-b); }
   function accessVid(project,p){ const v=vlan(project,p.accessVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.accessVlan||1); }
   function nativeVid(project,p){ const v=vlan(project,p.nativeVlanRef); return v&&v.vlanId?Number(v.vlanId):Number(p.nativeVlan||999); }
+  function ipv4Mask(cidr){
+    const m=clean(cidr).match(/\/(\d|[12]\d|3[0-2])$/);const pfx=m?Number(m[1]):24;
+    const mask=pfx===0?0:(0xffffffff<<(32-pfx))>>>0;
+    return [24,16,8,0].map(b=>(mask>>>b)&255).join('.');
+  }
+  function ip4num(value){
+    const parts=clean(value).split('.').map(Number);
+    if(parts.length!==4||parts.some(n=>!Number.isInteger(n)||n<0||n>255))return null;
+    return (((parts[0]<<24)>>>0)+(parts[1]<<16)+(parts[2]<<8)+parts[3])>>>0;
+  }
+  function subnetContains(cidr,ip){
+    const m=clean(cidr).match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d|[12]\d|3[0-2])$/);
+    if(!m)return false;
+    const netIp=ip4num(m[1]),candidate=ip4num(ip);if(netIp==null||candidate==null)return false;
+    const pfx=Number(m[2]),mask=pfx===0?0:(0xffffffff<<(32-pfx))>>>0;
+    return (netIp&mask)===(candidate&mask);
+  }
+  function management(project,d){
+    const ip=clean(d&&d.mgmtIp);if(!ip)return null;
+    let v=arr(project&&project.vlans).find(x=>clean(x&&x.intent&&x.intent.type).toLowerCase()==='management')||null;
+    let sn=v?arr(project&&project.subnets).find(x=>x&&x.vlanRef===v.id):null;
+    if(!sn){
+      sn=arr(project&&project.subnets).find(x=>x&&subnetContains(x.cidr,ip))||null;
+      v=sn?vlan(project,sn.vlanRef):null;
+    }
+    if(!v||!sn||!clean(sn.cidr)||!clean(sn.gateway))return null;
+    return{vlan:v,subnet:sn,ip};
+  }
   function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
   function isSwitch(d){ const model=deviceModel(); return !!d && (model ? model.isSwitching(d) : /switch/i.test(clean(d.kind||d.type))); }
   function ciscoVtp(project,d){
@@ -37,6 +65,10 @@
     }
     if(vtp.role!=='client'){
       arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>L.push(`vlan ${v.vlanId}`,` name ${token(v.name,'VLAN'+v.vlanId)}`,' exit'));
+    }
+    const mgmt=management(project,d);
+    if(mgmt){
+      L.push('!','! Management SVI',`interface Vlan${mgmt.vlan.vlanId}`,` description Management_${token(mgmt.vlan.name,'MGMT')}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)}`,' no shutdown',' exit',`ip default-gateway ${clean(mgmt.subnet.gateway)}`);
     }
     ports(project,d.id).forEach(p=>{
       L.push(`interface ${clean(p.name||p.id)}`);

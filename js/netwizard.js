@@ -50,7 +50,7 @@ const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
 const SCENARIOS=[
-  {id:'home',ico:'🏠',name:'Home Lab',desc:'Router + switch + PCs',vlans:[{id:10,n:'LAN',c:'#3b82f6'},{id:20,n:'IoT',c:'#10b981'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
+  {id:'home',ico:'🏠',name:'Home Lab',desc:'Router + switch + PCs',examplePresetId:'golden-home-lab-modern',exampleLabel:'Golden Path · Home Lab moderno y segmentado',certified:true,vlans:[{id:10,n:'LAN',c:'#3b82f6'},{id:20,n:'IoT',c:'#10b981'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
   {id:'office',ico:'🏢',name:'Oficina pequeña',desc:'< 50 usuarios',examplePresetId:'golden-office-modern',exampleLabel:'Golden Path · Oficina pequeña segura',certified:true,vlans:[{id:10,n:'Usuarios',c:'#3b82f6'},{id:20,n:'Servidores',c:'#10b981'},{id:30,n:'WiFi',c:'#f59e0b'},{id:99,n:'Gestión',c:'#8b5cf6'}]},
   {id:'corp',ico:'🏙',name:'Empresa mediana',desc:'Departamentos + servidores',vlans:[{id:10,n:'Dirección',c:'#ef4444'},{id:20,n:'Ventas',c:'#3b82f6'},{id:30,n:'IT',c:'#10b981'},{id:40,n:'RRHH',c:'#f59e0b'},{id:50,n:'Servidores',c:'#8b5cf6'},{id:60,n:'WiFi',c:'#06b6d4'},{id:70,n:'Cámaras',c:'#f97316'},{id:99,n:'Gestión',c:'#e879f9'}]},
   {id:'dc',ico:'🗄',name:'Datacenter',desc:'Frontend/Backend/DB/Storage',vlans:[{id:10,n:'Frontend',c:'#3b82f6'},{id:20,n:'Backend',c:'#10b981'},{id:30,n:'DB',c:'#ef4444'},{id:40,n:'Storage',c:'#f59e0b'},{id:50,n:'Management',c:'#8b5cf6'}]},

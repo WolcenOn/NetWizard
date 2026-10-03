@@ -66,6 +66,41 @@ test('Cisco IOS usa WAN canónica por dispositivo sin duplicar autoridad en roas
   assert.match(cfg,/ip nat inside source list 100 interface GigabitEthernet0\/0 overload/);
 });
 
+test('Cisco IOS aplica NAT outside y overload a cada WAN canónica habilitada', () => {
+  const project=JSON.parse(JSON.stringify(baseProject));
+  project.roas={};
+  project.ports=[
+    {id:'wan-a',deviceId:'r1',name:'GigabitEthernet0/0',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.0/30'},
+    {id:'wan-b',deviceId:'r1',name:'GigabitEthernet0/2',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.0/30'},
+    {id:'lan',deviceId:'r1',name:'GigabitEthernet0/1',mode:'trunk',role:'lan',allowedVlans:[10]}
+  ];
+  project.subnets[0].gatewayDeviceRef='r1';
+  project.wanCircuits=[
+    {id:'wan-primary',deviceId:'r1',portId:'wan-a',role:'primary',enabled:true,provider:'ISP-A'},
+    {id:'wan-backup',deviceId:'r1',portId:'wan-b',role:'backup',enabled:true,provider:'ISP-B'}
+  ];
+  project.highAvailability={devices:{r1:{defaultRoutes:[
+    {nextHop:'198.51.100.1',distance:1,circuitRef:'wan-primary'},
+    {nextHop:'203.0.113.1',distance:20,circuitRef:'wan-backup'}
+  ]}}};
+  const cfg=genFor(project)('r1','cisco_ios');
+  assert.match(cfg,/interface GigabitEthernet0\/0[\s\S]*?ip nat outside/);
+  assert.match(cfg,/interface GigabitEthernet0\/2[\s\S]*?ip nat outside/);
+  assert.match(cfg,/ip nat inside source list 100 interface GigabitEthernet0\/0 overload/);
+  assert.match(cfg,/ip nat inside source list 100 interface GigabitEthernet0\/2 overload/);
+});
+
+test('Cisco IOS materializa gateway IPv6 y forwarding en RoaS dual-stack', () => {
+  const project=JSON.parse(JSON.stringify(baseProject));
+  project.subnets[0].gatewayDeviceRef='r1';
+  project.ports[1].mode='trunk';
+  project.ports[1].allowedVlans=[10];
+  project.ipv6Networks=[{id:'v6-users',vlanRef:'v10',prefix:'2001:db8:10:10::/64',gateway:'2001:db8:10:10::1',slaac:true,routerAdvertisement:true}];
+  const cfg=genFor(project)('r1','cisco_ios');
+  assert.match(cfg,/^ipv6 unicast-routing$/m);
+  assert.match(cfg,/interface GigabitEthernet0\/1\.10[\s\S]*ipv6 address 2001:db8:10:10::1\/64/);
+});
+
 test('Cisco IOS multi-router con gatewayDeviceRef trata RoaS como intención explícita', () => {
   const project=JSON.parse(JSON.stringify(baseProject));
   project.devices.push({id:'r2',name:'RTR Peer',type:'router',kind:'router',vendorOs:'cisco_ios'});

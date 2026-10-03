@@ -226,7 +226,7 @@ assert.ok(badOspfResult.configReadiness['ospf-r1'].reasons.some(x=>/OSPF: .*no t
 const wanResilienceProject={
   _schemaVersion:'3.50.0',
   projName:'Private WAN resilience',
-  devices:[{id:'wr1',name:'WAN-EDGE',type:'router',kind:'router',vendorOs:'cisco_ios'}],
+  devices:[{id:'wr1',name:'WAN-EDGE',type:'router',kind:'router',vendorOs:'cisco_ios',internetEdge:'yes',wanIf:'GigabitEthernet0/0'}],
   ports:[
     {id:'wr1-a',deviceId:'wr1',name:'GigabitEthernet0/0',mode:'routed',role:'wan',l3Ip:'203.0.113.2',l3Cidr:'203.0.113.2/30'},
     {id:'wr1-b',deviceId:'wr1',name:'GigabitEthernet0/1',mode:'routed',role:'wan',l3Ip:'198.51.100.2',l3Cidr:'198.51.100.2/30'}
@@ -251,12 +251,63 @@ assert.strictEqual(wanResilienceResult.configReadiness.wr1.status,'apply-ready',
 assert.match(wanResilienceResult.configs.wr1,/ip sla 1/);
 assert.match(wanResilienceResult.configs.wr1,/ip route 0\.0\.0\.0 0\.0\.0\.0 203\.0\.113\.1 1 track 1/);
 assert.match(wanResilienceResult.configs.wr1,/ip route 0\.0\.0\.0 0\.0\.0\.0 198\.51\.100\.1 20/);
+assert.match(wanResilienceResult.configs.wr1,/ip nat inside source list 100 interface GigabitEthernet0\/0 overload/);
+assert.match(wanResilienceResult.configs.wr1,/ip nat inside source list 100 interface GigabitEthernet0\/1 overload/);
+assert.match(wanResilienceResult.configs.wr1,/interface GigabitEthernet0\/1[\s\S]*ip nat outside/);
 
 const badWanResilience=JSON.parse(JSON.stringify(wanResilienceProject));
 badWanResilience.highAvailability.devices.wr1.defaultRoutes[1].distance=1;
 const badWanResilienceResult=Engine.generateAll(badWanResilience);
 assert.strictEqual(badWanResilienceResult.configReadiness.wr1.status,'review-required');
 assert.ok(badWanResilienceResult.configReadiness.wr1.reasons.some(x=>/Resiliencia WAN: .*distancia mayor/i.test(x)));
+
+
+const managedSwitchProject={
+  _schemaVersion:'3.50.0',projName:'Managed switch readiness',
+  devices:[{id:'msw',name:'MGMT-SW',type:'switch',kind:'switch',vendorOs:'cisco_ios',mgmtIp:'10.99.0.10'}],
+  ports:[{id:'msw-uplink',deviceId:'msw',name:'GigabitEthernet1/0/48',mode:'trunk',allowedVlans:[99],nativeVlanRef:'v99'}],
+  vlans:[{id:'v99',vlanId:99,name:'Management',intent:{type:'management'}}],
+  subnets:[{id:'s99',vlanRef:'v99',cidr:'10.99.0.0/24',gateway:'10.99.0.1'}],
+  hosts:[],links:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},routing:{strategy:'static'},
+  management:{sourceNetworks:['10.99.0.0/24']},highAvailability:{},accessSecurity:{},linkAggregations:[],ipv6Networks:[]
+};
+const managedSwitchResult=Engine.generateAll(managedSwitchProject);
+assert.strictEqual(managedSwitchResult.configReadiness.msw.status,'apply-ready',JSON.stringify(managedSwitchResult.configReadiness.msw.reasons));
+assert.match(managedSwitchResult.configs.msw,/interface Vlan99[\s\S]*ip address 10\.99\.0\.10 255\.255\.255\.0/);
+assert.match(managedSwitchResult.configs.msw,/ip default-gateway 10\.99\.0\.1/);
+
+const dualStackProject={
+  _schemaVersion:'3.50.0',projName:'Dual-stack segmentation readiness',
+  devices:[{id:'r6',name:'R6',type:'router',kind:'router',vendorOs:'cisco_ios',lanIf:'GigabitEthernet0/1'}],
+  ports:[{id:'r6-lan',deviceId:'r6',name:'GigabitEthernet0/1',mode:'trunk',role:'lan',allowedVlans:[10,40]}],
+  vlans:[
+    {id:'v10',vlanId:10,name:'Trusted',intent:{type:'users',internet:false,isolation:'standard'}},
+    {id:'v40',vlanId:40,name:'IoT',intent:{type:'iot',internet:false,isolation:'isolated'}}
+  ],
+  subnets:[
+    {id:'s10',vlanRef:'v10',cidr:'10.6.10.0/24',gateway:'10.6.10.1',gatewayDeviceRef:'r6'},
+    {id:'s40',vlanRef:'v40',cidr:'10.6.40.0/24',gateway:'10.6.40.1',gatewayDeviceRef:'r6'}
+  ],
+  ipv6Networks:[
+    {id:'v6-10',vlanRef:'v10',prefix:'2001:db8:6:10::/64',gateway:'2001:db8:6:10::1',slaac:true,routerAdvertisement:true},
+    {id:'v6-40',vlanRef:'v40',prefix:'2001:db8:6:40::/64',gateway:'2001:db8:6:40::1',slaac:true,routerAdvertisement:true}
+  ],
+  vlanMatrix:{'v40_v10':false},
+  hosts:[],links:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},routing:{strategy:'static'},
+  management:{},highAvailability:{},accessSecurity:{},linkAggregations:[],wanCircuits:[]
+};
+const dualStackAcl=Engine.firewallIpv6Acl(dualStackProject,'r6');
+assert.deepStrictEqual(dualStackAcl.unsupported,[]);
+assert.match(dualStackAcl.text,/deny ipv6 2001:db8:6:40::\/64 2001:db8:6:10::\/64/);
+const dualStackResult=Engine.generateAll(dualStackProject);
+assert.strictEqual(dualStackResult.configReadiness.r6.status,'apply-ready',JSON.stringify(dualStackResult.configReadiness.r6.reasons));
+assert.match(dualStackResult.configs.r6,/^ipv6 unicast-routing$/m);
+assert.match(dualStackResult.configs.r6,/interface GigabitEthernet0\/1\.10[\s\S]*ipv6 address 2001:db8:6:10::1\/64/);
+assert.match(dualStackResult.configs.r6,/interface GigabitEthernet0\/1\.40[\s\S]*ipv6 address 2001:db8:6:40::1\/64/);
+assert.match(dualStackResult.configs.r6,/ipv6 access-list FW_POLICY_V6/);
+assert.match(dualStackResult.configs.r6,/interface GigabitEthernet0\/1\.40[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
+assert.match(dualStackResult.configs.r6,/ip access-list extended FW_POLICY/);
+assert.doesNotMatch(dualStackResult.configs.r6,/ip access-list extended NW_SEG_V40/);
 
 const vpnProject={
   _schemaVersion:'3.50.0',

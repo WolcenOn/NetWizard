@@ -258,12 +258,12 @@ const hqConfigPath=privateResult.configPaths.hq_rtr;
 const hqConfigArtifact=privateResult.artifacts.find(x=>x.path===hqConfigPath);
 assert.ok(hqConfigArtifact&&hqConfigArtifact.content,'Debe existir configuración privada para HQ router');
 const hqConfig=hqConfigArtifact.content;
-assert.match(hqConfig,/ip access-list extended NW_SEG_V110/);
-assert.match(hqConfig,/deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.30\.60\.0 0\.0\.0\.255/);
-assert.match(hqConfig,/interface GigabitEthernet0\/1\.110[\s\S]*ip access-group NW_SEG_V110 in/);
+assert.match(hqConfig,/ip access-list extended FW_POLICY/,'La política FW unificada debe generarse por router');
+assert.match(hqConfig,/deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.30\.60\.0 0\.0\.0\.255/,'vlanMatrix debe conservar el aislamiento de VLAN110 dentro de FW_POLICY');
+assert.match(hqConfig,/interface GigabitEthernet0\/1\.110[\s\S]*ip access-group FW_POLICY in/,'La política unificada debe quedar vinculada inbound a VLAN110');
+assert.doesNotMatch(hqConfig,/ip access-group NW_SEG_V110 in/,'No debe existir una segunda ACL IPv4 inbound que compita con FW_POLICY');
 assert.match(hqConfig,/ip access-list standard NW_MGMT_SOURCES/);
 assert.match(hqConfig,/line vty 0 15[\s\S]*access-class NW_MGMT_SOURCES in[\s\S]*transport input ssh/);
-assert.match(hqConfig,/ip access-list extended FW_POLICY/,'La política FW debe generarse por router');
 assert.match(hqConfig,/interface GigabitEthernet0\/1\.140[\s\S]*ip access-group FW_POLICY in/,'La ACL FW debe quedar vinculada inbound a la subinterfaz de origen');
 
 console.log('✓ Golden Path Multisede limpio: 4 routers en anillo, OSPF redundante, segmentación y Production Gate READY');

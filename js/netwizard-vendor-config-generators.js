@@ -32,6 +32,11 @@
     function portsByDev(p,id){ return arr(p.ports).filter(x=>x.deviceId===id); }
     function vlanByRef(p,ref){ return arr(p.vlans).find(v=>v.id===ref)||null; }
     function subnetByVlan(p,ref){ return arr(p.subnets).find(s=>s.vlanRef===ref)||null; }
+    function ipv6NetworkByVlan(p,ref){ return arr(p.ipv6Networks).find(n=>n&&n.vlanRef===ref)||null; }
+    function ipv6PrefixLength(value){
+      const m=clean(value).match(/\/(\d{1,3})$/);const n=m?Number(m[1]):64;
+      return Number.isInteger(n)&&n>=0&&n<=128?n:64;
+    }
     function parseC(cidr){
       if(typeof net.parseCidr === 'function') return net.parseCidr(cidr);
       const m=clean(cidr).match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(\d{1,2})$/); if(!m) return null;
@@ -88,12 +93,21 @@
       const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
       return{primary,port,route};
     }
+    function canonicalWanPorts(p,d){
+      const seen=new Set(),out=[];
+      for(const circuit of arr(p&&p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id)){
+        const port=arr(p&&p.ports).find(x=>x&&x.id===circuit.portId&&x.deviceId===d.id);
+        if(!port||seen.has(port.id))continue;
+        seen.add(port.id);out.push({circuit,port});
+      }
+      return out;
+    }
     function originalOrEmpty(devId,format){ return originalGenConfig ? originalGenConfig(devId,format) : ''; }
     function isUnsupported(out){ return /^! Sin vendor asignado:/i.test(out||'') || /^[!#]\s*Vendor\/OS todavía no implementado/i.test(out||''); }
 
     function genCiscoRouterAuto(d){
       const p=project();
-      const wanContext=canonicalWanContext(p,d);
+      const wanContext=canonicalWanContext(p,d),wanBindings=canonicalWanPorts(p,d);
       const lanIf=inferLanPort(p,d), wanIf=clean(wanContext.port&&wanContext.port.name)||inferWanPort(p,d);
       const explicitRoaS=!!(p.roas&&p.roas.gwId===d.id);
       const legacySingleRouter=arr(p.devices).filter(isRouterLike).length===1;
@@ -116,7 +130,9 @@
       if(needsRoaS&&!explicitRoaS&&!deterministicRoaS&&hasUnownedRoutedVlan){
         L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
       }
+      const hasIpv6=routedVlans.some(v=>{const n=ipv6NetworkByVlan(p,v.id);return n&&clean(n.prefix)&&clean(n.gateway);});
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
+      if(hasIpv6)L.push('ipv6 unicast-routing');
       const ports=portsByDev(p,d.id).sort((a,b)=>clean(a.name).localeCompare(clean(b.name),'es',{numeric:true}));
       if(ports.length){
         L.push('!','! Interfaces físicas');
@@ -131,7 +147,13 @@
         L.push('!','! RoaS — subinterfaces VLAN',`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
         routedVlans.slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
           const sn=subnetByVlan(p,v.id); if(!sn||!sn.gateway||!sn.cidr) return;
-          L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}`,` description GW_VLAN${v.vlanId}_${vlanName(v)}`,` ip address ${cliText(sn.gateway,40)} ${mask(sn.cidr)}`,' ip nat inside',' no shutdown',' exit');
+          const v6=ipv6NetworkByVlan(p,v.id);
+          L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,` encapsulation dot1Q ${v.vlanId}`,` description GW_VLAN${v.vlanId}_${vlanName(v)}`,` ip address ${cliText(sn.gateway,40)} ${mask(sn.cidr)}`,' ip nat inside');
+          if(v6&&clean(v6.gateway)&&clean(v6.prefix)){
+            L.push(` ipv6 address ${cliText(v6.gateway,80)}/${ipv6PrefixLength(v6.prefix)}`);
+            if(v6.routerAdvertisement===false)L.push(' ipv6 nd ra suppress all');
+          }
+          L.push(' no shutdown',' exit');
         });
       }
       const dh=[];
@@ -148,20 +170,31 @@
       if(dh.length) L.push('!','! DHCP Pools',...dh);
       const legacyWanCidr=clean((p.roas||{}).wanCidr), legacyNh=clean((p.roas||{}).wanNh);
       const canonicalPort=wanContext.port;
-      if(d.internetEdge==='yes' && wanIf){
-        const wanLines=['!','! WAN',`interface ${cliText(wanIf,80)}`];
-        if(!(canonicalPort&&(canonicalPort.l3Ip||canonicalPort.routedIp)&&(canonicalPort.l3Cidr||canonicalPort.routedCidr))&&legacyWanCidr){
-          wanLines.push(` ip address ${cidrIp(legacyWanCidr)} ${mask(legacyWanCidr)}`);
+      if(d.internetEdge==='yes'){
+        const bindings=wanBindings.length?wanBindings:[{circuit:wanContext.primary,port:canonicalPort||{name:wanIf}}];
+        const valid=bindings.filter(x=>x&&x.port&&clean(x.port.name));
+        if(valid.length){
+          L.push('!','! WAN');
+          for(const binding of valid){
+            const pt=binding.port,ifName=clean(pt.name);
+            const wanLines=[`interface ${cliText(ifName,80)}`];
+            if(ifName===wanIf&&!(pt&&(pt.l3Ip||pt.routedIp)&&(pt.l3Cidr||pt.routedCidr))&&legacyWanCidr){
+              wanLines.push(` ip address ${cidrIp(legacyWanCidr)} ${mask(legacyWanCidr)}`);
+            }
+            wanLines.push(' ip nat outside',' no shutdown',' exit');
+            L.push(...wanLines);
+          }
+          L.push('!','! NAT overload','access-list 100 permit ip any any');
+          for(const binding of valid)L.push(`ip nat inside source list 100 interface ${cliText(binding.port.name,80)} overload`);
         }
-        wanLines.push(' ip nat outside',' no shutdown',' exit');
-        L.push(...wanLines);
       }
       if(d.internetEdge==='yes' && legacyNh && !wanContext.route) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${legacyNh}`);
-      if(d.internetEdge==='yes' && wanIf) L.push('!','! NAT overload','access-list 100 permit ip any any',`ip nat inside source list 100 interface ${cliText(wanIf,80)} overload`);
       const aclResult=getFwAcl(d.id);
       const acl=typeof aclResult==='string'?aclResult:String(aclResult&&aclResult.text||'');
-      if(acl){
-        L.push('',acl);
+      const aclV6=typeof aclResult==='object'?String(aclResult&&aclResult.ipv6Text||''):'';
+      if(acl||aclV6){
+        if(acl)L.push('',acl);
+        if(aclV6)L.push('',aclV6);
         const explicitRefs=arr(aclResult&&aclResult.vlanRefs).filter(Boolean);
         const fallbackRefs=arr(p.fwRules).filter(r=>r&&r.enabled!==false).map(r=>{
           if(r.vlanRef)return r.vlanRef;
@@ -170,7 +203,10 @@
         }).filter(Boolean);
         const boundVlanRefs=new Set(explicitRefs.length?explicitRefs:fallbackRefs);
         routedVlans.filter(v=>boundVlanRefs.has(v.id)).forEach(v=>{
-          L.push(`interface ${cliText(lanIf,80)}.${v.vlanId}`,' ip access-group FW_POLICY in',' exit');
+          const lines=[`interface ${cliText(lanIf,80)}.${v.vlanId}`];
+          if(acl)lines.push(' ip access-group FW_POLICY in');
+          if(aclV6&&ipv6NetworkByVlan(p,v.id))lines.push(' ipv6 traffic-filter FW_POLICY_V6 in');
+          lines.push(' exit');L.push(...lines);
         });
       }
       L.push('end','write memory','!');

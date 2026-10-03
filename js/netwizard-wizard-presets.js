@@ -294,7 +294,8 @@ const presets={
 }
 };
 const files={
-  'golden-office-modern':'./samples/golden-path-office-modern.json'
+  'golden-office-modern':'./samples/golden-path-office-modern.json',
+  'golden-home-lab-modern':'./samples/golden-path-home-lab-modern.json'
 };
 function clone(value){return JSON.parse(JSON.stringify(value));}
 function get(id){return presets[id]?clone(presets[id]):null;}
