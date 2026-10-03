@@ -86,7 +86,7 @@ assert.strictEqual(p.vlanMatrix['retail_v110_retail_v130'],false);
 assert.strictEqual(p.vlanMatrix['retail_v110_retail_v140'],false);
 assert.strictEqual(p.vlanMatrix['retail_v110_retail_v160'],false);
 assert.strictEqual(p.vlanMatrix['retail_v110_retail_v170'],false);
-assert.strictEqual(p.vlanMatrix['retail_v120_retail_v170'],undefined);
+assert.strictEqual(p.vlanMatrix['retail_v170_retail_v120'],true);
 assert.strictEqual(p.vlanMatrix['retail_v160_retail_v170'],true);
 
 assert.strictEqual(p.accessSecurity.dhcpSnooping,true);
