@@ -338,3 +338,18 @@ body.v5-fs-lock{overflow:hidden}
 .nw-lang-label{font-size:11px;opacity:.85;}
 .nw-lang-select{height:28px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:inherit;padding:0 8px;font:inherit;}
 @media(max-width:900px){.nw-lang-label{display:none}.nw-lang-box{gap:4px}.nw-lang-select{max-width:78px}}
+
+
+/* Wizard scenario entry choice */
+.wiz-choice-btn{
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  white-space:normal;
+  text-align:left;
+  line-height:1.35;
+  min-height:78px;
+}
+.wiz-choice-btn .hint{
+  white-space:normal;
+}
