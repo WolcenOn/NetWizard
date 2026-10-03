@@ -1126,21 +1126,21 @@
       },
       {
         "id": "hq_wan_backup",
-        "name": "Internet backup independiente",
+        "name": "Fibra empresarial secundaria",
         "siteRef": "hq_site",
         "deviceId": "hq_rtr",
         "portId": "hq_wan2",
         "provider": "ISP-BACKUP-B",
         "role": "backup",
         "enabled": true,
-        "bandwidthDownMbps": 300,
-        "bandwidthUpMbps": 100,
-        "latencyTargetMs": 45,
-        "lossTargetPercent": 1,
-        "slaAvailability": 99.5,
+        "bandwidthDownMbps": 500,
+        "bandwidthUpMbps": 500,
+        "latencyTargetMs": 35,
+        "lossTargetPercent": 0.5,
+        "slaAvailability": 99.7,
         "demarcLocation": "Oficina principal · Armario comunicaciones",
         "physicalPath": "Demarcación secundaria → RTR-OFFICE-01",
-        "expectedPeakMbps": 180
+        "expectedPeakMbps": 420
       }
     ],
     "linkAggregations": [
