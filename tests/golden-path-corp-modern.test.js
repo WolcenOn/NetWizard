@@ -202,7 +202,7 @@ const cameraDnsV6=' permit udp 2001:db8:80:40::/64 2001:db8:80:20::/64 eq 53';
 const cameraServicesDenyV6=' deny ipv6 2001:db8:80:40::/64 2001:db8:80:20::/64';
 assert.ok(routerCfg.includes(cameraDnsV6),'La excepción DNS interna debe conservar paridad IPv6');
 assert.ok(routerCfg.indexOf(cameraDnsV6)<routerCfg.indexOf(cameraServicesDenyV6),'El permit DNS IPv6 debe preceder al deny lateral IPv6');
-assert.match(generated.configs.corp_core,/interface Vlan160[\s\S]*ip address 10\.70\.60\.10 255\.255\.255\.0/);
-assert.match(generated.configs.corp_access,/interface Vlan160[\s\S]*ip address 10\.70\.60\.11 255\.255\.255\.0/);
+assert.match(generated.configs.corp_core,/interface Vlan160[\s\S]*ip address 10\.80\.60\.10 255\.255\.255\.0/);
+assert.match(generated.configs.corp_access,/interface Vlan160[\s\S]*ip address 10\.80\.60\.11 255\.255\.255\.0/);
 
 console.log('✓ Golden Empresa mediana: departamentos segmentados, voz, Wi-Fi corporativa, dual-stack, dual-WAN y Production Gate READY');
