@@ -122,6 +122,17 @@ function planRackAutoLayout(project,rackId,options){
  const owners=panelOwnerMap(project),claimedPanels=new Set(),claimedManagers=new Set(),warnings=[];
  const panelItemByPanel=new Map(items.filter(i=>i.patchPanelId).map(i=>[i.patchPanelId,i]));
  const managers=items.filter(i=>clean(i.type).toLowerCase()==='cable-manager');
+ const preferredManagerBySwitch=new Map(),preferredManagerIds=new Set();
+ for(const manager of managers){
+   const mu=num(manager.startUnit);if(mu==null)continue;
+   const candidate=switches.filter(sw=>!preferredManagerBySwitch.has(sw.id)).slice().sort((a,b)=>{
+     const ad=Math.abs((num(a.rackUnit)||0)-mu),bd=Math.abs((num(b.rackUnit)||0)-mu);
+     return ad-bd||clean(a.name).localeCompare(clean(b.name));
+   })[0];
+   if(candidate&&Math.abs((num(candidate.rackUnit)||0)-mu)<=2){
+     preferredManagerBySwitch.set(candidate.id,manager);preferredManagerIds.add(manager.id);
+   }
+ }
  const createdPanels=[],createdItems=[],clusters=[];
 
  function nearestFree(list,target,claimed,getUnit){
@@ -176,7 +187,11 @@ function planRackAutoLayout(project,rackId,options){
      const deterministicId='rackauto-manager-'+safeIdPart(rackId)+'-'+safeIdPart(sw.id);
      manager=items.find(i=>i.id===deterministicId)||null;
      if(!manager){
-       const candidate=nearestFree(managers,switchUnit,claimedManagers,i=>i.startUnit);
+       const preferred=preferredManagerBySwitch.get(sw.id);
+       if(preferred&&!claimedManagers.has(preferred.id)){manager=preferred;claimedManagers.add(preferred.id);}
+     }
+     if(!manager){
+       const candidate=nearestFree(managers.filter(i=>!preferredManagerIds.has(i.id)),switchUnit,claimedManagers,i=>i.startUnit);
        if(candidate){manager=candidate;claimedManagers.add(candidate.id);}
      }
      if(!manager){
