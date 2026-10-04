@@ -247,7 +247,7 @@ test('Datacenter carga una Golden leaf-spine L3 y READY', async ({page})=>{
     const gate=window.NetWizardProductionGate.runProductionGate(p,{productionMode:true,strict:true});
     return{
       name:p.projName,
-      devices:p.devices.map(d=>({id:d.id,name:d.name,type:d.type,l3Capable:d.l3Capable})),
+      devices:p.devices.map(d=>({id:d.id,name:d.name,type:d.type,kind:d.kind,l3Capable:d.l3Capable})),
       links:p.links.map(l=>({id:l.id,speed:l.speed,medium:l.medium})),
       routing:p.routing&&p.routing.strategy,
       vlans:p.vlans.map(v=>({id:v.id,name:v.name})),
@@ -264,7 +264,7 @@ test('Datacenter carga una Golden leaf-spine L3 y READY', async ({page})=>{
 
   expect(result.name).toBe('Golden Path · Datacenter leaf-spine moderno');
   expect(result.devices).toHaveLength(4);
-  expect(result.devices.every(d=>d.type==='l3switch'&&d.l3Capable==='yes')).toBe(true);
+  expect(result.devices.every(d=>d.type==='switch'&&d.kind==='switch'&&d.l3Capable==='yes')).toBe(true);
   expect(result.links).toHaveLength(4);
   expect(result.links.every(l=>l.speed==='40G'&&l.medium==='fiber')).toBe(true);
   expect(result.routing).toBe('ospf');
