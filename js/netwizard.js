@@ -2154,9 +2154,10 @@ $('btnRoas').onclick=()=>{
 };
 function renderDhcp(){
   const box=$('dhcpView'); box.textContent='';
+  const locale=window.NetWizardI18n?.getLocale?.();
   if(!S.vlans.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent=i18nText('vlan.emptyPeriod',{},'Sin VLANs.'); box.appendChild(hint); return; }
   const dh=window.NetWizardDhcpUtils;
-  const audit=dh?dh.validateDhcpForProject(S):{issues:[]};
+  const audit=dh?dh.validateDhcpForProject(S,{locale}):{issues:[]};
   const top=document.createElement('div'); top.className='hrow'; top.style.marginBottom='8px'; top.style.gap='6px'; top.style.flexWrap='wrap';
   const btnDiff=document.createElement('button'); btnDiff.type='button'; btnDiff.className='btn small'; btnDiff.id='btnDhcpDiff'; btnDiff.textContent=i18nText('dhcp.actions.diff',{},'🧾 Ver diff DHCP');
   const btnPropose=document.createElement('button'); btnPropose.type='button'; btnPropose.className='btn small'; btnPropose.id='btnDhcpPropose'; btnPropose.textContent=i18nText('dhcp.actions.propose',{},'✨ Proponer pools DHCP');
@@ -2192,8 +2193,8 @@ function renderDhcp(){
   box.querySelectorAll('[data-dh-end]').forEach(i=>i.onblur=()=>{ensure(i.dataset.dhEnd);S.dhcp[i.dataset.dhEnd].end=(i.value||'').trim();save();});
   box.querySelectorAll('[data-dh-domain]').forEach(i=>i.onblur=()=>{ensure(i.dataset.dhDomain);S.dhcp[i.dataset.dhDomain].domain=(i.value||'').trim();save();});
   const bd=$('btnDhcpDiff');if(bd)bd.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const cp=window.NetWizardChangePreview;if(!cp)return alert(i18nText('dhcp.alert.diffUnavailable',{},'Módulo de diff no disponible.'));const diff=cp.computeDhcpDiff(S,{overwrite:false});alert(cp.summarizeDiff(diff,i18nText('dhcp.diffTitle',{},'Diff antes de proponer DHCP')));};
-  const bp=$('btnDhcpPropose');if(bp)bp.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const cp=window.NetWizardChangePreview;if(cp){const diff=cp.computeDhcpDiff(S,{overwrite:false});const txt=cp.summarizeDiff(diff,i18nText('dhcp.diffTitle',{},'Diff antes de proponer DHCP'));if(diff.add.length||diff.change.length||diff.remove.length){if(!confirm(txt+'\n\n'+i18nText('dhcp.confirmProposal',{},'¿Aplicar propuesta DHCP?')))return;}}const res=dh.proposeDhcpForProject(S,{overwrite:false});S=res.project;save();refresh();alert(res.changes.join('\n')||i18nText('dhcp.noChanges',{},'No había cambios DHCP que proponer.'));};
-  const bv=$('btnDhcpValidate');if(bv)bv.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const res=dh.validateDhcpForProject(S);alert(res.issues.length?res.issues.map(i=>`[${i.severity}] ${i.code}: ${i.message}`).join('\n'):i18nText('dhcp.validationOk',{},'✓ DHCP sin incidencias críticas.'));renderDhcp();};
+  const bp=$('btnDhcpPropose');if(bp)bp.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const cp=window.NetWizardChangePreview;if(cp){const diff=cp.computeDhcpDiff(S,{overwrite:false});const txt=cp.summarizeDiff(diff,i18nText('dhcp.diffTitle',{},'Diff antes de proponer DHCP'));if(diff.add.length||diff.change.length||diff.remove.length){if(!confirm(txt+'\n\n'+i18nText('dhcp.confirmProposal',{},'¿Aplicar propuesta DHCP?')))return;}}const res=dh.proposeDhcpForProject(S,{overwrite:false,locale});S=res.project;save();refresh();alert(res.changes.join('\n')||i18nText('dhcp.noChanges',{},'No había cambios DHCP que proponer.'));};
+  const bv=$('btnDhcpValidate');if(bv)bv.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const res=dh.validateDhcpForProject(S,{locale});alert(res.issues.length?res.issues.map(i=>`[${i.severity}] ${i.code}: ${i.message}`).join('\n'):i18nText('dhcp.validationOk',{},'✓ DHCP sin incidencias críticas.'));renderDhcp();};
 }
 function renderVendorPills(container, vendors, selected, dataKey, onSelect){
   container.textContent='';
