@@ -39,6 +39,7 @@ const NWPOL=window.NetWizardPolicyUtils||{};
 const NWDevice=window.NetWizardDeviceModel||null;
 const NWI18n=window.NetWizardI18n||null;
 const i18nText=(key,params,fallback)=>NWI18n&&typeof NWI18n.t==='function'?NWI18n.t(key,params||{}):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');
+const deviceKindText=value=>{const kind=NWDevice?NWDevice.normalizeKind(value):(value&&typeof value==='object'?(value.kind||value.type):value)||'appliance';const fallback=NWDevice?NWDevice.label(value):String(kind);return i18nText('device.kind.'+kind,{},fallback);};
 const devKind=d=>NWDevice?NWDevice.normalizeKind(d):(d?.kind||d?.type||'appliance');
 const isSwitchDevice=d=>NWDevice?NWDevice.isSwitching(d):devKind(d)==='switch';
 const isEdgeDevice=d=>NWDevice?NWDevice.isEdgeCapable(d):['router','firewall'].includes(devKind(d));
@@ -1018,7 +1019,7 @@ function initDeviceVendorSelect(){
 function initDeviceKindSelect(){
   const select=$('devType');if(!select)return;
   const current=select.value||'switch';
-  const options=NWDevice?NWDevice.kindOptions():[{value:'switch',label:'🔀 Switch'},{value:'router',label:'🌐 Router'},{value:'firewall',label:'🛡 Firewall'}];
+  const options=NWDevice?NWDevice.kindOptions().map(item=>({value:item.value,label:`${devIcon({kind:item.value})} ${deviceKindText(item.value)}`})):[{value:'switch',label:'🔀 '+deviceKindText('switch')},{value:'router',label:'🌐 '+deviceKindText('router')},{value:'firewall',label:'🛡 '+deviceKindText('firewall')}];
   setOptions(select,options.map(item=>makeOption(item.value,item.label)));
   select.value=options.some(item=>item.value===current)?current:'switch';
 }
@@ -1083,7 +1084,7 @@ function renderDevs(){
     const tdType=document.createElement('td'); const typeBadge=document.createElement('span');
     const type=devKind(d);
     typeBadge.className='dtype dtype-'+(type==='switch'?'sw':type==='router'?'rt':type==='firewall'?'fw':'xx');
-    typeBadge.textContent=`${devIcon(d)} ${devLabel(d)}`;
+    typeBadge.textContent=`${devIcon(d)} ${deviceKindText(d)}`;
     tdType.appendChild(typeBadge); tr.appendChild(tdType);
 
     const tdVendor=document.createElement('td'); tdVendor.appendChild(makeBadge(d.vendorOs||'-','b bac')); tr.appendChild(tdVendor);
@@ -1171,7 +1172,7 @@ function updatePortRoleOpts(){
   }
   updatePortL2Wrap();
   if(d){$('pName').placeholder=d.vendorOs==='juniper_junos'?'ge-0/0/0':d.vendorOs==='aruba_aoss'?'1/1/1':isSwitchDevice(d)?'GigabitEthernet0/1':'GigabitEthernet0/0';}
-  $('pHint').textContent=!d?'':i18nText('ports.hint.device',{device:d.name,type:devLabel(d),vendor:d.vendorOs||i18nText('ports.hint.unassigned',{},'sin asignar')},'Dispositivo: {device} ({type}) — vendor: {vendor}');
+  $('pHint').textContent=!d?'':i18nText('ports.hint.device',{device:d.name,type:deviceKindText(d),vendor:d.vendorOs||i18nText('ports.hint.unassigned',{},'sin asignar')},'Dispositivo: {device} ({type}) — vendor: {vendor}');
 }
 
 $('pDev').onchange=()=>{updatePortRoleOpts();};
