@@ -75,7 +75,13 @@ function validateRackResize(project,rackId,rackUnits){
 }
 
 function cloneProject(project){return JSON.parse(JSON.stringify(project||{}));}
-function safeIdPart(value){return clean(value).toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80)||'item';}
+function safeIdPart(value){return clean(value).toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,64)||'item';}
+function stableIdHash(value){
+ let h=2166136261;const s=clean(value);
+ for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+ return (h>>>0).toString(36);
+}
+function generatedIdPart(value){return safeIdPart(value)+'-'+stableIdHash(value);}
 function rackLayoutPolicy(project,options){
  const raw=Object.assign({},project&&project.designRequirements&&project.designRequirements.rackPolicy||{},options||{});
  const ports=Math.max(1,Math.min(192,Math.floor(num(raw.patchPanelPorts)||24)));
@@ -151,18 +157,18 @@ function planRackAutoLayout(project,rackId,options){
    let selected=exclusive.slice();
    selected.forEach(p=>claimedPanels.add(p.id));
    const accessPorts=patchablePortCount(project,sw.id);
-   const minimumPanels=Math.max(1,Math.ceil(Math.max(1,accessPorts)/policy.patchPanelPorts));
+   const requiredPorts=Math.max(1,accessPorts);
    let capacity=selected.reduce((sum,p)=>sum+(num(p.portCount)||policy.patchPanelPorts),0);
    if(shared.length&&!selected.length){
      warnings.push((sw.name||sw.id)+': usa '+shared.length+' patch panel(es) compartido(s); se mantienen en su posición actual.');
    }else{
      const unowned=panels.filter(p=>(!owners.get(p.id)||owners.get(p.id).size===0)&&!claimedPanels.has(p.id));
-     while(selected.length<minimumPanels||capacity<Math.max(1,accessPorts)){
+     while(capacity<requiredPorts){
        const candidate=nearestFree(unowned,switchUnit,claimedPanels,p=>p.rackUnit);
        if(candidate){
          selected.push(candidate);claimedPanels.add(candidate.id);capacity+=num(candidate.portCount)||policy.patchPanelPorts;continue;
        }
-       const index=selected.length+1,id='rackauto-pp-'+safeIdPart(rackId)+'-'+safeIdPart(sw.id)+'-'+index;
+       const index=selected.length+1,id='rackauto-pp-'+generatedIdPart(rackId)+'-'+generatedIdPart(sw.id)+'-'+index;
        const existing=panels.find(p=>p.id===id);
        if(existing&&!claimedPanels.has(existing.id)){
          selected.push(existing);claimedPanels.add(existing.id);capacity+=num(existing.portCount)||policy.patchPanelPorts;continue;
@@ -175,16 +181,16 @@ function planRackAutoLayout(project,rackId,options){
    const panelRefs=selected.map(panel=>{
      let item=panelItemByPanel.get(panel.id)||null;
      if(!item){
-       const id='rackauto-item-'+safeIdPart(panel.id);
+       const id='rackauto-item-'+generatedIdPart(panel.id);
        item=items.find(x=>x.id===id)||createdItems.find(x=>x.id===id)||{id,rackId,type:'patch-panel',patchPanelId:panel.id,label:panel.name||panel.id,startUnit:null,heightUnits:1,face:'front'};
        if(!items.some(x=>x.id===id)&&!createdItems.some(x=>x.id===id))createdItems.push(item);
      }
-     return{panelId:panel.id,itemId:item.id,label:panel.name||panel.id,heightUnits:1};
+     return{panelId:panel.id,itemId:item.id,label:panel.name||panel.id,heightUnits:num(item.heightUnits)||1};
    });
 
    let manager=null;
    if(policy.layoutPattern==='patch-manager-switch'&&policy.organizerPerSwitch){
-     const deterministicId='rackauto-manager-'+safeIdPart(rackId)+'-'+safeIdPart(sw.id);
+     const deterministicId='rackauto-manager-'+generatedIdPart(rackId)+'-'+generatedIdPart(sw.id);
      manager=items.find(i=>i.id===deterministicId)||null;
      if(!manager){
        const preferred=preferredManagerBySwitch.get(sw.id);
@@ -235,7 +241,8 @@ function planRackAutoLayout(project,rackId,options){
 
  let cursor=1,maxUnit=0;
  for(const cluster of clusters){
-   const blockHeight=cluster.panels.length+(cluster.manager?1:0)+cluster.switchHeight;
+   const panelHeight=cluster.panels.reduce((sum,p)=>sum+Math.max(1,Math.ceil(num(p.heightUnits)||1)),0);
+   const blockHeight=panelHeight+(cluster.manager?1:0)+cluster.switchHeight;
    let start=cursor,found=false;
    while(start+blockHeight-1<=Number(rack.rackUnits||42)){
      let blocked=false;
@@ -251,7 +258,7 @@ function planRackAutoLayout(project,rackId,options){
      };
    }
    let unit=start;
-   for(const panel of cluster.panels){panel.startUnit=unit;unit++;}
+   for(const panel of cluster.panels){panel.startUnit=unit;unit+=Math.max(1,Math.ceil(num(panel.heightUnits)||1));}
    if(cluster.manager){cluster.manager.startUnit=unit;unit++;}
    cluster.switchStartUnit=unit;
    cluster.blockStartUnit=start;cluster.blockEndUnit=start+blockHeight-1;
@@ -293,7 +300,7 @@ function applyRackAutoLayout(project,rackId,options){
        item={id:panelRef.itemId,rackId,type:'patch-panel',patchPanelId:panelRef.panelId,label:panel&&panel.name||panelRef.label,startUnit:panelRef.startUnit,heightUnits:1,face:'front'};
        next.rackItems.push(item);
      }
-     item.rackId=rackId;item.type='patch-panel';item.patchPanelId=panelRef.panelId;item.startUnit=panelRef.startUnit;item.heightUnits=1;item.face='front';
+     item.rackId=rackId;item.type='patch-panel';item.patchPanelId=panelRef.panelId;item.startUnit=panelRef.startUnit;item.heightUnits=num(panelRef.heightUnits)||1;item.face='front';
    }
    if(cluster.manager){
      let item=next.rackItems.find(x=>x.id===cluster.manager.itemId);
