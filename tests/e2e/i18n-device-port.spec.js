@@ -11,14 +11,17 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
 
   await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
-    p.devices=[{
-      id:'ap-i18n',name:'AP-I18N',kind:'access_point',type:'access_point',
-      vendorOs:'ubiquiti_unifi',model:'UniFi U6 Pro',wifiRole:'ap',hasWifi:true
-    }];
-    p.ports=[{
-      id:'port-i18n',deviceId:'ap-i18n',name:'eth0',media:'GE',mode:'access',
-      accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'uplink'
-    }];
+    p.devices=[
+      {id:'ap-i18n',name:'AP-I18N',kind:'access_point',type:'access_point',
+       vendorOs:'ubiquiti_unifi',model:'UniFi U6 Pro',wifiRole:'ap',hasWifi:true},
+      {id:'sw-z-i18n',name:'ZZ-SW-I18N',kind:'switch',type:'switch',vendorOs:'cisco_ios'}
+    ];
+    p.ports=[
+      {id:'port-i18n',deviceId:'ap-i18n',name:'eth0',media:'GE',mode:'access',
+       accessVlanRef:null,nativeVlanRef:null,allowedVlans:[],desc:'uplink'},
+      {id:'trunk-i18n',deviceId:'sw-z-i18n',name:'Gi1/0/48',media:'GE',mode:'trunk',
+       accessVlanRef:null,nativeVlanRef:null,allowedVlans:[10,20],desc:'uplink trunk'}
+    ];
     p.vlans=[];p.links=[];p.hosts=[];
     window.NetWizardState.replaceProject(p,{source:'i18n-device-port-e2e'});
   });
@@ -42,7 +45,7 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
   const model=page.locator('#devModel');
   await model.fill('UniFi U6 Pro');
   await model.dispatchEvent('input');
-  await expect(page.locator('#devModelHint')).toContainText('Suggested type');
+  await expect(page.locator('#devModelHint')).toContainText('Suggested type: Access Point');
   await expect(page.locator('#devModelHint')).toContainText('Wi‑Fi 6 AP. The uplink is typically a trunk');
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
@@ -52,6 +55,7 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
   await expect(custom).toContainText('Modelo personalizado del proyecto');
   await expect(custom).toContainText('Fabricante');
   await expect(custom).toContainText('Guardar modelo');
+  await expect(page.locator('#devModelHint')).toContainText('Tipo sugerido: Punto de acceso');
   await expect(page.locator('#devModelHint')).toContainText('AP Wi‑Fi 6. Uplink normalmente trunk');
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
@@ -65,10 +69,14 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
   await expect(page.locator('#nwBulkPortEditor')).toContainText('Name root');
   await expect(page.locator('#portsPageInfo')).toContainText('1 ports · page 1/1');
 
-  await page.locator('[data-ep="port-i18n"]').click();
+  await page.locator('[data-ep="trunk-i18n"]').click();
   await expect(page.locator('#btnAddPort')).toContainText('Save changes');
+  await expect(page.locator('#pDev')).toHaveValue('sw-z-i18n');
+  await expect(page.locator('#pRole')).toHaveValue('trunk');
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
+  await expect(page.locator('#pDev')).toHaveValue('sw-z-i18n');
+  await expect(page.locator('#pRole')).toHaveValue('trunk');
   await expect(portPage).toContainText('Puertos & Interfaces');
   await expect(portPage).toContainText('Añadir puerto / interfaz');
   await expect(page.locator('#nwBulkPortEditor')).toContainText('Creación y edición masiva de puertos');
