@@ -43,7 +43,8 @@ assert.strictEqual(plan.summary.switches,2);
 assert.strictEqual(plan.summary.panels,2);
 assert.strictEqual(plan.summary.managers,2);
 assert.strictEqual(plan.summary.createPanels,1,'SW2 debe necesitar un panel nuevo');
-assert.strictEqual(plan.createdPanels[0].id,'rackauto-pp-rack1-sw2-1');
+assert.ok(plan.createdPanels[0].id.startsWith('rackauto-pp-rack1-'),'El panel generado debe usar un id determinista y seguro');
+const generatedSw2PanelId=plan.createdPanels[0].id;
 
 const sw2Plan=plan.clusters.find(x=>x.switchId==='sw2');
 const sw1Plan=plan.clusters.find(x=>x.switchId==='sw1');
@@ -65,8 +66,8 @@ assert.strictEqual(project.devices.find(x=>x.id==='sw2').rackUnit,4);
 assert.strictEqual(project.devices.find(x=>x.id==='sw1').rackUnit,7);
 assert.strictEqual(project.patchPanels.find(x=>x.id==='pp-existing').rackUnit,5);
 assert.strictEqual(project.rackItems.find(x=>x.id==='cm-existing').startUnit,6);
-assert.ok(project.patchPanels.some(x=>x.id==='rackauto-pp-rack1-sw2-1'));
-assert.ok(project.rackItems.some(x=>x.id==='rackauto-manager-rack1-sw2'));
+assert.ok(project.patchPanels.some(x=>x.id===generatedSw2PanelId));
+assert.ok(project.rackItems.some(x=>x.id===sw2Plan.manager.itemId));
 assert.deepStrictEqual(project.patchConnections,[{id:'pc-sw1',patchPanelId:'pp-existing',patchPort:1,switchPortId:'sw1-p1',patchCordLengthM:1}],'El autolayout no debe reescribir cableado estructurado');
 assert.strictEqual(Rack.validate(project).issues.filter(x=>x.code==='NW-RACK-001'||x.code==='NW-RACK-002').length,0);
 
@@ -116,5 +117,54 @@ assert.strictEqual(sharedPlan.ok,true,sharedPlan.message);
 assert.ok(sharedPlan.warnings.some(x=>/compartido/.test(x)));
 assert.ok(sharedPlan.clusters.find(x=>x.switchId==='sw1').sharedPanelIds.includes('pp-existing'));
 assert.ok(sharedPlan.clusters.find(x=>x.switchId==='sw3').sharedPanelIds.includes('pp-existing'));
+
+
+const collisionIds={
+  designRequirements:{rackPolicy:{patchPanelPorts:24,organizerPerSwitch:false,layoutPattern:'patch-switch'}},
+  racks:[{id:'rack:1',name:'Rack IDs',rackUnits:12}],
+  devices:[
+    {id:'sw:a',name:'SW A',kind:'switch',type:'switch',rackId:'rack:1',rack:'rack:1',rackUnit:8,rackUnits:1},
+    {id:'sw.a',name:'SW B',kind:'switch',type:'switch',rackId:'rack:1',rack:'rack:1',rackUnit:10,rackUnits:1}
+  ],
+  ports:[
+    {id:'pa',deviceId:'sw:a',name:'Gi1',mode:'access',media:'GE'},
+    {id:'pb',deviceId:'sw.a',name:'Gi1',mode:'access',media:'GE'}
+  ],
+  patchPanels:[],patchConnections:[],rackItems:[],pdus:[],powerConnections:[],links:[],hosts:[]
+};
+const collisionPlan=Rack.planRackAutoLayout(collisionIds,'rack:1');
+assert.strictEqual(collisionPlan.ok,true,collisionPlan.message);
+assert.strictEqual(collisionPlan.createdPanels.length,2);
+assert.strictEqual(new Set(collisionPlan.createdPanels.map(x=>x.id)).size,2,'IDs distintos aunque los IDs fuente normalicen igual');
+const collisionApplied=Rack.applyRackAutoLayout(collisionIds,'rack:1');
+assert.strictEqual(collisionApplied.ok,true,collisionApplied.message);
+assert.strictEqual(new Set(collisionApplied.project.patchPanels.map(x=>x.id)).size,collisionApplied.project.patchPanels.length);
+
+const capacity=fixture();
+capacity.devices=capacity.devices.filter(x=>x.id==='sw1');
+capacity.ports=Array.from({length:48},(_,i)=>({id:'sw1-'+(i+1),deviceId:'sw1',name:'Gi1/0/'+(i+1),mode:'access',media:'GE'}));
+capacity.patchPanels=[{id:'pp48',rackId:'rack1',name:'PP-48',portCount:48,category:'Cat6A',rackUnit:14}];
+capacity.patchConnections=[{id:'pc48',patchPanelId:'pp48',patchPort:1,switchPortId:'sw1-1'}];
+capacity.rackItems=[{id:'pp48-item',rackId:'rack1',type:'patch-panel',patchPanelId:'pp48',label:'PP-48',startUnit:14,heightUnits:1,face:'front'}];
+const capacityPlan=Rack.planRackAutoLayout(capacity,'rack1');
+assert.strictEqual(capacityPlan.ok,true,capacityPlan.message);
+assert.strictEqual(capacityPlan.summary.createPanels,0,'Un panel 48p debe cubrir 48 puertos aunque la política por defecto sea 24p');
+assert.strictEqual(capacityPlan.clusters[0].panels.length,1);
+
+const tallPanel=fixture();
+tallPanel.devices=tallPanel.devices.filter(x=>x.id==='sw1');
+tallPanel.ports=tallPanel.ports.filter(x=>x.deviceId==='sw1');
+tallPanel.patchPanels=[{id:'pp2u',rackId:'rack1',name:'PP 2U',portCount:24,category:'Cat6A',rackUnit:14}];
+tallPanel.patchConnections=[{id:'pc2u',patchPanelId:'pp2u',patchPort:1,switchPortId:'sw1-p1'}];
+tallPanel.rackItems=[{id:'pp2u-item',rackId:'rack1',type:'patch-panel',patchPanelId:'pp2u',label:'PP 2U',startUnit:14,heightUnits:2,face:'front'}];
+const tallPlan=Rack.planRackAutoLayout(tallPanel,'rack1');
+assert.strictEqual(tallPlan.ok,true,tallPlan.message);
+assert.strictEqual(tallPlan.clusters[0].panels[0].heightUnits,2);
+assert.strictEqual(tallPlan.clusters[0].panels[0].startUnit,1);
+assert.strictEqual(tallPlan.clusters[0].manager.startUnit,3,'El organizador debe quedar después de las 2U reales del panel');
+assert.strictEqual(tallPlan.clusters[0].switchStartUnit,4);
+const tallApplied=Rack.applyRackAutoLayout(tallPanel,'rack1');
+assert.strictEqual(tallApplied.ok,true,tallApplied.message);
+assert.strictEqual(tallApplied.project.rackItems.find(x=>x.id==='pp2u-item').heightUnits,2,'El apply no debe degradar un panel 2U a 1U');
 
 console.log('✓ Rack auto-layout compacta, reutiliza paneles/organizadores y es idempotente');
