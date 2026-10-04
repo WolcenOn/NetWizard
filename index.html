@@ -169,7 +169,7 @@
 <!-- ═══════════ DISPOSITIVOS ═══════════ -->
 <div class="pg" id="pg-loc">
   <div class="ph"><h1>📍 Paso 0 · Ubicaciones</h1></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-h"><div class="card-t">📍 Ubicaciones físicas</div><span class="b bac" id="physLocCnt">0</span></div>
@@ -214,7 +214,7 @@
 
 <div class="pg" id="pg-dev">
   <div class="ph"><h1>🖥 Dispositivos</h1><p>Switches, routers, firewalls y endpoints de red.</p></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">➕ Añadir dispositivo</div>
@@ -369,7 +369,7 @@
 <!-- ═══════════ VLANs & SUBNETS ═══════════ -->
 <div class="pg" id="pg-vlan">
   <div class="ph"><h1>🏷 VLANs & Subnets</h1></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">➕ Nueva VLAN</div>
@@ -417,7 +417,7 @@
   </div>
 
   <div class="ph" style="margin-top:18px;"><h2>🧩 Servicios VLAN y gateway</h2><p>Estas opciones forman parte del diseño deseado y alimentan la generación posterior. Configúralas antes de validar y desplegar.</p></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🌐 Router-on-a-Stick (RoaS)</div>
@@ -464,7 +464,7 @@
 <!-- ═══════════ HOSTS ═══════════ -->
 <div class="pg" id="pg-hosts">
   <div class="ph"><h1>💻 Hosts & Mapa IP</h1></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">➕ Nuevo host</div>
@@ -548,7 +548,7 @@
 <div class="pg" id="pg-iot">
   <div class="ph"><h1>🛰 IoT & Gateways</h1><p>Dispositivos IoT, APs, gateways LoRaWAN, coordinadores Zigbee, Thread Border Routers y brokers MQTT integrados en el mapa común de NetWizard.</p></div>
   <div class="stats" id="iotStats"></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-h"><div class="card-t">📶 Infraestructura de acceso IoT</div><button class="btn bp bsm" id="iotAddAccess">➕ Añadir acceso</button></div>
@@ -588,7 +588,7 @@
 <!-- ═══════════ ENLACES ═══════════ -->
 <div class="pg" id="pg-links">
   <div class="ph"><h1>🔗 Enlaces</h1><p>Conecta puertos existentes y documenta el medio físico entre equipos. La creación y edición de puertos se realiza en Puertos & Interfaces.</p></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
 
       <div class="card">
@@ -647,7 +647,7 @@
     <div class="tab" data-tab="fw-harden">🔐 Hardening</div>
   </div>
   <div class="tc on" id="fw-rules">
-    <div class="g2">
+    <div class="g2 nw-workspace-stack">
       <div>
         <div class="card">
           <div class="card-t" style="margin-bottom:11px;">➕ Nueva regla</div>
@@ -697,7 +697,7 @@
     <div class="card"><div class="card-h"><div class="card-t">ACLs generadas</div></div><textarea class="cfg" id="matrixAcl" readonly style="min-height:100px;"></textarea></div>
   </div>
   <div class="tc" id="fw-harden">
-    <div class="g2">
+    <div class="g2 nw-workspace-stack">
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🔐 Parámetros de hardening</div>
         <div class="row"><div><label class="fl">BPDU Guard + PortFast</label><select id="secBpdu"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div><div><label class="fl">Port-Security (máx 2 MACs)</label><select id="secPs"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div></div>
@@ -820,7 +820,7 @@
 <!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->
 <div class="pg" id="pg-cfg">
   <div class="ph"><h1>🚀 Despliegue & Exportación</h1><p>Genera artefactos desde el Private Engine, revisa su readiness y exporta únicamente resultados vigentes.</p></div>
-  <div class="g2">
+  <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-h">
