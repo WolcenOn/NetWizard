@@ -588,5 +588,15 @@
   "ports.bulk.preview": "👁 Previsualizar",
   "ports.bulk.apply": "💾 Aplicar cambios",
   "ports.bulk.alert.previewFirst": "Genera primero la previsualización.",
-  "ports.bulk.feedback.applied": "✓ Puertos aplicados correctamente."
+  "ports.bulk.feedback.applied": "✓ Puertos aplicados correctamente.",
+  "device.catalog.isr1121_8p.note": "Router ISR de sucursal con variante de 8 puertos LAN.",
+  "device.catalog.isr1121_4p.note": "Router ISR de sucursal con variante de 4 puertos LAN.",
+  "device.catalog.886vaw.note": "Router ISR 880 con WLAN integrada según variante.",
+  "device.catalog.ir1800.note": "Router industrial con opciones 5G/LTE/Wi‑Fi según módulo.",
+  "device.catalog.u6pro.note": "AP Wi‑Fi 6. Uplink normalmente trunk hacia VLANs de SSID y gestión.",
+  "device.catalog.u7pro.note": "AP Wi‑Fi 7. Uplink trunk recomendado para múltiples SSID/VLAN.",
+  "device.catalog.huaweiAp.note": "AP Huawei gestionado por controlador/AC o cloud según modelo.",
+  "device.catalog.galgusAp.note": "AP Galgus gestionado por plataforma/cloud.",
+  "device.catalog.omadaAp.note": "AP Omada con SSID/VLAN desde controlador.",
+  "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet."
 }
