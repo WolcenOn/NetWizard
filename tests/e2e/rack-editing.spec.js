@@ -77,8 +77,9 @@ test('Inventario físico permite editar y redimensionar un rack sin perder refer
   await formAfter.locator('input').nth(1).fill('9');
   await page.click('[data-action="update-selected-rack"]');
 
-  await expect(page.locator('.rack-selected-editor')).toContainText('No se puede reducir a 9U');
-  await expect(page.locator('.rack-selected-editor')).toContainText('PP-TEST');
+  const rackEditor=page.locator('[data-form="selected-rack"]').locator('xpath=..');
+  await expect(rackEditor).toContainText('No se puede reducir a 9U');
+  await expect(rackEditor).toContainText('PP-TEST');
 
   state=await page.evaluate(()=>{
     const p=window.NetWizardState.getSnapshot();
