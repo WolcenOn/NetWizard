@@ -5,6 +5,7 @@ const MODEL=root.NetWizardRackModel||(typeof require==='function'?require('./net
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
+const optionalNum=v=>clean(v)===''?null:num(v);
 const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 let selectedRackItemId='';
@@ -17,18 +18,19 @@ function addRack(project,input){const next=ensureArrays(clone(project));const ra
 function updateRack(project,rackId,input){
   const next=ensureArrays(clone(project)),rack=next.racks.find(x=>x.id===rackId);
   if(!rack)return{ok:false,project:next,message:'Rack inexistente.'};
-  const requestedUnits=Math.max(1,Math.floor(num(input.rackUnits)||Number(rack.rackUnits||42)));
-  const resize=MODEL.validateRackResize?MODEL.validateRackResize(project,rackId,requestedUnits):{ok:true};
+  const rawUnits=clean(input.rackUnits)===''?Number(rack.rackUnits||42):num(input.rackUnits);
+  const requestedUnits=Math.floor(rawUnits==null?0:rawUnits);
+  const resize=MODEL.validateRackResize?MODEL.validateRackResize(project,rackId,requestedUnits):{ok:requestedUnits>=1,message:'La altura del rack debe ser al menos 1U.'};
   if(!resize.ok)return{ok:false,project:clone(project),message:resize.message,resize};
   Object.assign(rack,{
     name:clean(input.name)||rack.name||'Rack sin nombre',
     locationId:clean(input.locationId)||null,
     rackUnits:requestedUnits,
-    widthMm:num(input.widthMm),
-    depthMm:num(input.depthMm),
-    maxLoadKg:num(input.maxLoadKg),
-    powerCapacityWatts:num(input.powerCapacityWatts),
-    coolingCapacityWatts:num(input.coolingCapacityWatts),
+    widthMm:optionalNum(input.widthMm),
+    depthMm:optionalNum(input.depthMm),
+    maxLoadKg:optionalNum(input.maxLoadKg),
+    powerCapacityWatts:optionalNum(input.powerCapacityWatts),
+    coolingCapacityWatts:optionalNum(input.coolingCapacityWatts),
     numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'
   });
   return{ok:true,project:next,rack:Object.assign({},rack),resize};
