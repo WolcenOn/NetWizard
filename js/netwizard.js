@@ -1321,7 +1321,7 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
   }
   if(S.step==='vlan'){
     vlanSelectSignature='';
-    fillVlanSels();renderVlans();renderSubnets();updManualSnHint();fillRoasSels();
+    fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
     if($('dhcpPanel')?.open)renderDhcp();
   }
 });
@@ -1347,6 +1347,7 @@ function fillVlanSels(){
   const hFiltV=$('hFiltV');if(hFiltV){setOptions(hFiltV,[makeOption('',i18nText('common.all',{},'Todas')), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hFiltV')&&Array.from(hFiltV.options).some(o=>o.value===selected.get('hFiltV')))hFiltV.value=selected.get('hFiltV');}
 }
 
+function syncSubnetAuthorityLabel(){if($('aSnAuthority'))$('aSnAuthority').value=i18nText('subnet.quick.authorityValue',{},'S.subnets · solo faltantes');}
 function updManualSnHint(){
   const ref=$('mSnVlan')?.value||'';
   const hint=$('mSnHint');
@@ -3062,6 +3063,7 @@ function renderActiveStep(){
       renderVlans();
       renderSubnets();
       fillVlanSels();
+      syncSubnetAuthorityLabel();
       updManualSnHint();
       fillRoasSels();
       if($('dhcpPanel')?.open)renderDhcp();
