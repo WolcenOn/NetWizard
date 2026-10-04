@@ -699,7 +699,21 @@
     "dhcp.diffTitle": "Diff antes de proponer DHCP",
     "dhcp.confirmProposal": "¿Aplicar propuesta DHCP?",
     "dhcp.noChanges": "No había cambios DHCP que proponer.",
-    "dhcp.validationOk": "✓ DHCP sin incidencias críticas."
+    "dhcp.validationOk": "✓ DHCP sin incidencias críticas.",
+    "dhcp.change.updated": "VLAN {vlan}: DHCP actualizado{range}.",
+    "dhcp.change.enable": "Activar DHCP en VLAN {vlan}{range}.",
+    "dhcp.change.disabledIntent": "VLAN {vlan}: DHCP desactivado por intención {type}.",
+    "dhcp.change.poolCompleted": "VLAN {vlan}: pool DHCP completado ({start} - {end}).",
+    "dhcp.validation.missingVlan": "Scope DHCP para VLAN {vlan} sin VLAN existente.",
+    "dhcp.validation.noSubnet": "VLAN {vlan}: DHCP activo sin subnet válida.",
+    "dhcp.validation.invalidRange": "VLAN {vlan}: rango DHCP inválido o incompleto.",
+    "dhcp.validation.startAfterEnd": "VLAN {vlan}: inicio del pool DHCP posterior al final.",
+    "dhcp.validation.poolOutsideSubnet": "VLAN {vlan}: pool DHCP fuera de la subnet {cidr}.",
+    "dhcp.validation.includesGateway": "VLAN {vlan}: el pool DHCP incluye el gateway {gateway}.",
+    "dhcp.validation.includesStatic": "VLAN {vlan}: el pool DHCP incluye IP estática {ip} ({host}).",
+    "dhcp.validation.invalidExclusion": "VLAN {vlan}: exclusión DHCP inválida {range}.",
+    "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusión fuera de subnet {range}.",
+    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: reserva DHCP fuera de subnet ({ip})."
   },
   "en": {
     "app.title": "NetWizard Pro",
@@ -1372,7 +1386,21 @@
     "dhcp.diffTitle": "Diff before proposing DHCP",
     "dhcp.confirmProposal": "Apply DHCP proposal?",
     "dhcp.noChanges": "There were no DHCP changes to propose.",
-    "dhcp.validationOk": "✓ DHCP has no critical issues."
+    "dhcp.validationOk": "✓ DHCP has no critical issues.",
+    "dhcp.change.updated": "VLAN {vlan}: DHCP updated{range}.",
+    "dhcp.change.enable": "Enable DHCP on VLAN {vlan}{range}.",
+    "dhcp.change.disabledIntent": "VLAN {vlan}: DHCP disabled by {type} intent.",
+    "dhcp.change.poolCompleted": "VLAN {vlan}: DHCP pool completed ({start} - {end}).",
+    "dhcp.validation.missingVlan": "DHCP scope for VLAN {vlan} has no matching VLAN.",
+    "dhcp.validation.noSubnet": "VLAN {vlan}: DHCP enabled without a valid subnet.",
+    "dhcp.validation.invalidRange": "VLAN {vlan}: invalid or incomplete DHCP range.",
+    "dhcp.validation.startAfterEnd": "VLAN {vlan}: DHCP pool start is after the end.",
+    "dhcp.validation.poolOutsideSubnet": "VLAN {vlan}: DHCP pool is outside subnet {cidr}.",
+    "dhcp.validation.includesGateway": "VLAN {vlan}: DHCP pool includes gateway {gateway}.",
+    "dhcp.validation.includesStatic": "VLAN {vlan}: DHCP pool includes static IP {ip} ({host}).",
+    "dhcp.validation.invalidExclusion": "VLAN {vlan}: invalid DHCP exclusion {range}.",
+    "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusion is outside the subnet {range}.",
+    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: DHCP reservation is outside the subnet ({ip})."
   }
 };
   const SUPPORTED=localeMeta.map(x=>String(x.code||'').trim()).filter(Boolean);
