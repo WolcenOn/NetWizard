@@ -7,11 +7,17 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const outFile = path.join(root, 'docs', 'I18N_HARDCODED_AUDIT.txt');
 const checkMode = process.argv.includes('--check');
-const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js']);
+const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js']);
+const strictRegionMarkers = {
+  'js/netwizard.js': [
+    ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
+    ["$('lyDev').onchange=", "$('visDev').onchange=renderVisPorts;"]
+  ]
+};
 const skipFiles = new Set(['js/netwizard-i18n.js']);
 const includeExt = new Set(['.js','.html']);
 const skipDirs = new Set(['node_modules','.git','dist','tests','original']);
-const candidate = /(['"`])([^'"`\n]*(?:[áéíóúÁÉÍÓÚñÑ¿¡]|\b(?:Añadir|Guardar|Eliminar|Cancelar|Descargar|Proyecto|Dispositivo|Puerto|VLAN|Subred|Enlace|Firewall|Configuración|Producción|Auditoría|Validar|Aplicar|Exportar|Rack|Ubicación|Equipo|Inventario|Alimentación|Organización|Ocupación|Incidencias|Elemento|Conexión|Propiedades)\b)[^'"`\n]*)\1/g;
+const candidate = /(['"`])([^'"`\n]*(?:[áéíóúÁÉÍÓÚñÑ¿¡]|\b(?:Añadir|Guardar|Eliminar|Cancelar|Descargar|Proyecto|Dispositivo|Puerto|Puertos|VLAN|Subred|Enlace|Firewall|Configuración|Producción|Auditoría|Validar|Aplicar|Exportar|Rack|Ubicación|Equipo|Inventario|Alimentación|Organización|Ocupación|Incidencias|Elemento|Conexión|Propiedades|Modelo|Fabricante|Descripción|Medio|Modo|Cantidad|Inicio|Acciones|Notas|Revisión|Consumo|Voltaje|Peso|Servidor|Selecciona|Genera|Previsualiza|Borrar|Promover)\b)[^'"`\n]*)\1/g;
 const allowed = [/data-i18n/, /console\./, /VERSION/i, /schemaVersion/, /docs\//, /CHANGELOG/];
 
 function walk(dir, files=[]){
@@ -27,7 +33,7 @@ function maskTranslationCalls(text,rel){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');
+    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');if(rel==='js/netwizard.js')tokens.push('i18nText(');if(rel==='js/netwizard-custom-device-model-ui.js')tokens.push('i18nNode(');if(rel==='js/netwizard-bulk-port-editor.js')tokens.push('trText(','i18nEl(');
     const starts=tokens.map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
     if(!starts.length)break;
     const start=Math.min(...starts);
@@ -51,19 +57,31 @@ function maskTranslationCalls(text,rel){
   }
   return chars.join('');
 }
+function strictRanges(rel,text){
+  const defs=strictRegionMarkers[rel]||[],ranges=[];
+  for(const [startMarker,endMarker] of defs){
+    const start=text.indexOf(startMarker);if(start<0)continue;
+    const end=text.indexOf(endMarker,start+startMarker.length);
+    if(end<0)continue;
+    ranges.push([start,end+endMarker.length]);
+  }
+  return ranges;
+}
+function offsetInRanges(offset,ranges){return ranges.some(([a,b])=>offset>=a&&offset<b);}
 const findings = [];
 for(const file of walk(root)){
   const rel = path.relative(root, file).replace(/\\/g,'/');
   if(skipFiles.has(rel)) continue;
   const raw = fs.readFileSync(file, 'utf8');
-  const text = strictFiles.has(rel) ? maskTranslationCalls(raw,rel) : raw;
+  const ranges=strictRanges(rel,raw);
+  const text = (strictFiles.has(rel)||ranges.length) ? maskTranslationCalls(raw,rel) : raw;
   let m;
   while((m = candidate.exec(text))){
     const line = text.slice(0,m.index).split(/\r?\n/).length;
     const snippet = m[2].trim();
     const context = text.slice(Math.max(0,m.index-80), Math.min(text.length,m.index+160));
     if(snippet.length < 3 || allowed.some(re => re.test(context))) continue;
-    findings.push({rel,line,snippet,strict:strictFiles.has(rel)});
+    findings.push({rel,line,snippet,strict:strictFiles.has(rel)||offsetInRanges(m.index,ranges)});
   }
 }
 const strictFindings=findings.filter(x=>x.strict);
