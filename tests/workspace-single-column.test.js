@@ -22,7 +22,8 @@ function count(haystack,needle){
 
 const expected={
   'pg-loc':1,
-  'pg-dev':2,
+  'pg-dev':1,
+  'pg-ports':1,
   'pg-vlan':2,
   'pg-hosts':1,
   'pg-iot':1,
@@ -45,7 +46,7 @@ assert.match(css,/\.g2\.nw-workspace-stack\{grid-template-columns:minmax\(0,1fr\
 assert.match(css,/\.g2\.nw-workspace-stack>\*\{grid-column:1\/-1;min-width:0;\}/);
 assert.ok(!adaptive.includes('.g2.nw-workspace-stack'),'La regla de workspace debe vivir en el CSS base y no depender de módulos físicos');
 
-assert.ok(pageSection('pg-dev').includes('<div class="g2 nw-workspace-stack">\n    <div>\n      <div class="card" id="portFormCard">'),'Puertos debe apilar formulario y lista desplegable');
+assert.ok(pageSection('pg-ports').includes('<div class="g2 nw-workspace-stack">\n    <div>\n      <div class="card" id="portFormCard">'),'Puertos debe apilar formulario y lista desplegable');
 assert.ok(pageSection('pg-vlan').includes('<details class="card" id="vlanListPanel" open>'),'La lista VLAN sigue siendo desplegable');
 assert.ok(pageSection('pg-vlan').includes('<details class="card" id="dhcpPanel" open>'),'DHCP sigue siendo desplegable');
 assert.ok(pageSection('pg-hosts').includes('<details class="card" id="ipMapPanel">'),'Mapa IP sigue siendo desplegable');
