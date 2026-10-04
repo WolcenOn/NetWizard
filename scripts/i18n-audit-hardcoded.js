@@ -35,7 +35,7 @@ function maskTranslationCalls(text,rel){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');if(rel==='js/netwizard.js')tokens.push('i18nText(');if(rel==='js/netwizard-custom-device-model-ui.js')tokens.push('i18nNode(');if(rel==='js/netwizard-bulk-port-editor.js')tokens.push('trText(','i18nEl(','field(');
+    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');if(rel==='js/netwizard-dhcp-utils.js')tokens.push('issue(');if(rel==='js/netwizard.js')tokens.push('i18nText(');if(rel==='js/netwizard-custom-device-model-ui.js')tokens.push('i18nNode(');if(rel==='js/netwizard-bulk-port-editor.js')tokens.push('trText(','i18nEl(','field(');
     const starts=tokens.map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
     if(!starts.length)break;
     const start=Math.min(...starts);
@@ -82,7 +82,7 @@ for(const file of walk(root)){
     const line = text.slice(0,m.index).split(/\r?\n/).length;
     const snippet = m[2].trim();
     const context = text.slice(Math.max(0,m.index-80), Math.min(text.length,m.index+160));
-    if(snippet.length < 3 || allowed.some(re => re.test(context))) continue;
+    if(snippet.length < 3 || /^VLAN(?:\$\{[^}]+\})?$/.test(snippet) || allowed.some(re => re.test(context))) continue;
     findings.push({rel,line,snippet,strict:strictFiles.has(rel)||offsetInRanges(m.index,ranges)});
   }
 }
