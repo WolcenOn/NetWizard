@@ -368,45 +368,45 @@
 
 <!-- ═══════════ VLANs & SUBNETS ═══════════ -->
 <div class="pg" id="pg-vlan">
-  <div class="ph"><h1>🏷 VLANs & Subnets</h1></div>
+  <div class="ph"><h1 data-i18n="vlan.page.title">🏷 VLANs & Subnets</h1></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">➕ Nueva VLAN</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="vlan.form.title">➕ Nueva VLAN</div>
         <div class="row">
           <div><label class="fl">VLAN ID</label><input id="vId" type="number" min="1" max="4094" placeholder="10"/></div>
-          <div><label class="fl">Nombre</label><input id="vName" placeholder="Producción"/></div>
-          <div style="max-width:60px;"><label class="fl">Color</label><input id="vColor" type="color" value="#3b82f6"/></div>
+          <div><label class="fl" data-i18n="form.name">Nombre</label><input id="vName" placeholder="Producción" data-i18n-placeholder="vlan.form.namePlaceholder"/></div>
+          <div style="max-width:60px;"><label class="fl" data-i18n="vlan.form.color">Color</label><input id="vColor" type="color" value="#3b82f6"/></div>
         </div>
-        <div class="brow"><button class="btn bp" id="btnAddVlan">➕ Añadir VLAN</button></div>
+        <div class="brow"><button class="btn bp" id="btnAddVlan" data-i18n="vlan.actions.add">➕ Añadir VLAN</button></div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">✍ Subnet canónica por VLAN</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="subnet.form.title">✍ Subnet canónica por VLAN</div>
         <div class="row">
           <div><label class="fl">VLAN</label><select id="mSnVlan"></select></div>
           <div><label class="fl">CIDR</label><input id="mSnCidr" placeholder="10.10.10.0/24"/></div>
         </div>
         <div class="row">
-          <div><label class="fl">Gateway</label><input id="mSnGw" placeholder="10.10.10.1"/></div>
-          <div><label class="fl">RoaS nativa</label><select id="aNatV"></select></div>
+          <div><label class="fl" data-i18n="subnet.form.gateway">Gateway</label><input id="mSnGw" placeholder="10.10.10.1"/></div>
+          <div><label class="fl" data-i18n="subnet.form.nativeVlan">RoaS nativa</label><select id="aNatV"></select></div>
         </div>
-        <div class="hint" id="mSnHint">Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.</div>
-        <div class="brow"><button class="btn bg" id="btnAddManualSn">💾 Guardar subnet manual</button></div>
+        <div class="hint" id="mSnHint" data-i18n="subnet.form.hint">Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.</div>
+        <div class="brow"><button class="btn bg" id="btnAddManualSn" data-i18n="subnet.actions.saveManual">💾 Guardar subnet manual</button></div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">⚡ Asignación rápida conservadora</div>
-        <div class="co co-ac" style="margin-bottom:9px;">Completa únicamente VLANs que todavía no tienen subnet. Usa el mismo motor de planes que VLSM, evita solapamientos con las subnets existentes y nunca reemplaza una asignación ya definida.</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="subnet.quick.title">⚡ Asignación rápida conservadora</div>
+        <div class="co co-ac" style="margin-bottom:9px;" data-i18n="subnet.quick.hint">Completa únicamente VLANs que todavía no tienen subnet. Usa el mismo motor de planes que VLSM, evita solapamientos con las subnets existentes y nunca reemplaza una asignación ya definida.</div>
         <div class="row">
-          <div><label class="fl">Bloque base</label><input id="aBase" placeholder="10.10.0.0/16"/></div>
-          <div><label class="fl">Prefijo fijo por VLAN</label>
+          <div><label class="fl" data-i18n="subnet.quick.base">Bloque base</label><input id="aBase" placeholder="10.10.0.0/16"/></div>
+          <div><label class="fl" data-i18n="subnet.quick.prefix">Prefijo fijo por VLAN</label>
             <select id="aSize"><option value="24">/24</option><option value="25">/25</option><option value="26">/26</option><option value="23">/23</option></select>
           </div>
         </div>
         <div class="row">
-          <div><label class="fl">Gateway</label><select id="aGw"><option value="first">Primera IP usable</option><option value="last">Última IP usable</option></select></div>
-          <div><label class="fl">Autoridad</label><input value="S.subnets · solo faltantes" readonly/></div>
+          <div><label class="fl" data-i18n="subnet.form.gateway">Gateway</label><select id="aGw"><option value="first" data-i18n="subnet.quick.firstUsable">Primera IP usable</option><option value="last" data-i18n="subnet.quick.lastUsable">Última IP usable</option></select></div>
+          <div><label class="fl" data-i18n="subnet.quick.authority">Autoridad</label><input value="S.subnets · solo faltantes" readonly data-i18n-value="subnet.quick.authorityValue"/></div>
         </div>
-        <div class="brow"><button class="btn bs" id="btnAutoSnPreview">👁 Previsualizar</button><button class="btn bp" id="btnAutoSn">✔ Aplicar faltantes</button></div>
+        <div class="brow"><button class="btn bs" id="btnAutoSnPreview" data-i18n="actions.preview">👁 Previsualizar</button><button class="btn bp" id="btnAutoSn" data-i18n="subnet.actions.applyMissing">✔ Aplicar faltantes</button></div>
         <pre class="cfg" id="aSnOut" style="min-height:90px;white-space:pre-wrap;"></pre>
       </div>
     </div>
@@ -416,26 +416,26 @@
     </div>
   </div>
 
-  <div class="ph" style="margin-top:18px;"><h2>🧩 Servicios VLAN y gateway</h2><p>Estas opciones forman parte del diseño deseado y alimentan la generación posterior. Configúralas antes de validar y desplegar.</p></div>
+  <div class="ph" style="margin-top:18px;"><h2 data-i18n="vlan.services.title">🧩 Servicios VLAN y gateway</h2><p data-i18n="vlan.services.subtitle">Estas opciones forman parte del diseño deseado y alimentan la generación posterior. Configúralas antes de validar y desplegar.</p></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-t" style="margin-bottom:11px;">🌐 Router-on-a-Stick (RoaS)</div>
-        <div class="hint" style="margin-bottom:8px;">Define qué gateway enruta las VLANs y qué interfaz actúa como trunk LAN. Al aplicar, NetWizard actualiza ese puerto con todas las VLANs actuales.</div>
+        <div class="hint" style="margin-bottom:8px;" data-i18n="roas.hint">Define qué gateway enruta las VLANs y qué interfaz actúa como trunk LAN. Al aplicar, NetWizard actualiza ese puerto con todas las VLANs actuales.</div>
         <div class="row">
           <div><label class="fl">Gateway</label><select id="roasDev"></select></div>
-          <div><label class="fl">Interfaz LAN (trunk)</label><select id="roasLanIf"></select></div>
+          <div><label class="fl" data-i18n="roas.lanInterface">Interfaz LAN (trunk)</label><select id="roasLanIf"></select></div>
         </div>
         <div class="row">
-          <div><label class="fl">VLAN nativa</label><select id="roasNatV"></select></div>
+          <div><label class="fl" data-i18n="roas.nativeVlan">VLAN nativa</label><select id="roasNatV"></select></div>
           <div><label class="fl">WAN IP/CIDR</label><input id="wanCidr" placeholder="203.0.113.2/30"/></div>
         </div>
-        <label class="fl">Next-hop ISP</label><input id="wanNh" placeholder="203.0.113.1"/>
-        <div class="brow"><button class="btn bg" id="btnRoas">✔ Aplicar RoaS</button></div>
+        <label class="fl" data-i18n="roas.nextHop">Next-hop ISP</label><input id="wanNh" placeholder="203.0.113.1"/>
+        <div class="brow"><button class="btn bg" id="btnRoas" data-i18n="roas.apply">✔ Aplicar RoaS</button></div>
       </div>
       <details class="card" id="dhcpPanel" open>
-        <summary><span class="card-t">📡 DHCP por VLAN</span></summary>
-        <div class="hint" style="margin-bottom:8px;">Pools, DNS y lease se definen por VLAN sobre la subnet canónica existente.</div>
+        <summary><span class="card-t" data-i18n="dhcp.title">📡 DHCP por VLAN</span></summary>
+        <div class="hint" style="margin-bottom:8px;" data-i18n="dhcp.hint">Pools, DNS y lease se definen por VLAN sobre la subnet canónica existente.</div>
         <div id="dhcpView"></div>
       </details>
     </div>
