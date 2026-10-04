@@ -3,7 +3,10 @@ const { test, expect } = require('@playwright/test');
 async function assertWorkspaceStacks(page,step,expectedCount){
   await page.click('[data-step="'+step+'"]');
   const selector='#pg-'+step+' .nw-workspace-stack';
-  const result=await page.locator(selector).evaluateAll(stacks=>stacks.map(el=>{
+  const result=await page.locator(selector).evaluateAll(stacks=>stacks.filter(el=>{
+    const r=el.getBoundingClientRect();
+    return r.width>0&&r.height>0;
+  }).map(el=>{
     const children=[...el.children].map(x=>x.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
     return{
       childCount:children.length,
@@ -35,11 +38,27 @@ test('áreas de trabajo principales se apilan en una columna sin romper grids in
     ['hosts',1],
     ['iot',1],
     ['links',1],
-    ['fw',2],
+    ['fw',1],
     ['cfg',1]
   ]){
     await assertWorkspaceStacks(page,step,count);
   }
+
+  await page.click('[data-step="fw"]');
+  await page.click('[data-tab="fw-harden"]');
+  const harden=await page.locator('#fw-harden .nw-workspace-stack').evaluate(el=>{
+    const children=[...el.children].map(x=>x.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+    return{
+      childCount:children.length,
+      vertical:children.length<2||children.slice(1).every((r,i)=>r.top>=children[i].bottom-1),
+      aligned:children.length<2||children.every(r=>Math.abs(r.left-children[0].left)<1),
+      fullWidth:children.length<2||children.every(r=>Math.abs(r.width-children[0].width)<1)
+    };
+  });
+  expect(harden.childCount).toBeGreaterThan(0);
+  expect(harden.vertical).toBe(true);
+  expect(harden.aligned).toBe(true);
+  expect(harden.fullWidth).toBe(true);
 
   await page.click('[data-step="vlan"]');
   const layout=page.locator('#pg-vlan > .nw-workspace-stack').first();
