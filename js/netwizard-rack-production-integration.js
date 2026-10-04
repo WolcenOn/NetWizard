@@ -13,7 +13,7 @@ function install(){
   if(!gate||!rack||!cabling||typeof gate.runProductionGate!=='function'||gate.__rackExtensionInstalled)return false;
   const original=gate.runProductionGate.bind(gate);
   gate.runProductionGate=(project,options)=>{
-    const report=original(project,options),rackReport=rack.validate(project||{}),cablingReport=cabling.validate(project||{});
+    const report=original(project,options),rackReport=rack.validate(project||{},options||{}),cablingReport=cabling.validate(project||{});
     const issues=mergeIssues(report.issues,rackReport.issues,cablingReport.issues);
     const counts=typeof gate.summarizeCounts==='function'?gate.summarizeCounts(issues):{errors:issues.filter(i=>i&&i.severity==='error').length,warnings:issues.filter(i=>i&&i.severity==='warning').length,blocking:issues.filter(i=>i&&(i.blocking||i.severity==='error')).length,byCategory:{}};
     const blocking=issues.filter(i=>i&&(i.blocking||i.severity==='error'));
