@@ -19,6 +19,60 @@ function validate(project){const issues=[],racks=arr(project&&project.racks).map
  const byDevice=new Map();for(const c of arr(project&&project.powerConnections)){if(!c.deviceId)continue;const list=byDevice.get(c.deviceId)||[];list.push(c);byDevice.set(c.deviceId,list);}for(const [deviceId,connections] of byDevice){if(connections.length>1){const feeds=new Set(connections.map(c=>clean(c.feed||c.pduId)));if(feeds.size<connections.length)issues.push(issue('NW-RACK-008','warning',`${byId(project&&project.devices,deviceId)?.name||deviceId}: fuentes redundantes comparten la misma alimentación.`,{deviceId}));}}
  return{version:'netwizard-rack-model-v1',ok:!issues.some(i=>i.blocking),issues,counts:{blocking:issues.filter(i=>i.blocking).length,warnings:issues.filter(i=>i.severity==='warning').length},racks,items,occupancy:Object.fromEntries(occupancy)};
 }
+function rackOccupancy(project,rackId){
+ const rack=byId(project&&project.racks,rackId);
+ const items=allRackItems(project).filter(x=>x.rackId===rackId);
+ const units=new Set(),entries=[];
+ const representedPanels=new Set(items.filter(x=>x&&x.patchPanelId).map(x=>x.patchPanelId));
+ for(const item of items){
+   const start=num(item&&item.startUnit),height=num(item&&item.heightUnits);
+   if(start==null||height==null||height<=0)continue;
+   const first=Math.max(1,Math.floor(start));
+   const end=Math.max(first,Math.ceil(start+height-1));
+   for(let u=first;u<=end;u++)units.add(u);
+   entries.push({
+     id:item.id,label:item.label||item.name||item.id,type:item.type||'rack-item',
+     startUnit:start,endUnit:end,heightUnits:height
+   });
+ }
+ for(const panel of arr(project&&project.patchPanels).filter(x=>x&&x.rackId===rackId&&!representedPanels.has(x.id))){
+   const u=num(panel.rackUnit);
+   if(u!=null&&u>=1){
+     const unit=Math.floor(u);units.add(unit);
+     entries.push({id:panel.id,label:panel.name||panel.id,type:'patch-panel',startUnit:unit,endUnit:unit});
+   }
+ }
+ const usedUnits=Array.from(units).sort((a,b)=>a-b);
+ return{rack:rack?normalizeRack(rack):null,items,entries,usedUnits,usedCount:usedUnits.length,minUsedUnit:usedUnits.length?usedUnits[0]:null,maxUsedUnit:usedUnits.length?usedUnits[usedUnits.length-1]:0};
+}
+function recommendedRackUnits(project,rackId,options){
+ const o=options||{},summary=rackOccupancy(project,rackId);
+ const standards=arr(o.standardSizes).map(Number).filter(x=>Number.isInteger(x)&&x>0).sort((a,b)=>a-b);
+ const sizes=standards.length?standards:[6,9,12,15,18,22,24,27,32,36,42,47];
+ const policy=project&&project.designRequirements&&project.designRequirements.capacityPolicy||{};
+ const reserve=Math.max(0,Math.floor(num(o.reserveUnits)!=null?num(o.reserveUnits):(num(policy.minFreeRackUnits)!=null?num(policy.minFreeRackUnits):4)));
+ const growth=Math.max(0,num(o.growthPercent)!=null?num(o.growthPercent):(num(policy.rackGrowthPercent)!=null?num(policy.rackGrowthPercent):20));
+ const occupied=Math.max(0,summary.maxUsedUnit||0);
+ const target=Math.max(occupied+reserve,Math.ceil(occupied*(1+growth/100)),1);
+ const recommended=sizes.find(x=>x>=target)||target;
+ return{rackId,occupiedThroughUnit:occupied,reserveUnits:reserve,growthPercent:growth,targetUnits:target,recommendedUnits:recommended,standardSizes:sizes};
+}
+function validateRackResize(project,rackId,rackUnits){
+ const rack=byId(project&&project.racks,rackId),units=Math.floor(num(rackUnits)||0);
+ if(!rack)return{ok:false,rack:null,rackId,rackUnits:units,blockers:[],message:'Rack inexistente.'};
+ if(units<1)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack debe ser al menos 1U.'};
+ if(units>100)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack no puede superar 100U.'};
+ const summary=rackOccupancy(project,rackId);
+ const blockers=summary.entries.filter(x=>x.endUnit>units).sort((a,b)=>b.endUnit-a.endUnit);
+ const recommendation=recommendedRackUnits(project,rackId);
+ return{
+   ok:!blockers.length,rack:normalizeRack(rack),rackId,rackUnits:units,blockers,
+   minRackUnits:summary.maxUsedUnit||1,maxUsedUnit:summary.maxUsedUnit||0,recommendedUnits:recommendation.recommendedUnits,
+   message:blockers.length
+     ?'No se puede reducir a '+units+'U: '+blockers.map(x=>x.label+' ocupa U'+x.startUnit+(x.endUnit!==x.startUnit?'-U'+x.endUnit:'')).join(', ')+'.'
+     :'El rack puede redimensionarse a '+units+'U sin dejar elementos fuera de rango.'
+ };
+}
 function rackTopology(project,rackId){
  const rack=byId(project&&project.racks,rackId);if(!rack)return{rack:null,nodes:[],dataEdges:[],powerEdges:[]};
  const items=allRackItems(project).filter(x=>x.rackId===rackId),deviceIds=new Set(items.filter(x=>x.deviceId).map(x=>x.deviceId));
@@ -44,5 +98,5 @@ function rackTopology(project,rackId){
  return{rack:normalizeRack(rack),nodes,dataEdges,powerEdges,cablingEdges};
 }
 function billOfMaterials(project){const rows=[];for(const rack of arr(project&&project.racks))rows.push({kind:'Rack',description:`${rack.name||rack.id} · ${rack.rackUnits||42}U`,quantity:1,locationId:rack.locationId});for(const item of allRackItems(project)){if(item.type!=='device'&&item.type!=='reserved'&&!item.patchPanelId)rows.push({kind:item.type||'Elemento rack',description:item.label||item.name||item.id,quantity:1,rackId:item.rackId});}for(const p of arr(project&&project.patchPanels))rows.push({kind:'Patch panel',description:`${p.name||p.id} · ${p.portCount||0} puertos`,quantity:1,rackId:p.rackId});for(const pdu of arr(project&&project.pdus))rows.push({kind:'PDU',description:`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas`,quantity:1,rackId:pdu.rackId});return rows;}
-const api={version:'netwizard-rack-model-v3',normalizeRack,deviceRackItem,allRackItems,occupiedUnits,validate,rackTopology,billOfMaterials};root.NetWizardRackModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+const api={version:'netwizard-rack-model-v4',normalizeRack,deviceRackItem,allRackItems,occupiedUnits,rackOccupancy,recommendedRackUnits,validateRackResize,validate,rackTopology,billOfMaterials};root.NetWizardRackModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
