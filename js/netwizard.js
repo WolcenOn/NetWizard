@@ -1029,7 +1029,7 @@ function renderDeviceModelHint(){
   if(!m){hint.style.display='none';return;}
   hint.style.display='';
   const b=document.createElement('b'); b.textContent=$('devModel').value||''; hint.appendChild(b); hint.appendChild(document.createElement('br'));
-  appendText(hint,i18nText('device.modelHint.summary',{kind:m.kind,vendor:m.vendorOs||'—',ports:m.ports?.length||0,wifi:m.wifi?((m.wifiStandards||[]).join(', ')||i18nText('common.yes',{},'sí')):i18nText('common.no',{},'no')},'Tipo sugerido: {kind} · Vendor: {vendor} · Puertos plantilla: {ports} · Wi‑Fi/AP: {wifi}'));
+  appendText(hint,i18nText('device.modelHint.summary',{kind:deviceKindText(m.kind),vendor:m.vendorOs||'—',ports:m.ports?.length||0,wifi:m.wifi?((m.wifiStandards||[]).join(', ')||i18nText('common.yes',{},'sí')):i18nText('common.no',{},'no')},'Tipo sugerido: {kind} · Vendor: {vendor} · Puertos plantilla: {ports} · Wi‑Fi/AP: {wifi}'));
   hint.appendChild(document.createElement('br')); appendText(hint,m.noteKey?i18nText(m.noteKey,{},m.notes||''):(m.notes||''));
 }
 function applyDeviceModelToForm(){const key=modelKeyByName($('devModel')?.value||'');if(!key)return alert(i18nText('device.alert.selectCatalogModel',{},'Selecciona un modelo del catálogo o escribe uno y guárdalo como texto libre.'));const m=DEVICE_MODEL_CATALOG[key];if(m.vendorOs)$('devVendor').value=m.vendorOs;if(m.kind)$('devType').value=m.kind;if($('devWifiRole'))$('devWifiRole').value=m.wifiRole||'none';$('devType').dispatchEvent(new Event('change'));renderDeviceModelHint();}
@@ -1155,21 +1155,26 @@ function updatePortL2Wrap(){
 // Gestión de puertos físicos/lógicos, roles, edición y render de interfaces.
 // =========================================================
 function fillPortDevSel(){
+  const devSelect=$('pDev'),filterSelect=$('portFiltDev');
+  const selectedDev=devSelect?.value||'',selectedFilter=filterSelect?.value||'';
   const all=S.devices.slice().sort((a,b)=>a.name.localeCompare(b.name));
-  setOptions($('pDev'),all.map(d=>makeOption(d.id,`${d.name||''} (${d.type||''})`)),i18nText('ports.select.addDeviceFirst',{},'— añade un dispositivo primero —'));
-  setOptions($('portFiltDev'),[makeOption('',i18nText('common.all',{},'Todos')), ...all.map(d=>makeOption(d.id,d.name||''))]);
+  setOptions(devSelect,all.map(d=>makeOption(d.id,`${d.name||''} (${d.type||''})`)),i18nText('ports.select.addDeviceFirst',{},'— añade un dispositivo primero —'));
+  setOptions(filterSelect,[makeOption('',i18nText('common.all',{},'Todos')), ...all.map(d=>makeOption(d.id,d.name||''))]);
+  if(selectedDev&&all.some(d=>d.id===selectedDev))devSelect.value=selectedDev;
+  if(selectedFilter&&all.some(d=>d.id===selectedFilter))filterSelect.value=selectedFilter;
   updatePortRoleOpts();
 }
 
 function updatePortRoleOpts(){
   const devId=$('pDev').value;const d=devById(devId);
   const isRF=!d||!isSwitchDevice(d);
-  const role=$('pRole'); clearNode(role);
+  const role=$('pRole'),previousRole=role?.value||''; clearNode(role);
   if(!isRF){
     role.append(makeOption('access',i18nText('ports.role.access',{},'access (usuario/host)')),makeOption('trunk',i18nText('ports.role.trunk',{},'trunk (uplink/RoaS)')));
   } else {
     role.append(makeOption('lan',i18nText('ports.role.lan',{},'LAN (trunk a switches)')),makeOption('wan',i18nText('ports.role.wan',{},'WAN (hacia ISP)')),makeOption('routed',i18nText('ports.role.routed',{},'routed (L3 directo)')));
   }
+  if(previousRole&&Array.from(role.options).some(o=>o.value===previousRole))role.value=previousRole;
   updatePortL2Wrap();
   if(d){$('pName').placeholder=d.vendorOs==='juniper_junos'?'ge-0/0/0':d.vendorOs==='aruba_aoss'?'1/1/1':isSwitchDevice(d)?'GigabitEthernet0/1':'GigabitEthernet0/0';}
   $('pHint').textContent=!d?'':i18nText('ports.hint.device',{device:d.name,type:deviceKindText(d),vendor:d.vendorOs||i18nText('ports.hint.unassigned',{},'sin asignar')},'Dispositivo: {device} ({type}) — vendor: {vendor}');
@@ -1310,7 +1315,7 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     else if($('btnAddDev')){$('btnAddDev').dataset.i18n='device.actions.add';$('btnAddDev').textContent=i18nText('device.actions.add',{},'➕ Añadir dispositivo');}
   }
   if(S.step==='ports'){
-    fillPortDevSel();updatePortRoleOpts();renderPortsList();
+    fillPortDevSel();renderPortsList();
     if($('portEditId')&&$('portEditId').value){$('btnAddPort').dataset.i18n='ports.actions.saveChanges';$('btnAddPort').textContent=i18nText('ports.actions.saveChanges',{},'💾 Guardar cambios');}
     else if($('btnAddPort')){$('btnAddPort').dataset.i18n='ports.actions.add';$('btnAddPort').textContent=i18nText('ports.actions.add',{},'➕ Añadir');}
   }
