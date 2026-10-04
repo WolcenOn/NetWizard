@@ -70,8 +70,8 @@ function validateRackResize(project,rackId,rackUnits){
    ok:!blockers.length,rack:normalizeRack(rack),rackId,rackUnits:units,blockers,
    minRackUnits:summary.maxUsedUnit||1,maxUsedUnit:summary.maxUsedUnit||0,recommendedUnits:recommendation.recommendedUnits,
    message:blockers.length
-     ?tr('rack.resize.blocked',{units,blockers:blockers.map(x=>x.label+' U'+x.startUnit+(x.endUnit!==x.startUnit+'-U'+x.endUnit?'':'')).join(', ')},'No se puede reducir a {units}U: {blockers}.')
-     :'El rack puede redimensionarse a '+units+'U sin dejar elementos fuera de rango.'
+     ?tr('rack.resize.blocked',{units,blockers:blockers.map(x=>x.label+' U'+x.startUnit+(x.endUnit!==x.startUnit?'-U'+x.endUnit:'')).join(', ')},'No se puede reducir a {units}U: {blockers}.')
+     :tr('rack.resize.allowed',{units},'El rack puede redimensionarse a {units}U sin dejar elementos fuera de rango.')
  };
 }
 
