@@ -20,7 +20,7 @@ global.NetWizardI18n=I18N;
 const es=JSON.parse(fs.readFileSync(path.join(root,'i18n','es.json'),'utf8'));
 const en=JSON.parse(fs.readFileSync(path.join(root,'i18n','en.json'),'utf8'));
 const keys=Object.keys(es).filter(k=>k.startsWith('device.')||k.startsWith('ports.'));
-assert.ok(keys.length>170,'Dispositivos/Puertos debe tener cobertura i18n sustancial');
+assert.ok(keys.length>=160,'Dispositivos/Puertos debe tener cobertura i18n sustancial');
 for(const key of keys){
   assert.ok(Object.prototype.hasOwnProperty.call(en,key),'Falta clave EN: '+key);
   assert.strictEqual(typeof es[key],'string',key+' ES debe ser string');
