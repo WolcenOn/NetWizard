@@ -713,7 +713,17 @@
     "dhcp.validation.includesStatic": "VLAN {vlan}: el pool DHCP incluye IP estática {ip} ({host}).",
     "dhcp.validation.invalidExclusion": "VLAN {vlan}: exclusión DHCP inválida {range}.",
     "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusión fuera de subnet {range}.",
-    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: reserva DHCP fuera de subnet ({ip})."
+    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: reserva DHCP fuera de subnet ({ip}).",
+    "subnet.validation.selectVlan": "Selecciona una VLAN.",
+    "subnet.validation.invalidCidr": "CIDR inválido. Usa formato tipo 10.10.10.0/24.",
+    "subnet.validation.invalidGateway": "Gateway inválido.",
+    "subnet.validation.gatewayOutside": "El gateway no pertenece a la subnet indicada.",
+    "subnet.validation.gatewayReserved": "El gateway no puede ser la dirección de red ni broadcast.",
+    "subnet.validation.overlap": "La subnet {cidr} se solapa con {existing}.",
+    "subnet.validation.normalized": "CIDR normalizado a {cidr}.",
+    "dhcp.placeholders.start": "inicio pool",
+    "dhcp.placeholders.end": "fin pool",
+    "dhcp.placeholders.domain": "empresa.local"
   },
   "en": {
     "app.title": "NetWizard Pro",
@@ -1400,7 +1410,17 @@
     "dhcp.validation.includesStatic": "VLAN {vlan}: DHCP pool includes static IP {ip} ({host}).",
     "dhcp.validation.invalidExclusion": "VLAN {vlan}: invalid DHCP exclusion {range}.",
     "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusion is outside the subnet {range}.",
-    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: DHCP reservation is outside the subnet ({ip})."
+    "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: DHCP reservation is outside the subnet ({ip}).",
+    "subnet.validation.selectVlan": "Select a VLAN.",
+    "subnet.validation.invalidCidr": "Invalid CIDR. Use a format such as 10.10.10.0/24.",
+    "subnet.validation.invalidGateway": "Invalid gateway.",
+    "subnet.validation.gatewayOutside": "The gateway does not belong to the selected subnet.",
+    "subnet.validation.gatewayReserved": "The gateway cannot be the network or broadcast address.",
+    "subnet.validation.overlap": "Subnet {cidr} overlaps with {existing}.",
+    "subnet.validation.normalized": "CIDR normalized to {cidr}.",
+    "dhcp.placeholders.start": "pool start",
+    "dhcp.placeholders.end": "pool end",
+    "dhcp.placeholders.domain": "example.local"
   }
 };
   const SUPPORTED=localeMeta.map(x=>String(x.code||'').trim()).filter(Boolean);
