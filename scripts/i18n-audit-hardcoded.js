@@ -27,9 +27,11 @@ function maskTranslationCalls(text){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const start=text.indexOf('tr(',cursor);
-    if(start<0)break;
-    let i=start+3,depth=1,quote='',escape=false;
+    const starts=['tr(','localized(','field('].map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
+    if(!starts.length)break;
+    const start=Math.min(...starts);
+    const open=text.indexOf('(',start);
+    let i=open+1,depth=1,quote='',escape=false;
     for(;i<text.length&&depth>0;i++){
       const ch=text[i];
       if(quote){
@@ -42,7 +44,7 @@ function maskTranslationCalls(text){
       if(ch==='(')depth++;
       else if(ch===')')depth--;
     }
-    if(depth!==0){cursor=start+3;continue;}
+    if(depth!==0){cursor=open+1;continue;}
     for(let j=start;j<i;j++)if(chars[j]!=='\n'&&chars[j]!=='\r')chars[j]=' ';
     cursor=i;
   }
