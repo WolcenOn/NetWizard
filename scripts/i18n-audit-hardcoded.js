@@ -7,7 +7,7 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const outFile = path.join(root, 'docs', 'I18N_HARDCODED_AUDIT.txt');
 const checkMode = process.argv.includes('--check');
-const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js']);
+const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js','js/netwizard-dhcp-utils.js']);
 const strictRegionMarkers = {
   'js/netwizard.js': [
     ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
