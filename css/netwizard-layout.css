@@ -6,14 +6,6 @@
   grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
   align-items: start;
 }
-.g2.nw-workspace-stack {
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-}
-.g2.nw-workspace-stack > * {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
 .g2.nw-grid-fill-last > :last-child:nth-child(odd),
 .g2 > .card:last-child:nth-child(odd),
 .g2 > [data-layout-span="full"] { grid-column: 1 / -1; }
