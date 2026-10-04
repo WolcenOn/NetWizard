@@ -14,10 +14,12 @@ let selectedRackItemId='';
 let selectedRackId='';
 let rackEditorNotice='';
 let selectedRackNotice='';
+function notice(key,params,fallback){return{key,params:Object.assign({},params||{}),fallback};}
+function noticeText(value){return !value?'':typeof value==='string'?value:tr(value.key,value.params||{},value.fallback||value.key);}
 let rackLayoutPreview=null;
 let suppressRackClickUntil=0;
 function ensureArrays(project){for(const key of ['racks','rackItems','pdus','powerConnections'])if(!Array.isArray(project[key]))project[key]=[];return project;}
-function addRack(project,input){const next=ensureArrays(clone(project));const requested=Math.floor(num(input.rackUnits)||42);const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||tr('rack.defaultName',{},'Rack sin nombre'),locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.min(100,requested)),widthMm:nonNegativeOptional(input.widthMm),depthMm:nonNegativeOptional(input.depthMm),maxLoadKg:nonNegativeOptional(input.maxLoadKg),powerCapacityWatts:nonNegativeOptional(input.powerCapacityWatts),coolingCapacityWatts:nonNegativeOptional(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
+function addRack(project,input){const next=ensureArrays(clone(project));const requested=Math.floor(num(input.rackUnits)||42);const rack={id:clean(input.id)||uid('rack'),name:clean(input.name),locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.min(100,requested)),widthMm:nonNegativeOptional(input.widthMm),depthMm:nonNegativeOptional(input.depthMm),maxLoadKg:nonNegativeOptional(input.maxLoadKg),powerCapacityWatts:nonNegativeOptional(input.powerCapacityWatts),coolingCapacityWatts:nonNegativeOptional(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
 function updateRack(project,rackId,input){
   const next=ensureArrays(clone(project)),rack=next.racks.find(x=>x.id===rackId);
   if(!rack)return{ok:false,project:next,message:tr('rack.error.missing',{},'Rack inexistente.')};
@@ -34,7 +36,7 @@ function updateRack(project,rackId,input){
     if(parsed!=null&&parsed<0)return{ok:false,project:clone(project),message:tr('rack.error.nonNegative',{field:key},'{field} no puede ser negativo.'),resize};
   }
   Object.assign(rack,{
-    name:clean(input.name)||rack.name||tr('rack.defaultName',{},'Rack sin nombre'),
+    name:clean(input.name)||rack.name||'',
     locationId:clean(input.locationId)||null,
     rackUnits:requestedUnits,
     widthMm:nonNegativeOptional(input.widthMm),
@@ -221,7 +223,7 @@ function selectedRackEditor(project){
   if(!rack)return null;
   const card=el('div','card nw-card-wide rack-selected-editor');
   const title=el('div','card-h');title.append(el('div','card-t',tr('rack.edit.title',{},'🗄 Editar rack')),el('span','b bac',rack.name||rack.id));card.appendChild(title);
-  if(selectedRackNotice)card.appendChild(el('div','co co-yw',selectedRackNotice));
+  if(selectedRackNotice)card.appendChild(el('div','co co-yw',noticeText(selectedRackNotice)));
   const occupancy=MODEL.rackOccupancy?MODEL.rackOccupancy(project,rack.id):{usedCount:0,maxUsedUnit:0};
   const recommendation=MODEL.recommendedRackUnits?MODEL.recommendedRackUnits(project,rack.id):{recommendedUnits:rack.rackUnits};
   card.appendChild(el('p','hint',tr('rack.edit.occupancy',{used:occupancy.usedCount||0,max:occupancy.maxUsedUnit||0,recommended:recommendation.recommendedUnits},'Ocupación actual: {used}U · U más alta ocupada: {max} · Tamaño recomendado con reserva: {recommended}U.')));
@@ -250,7 +252,7 @@ function selectedItemEditor(project){
   const title=el('div','card-h');title.append(el('div','card-t',tr('rack.itemEditor.title',{},'🎛 Elemento seleccionado')));
   if(!item){card.append(title,el('p','hint',tr('rack.itemEditor.hint',{},'Haz clic en un elemento del rack para cargar sus propiedades. También puedes arrastrarlo directamente a otra U.')));return card;}
   title.appendChild(el('span','b bac',item.type||tr('rack.common.item',{},'elemento')));card.appendChild(title);
-  if(rackEditorNotice)card.appendChild(el('div','co co-yw',rackEditorNotice));
+  if(rackEditorNotice)card.appendChild(el('div','co co-yw',noticeText(rackEditorNotice)));
   const form=el('form','rack-editor-form rack-selected-form');form.dataset.form='selected-item';form.dataset.itemId=item.id;
   const rack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),item.rackId);
   const label=input('text',tr('rack.field.label',{},'Etiqueta'),item.label||item.name||'');
@@ -310,7 +312,7 @@ function bind(mount,state){
       selectedRackId=id;
       if(!result.ok){selectedRackNotice=result.message||tr('rack.auto.applyFailed',{},'No se ha podido aplicar la organización.');rerenderMount(mount,state);return;}
       rackLayoutPreview=null;
-      selectedRackNotice=tr('rack.auto.applied',{},'Organización aplicada. Se han reutilizado los elementos existentes y creado solo el material necesario.');
+      selectedRackNotice=notice('rack.auto.applied',{},'Organización aplicada. Se han reutilizado los elementos existentes y creado solo el material necesario.');
       state.replaceProject(result.project,{source:'rack-auto-layout'});
       return;
     }
@@ -335,7 +337,7 @@ function bind(mount,state){
       });
       selectedRackId=id;
       if(!result.ok){selectedRackNotice=result.message;rerenderMount(mount,state);return;}
-      selectedRackNotice=tr('rack.edit.saved',{},'Rack actualizado. Se han conservado sus equipos, material pasivo, PDUs y cableado.');
+      selectedRackNotice=notice('rack.edit.saved',{},'Rack actualizado. Se han conservado sus equipos, material pasivo, PDUs y cableado.');
       state.replaceProject(result.project,{source:'rack-editor-update',skipNormalize:true,skipRefresh:true,notify:false,silent:true,returnSnapshot:false});
       rerenderMount(mount,state);return;
     }
@@ -366,7 +368,7 @@ function bind(mount,state){
       });
       selectedRackItemId=id;
       if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
-      rackEditorNotice=tr('rack.itemEditor.saved',{},'Cambios guardados. Las referencias de cableado y equipo se han conservado.');
+      rackEditorNotice=notice('rack.itemEditor.saved',{},'Cambios guardados. Las referencias de cableado y equipo se han conservado.');
       state.replaceProject(result.project,{source:'rack-item-editor',skipNormalize:true,skipRefresh:true,notify:false,silent:true,returnSnapshot:false});
       rerenderMount(mount,state);
     };
@@ -411,7 +413,7 @@ function bind(mount,state){
       const result=moveRackItem(state.getSnapshot(),id,row.dataset.rackId,Number(row.dataset.unit));
       selectedRackItemId=id;
       if(!result.ok){rackEditorNotice=result.message;rerenderMount(mount,state);return;}
-      rackEditorNotice=tr('rack.itemEditor.moved',{rack:arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId,unit:row.dataset.unit},'Movido a {rack} · U{unit}. Cableado y referencias conservados.');
+      rackEditorNotice=notice('rack.itemEditor.moved',{rack:arr(result.project.racks).find(x=>x.id===row.dataset.rackId)?.name||row.dataset.rackId,unit:row.dataset.unit},'Movido a {rack} · U{unit}. Cableado y referencias conservados.');
       state.replaceProject(result.project,{source:'rack-pointer-drag',skipNormalize:true,skipRefresh:true,notify:false,silent:true,returnSnapshot:false});
       rerenderMount(mount,state);
     };
@@ -423,5 +425,5 @@ function bind(mount,state){
   }
 }
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
-const api={version:'netwizard-rack-ui-v9',render,inject,ensureLayoutCss,ensureArrays,addRack,updateRack,upsertRackItem,rackItemPlacement,moveRackItem,updateRackItemFromEditor,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};root.document.addEventListener('DOMContentLoaded',refresh);root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});root.addEventListener&&root.addEventListener('netwizard:i18n',refresh);}
+const api={version:'netwizard-rack-ui-v9',render,inject,ensureLayoutCss,ensureArrays,addRack,updateRack,upsertRackItem,rackItemPlacement,moveRackItem,updateRackItemFromEditor,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};const refreshLocale=()=>{if(typeof selectedRackNotice==='string')selectedRackNotice='';if(typeof rackEditorNotice==='string')rackEditorNotice='';refresh();};root.document.addEventListener('DOMContentLoaded',refresh);root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});root.addEventListener&&root.addEventListener('netwizard:i18n',refreshLocale);}
 })(typeof window!=='undefined'?window:globalThis);
