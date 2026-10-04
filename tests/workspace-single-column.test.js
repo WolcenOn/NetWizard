@@ -13,7 +13,7 @@ function pageSection(id){
   const marker='<div class="pg" id="'+id+'">';
   const start=html.indexOf(marker);
   assert.ok(start>=0,'Página inexistente: '+id);
-  const next=html.indexOf('\n<!-- ═',start+marker.length);
+  const next=html.indexOf('\n<div class="pg" id="',start+marker.length);
   return html.slice(start,next>start?next:html.length);
 }
 function count(haystack,needle){
