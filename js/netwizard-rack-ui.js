@@ -13,6 +13,7 @@ let selectedRackItemId='';
 let selectedRackId='';
 let rackEditorNotice='';
 let selectedRackNotice='';
+let rackLayoutPreview=null;
 let suppressRackClickUntil=0;
 function ensureArrays(project){for(const key of ['racks','rackItems','pdus','powerConnections'])if(!Array.isArray(project[key]))project[key]=[];return project;}
 function addRack(project,input){const next=ensureArrays(clone(project));const requested=Math.floor(num(input.rackUnits)||42);const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||'Rack sin nombre',locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.min(100,requested)),widthMm:nonNegativeOptional(input.widthMm),depthMm:nonNegativeOptional(input.depthMm),maxLoadKg:nonNegativeOptional(input.maxLoadKg),powerCapacityWatts:nonNegativeOptional(input.powerCapacityWatts),coolingCapacityWatts:nonNegativeOptional(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
@@ -175,6 +176,45 @@ const itemForm=el('form','rack-editor-form');itemForm.dataset.form='item';const 
 const pduForm=el('form','rack-editor-form');pduForm.dataset.form='pdu';const pduRack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),'');const pduName=input('text','PDU-A');const pduFeed=select([['A','Alimentación A'],['B','Alimentación B'],['UPS','UPS']],'A');const pduOutlets=input('number','12',12);pduOutlets.min='1';const pduPower=input('number','3680');pduForm.append(field('Rack',pduRack),field('Nombre',pduName),field('Feed',pduFeed),field('Tomas',pduOutlets),field('Potencia máxima W',pduPower),button('➕ Crear PDU','bp','add-pdu'));pduForm.elementsRef={pduRack,pduName,pduFeed,pduOutlets,pduPower};
 const powerForm=el('form','rack-editor-form');powerForm.dataset.form='power';const powerDevice=select(arr(project.devices).map(x=>[x.id,x.name||x.id]),'');const powerPdu=select(arr(project.pdus).map(x=>[x.id,x.name||x.id]),'');const powerOutlet=input('number','1',1);powerOutlet.min='1';const powerPsu=input('number','0',0);powerPsu.min='0';powerForm.append(field('Equipo',powerDevice),field('PDU',powerPdu),field('Toma',powerOutlet),field('Fuente nº',powerPsu),button('🔌 Conectar alimentación','bp','add-power'));powerForm.elementsRef={powerDevice,powerPdu,powerOutlet,powerPsu};
 for(const [title,form] of [['Nuevo rack',rackForm],['Elemento de rack',itemForm],['PDU / regleta',pduForm],['Conexión eléctrica',powerForm]]){const group=el('section','rack-editor-group');group.append(el('h3','',title),form);tabs.appendChild(group);}card.appendChild(tabs);return card;}
+
+function rackLayoutPreviewCard(project){
+  if(!rackLayoutPreview||!MODEL||typeof MODEL.planRackAutoLayout!=='function')return null;
+  const plan=MODEL.planRackAutoLayout(project,rackLayoutPreview.rackId,rackLayoutPreview.options||{});
+  const rack=arr(project.racks).find(x=>x.id===rackLayoutPreview.rackId);
+  const card=el('div','card nw-card-wide rack-layout-preview');card.dataset.rackLayoutPreview=plan.rackId||'';
+  const head=el('div','card-h');head.append(el('div','card-t','✨ Vista previa de organización'),el('span','b bac',rack&&rack.name||plan.rackId||'Rack'));card.appendChild(head);
+  card.appendChild(el('p','hint','Solo se moverán switches y elementos de cableado seleccionados por el planner. El resto del rack permanece fijo.'));
+  if(!plan.ok){
+    card.appendChild(el('div','co co-yw',plan.message||'No se puede generar una organización automática.'));
+    const actions=el('div','rack-selected-actions');actions.appendChild(button('Cerrar','bs','cancel-rack-layout'));card.appendChild(actions);return card;
+  }
+  const policyLabel=plan.policy.layoutPattern==='patch-manager-switch'?'patch panel → organizador → switch':'patch panel → switch';
+  card.appendChild(el('p','',
+    'Patrón: '+policyLabel+' · '+plan.summary.switches+' switch(es) · '+plan.summary.panels+' patch panel(es) · '+plan.summary.managers+' organizador(es).'
+  ));
+  const list=el('div','nw-panel-stack');
+  for(const cluster of plan.clusters){
+    const row=el('div','rack-list-row rack-layout-preview-row');
+    const sequence=[];
+    cluster.panels.forEach(x=>sequence.push(x.label+' U'+x.startUnit));
+    if(cluster.manager)sequence.push(cluster.manager.label+' U'+cluster.manager.startUnit);
+    let switchLabel=cluster.switchName+' U'+cluster.switchStartUnit;
+    if(cluster.switchHeight>1)switchLabel+='-U'+(cluster.switchStartUnit+cluster.switchHeight-1);
+    sequence.push(switchLabel);
+    row.append(el('span','',sequence.join(' → ')));list.appendChild(row);
+  }
+  card.appendChild(list);
+  if(plan.warnings&&plan.warnings.length){
+    const warnings=el('ul','rack-issues');plan.warnings.forEach(x=>warnings.appendChild(el('li','',x)));card.appendChild(warnings);
+  }
+  card.appendChild(el('p','hint',
+    'Se crearán '+plan.summary.createPanels+' patch panel(es) y '+plan.summary.createItems+' elemento(s) de rack nuevos. U más alta tras organizar: '+plan.proposedMaxUnit+'.'
+  ));
+  const actions=el('div','rack-selected-actions');
+  const apply=button('✅ Aplicar organización','bp','apply-rack-layout');apply.dataset.id=plan.rackId;
+  const cancel=button('Cancelar','bs','cancel-rack-layout');
+  actions.append(apply,cancel);card.appendChild(actions);return card;
+}
 function selectedRackEditor(project){
   const rack=arr(project.racks).find(x=>x.id===selectedRackId);
   if(!rack)return null;
@@ -233,9 +273,9 @@ function selectedItemEditor(project){
   if(relation.length)card.appendChild(el('p','hint',relation.join(' · ')+' · Las conexiones se conservan al moverlo.'));
   card.appendChild(form);return card;
 }
-function summaryCard(project,rack,validation){const card=el('div','card');const h=el('div','card-h');h.append(el('div','card-t',`🗄 ${rack.name||rack.id}`),el('span','b bac',`${rack.rackUnits}U`));const edit=button('Editar','bs bxs','edit-rack');edit.dataset.id=rack.id;const del=button('Eliminar','bd bxs','remove-rack');del.dataset.id=rack.id;h.append(edit,del);card.appendChild(h);const loc=arr(project.physicalLocations).find(x=>x.id===rack.locationId);card.appendChild(el('div','hint',`${loc?loc.name:'Ubicación no definida'} · ${rack.widthMm||'—'}×${rack.depthMm||'—'} mm`));const grid=el('div','g2 nw-grid-adaptive');grid.appendChild(rackDiagram(project,rack));const details=el('div','nw-panel-stack');const issues=arr(validation.issues).filter(i=>i.rackId===rack.id);const items=MODEL.allRackItems(project).filter(i=>i.rackId===rack.id);const used=new Set();items.forEach(i=>{for(let u=Number(i.startUnit);u<Number(i.startUnit)+Number(i.heightUnits||1);u++)used.add(u);});details.append(el('p','',`Ocupación: ${used.size}/${rack.rackUnits}U`),el('p','',`Elementos: ${items.length}`),el('p','',`Incidencias: ${issues.length}`));const pdus=arr(project.pdus).filter(x=>x.rackId===rack.id);details.appendChild(el('p','',`PDU/regletas: ${pdus.length}`));for(const pdu of pdus){const line=el('div','rack-list-row');line.append(el('span','',`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas · feed ${pdu.feed||'—'}`));const b=button('Quitar','bd bxs','remove-pdu');b.dataset.id=pdu.id;line.appendChild(b);details.appendChild(line);}if(issues.length){const ul=el('ul','rack-issues');issues.slice(0,8).forEach(i=>ul.appendChild(el('li','',i.message)));details.appendChild(ul);}grid.append(details);card.appendChild(grid);card.appendChild(rackTopologyView(project,rack));return card;}
+function summaryCard(project,rack,validation){const card=el('div','card');const h=el('div','card-h');h.append(el('div','card-t',`🗄 ${rack.name||rack.id}`),el('span','b bac',`${rack.rackUnits}U`));const auto=button('✨ Organizar','bp bxs','preview-rack-layout');auto.dataset.id=rack.id;const edit=button('Editar','bs bxs','edit-rack');edit.dataset.id=rack.id;const del=button('Eliminar','bd bxs','remove-rack');del.dataset.id=rack.id;h.append(auto,edit,del);card.appendChild(h);const loc=arr(project.physicalLocations).find(x=>x.id===rack.locationId);card.appendChild(el('div','hint',`${loc?loc.name:'Ubicación no definida'} · ${rack.widthMm||'—'}×${rack.depthMm||'—'} mm`));const grid=el('div','g2 nw-grid-adaptive');grid.appendChild(rackDiagram(project,rack));const details=el('div','nw-panel-stack');const issues=arr(validation.issues).filter(i=>i.rackId===rack.id);const items=MODEL.allRackItems(project).filter(i=>i.rackId===rack.id);const used=new Set();items.forEach(i=>{for(let u=Number(i.startUnit);u<Number(i.startUnit)+Number(i.heightUnits||1);u++)used.add(u);});details.append(el('p','',`Ocupación: ${used.size}/${rack.rackUnits}U`),el('p','',`Elementos: ${items.length}`),el('p','',`Incidencias: ${issues.length}`));const pdus=arr(project.pdus).filter(x=>x.rackId===rack.id);details.appendChild(el('p','',`PDU/regletas: ${pdus.length}`));for(const pdu of pdus){const line=el('div','rack-list-row');line.append(el('span','',`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas · feed ${pdu.feed||'—'}`));const b=button('Quitar','bd bxs','remove-pdu');b.dataset.id=pdu.id;line.appendChild(b);details.appendChild(line);}if(issues.length){const ul=el('ul','rack-issues');issues.slice(0,8).forEach(i=>ul.appendChild(el('li','',i.message)));details.appendChild(ul);}grid.append(details);card.appendChild(grid);card.appendChild(rackTopologyView(project,rack));return card;}
 function connectionsCard(project){const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','🔌 Conexiones de alimentación'));const list=el('div','nw-panel-stack');for(const c of arr(project.powerConnections)){const d=arr(project.devices).find(x=>x.id===c.deviceId),p=arr(project.pdus).find(x=>x.id===c.pduId);const row=el('div','rack-list-row');row.appendChild(el('span','',`${d?.name||c.deviceId||'Equipo'} PSU-${Number(c.powerSupplyIndex||0)+1} → ${p?.name||c.pduId||'PDU'} / toma ${c.outlet||'—'}`));const b=button('Quitar','bd bxs','remove-power');b.dataset.id=c.id;row.appendChild(b);list.appendChild(row);}if(!arr(project.powerConnections).length)list.appendChild(el('div','empty','No hay conexiones eléctricas definidas.'));card.appendChild(list);return card;}
-function render(project){ensureLayoutCss();project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');const validation=MODEL.validate(project);const head=el('div','card nw-card-wide');const hh=el('div','card-h');hh.append(el('div','card-t','🗄 Racks, alimentación y material pasivo'),el('span',`b ${validation.ok?'bgn':'brd'}`,validation.ok?'Sin bloqueos':`${validation.issues.length} incidencias`));head.appendChild(hh);head.appendChild(el('p','hint','Crea racks, coloca equipos y material pasivo por unidades, define PDU y conecta fuentes de alimentación.'));wrap.append(head,editorCard(project));const rackEdit=selectedRackEditor(project);if(rackEdit)wrap.appendChild(rackEdit);wrap.appendChild(selectedItemEditor(project));if(validation.racks.length){const rackGrid=el('div','nw-card-grid');validation.racks.forEach(r=>rackGrid.appendChild(summaryCard(project,r,validation)));wrap.appendChild(rackGrid);}else wrap.appendChild(el('div','co co-yw','No hay racks definidos. Usa el editor para crear el primero.'));wrap.appendChild(connectionsCard(project));const bom=MODEL.billOfMaterials(project);const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','📦 Materiales de rack'));const ul=el('ul','');bom.forEach(x=>ul.appendChild(el('li','',`${x.quantity} × ${x.description||x.label||x.name||x.kind||x.type||'Material'}`)));if(!bom.length)ul.appendChild(el('li','empty','No hay materiales definidos.'));card.appendChild(ul);wrap.appendChild(card);return wrap;}
+function render(project){ensureLayoutCss();project=ensureArrays(clone(project));const wrap=el('div','nw-panel-stack');const validation=MODEL.validate(project);const head=el('div','card nw-card-wide');const hh=el('div','card-h');hh.append(el('div','card-t','🗄 Racks, alimentación y material pasivo'),el('span',`b ${validation.ok?'bgn':'brd'}`,validation.ok?'Sin bloqueos':`${validation.issues.length} incidencias`));head.appendChild(hh);head.appendChild(el('p','hint','Crea racks, coloca equipos y material pasivo por unidades, define PDU y conecta fuentes de alimentación.'));wrap.append(head,editorCard(project));const rackEdit=selectedRackEditor(project);if(rackEdit)wrap.appendChild(rackEdit);const layoutPreview=rackLayoutPreviewCard(project);if(layoutPreview)wrap.appendChild(layoutPreview);wrap.appendChild(selectedItemEditor(project));if(validation.racks.length){const rackGrid=el('div','nw-card-grid');validation.racks.forEach(r=>rackGrid.appendChild(summaryCard(project,r,validation)));wrap.appendChild(rackGrid);}else wrap.appendChild(el('div','co co-yw','No hay racks definidos. Usa el editor para crear el primero.'));wrap.appendChild(connectionsCard(project));const bom=MODEL.billOfMaterials(project);const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','📦 Materiales de rack'));const ul=el('ul','');bom.forEach(x=>ul.appendChild(el('li','',`${x.quantity} × ${x.description||x.label||x.name||x.kind||x.type||'Material'}`)));if(!bom.length)ul.appendChild(el('li','empty','No hay materiales definidos.'));card.appendChild(ul);wrap.appendChild(card);return wrap;}
 function updateRackItemFromEditor(project,itemId,values){
   const item=MODEL.allRackItems(project).find(x=>x.id===itemId);
   if(!item)return{ok:false,project:clone(project),message:'Elemento de rack inexistente.'};
@@ -256,6 +296,23 @@ function rerenderMount(mount,state){
 function bind(mount,state){
   mount.onclick=e=>{
     const actionNode=e.target&&e.target.closest&&e.target.closest('[data-action]');const action=actionNode&&actionNode.dataset.action;if(!action)return;
+    if(action==='preview-rack-layout'){
+      const id=actionNode.dataset.id||'';selectedRackId=id;selectedRackNotice='';rackLayoutPreview={rackId:id,options:{}};rerenderMount(mount,state);return;
+    }
+    if(action==='cancel-rack-layout'){
+      rackLayoutPreview=null;rerenderMount(mount,state);return;
+    }
+    if(action==='apply-rack-layout'){
+      e.preventDefault();
+      const id=actionNode.dataset.id||(rackLayoutPreview&&rackLayoutPreview.rackId)||'';
+      const result=MODEL.applyRackAutoLayout(state.getSnapshot(),id,rackLayoutPreview&&rackLayoutPreview.options||{});
+      selectedRackId=id;
+      if(!result.ok){selectedRackNotice=result.message||'No se ha podido aplicar la organización.';rerenderMount(mount,state);return;}
+      rackLayoutPreview=null;
+      selectedRackNotice='Organización aplicada. Se han reutilizado los elementos existentes y creado solo el material necesario.';
+      state.replaceProject(result.project,{source:'rack-auto-layout'});
+      return;
+    }
     if(action==='edit-rack'){
       selectedRackId=actionNode.dataset.id||'';selectedRackNotice='';rerenderMount(mount,state);return;
     }
@@ -290,7 +347,7 @@ function bind(mount,state){
     if(action==='add-item'){const f=mount.querySelector('[data-form="item"]');const r=f.elementsRef;next=upsertRackItem(snapshot,{rackId:r.itemRack.value,type:r.itemType.value,deviceId:r.itemDevice.value,label:r.itemLabel.value,startUnit:r.itemStart.value,heightUnits:r.itemHeight.value});}
     if(action==='add-pdu'){const f=mount.querySelector('[data-form="pdu"]');const r=f.elementsRef;next=addPdu(snapshot,{rackId:r.pduRack.value,name:r.pduName.value,feed:r.pduFeed.value,outletCount:r.pduOutlets.value,maxPowerWatts:r.pduPower.value});}
     if(action==='add-power'){const f=mount.querySelector('[data-form="power"]');const r=f.elementsRef;const pdu=arr(snapshot.pdus).find(x=>x.id===r.powerPdu.value);next=addPowerConnection(snapshot,{deviceId:r.powerDevice.value,pduId:r.powerPdu.value,outlet:r.powerOutlet.value,powerSupplyIndex:r.powerPsu.value,feed:pdu&&pdu.feed});}
-    if(action==='remove-rack'){if(selectedRackId===actionNode.dataset.id){selectedRackId='';selectedRackNotice='';}next=removeEntity(snapshot,'rack',actionNode.dataset.id);}
+    if(action==='remove-rack'){if(selectedRackId===actionNode.dataset.id){selectedRackId='';selectedRackNotice='';}if(rackLayoutPreview&&rackLayoutPreview.rackId===actionNode.dataset.id)rackLayoutPreview=null;next=removeEntity(snapshot,'rack',actionNode.dataset.id);}
     if(action==='remove-pdu')next=removeEntity(snapshot,'pdu',actionNode.dataset.id);
     if(action==='remove-power')next=removeEntity(snapshot,'powerConnection',actionNode.dataset.id);
     if(next!==snapshot)state.replaceProject(next,{source:'rack-editor'});
@@ -365,5 +422,5 @@ function bind(mount,state){
   }
 }
 function inject(){if(!root.document||!MODEL)return;ensureLayoutCss();const page=root.document.getElementById('pg-physical')||root.document.getElementById('pg-dev')||root.document.getElementById('pg-dash');const state=root.NetWizardState;if(!page||!state||typeof state.getSnapshot!=='function')return;let mount=root.document.getElementById('rackPlannerMount');if(!mount){mount=root.document.createElement('div');mount.id='rackPlannerMount';mount.dataset.layoutSection='full';page.appendChild(mount);}mount.textContent='';mount.appendChild(render(state.getSnapshot()));bind(mount,state);}
-const api={version:'netwizard-rack-ui-v8',render,inject,ensureLayoutCss,ensureArrays,addRack,updateRack,upsertRackItem,rackItemPlacement,moveRackItem,updateRackItemFromEditor,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};root.document.addEventListener('DOMContentLoaded',refresh);root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});}
+const api={version:'netwizard-rack-ui-v9',render,inject,ensureLayoutCss,ensureArrays,addRack,updateRack,upsertRackItem,rackItemPlacement,moveRackItem,updateRackItemFromEditor,addPdu,addPowerConnection,removeEntity};root.NetWizardRackUi=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};root.document.addEventListener('DOMContentLoaded',refresh);root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});}
 })(typeof window!=='undefined'?window:globalThis);
