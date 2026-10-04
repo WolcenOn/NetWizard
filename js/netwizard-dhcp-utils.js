@@ -16,6 +16,9 @@ Mantenimiento:
   function clone(v){ return JSON.parse(JSON.stringify(v == null ? null : v)); }
   function arr(v){ return Array.isArray(v) ? v : []; }
   function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+  function i18n(){ return root.NetWizardI18n || (typeof require === 'function' ? tryRequire('./netwizard-i18n.js') : null); }
+  function tr(key, params, fallback, locale){ const api=i18n(); if(api&&typeof api.t==='function'){ const v=api.t(key,params||{},locale); if(v!==key)return v; } return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):''); }
+  function issue(code,severity,key,params,fallback,extra,locale){ return Object.assign({code,severity,category:'dhcp',message:tr(key,params,fallback,locale),messageKey:key,messageParams:Object.assign({},params||{})},extra||{}); }
 
   function nw(){
     return root.NetWizardNetworkUtils || (typeof require === 'function' ? tryRequire('./netwizard-network-utils.js') : null);
@@ -99,6 +102,7 @@ Mantenimiento:
     next.dhcp = obj(next.dhcp);
     const changes = [];
     const opts = options || {};
+    const locale=opts.locale;
     for(const vlan of arr(next.vlans)){
       const key = String(vlan.vlanId);
       const intent = obj(vlan.intent);
@@ -118,23 +122,24 @@ Mantenimiento:
         if(proposed && (!after.start || opts.overwrite)) after.start = proposed.start;
         if(proposed && (!after.end || opts.overwrite)) after.end = proposed.end;
         after.exclusions = buildExclusions(next, vlan, sn, after);
-        changes.push(before.enabled ? `VLAN ${vlan.vlanId}: DHCP actualizado${proposed ? ` (${proposed.start} - ${proposed.end})` : ''}.` : `Activar DHCP en VLAN ${vlan.vlanId}${proposed ? ` (${proposed.start} - ${proposed.end})` : ''}.`);
+        changes.push(before.enabled ? tr('dhcp.change.updated',{vlan:vlan.vlanId,range:proposed?' ('+proposed.start+' - '+proposed.end+')':''},'VLAN {vlan}: DHCP actualizado{range}.',locale) : tr('dhcp.change.enable',{vlan:vlan.vlanId,range:proposed?' ('+proposed.start+' - '+proposed.end+')':''},'Activar DHCP en VLAN {vlan}{range}.',locale));
       } else if(shouldDisable && before.enabled){
         after.enabled = false;
-        changes.push(`VLAN ${vlan.vlanId}: DHCP desactivado por intención ${type}.`);
+        changes.push(tr('dhcp.change.disabledIntent',{vlan:vlan.vlanId,type},'VLAN {vlan}: DHCP desactivado por intención {type}.',locale));
       } else if(before.enabled && proposed){
         if(!after.start || opts.overwrite) after.start = proposed.start;
         if(!after.end || opts.overwrite) after.end = proposed.end;
         after.exclusions = buildExclusions(next, vlan, sn, after);
-        changes.push(`VLAN ${vlan.vlanId}: pool DHCP completado (${after.start} - ${after.end}).`);
+        changes.push(tr('dhcp.change.poolCompleted',{vlan:vlan.vlanId,start:after.start,end:after.end},'VLAN {vlan}: pool DHCP completado ({start} - {end}).',locale));
       }
       next.dhcp[key] = after;
     }
     return { project: next, changes };
   }
 
-  function validateDhcpForProject(project){
+  function validateDhcpForProject(project, options){
     const p = project || {};
+    const locale=options&&options.locale;
     const issues = [];
     const vlansById = new Map(arr(p.vlans).map(v => [String(v.vlanId), v]));
     const hostStaticIps = new Map();
@@ -145,29 +150,29 @@ Mantenimiento:
       const cfg = normalizeDhcpConfig(rawCfg);
       if(!cfg.enabled) continue;
       const vlan = vlansById.get(String(key));
-      if(!vlan){ issues.push({code:'NW-DHCP-010', severity:'error', category:'dhcp', message:`Scope DHCP para VLAN ${key} sin VLAN existente.`, blocking:true}); continue; }
+      if(!vlan){ issues.push(issue('NW-DHCP-010','error','dhcp.validation.missingVlan',{vlan:key},'Scope DHCP para VLAN {vlan} sin VLAN existente.',{blocking:true},locale)); continue; }
       const sn = subnetForVlan(p, vlan.id);
       const ci = parseCidr(sn && sn.cidr);
-      if(!sn || !ci){ issues.push({code:'NW-DHCP-011', severity:'error', category:'dhcp', message:`VLAN ${vlan.vlanId}: DHCP activo sin subnet válida.`, blocking:true}); continue; }
+      if(!sn || !ci){ issues.push(issue('NW-DHCP-011','error','dhcp.validation.noSubnet',{vlan:vlan.vlanId},'VLAN {vlan}: DHCP activo sin subnet válida.',{blocking:true},locale)); continue; }
       const start = ipToNum(cfg.start);
       const end = ipToNum(cfg.end);
-      if(start === null || end === null){ issues.push({code:'NW-DHCP-012', severity:'error', category:'dhcp', message:`VLAN ${vlan.vlanId}: rango DHCP inválido o incompleto.`, blocking:true}); continue; }
-      if(start > end){ issues.push({code:'NW-DHCP-013', severity:'error', category:'dhcp', message:`VLAN ${vlan.vlanId}: inicio del pool DHCP posterior al final.`, blocking:true}); }
-      if(!usableWithin(start, ci) || !usableWithin(end, ci)){ issues.push({code:'NW-DHCP-014', severity:'error', category:'dhcp', message:`VLAN ${vlan.vlanId}: pool DHCP fuera de la subnet ${ci.cidr}.`, blocking:true}); }
+      if(start === null || end === null){ issues.push(issue('NW-DHCP-012','error','dhcp.validation.invalidRange',{vlan:vlan.vlanId},'VLAN {vlan}: rango DHCP inválido o incompleto.',{blocking:true},locale)); continue; }
+      if(start > end){ issues.push(issue('NW-DHCP-013','error','dhcp.validation.startAfterEnd',{vlan:vlan.vlanId},'VLAN {vlan}: inicio del pool DHCP posterior al final.',{blocking:true},locale)); }
+      if(!usableWithin(start, ci) || !usableWithin(end, ci)){ issues.push(issue('NW-DHCP-014','error','dhcp.validation.poolOutsideSubnet',{vlan:vlan.vlanId,cidr:ci.cidr},'VLAN {vlan}: pool DHCP fuera de la subnet {cidr}.',{blocking:true},locale)); }
       const gw = ipToNum(sn.gateway);
-      if(gw !== null && rangeOverlaps(start, end, gw, gw)) issues.push({code:'NW-DHCP-015', severity:'error', category:'dhcp', message:`VLAN ${vlan.vlanId}: el pool DHCP incluye el gateway ${sn.gateway}.`, blocking:true});
+      if(gw !== null && rangeOverlaps(start, end, gw, gw)) issues.push(issue('NW-DHCP-015','error','dhcp.validation.includesGateway',{vlan:vlan.vlanId,gateway:sn.gateway},'VLAN {vlan}: el pool DHCP incluye el gateway {gateway}.',{blocking:true},locale));
       for(const h of staticHosts(p, vlan.id)){
         const hip = ipToNum(h.staticIp);
-        if(hip !== null && rangeOverlaps(start, end, hip, hip)) issues.push({code:'NW-DHCP-016', severity:'warning', category:'dhcp', message:`VLAN ${vlan.vlanId}: el pool DHCP incluye IP estática ${h.staticIp} (${h.name || h.id}).`});
+        if(hip !== null && rangeOverlaps(start, end, hip, hip)) issues.push(issue('NW-DHCP-016','warning','dhcp.validation.includesStatic',{vlan:vlan.vlanId,ip:h.staticIp,host:h.name||h.id},'VLAN {vlan}: el pool DHCP incluye IP estática {ip} ({host}).',{},locale));
       }
       for(const ex of cfg.exclusions){
         const xs = ipToNum(ex.start); const xe = ipToNum(ex.end || ex.start);
-        if(xs === null || xe === null || xs > xe) issues.push({code:'NW-DHCP-017', severity:'warning', category:'dhcp', message:`VLAN ${vlan.vlanId}: exclusión DHCP inválida ${ex.start}${ex.end?`-${ex.end}`:''}.`});
-        else if(!within(xs, ci) || !within(xe, ci)) issues.push({code:'NW-DHCP-018', severity:'warning', category:'dhcp', message:`VLAN ${vlan.vlanId}: exclusión fuera de subnet ${ex.start}${ex.end?`-${ex.end}`:''}.`});
+        if(xs === null || xe === null || xs > xe) issues.push(issue('NW-DHCP-017','warning','dhcp.validation.invalidExclusion',{vlan:vlan.vlanId,range:ex.start+(ex.end?'-'+ex.end:'')},'VLAN {vlan}: exclusión DHCP inválida {range}.',{},locale));
+        else if(!within(xs, ci) || !within(xe, ci)) issues.push(issue('NW-DHCP-018','warning','dhcp.validation.exclusionOutsideSubnet',{vlan:vlan.vlanId,range:ex.start+(ex.end?'-'+ex.end:'')},'VLAN {vlan}: exclusión fuera de subnet {range}.',{},locale));
       }
       for(const r of cfg.reservations){
         const rip = ipToNum(r.ip);
-        if(r.ip && (rip === null || !usableWithin(rip, ci))) issues.push({code:'NW-DHCP-019', severity:'warning', category:'dhcp', message:`VLAN ${vlan.vlanId}: reserva DHCP fuera de subnet (${r.ip}).`});
+        if(r.ip && (rip === null || !usableWithin(rip, ci))) issues.push(issue('NW-DHCP-019','warning','dhcp.validation.reservationOutsideSubnet',{vlan:vlan.vlanId,ip:r.ip},'VLAN {vlan}: reserva DHCP fuera de subnet ({ip}).',{},locale));
       }
     }
     return { ok: !issues.some(i => i.severity === 'error' || i.blocking), issues };
@@ -195,7 +200,7 @@ Mantenimiento:
     return { vlanId:vlan.vlanId, vlanName:vlan.name, enabled:cfg.enabled, cidr:sn && sn.cidr, gateway:sn && sn.gateway, ...cfg };
   }
 
-  const api = { version:'netwizard-dhcp-utils-v3.15', normalizeDhcpConfig, proposePoolForSubnet, proposeDhcpForProject, validateDhcpForProject, excludedRangesForCisco, describeScope };
+  const api = { version:'netwizard-dhcp-utils-v3.16', normalizeDhcpConfig, proposePoolForSubnet, proposeDhcpForProject, validateDhcpForProject, excludedRangesForCisco, describeScope };
   root.NetWizardDhcpUtils = api;
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
