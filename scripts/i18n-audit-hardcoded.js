@@ -11,7 +11,7 @@ const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.
 const skipFiles = new Set(['js/netwizard-i18n.js']);
 const includeExt = new Set(['.js','.html']);
 const skipDirs = new Set(['node_modules','.git','dist','tests','original']);
-const candidate = /(['"`])([^'"`\n]*(?:[áéíóúÁÉÍÓÚñÑ¿¡]|\b(?:Añadir|Guardar|Eliminar|Cancelar|Descargar|Proyecto|Dispositivo|Puerto|VLAN|Subred|Enlace|Firewall|Configuración|Producción|Auditoría|Validar|Aplicar|Exportar)\b)[^'"`\n]*)\1/g;
+const candidate = /(['"`])([^'"`\n]*(?:[áéíóúÁÉÍÓÚñÑ¿¡]|\b(?:Añadir|Guardar|Eliminar|Cancelar|Descargar|Proyecto|Dispositivo|Puerto|VLAN|Subred|Enlace|Firewall|Configuración|Producción|Auditoría|Validar|Aplicar|Exportar|Rack|Ubicación|Equipo|Inventario|Alimentación|Organización|Ocupación|Incidencias|Elemento|Conexión|Propiedades)\b)[^'"`\n]*)\1/g;
 const allowed = [/data-i18n/, /console\./, /VERSION/i, /schemaVersion/, /docs\//, /CHANGELOG/];
 
 function walk(dir, files=[]){
