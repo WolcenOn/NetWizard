@@ -54,7 +54,7 @@ function renderDeviceOptions(sel,project){
 }
 function renderVlanOptions(sel,project,selected){
   sel.textContent='';sel.appendChild(opt('',trText('ports.bulk.noVlan',{},'— sin VLAN —'),!selected));
-  arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>sel.appendChild(opt(v.id,'VLAN '+v.vlanId+' · '+(v.name||''),v.id===selected)));
+  arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>sel.appendChild(opt(v.id,trText('ports.bulk.vlanLabel',{id:v.vlanId,name:v.name||''},'VLAN {id} · {name}'),v.id===selected)));
 }
 function renderPreview(host,project){
   host.textContent='';
