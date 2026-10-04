@@ -27,7 +27,7 @@ function maskTranslationCalls(text,rel){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');
+    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');
     const starts=tokens.map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
     if(!starts.length)break;
     const start=Math.min(...starts);
