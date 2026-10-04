@@ -11,7 +11,9 @@ const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.
 const strictRegionMarkers = {
   'js/netwizard.js': [
     ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
-    ["$('lyDev').onchange=", "$('visDev').onchange=renderVisPorts;"]
+    ["$('lyDev').onchange=", "$('visDev').onchange=renderVisPorts;"],
+    ['// 08. VLANS Y SUBNETS','// ─────────────────── HOSTS ───────────────────'],
+    ['function fillRoasSels(){','function renderVendorPills(']
   ]
 };
 const skipFiles = new Set(['js/netwizard-i18n.js']);
