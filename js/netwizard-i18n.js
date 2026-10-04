@@ -469,7 +469,7 @@
     "common.yes": "Sí",
     "common.no": "No",
     "common.unknownError": "error desconocido",
-    "device.kind.server": "Servidor",
+    "device.kind.server": "Servidor gestionado",
     "device.page.title": "🖥 Dispositivos",
     "device.page.subtitle": "Switches, routers, firewalls y endpoints de red.",
     "device.form.title": "➕ Añadir dispositivo",
@@ -628,7 +628,13 @@
     "device.catalog.huaweiAp.note": "AP Huawei gestionado por controlador/AC o cloud según modelo.",
     "device.catalog.galgusAp.note": "AP Galgus gestionado por plataforma/cloud.",
     "device.catalog.omadaAp.note": "AP Omada con SSID/VLAN desde controlador.",
-    "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet."
+    "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet.",
+    "device.kind.switch": "Switch",
+    "device.kind.router": "Router",
+    "device.kind.firewall": "Firewall",
+    "device.kind.access_point": "Punto de acceso",
+    "device.kind.wlan_controller": "Controlador WLAN",
+    "device.kind.appliance": "Appliance"
   },
   "en": {
     "app.title": "NetWizard Pro",
@@ -1071,7 +1077,7 @@
     "common.yes": "Yes",
     "common.no": "No",
     "common.unknownError": "unknown error",
-    "device.kind.server": "Server",
+    "device.kind.server": "Managed Server",
     "device.page.title": "🖥 Devices",
     "device.page.subtitle": "Switches, routers, firewalls and network endpoints.",
     "device.form.title": "➕ Add device",
@@ -1230,7 +1236,13 @@
     "device.catalog.huaweiAp.note": "Huawei AP managed by controller/AC or cloud depending on the model.",
     "device.catalog.galgusAp.note": "Galgus AP managed through its platform/cloud.",
     "device.catalog.omadaAp.note": "Omada AP with SSID/VLAN management from the controller.",
-    "device.catalog.hapAx3.note": "Router with integrated Wi‑Fi and Ethernet ports."
+    "device.catalog.hapAx3.note": "Router with integrated Wi‑Fi and Ethernet ports.",
+    "device.kind.switch": "Switch",
+    "device.kind.router": "Router",
+    "device.kind.firewall": "Firewall",
+    "device.kind.access_point": "Access Point",
+    "device.kind.wlan_controller": "WLAN Controller",
+    "device.kind.appliance": "Appliance"
   }
 };
   const SUPPORTED=localeMeta.map(x=>String(x.code||'').trim()).filter(Boolean);
