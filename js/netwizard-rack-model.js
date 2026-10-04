@@ -4,6 +4,7 @@
 const arr=v=>Array.isArray(v)?v:[];
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
 const clean=v=>String(v==null?'':v).trim();
+function tr(key,params,fallback){const i=root.NetWizardI18n;if(i&&typeof i.t==='function'){const v=i.t(key,params||{});if(v!==key)return v;}return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
 const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
 const CABLING=root.NetWizardStructuredCabling||(typeof require==='function'?require('./netwizard-structured-cabling.js'):null);
 function normalizeRack(rack){const units=num(rack&&rack.rackUnits);return Object.assign({},rack,{rackUnits:units&&units>0?Math.floor(units):42,numberingDirection:rack&&rack.numberingDirection==='top-down'?'top-down':'bottom-up'});}
@@ -12,11 +13,11 @@ function allRackItems(project){const explicit=arr(project&&project.rackItems).ma
 function occupiedUnits(item){const start=num(item&&item.startUnit),height=num(item&&item.heightUnits);if(start==null||height==null||height<=0)return[];return Array.from({length:Math.floor(height)},(_,i)=>Math.floor(start)+i);}
 function issue(code,severity,message,extra){return Object.assign({code,severity,blocking:severity==='error',category:'rack',message,source:'rack'},extra||{});}
 function validate(project){const issues=[],racks=arr(project&&project.racks).map(normalizeRack),items=allRackItems(project),rackMap=new Map(racks.map(r=>[r.id,r]));const occupancy=new Map();
- for(const item of items){const rack=rackMap.get(item.rackId);if(!rack){issues.push(issue('NW-RACK-003','error',`${item.label||item.id}: referencia un rack inexistente (${item.rackId}).`,{rackItemId:item.id,rackId:item.rackId}));continue;}const units=occupiedUnits(item);if(!units.length&&item.mounting!=='vertical-left'&&item.mounting!=='vertical-right'&&item.mounting!=='vertical-rear'){issues.push(issue('NW-RACK-002','error',`${item.label||item.id}: posición o altura de rack inválida.`,{rackItemId:item.id,rackId:item.rackId}));continue;}for(const u of units){if(u<1||u>rack.rackUnits)issues.push(issue('NW-RACK-002','error',`${item.label||item.id}: ocupa U${u}, fuera del rango 1-${rack.rackUnits}.`,{rackItemId:item.id,rackId:item.rackId,unit:u}));const key=`${rack.id}|${item.face||'front'}|${u}`;if(occupancy.has(key)){const other=occupancy.get(key);issues.push(issue('NW-RACK-001','error',`${item.label||item.id} colisiona con ${other.label||other.id} en ${rack.name||rack.id} U${u}.`,{rackId:rack.id,unit:u,rackItemId:item.id,otherRackItemId:other.id}));}else occupancy.set(key,item);}}
- for(const rack of racks){const rackItems=items.filter(x=>x.rackId===rack.id);const weight=rackItems.reduce((s,x)=>s+(num(x.weightKg)||0),0);const draw=rackItems.reduce((s,x)=>s+(num(x.powerDrawWatts)||0),0);if(num(rack.maxLoadKg)!=null&&weight>num(rack.maxLoadKg))issues.push(issue('NW-RACK-004','error',`${rack.name||rack.id}: peso ${weight} kg supera el máximo ${rack.maxLoadKg} kg.`,{rackId:rack.id}));if(num(rack.powerCapacityWatts)!=null&&draw>num(rack.powerCapacityWatts))issues.push(issue('NW-RACK-005','error',`${rack.name||rack.id}: consumo ${draw} W supera capacidad ${rack.powerCapacityWatts} W.`,{rackId:rack.id}));if(num(rack.coolingCapacityWatts)!=null&&draw>num(rack.coolingCapacityWatts))issues.push(issue('NW-RACK-006','warning',`${rack.name||rack.id}: carga térmica estimada ${draw} W supera refrigeración declarada ${rack.coolingCapacityWatts} W.`,{rackId:rack.id}));}
+ for(const item of items){const rack=rackMap.get(item.rackId);if(!rack){issues.push(issue('NW-RACK-003','error',tr('rack.validation.missingRack',{item:item.label||item.id,rackId:item.rackId},'{item}: referencia un rack inexistente ({rackId}).'),{rackItemId:item.id,rackId:item.rackId}));continue;}const units=occupiedUnits(item);if(!units.length&&item.mounting!=='vertical-left'&&item.mounting!=='vertical-right'&&item.mounting!=='vertical-rear'){issues.push(issue('NW-RACK-002','error',tr('rack.validation.invalidPlacement',{item:item.label||item.id},'{item}: posición o altura de rack inválida.'),{rackItemId:item.id,rackId:item.rackId}));continue;}for(const u of units){if(u<1||u>rack.rackUnits)issues.push(issue('NW-RACK-002','error',tr('rack.validation.outOfRange',{item:item.label||item.id,unit:u,max:rack.rackUnits},'{item}: ocupa U{unit}, fuera del rango 1-{max}.'),{rackItemId:item.id,rackId:item.rackId,unit:u}));const key=`${rack.id}|${item.face||'front'}|${u}`;if(occupancy.has(key)){const other=occupancy.get(key);issues.push(issue('NW-RACK-001','error',tr('rack.validation.collision',{item:item.label||item.id,other:other.label||other.id,rack:rack.name||rack.id,unit:u},'{item} colisiona con {other} en {rack} U{unit}.'),{rackId:rack.id,unit:u,rackItemId:item.id,otherRackItemId:other.id}));}else occupancy.set(key,item);}}
+ for(const rack of racks){const rackItems=items.filter(x=>x.rackId===rack.id);const weight=rackItems.reduce((s,x)=>s+(num(x.weightKg)||0),0);const draw=rackItems.reduce((s,x)=>s+(num(x.powerDrawWatts)||0),0);if(num(rack.maxLoadKg)!=null&&weight>num(rack.maxLoadKg))issues.push(issue('NW-RACK-004','error',tr('rack.validation.overWeight',{rack:rack.name||rack.id,weight,max:rack.maxLoadKg},'{rack}: peso {weight} kg supera el máximo {max} kg.'),{rackId:rack.id}));if(num(rack.powerCapacityWatts)!=null&&draw>num(rack.powerCapacityWatts))issues.push(issue('NW-RACK-005','error',tr('rack.validation.overPower',{rack:rack.name||rack.id,draw,max:rack.powerCapacityWatts},'{rack}: consumo {draw} W supera capacidad {max} W.'),{rackId:rack.id}));if(num(rack.coolingCapacityWatts)!=null&&draw>num(rack.coolingCapacityWatts))issues.push(issue('NW-RACK-006','warning',tr('rack.validation.overCooling',{rack:rack.name||rack.id,draw,max:rack.coolingCapacityWatts},'{rack}: carga térmica estimada {draw} W supera refrigeración declarada {max} W.'),{rackId:rack.id}));}
  const pduMap=new Map(arr(project&&project.pdus).map(p=>[p.id,p]));const deviceMap=new Map(arr(project&&project.devices).map(d=>[d.id,d]));
- const outlets=new Map();for(const c of arr(project&&project.powerConnections)){if(!pduMap.has(c.pduId)){issues.push(issue('NW-RACK-009','error',`Conexión ${c.id||'eléctrica'} referencia una PDU inexistente (${c.pduId||'sin id'}).`,{powerConnectionId:c.id,pduId:c.pduId}));continue;}if(!deviceMap.has(c.deviceId)){issues.push(issue('NW-RACK-010','error',`Conexión ${c.id||'eléctrica'} referencia un equipo inexistente (${c.deviceId||'sin id'}).`,{powerConnectionId:c.id,deviceId:c.deviceId}));continue;}const key=`${c.pduId}|${c.outlet}`;if(outlets.has(key))issues.push(issue('NW-RACK-007','error',`La toma ${c.outlet} de ${c.pduId} está asignada a más de una conexión.`,{powerConnectionId:c.id,pduId:c.pduId,outlet:c.outlet}));else outlets.set(key,c);}
- const byDevice=new Map();for(const c of arr(project&&project.powerConnections)){if(!c.deviceId)continue;const list=byDevice.get(c.deviceId)||[];list.push(c);byDevice.set(c.deviceId,list);}for(const [deviceId,connections] of byDevice){if(connections.length>1){const feeds=new Set(connections.map(c=>clean(c.feed||c.pduId)));if(feeds.size<connections.length)issues.push(issue('NW-RACK-008','warning',`${byId(project&&project.devices,deviceId)?.name||deviceId}: fuentes redundantes comparten la misma alimentación.`,{deviceId}));}}
+ const outlets=new Map();for(const c of arr(project&&project.powerConnections)){if(!pduMap.has(c.pduId)){issues.push(issue('NW-RACK-009','error',tr('rack.validation.missingPdu',{connection:c.id||tr('rack.common.electrical',{},'eléctrica'),pduId:c.pduId||tr('common.noId',{},'sin id')},'Conexión {connection} referencia una PDU inexistente ({pduId}).'),{powerConnectionId:c.id,pduId:c.pduId}));continue;}if(!deviceMap.has(c.deviceId)){issues.push(issue('NW-RACK-010','error',tr('rack.validation.missingDevice',{connection:c.id||tr('rack.common.electrical',{},'eléctrica'),deviceId:c.deviceId||tr('common.noId',{},'sin id')},'Conexión {connection} referencia un equipo inexistente ({deviceId}).'),{powerConnectionId:c.id,deviceId:c.deviceId}));continue;}const key=`${c.pduId}|${c.outlet}`;if(outlets.has(key))issues.push(issue('NW-RACK-007','error',tr('rack.validation.duplicateOutlet',{outlet:c.outlet,pduId:c.pduId},'La toma {outlet} de {pduId} está asignada a más de una conexión.'),{powerConnectionId:c.id,pduId:c.pduId,outlet:c.outlet}));else outlets.set(key,c);}
+ const byDevice=new Map();for(const c of arr(project&&project.powerConnections)){if(!c.deviceId)continue;const list=byDevice.get(c.deviceId)||[];list.push(c);byDevice.set(c.deviceId,list);}for(const [deviceId,connections] of byDevice){if(connections.length>1){const feeds=new Set(connections.map(c=>clean(c.feed||c.pduId)));if(feeds.size<connections.length)issues.push(issue('NW-RACK-008','warning',tr('rack.validation.sharedFeed',{device:byId(project&&project.devices,deviceId)?.name||deviceId},'{device}: fuentes redundantes comparten la misma alimentación.'),{deviceId}));}}
  return{version:'netwizard-rack-model-v1',ok:!issues.some(i=>i.blocking),issues,counts:{blocking:issues.filter(i=>i.blocking).length,warnings:issues.filter(i=>i.severity==='warning').length},racks,items,occupancy:Object.fromEntries(occupancy)};
 }
 function rackOccupancy(project,rackId){
@@ -59,9 +60,9 @@ function recommendedRackUnits(project,rackId,options){
 }
 function validateRackResize(project,rackId,rackUnits){
  const rack=byId(project&&project.racks,rackId),units=Math.floor(num(rackUnits)||0);
- if(!rack)return{ok:false,rack:null,rackId,rackUnits:units,blockers:[],message:'Rack inexistente.'};
- if(units<1)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack debe ser al menos 1U.'};
- if(units>100)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack no puede superar 100U.'};
+ if(!rack)return{ok:false,rack:null,rackId,rackUnits:units,blockers:[],message:tr('rack.error.missing',{},'Rack inexistente.')};
+ if(units<1)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:tr('rack.error.minUnits',{},'La altura del rack debe ser al menos 1U.')};
+ if(units>100)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:tr('rack.error.maxUnits',{},'La altura del rack no puede superar 100U.')};
  const summary=rackOccupancy(project,rackId);
  const blockers=summary.entries.filter(x=>x.endUnit>units).sort((a,b)=>b.endUnit-a.endUnit);
  const recommendation=recommendedRackUnits(project,rackId);
@@ -69,7 +70,7 @@ function validateRackResize(project,rackId,rackUnits){
    ok:!blockers.length,rack:normalizeRack(rack),rackId,rackUnits:units,blockers,
    minRackUnits:summary.maxUsedUnit||1,maxUsedUnit:summary.maxUsedUnit||0,recommendedUnits:recommendation.recommendedUnits,
    message:blockers.length
-     ?'No se puede reducir a '+units+'U: '+blockers.map(x=>x.label+' ocupa U'+x.startUnit+(x.endUnit!==x.startUnit?'-U'+x.endUnit:'')).join(', ')+'.'
+     ?tr('rack.resize.blocked',{units,blockers:blockers.map(x=>x.label+' U'+x.startUnit+(x.endUnit!==x.startUnit+'-U'+x.endUnit?'':'')).join(', ')},'No se puede reducir a {units}U: {blockers}.')
      :'El rack puede redimensionarse a '+units+'U sin dejar elementos fuera de rango.'
  };
 }
@@ -117,11 +118,11 @@ function patchablePortCount(project,deviceId){
 }
 function planRackAutoLayout(project,rackId,options){
  const rack=byId(project&&project.racks,rackId),policy=rackLayoutPolicy(project,options);
- if(!rack)return{ok:false,code:'rack_missing',rackId,policy,message:'Rack inexistente.',clusters:[],warnings:[]};
- if(policy.layoutPattern==='manual')return{ok:false,code:'manual_policy',rackId,policy,message:'La política del proyecto está en disposición manual.',clusters:[],warnings:[]};
+ if(!rack)return{ok:false,code:'rack_missing',rackId,policy,message:tr('rack.error.missing',{},'Rack inexistente.'),clusters:[],warnings:[]};
+ if(policy.layoutPattern==='manual')return{ok:false,code:'manual_policy',rackId,policy,message:tr('rack.auto.manualPolicy',{},'La política del proyecto está en disposición manual.'),clusters:[],warnings:[]};
  const switches=arr(project&&project.devices).filter(d=>(d.rackId||d.rack)===rackId&&isSwitchDevice(d))
    .slice().sort((a,b)=>(num(a.rackUnit)||999)-(num(b.rackUnit)||999)||clean(a.name).localeCompare(clean(b.name)));
- if(!switches.length)return{ok:false,code:'no_switches',rackId,policy,message:'No hay switches montados en este rack.',clusters:[],warnings:[]};
+ if(!switches.length)return{ok:false,code:'no_switches',rackId,policy,message:tr('rack.auto.noSwitches',{},'No hay switches montados en este rack.'),clusters:[],warnings:[]};
 
  const panels=arr(project&&project.patchPanels).filter(p=>p&&p.rackId===rackId);
  const items=arr(project&&project.rackItems).filter(i=>i&&i.rackId===rackId);
@@ -160,7 +161,7 @@ function planRackAutoLayout(project,rackId,options){
    const requiredPorts=Math.max(1,accessPorts);
    let capacity=selected.reduce((sum,p)=>sum+(num(p.portCount)||policy.patchPanelPorts),0);
    if(shared.length&&!selected.length){
-     warnings.push((sw.name||sw.id)+': usa '+shared.length+' patch panel(es) compartido(s); se mantienen en su posición actual.');
+     warnings.push(tr('rack.auto.sharedPanels',{switch:sw.name||sw.id,count:shared.length},'{switch}: usa {count} patch panel(es) compartido(s); se mantienen en su posición actual.'));
    }else{
      const unowned=panels.filter(p=>(!owners.get(p.id)||owners.get(p.id).size===0)&&!claimedPanels.has(p.id));
      while(capacity<requiredPorts){
@@ -201,7 +202,7 @@ function planRackAutoLayout(project,rackId,options){
        if(candidate){manager=candidate;claimedManagers.add(candidate.id);}
      }
      if(!manager){
-       manager={id:deterministicId,rackId,type:'cable-manager',label:'Organizador '+(sw.name||sw.id),startUnit:null,heightUnits:1,face:'front'};
+       manager={id:deterministicId,rackId,type:'cable-manager',label:tr('rack.auto.organizerName',{switch:sw.name||sw.id},'Organizador {switch}'),startUnit:null,heightUnits:1,face:'front'};
        createdItems.push(manager);
      }
      claimedManagers.add(manager.id);
@@ -237,7 +238,7 @@ function planRackAutoLayout(project,rackId,options){
    if(movablePanelIds.has(panel.id)||representedPanels.has(panel.id))continue;
    const u=num(panel.rackUnit);if(u!=null)markFixed(Math.floor(u),panel.name||panel.id);
  }
- if(fixedConflicts.length)return{ok:false,code:'fixed_collision',rackId,policy,message:'El rack contiene colisiones entre elementos que el autolayout no debe mover: '+fixedConflicts.join('; ')+'.',clusters,warnings,createdPanels,createdItems};
+ if(fixedConflicts.length)return{ok:false,code:'fixed_collision',rackId,policy,message:tr('rack.auto.fixedCollision',{conflicts:fixedConflicts.join('; ')},'El rack contiene colisiones entre elementos que el autolayout no debe mover: {conflicts}.'),clusters,warnings,createdPanels,createdItems};
 
  let cursor=1,maxUnit=0;
  for(const cluster of clusters){
@@ -254,7 +255,7 @@ function planRackAutoLayout(project,rackId,options){
      return{
        ok:false,code:'insufficient_space',rackId,policy,clusters,warnings,createdPanels,createdItems,
        requiredUnits:blockHeight,availableUnits:Number(rack.rackUnits||42),
-       message:(rack.name||rack.id)+': no hay '+blockHeight+'U contiguas libres para organizar '+cluster.switchName+'.'
+       message:tr('rack.auto.noSpace',{rack:rack.name||rack.id,units:blockHeight,switch:cluster.switchName},'{rack}: no hay {units}U contiguas libres para organizar {switch}.')
      };
    }
    let unit=start;
@@ -275,7 +276,7 @@ function planRackAutoLayout(project,rackId,options){
      createPanels:createdPanels.length,
      createItems:createdItems.length
    },
-   message:'Se organizarán '+clusters.length+' switch(es) en patrón '+policy.layoutPattern+', sin mover el resto del rack.'
+   message:tr('rack.auto.ready',{count:clusters.length,pattern:policy.layoutPattern},'Se organizarán {count} switch(es) en patrón {pattern}, sin mover el resto del rack.')
  };
 }
 function applyRackAutoLayout(project,rackId,options){
@@ -330,13 +331,13 @@ function rackTopology(project,rackId){
    const a=portMap.get(aId),b=portMap.get(bId);if(!a||!b)continue;
    const aIn=deviceIds.has(a.deviceId),bIn=deviceIds.has(b.deviceId);if(!aIn&&!bIn)continue;
    const da=devMap.get(a.deviceId),db=devMap.get(b.deviceId);
-   dataEdges.push({id:link.id,kind:'data',label:link.name||link.label||link.cableId||link.id||'Enlace',cableId:link.cableId||null,internal:aIn&&bIn,fromDeviceId:a.deviceId,toDeviceId:b.deviceId,fromPortId:a.id,toPortId:b.id,fromLabel:`${da?.name||a.deviceId} · ${a.name||a.id}`,toLabel:`${db?.name||b.deviceId} · ${b.name||b.id}`,media:link.media||link.medium||link.cableType||null,capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||link.route||null});
+   dataEdges.push({id:link.id,kind:'data',label:link.name||link.label||link.cableId||link.id||tr('rack.common.link',{},'Enlace'),cableId:link.cableId||null,internal:aIn&&bIn,fromDeviceId:a.deviceId,toDeviceId:b.deviceId,fromPortId:a.id,toPortId:b.id,fromLabel:`${da?.name||a.deviceId} · ${a.name||a.id}`,toLabel:`${db?.name||b.deviceId} · ${b.name||b.id}`,media:link.media||link.medium||link.cableType||null,capacityMbps:link.capacityMbps||null,physicalPath:link.physicalPath||link.route||null});
  }
  const pduMap2=new Map(arr(project&&project.pdus).map(p=>[p.id,p]));
- const powerEdges=arr(project&&project.powerConnections).filter(x=>deviceIds.has(x.deviceId)||pduMap2.get(x.pduId)?.rackId===rackId).map(x=>{const d=devMap.get(x.deviceId),p=pduMap2.get(x.pduId);return{id:x.id,kind:'power',label:x.label||x.name||x.id||'Alimentación',deviceId:x.deviceId,pduId:x.pduId,fromLabel:`${d?.name||x.deviceId} PSU-${Number(x.powerSupplyIndex||0)+1}`,toLabel:`${p?.name||x.pduId} · toma ${x.outlet||'—'}`,feed:x.feed||p?.feed||null,outlet:x.outlet||null};});
+ const powerEdges=arr(project&&project.powerConnections).filter(x=>deviceIds.has(x.deviceId)||pduMap2.get(x.pduId)?.rackId===rackId).map(x=>{const d=devMap.get(x.deviceId),p=pduMap2.get(x.pduId);return{id:x.id,kind:'power',label:x.label||x.name||x.id||tr('rack.common.power',{},'Alimentación'),deviceId:x.deviceId,pduId:x.pduId,fromLabel:`${d?.name||x.deviceId} PSU-${Number(x.powerSupplyIndex||0)+1}`,toLabel:(p?.name||x.pduId)+' · '+tr('rack.common.outlet',{outlet:x.outlet||'—'},'toma {outlet}'),feed:x.feed||p?.feed||null,outlet:x.outlet||null};});
  const cablingEdges=CABLING&&typeof CABLING.rackEdges==='function'?CABLING.rackEdges(project,rackId):[];
  return{rack:normalizeRack(rack),nodes,dataEdges,powerEdges,cablingEdges};
 }
-function billOfMaterials(project){const rows=[];for(const rack of arr(project&&project.racks))rows.push({kind:'Rack',description:`${rack.name||rack.id} · ${rack.rackUnits||42}U`,quantity:1,locationId:rack.locationId});for(const item of allRackItems(project)){if(item.type!=='device'&&item.type!=='reserved'&&!item.patchPanelId)rows.push({kind:item.type||'Elemento rack',description:item.label||item.name||item.id,quantity:1,rackId:item.rackId});}for(const p of arr(project&&project.patchPanels))rows.push({kind:'Patch panel',description:`${p.name||p.id} · ${p.portCount||0} puertos`,quantity:1,rackId:p.rackId});for(const pdu of arr(project&&project.pdus))rows.push({kind:'PDU',description:`${pdu.name||pdu.id} · ${pdu.outletCount||0} tomas`,quantity:1,rackId:pdu.rackId});return rows;}
+function billOfMaterials(project){const rows=[];for(const rack of arr(project&&project.racks))rows.push({kind:tr('rack.bom.rack',{},'Rack'),description:(rack.name||rack.id)+' · '+(rack.rackUnits||42)+'U',quantity:1,locationId:rack.locationId});for(const item of allRackItems(project)){if(item.type!=='device'&&item.type!=='reserved'&&!item.patchPanelId)rows.push({kind:item.type||tr('rack.bom.item',{},'Elemento rack'),description:item.label||item.name||item.id,quantity:1,rackId:item.rackId});}for(const p of arr(project&&project.patchPanels))rows.push({kind:tr('rack.bom.patchPanel',{},'Patch panel'),description:(p.name||p.id)+' · '+tr('rack.bom.ports',{count:p.portCount||0},'{count} puertos'),quantity:1,rackId:p.rackId});for(const pdu of arr(project&&project.pdus))rows.push({kind:'PDU',description:(pdu.name||pdu.id)+' · '+tr('rack.bom.outlets',{count:pdu.outletCount||0},'{count} tomas'),quantity:1,rackId:pdu.rackId});return rows;}
 const api={version:'netwizard-rack-model-v5',normalizeRack,deviceRackItem,allRackItems,occupiedUnits,rackOccupancy,recommendedRackUnits,validateRackResize,rackLayoutPolicy,planRackAutoLayout,applyRackAutoLayout,validate,rackTopology,billOfMaterials};root.NetWizardRackModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
