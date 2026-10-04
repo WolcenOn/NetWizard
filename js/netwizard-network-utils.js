@@ -6,6 +6,11 @@
 (function initNetWizardNetworkUtils(root){
   'use strict';
 
+  function tryRequire(p){ try{return require(p);}catch{return null;} }
+  function i18n(){ return root.NetWizardI18n || (typeof require==='function'?tryRequire('./netwizard-i18n.js'):null); }
+  function tr(key,params,fallback,locale){ const api=i18n(); if(api&&typeof api.t==='function'){const v=api.t(key,params||{},locale);if(v!==key)return v;} return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):''); }
+  function result(ok,code,key,params,fallback,extra,locale){ return Object.assign({ok,code,msg:tr(key,params,fallback,locale),messageKey:key,messageParams:Object.assign({},params||{})},extra||{}); }
+
   function parseIp(ip){
     const p=(ip||'').trim().split('.');
     if(p.length!==4)return null;
