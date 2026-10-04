@@ -439,7 +439,7 @@
   "common.yes": "Yes",
   "common.no": "No",
   "common.unknownError": "unknown error",
-  "device.kind.server": "Server",
+  "device.kind.server": "Managed Server",
   "device.page.title": "🖥 Devices",
   "device.page.subtitle": "Switches, routers, firewalls and network endpoints.",
   "device.form.title": "➕ Add device",
@@ -598,5 +598,11 @@
   "device.catalog.huaweiAp.note": "Huawei AP managed by controller/AC or cloud depending on the model.",
   "device.catalog.galgusAp.note": "Galgus AP managed through its platform/cloud.",
   "device.catalog.omadaAp.note": "Omada AP with SSID/VLAN management from the controller.",
-  "device.catalog.hapAx3.note": "Router with integrated Wi‑Fi and Ethernet ports."
+  "device.catalog.hapAx3.note": "Router with integrated Wi‑Fi and Ethernet ports.",
+  "device.kind.switch": "Switch",
+  "device.kind.router": "Router",
+  "device.kind.firewall": "Firewall",
+  "device.kind.access_point": "Access Point",
+  "device.kind.wlan_controller": "WLAN Controller",
+  "device.kind.appliance": "Appliance"
 }
