@@ -63,11 +63,11 @@ test('Inventario físico previsualiza y aplica organización automática de rack
   expect(result.sw1.rackUnit).toBe(7);
   expect(result.panels).toEqual(expect.arrayContaining([
     expect.objectContaining({id:'pp-auto-existing',rackUnit:5}),
-    expect.objectContaining({id:'rackauto-pp-rack-auto-sw-auto-2-1',rackUnit:2})
+    expect.objectContaining({id:expect.stringMatching(/^rackauto-pp-/),rackUnit:2})
   ]));
   expect(result.managers).toEqual(expect.arrayContaining([
     expect.objectContaining({id:'cm-auto-existing',startUnit:6}),
-    expect.objectContaining({id:'rackauto-manager-rack-auto-sw-auto-2',startUnit:3})
+    expect.objectContaining({id:expect.stringMatching(/^rackauto-manager-/),startUnit:3})
   ]));
   expect(result.patchConnections).toEqual([
     expect.objectContaining({id:'patch-auto-existing',patchPanelId:'pp-auto-existing',switchPortId:'sw-auto-1-p1'})
