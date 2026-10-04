@@ -6,6 +6,7 @@ const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
 const optionalNum=v=>clean(v)===''?null:num(v);
+const nonNegativeOptional=v=>{const n=optionalNum(v);return n==null?null:(n>=0?n:null);};
 const clone=v=>JSON.parse(JSON.stringify(v||{}));
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 let selectedRackItemId='';
@@ -14,7 +15,7 @@ let rackEditorNotice='';
 let selectedRackNotice='';
 let suppressRackClickUntil=0;
 function ensureArrays(project){for(const key of ['racks','rackItems','pdus','powerConnections'])if(!Array.isArray(project[key]))project[key]=[];return project;}
-function addRack(project,input){const next=ensureArrays(clone(project));const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||'Rack sin nombre',locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.floor(num(input.rackUnits)||42)),widthMm:num(input.widthMm),depthMm:num(input.depthMm),maxLoadKg:num(input.maxLoadKg),powerCapacityWatts:num(input.powerCapacityWatts),coolingCapacityWatts:num(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
+function addRack(project,input){const next=ensureArrays(clone(project));const requested=Math.floor(num(input.rackUnits)||42);const rack={id:clean(input.id)||uid('rack'),name:clean(input.name)||'Rack sin nombre',locationId:clean(input.locationId)||null,rackUnits:Math.max(1,Math.min(100,requested)),widthMm:nonNegativeOptional(input.widthMm),depthMm:nonNegativeOptional(input.depthMm),maxLoadKg:nonNegativeOptional(input.maxLoadKg),powerCapacityWatts:nonNegativeOptional(input.powerCapacityWatts),coolingCapacityWatts:nonNegativeOptional(input.coolingCapacityWatts),numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'};next.racks.push(rack);return next;}
 function updateRack(project,rackId,input){
   const next=ensureArrays(clone(project)),rack=next.racks.find(x=>x.id===rackId);
   if(!rack)return{ok:false,project:next,message:'Rack inexistente.'};
@@ -22,15 +23,23 @@ function updateRack(project,rackId,input){
   const requestedUnits=Math.floor(rawUnits==null?0:rawUnits);
   const resize=MODEL.validateRackResize?MODEL.validateRackResize(project,rackId,requestedUnits):{ok:requestedUnits>=1,message:'La altura del rack debe ser al menos 1U.'};
   if(!resize.ok)return{ok:false,project:clone(project),message:resize.message,resize};
+  const numericFields=[
+    ['widthMm',input.widthMm],['depthMm',input.depthMm],['maxLoadKg',input.maxLoadKg],
+    ['powerCapacityWatts',input.powerCapacityWatts],['coolingCapacityWatts',input.coolingCapacityWatts]
+  ];
+  for(const [key,value] of numericFields){
+    const parsed=optionalNum(value);
+    if(parsed!=null&&parsed<0)return{ok:false,project:clone(project),message:key+' no puede ser negativo.',resize};
+  }
   Object.assign(rack,{
     name:clean(input.name)||rack.name||'Rack sin nombre',
     locationId:clean(input.locationId)||null,
     rackUnits:requestedUnits,
-    widthMm:optionalNum(input.widthMm),
-    depthMm:optionalNum(input.depthMm),
-    maxLoadKg:optionalNum(input.maxLoadKg),
-    powerCapacityWatts:optionalNum(input.powerCapacityWatts),
-    coolingCapacityWatts:optionalNum(input.coolingCapacityWatts),
+    widthMm:nonNegativeOptional(input.widthMm),
+    depthMm:nonNegativeOptional(input.depthMm),
+    maxLoadKg:nonNegativeOptional(input.maxLoadKg),
+    powerCapacityWatts:nonNegativeOptional(input.powerCapacityWatts),
+    coolingCapacityWatts:nonNegativeOptional(input.coolingCapacityWatts),
     numberingDirection:input.numberingDirection==='top-down'?'top-down':'bottom-up'
   });
   return{ok:true,project:next,rack:Object.assign({},rack),resize};
@@ -161,7 +170,7 @@ function rackTopologyView(project,rack){
   wrap.append(data,power,cable);return wrap;
 }
 function editorCard(project){const card=el('div','card nw-card-wide');card.appendChild(el('div','card-t','✏️ Editor de racks y alimentación'));const tabs=el('div','rack-editor-grid');
-const rackForm=el('form','rack-editor-form');rackForm.dataset.form='rack';const rackName=input('text','Rack principal');const rackUnits=input('number','42',42);rackUnits.min='1';const rackLocation=select([['','Sin ubicación'],...arr(project.physicalLocations).map(x=>[x.id,x.name||x.id])],'');const rackPower=input('number','7000');rackForm.append(field('Nombre',rackName),field('Unidades',rackUnits),field('Ubicación',rackLocation),field('Capacidad eléctrica W',rackPower),button('➕ Crear rack','bp','add-rack'));rackForm.elementsRef={rackName,rackUnits,rackLocation,rackPower};
+const rackForm=el('form','rack-editor-form');rackForm.dataset.form='rack';const rackName=input('text','Rack principal');const rackUnits=input('number','42',42);rackUnits.min='1';rackUnits.max='100';const rackLocation=select([['','Sin ubicación'],...arr(project.physicalLocations).map(x=>[x.id,x.name||x.id])],'');const rackPower=input('number','7000');rackForm.append(field('Nombre',rackName),field('Unidades',rackUnits),field('Ubicación',rackLocation),field('Capacidad eléctrica W',rackPower),button('➕ Crear rack','bp','add-rack'));rackForm.elementsRef={rackName,rackUnits,rackLocation,rackPower};
 const itemForm=el('form','rack-editor-form');itemForm.dataset.form='item';const itemRack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),'');const itemType=select([['device','Equipo'],['patch-panel','Patch panel'],['cable-manager','Pasacables'],['shelf','Bandeja'],['ups','UPS'],['blanking-panel','Panel ciego'],['other','Otro']],'device');const itemDevice=select([['','Sin equipo'],...arr(project.devices).map(x=>[x.id,x.name||x.id])],'');const itemLabel=input('text','Patch panel Cat6A');const itemStart=input('number','20');itemStart.min='1';const itemHeight=input('number','1',1);itemHeight.min='1';itemForm.append(field('Rack',itemRack),field('Tipo',itemType),field('Equipo',itemDevice),field('Etiqueta',itemLabel),field('Unidad inicial',itemStart),field('Altura U',itemHeight),button('➕ Colocar elemento','bp','add-item'));itemForm.elementsRef={itemRack,itemType,itemDevice,itemLabel,itemStart,itemHeight};
 const pduForm=el('form','rack-editor-form');pduForm.dataset.form='pdu';const pduRack=select(arr(project.racks).map(x=>[x.id,x.name||x.id]),'');const pduName=input('text','PDU-A');const pduFeed=select([['A','Alimentación A'],['B','Alimentación B'],['UPS','UPS']],'A');const pduOutlets=input('number','12',12);pduOutlets.min='1';const pduPower=input('number','3680');pduForm.append(field('Rack',pduRack),field('Nombre',pduName),field('Feed',pduFeed),field('Tomas',pduOutlets),field('Potencia máxima W',pduPower),button('➕ Crear PDU','bp','add-pdu'));pduForm.elementsRef={pduRack,pduName,pduFeed,pduOutlets,pduPower};
 const powerForm=el('form','rack-editor-form');powerForm.dataset.form='power';const powerDevice=select(arr(project.devices).map(x=>[x.id,x.name||x.id]),'');const powerPdu=select(arr(project.pdus).map(x=>[x.id,x.name||x.id]),'');const powerOutlet=input('number','1',1);powerOutlet.min='1';const powerPsu=input('number','0',0);powerPsu.min='0';powerForm.append(field('Equipo',powerDevice),field('PDU',powerPdu),field('Toma',powerOutlet),field('Fuente nº',powerPsu),button('🔌 Conectar alimentación','bp','add-power'));powerForm.elementsRef={powerDevice,powerPdu,powerOutlet,powerPsu};
@@ -177,10 +186,10 @@ function selectedRackEditor(project){
   card.appendChild(el('p','hint',`Ocupación actual: ${occupancy.usedCount||0}U · U más alta ocupada: ${occupancy.maxUsedUnit||0} · Tamaño recomendado con reserva: ${recommendation.recommendedUnits}U.`));
   const form=el('form','rack-editor-form rack-selected-form');form.dataset.form='selected-rack';form.dataset.rackId=rack.id;
   const name=input('text','Rack principal',rack.name||'');
-  const units=input('number','42',rack.rackUnits||42);units.min='1';
+  const units=input('number','42',rack.rackUnits||42);units.min='1';units.max='100';
   const location=select([['','Sin ubicación'],...arr(project.physicalLocations).map(x=>[x.id,x.name||x.id])],rack.locationId||'');
-  const width=input('number','600',rack.widthMm);width.min='1';
-  const depth=input('number','1000',rack.depthMm);depth.min='1';
+  const width=input('number','600',rack.widthMm);width.min='0';
+  const depth=input('number','1000',rack.depthMm);depth.min='0';
   const load=input('number','800',rack.maxLoadKg);load.min='0';load.step='0.1';
   const power=input('number','7000',rack.powerCapacityWatts);power.min='0';
   const cooling=input('number','5000',rack.coolingCapacityWatts);cooling.min='0';
