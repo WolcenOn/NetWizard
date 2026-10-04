@@ -44,6 +44,18 @@
   }
   function deviceModel(){ try{return root.NetWizardDeviceModel || (typeof require==='function'&&require('./netwizard-device-model.js'));}catch{return null;} }
   function isSwitch(d){ const model=deviceModel(); return !!d && (model ? model.isSwitching(d) : /switch/i.test(clean(d.kind||d.type))); }
+  function isL3Switch(d){
+    const type=clean(d&&(d.type||d.kind)).toLowerCase();
+    return isSwitch(d)&&(['l3switch','switch_l3'].includes(type)||d.l3===true||d.layer3===true||d.routing===true||clean(d.l3Capable).toLowerCase()==='yes');
+  }
+  function subnetOwner(sn){ return clean(sn&&(sn.gatewayDeviceRef||sn.gatewayDeviceId||sn.ownerDeviceRef||sn.routingDeviceRef)); }
+  function ownedGatewayVlans(project,d){
+    return arr(project&&project.subnets).map(sn=>({subnet:sn,vlan:vlan(project,sn&&sn.vlanRef)}))
+      .filter(x=>x.vlan&&subnetOwner(x.subnet)===d.id&&clean(x.subnet.gateway)&&clean(x.subnet.cidr)&&clean(x.vlan&&x.vlan.intent&&x.vlan.intent.type).toLowerCase()!=='transit')
+      .sort((a,b)=>(a.vlan.vlanId||0)-(b.vlan.vlanId||0));
+  }
+  function ipv6ForVlan(project,ref){ return arr(project&&project.ipv6Networks).find(n=>n&&n.vlanRef===ref)||null; }
+  function ipv6PrefixLength(prefix){ const m=clean(prefix).match(/\/(\d{1,3})$/),n=m?Number(m[1]):64; return Number.isInteger(n)&&n>=0&&n<=128?n:64; }
   function ciscoVtp(project,d){
     const raw=project&&project.vtp&&typeof project.vtp==='object'?project.vtp:{};
     const roles=raw.roles&&typeof raw.roles==='object'?raw.roles:{};
@@ -52,8 +64,14 @@
     const version=['1','2','3'].includes(String(raw.version||''))?String(raw.version):'';
     return{role:supported,domain:clean(raw.domain),passwordRequired:!!clean(raw.password),version,pruning:raw.pruning==='yes'};
   }
-  function cisco(project,d){
+  function cisco(project,d,options){
+    const opts=options||{},l3=isL3Switch(d),owned=ownedGatewayVlans(project,d);
+    const ipv4Acl=String(opts.ipv4Acl||'').trim(),ipv6Acl=String(opts.ipv6Acl||'').trim();
+    const policyRefs=new Set(arr(opts.policyVlanRefs).filter(Boolean));
+    const hasIpv6=owned.some(x=>{const n=ipv6ForVlan(project,x.vlan.id);return n&&clean(n.prefix)&&clean(n.gateway);});
     const L=['!','! NetWizard switching profesional','configure terminal',`hostname ${token(d.name,'switch')}`,'spanning-tree mode rapid-pvst','spanning-tree portfast default','spanning-tree bpduguard default','no ip http server','ip ssh version 2'];
+    if(l3)L.push('ip routing');
+    if(hasIpv6)L.push('ipv6 unicast-routing');
     const vtp=ciscoVtp(project,d);
     if(vtp.role!=='off'){
       L.push('!','! VTP — revisión obligatoria antes de producción');
@@ -66,9 +84,31 @@
     if(vtp.role!=='client'){
       arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>L.push(`vlan ${v.vlanId}`,` name ${token(v.name,'VLAN'+v.vlanId)}`,' exit'));
     }
+    if(ipv4Acl)L.push('',ipv4Acl);
+    if(ipv6Acl)L.push('',ipv6Acl);
+    const renderedSvis=new Set();
+    if(l3){
+      for(const item of owned){
+        const v=item.vlan,sn=item.subnet,v6=ipv6ForVlan(project,v.id);
+        L.push('!',`interface Vlan${v.vlanId}`,` description GW_${token(v.name,'VLAN'+v.vlanId)}`,` ip address ${clean(sn.gateway)} ${ipv4Mask(sn.cidr)}`);
+        if(v6&&clean(v6.gateway)&&clean(v6.prefix))L.push(` ipv6 address ${clean(v6.gateway)}/${ipv6PrefixLength(v6.prefix)}`);
+        if(policyRefs.has(v.id)&&ipv4Acl)L.push(' ip access-group FW_POLICY in');
+        if(policyRefs.has(v.id)&&ipv6Acl&&v6)L.push(' ipv6 traffic-filter FW_POLICY_V6 in');
+        L.push(' no shutdown',' exit');
+        renderedSvis.add(v.id);
+      }
+    }
     const mgmt=management(project,d);
     if(mgmt){
-      L.push('!','! Management SVI',`interface Vlan${mgmt.vlan.vlanId}`,` description Management_${token(mgmt.vlan.name,'MGMT')}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)}`,' no shutdown',' exit',`ip default-gateway ${clean(mgmt.subnet.gateway)}`);
+      if(renderedSvis.has(mgmt.vlan.id)){
+        const ownedItem=owned.find(x=>x.vlan.id===mgmt.vlan.id);
+        if(ownedItem&&clean(ownedItem.subnet.gateway)!==mgmt.ip){
+          L.push(`interface Vlan${mgmt.vlan.vlanId}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)} secondary`,' exit');
+        }
+      }else{
+        L.push('!','! Management SVI',`interface Vlan${mgmt.vlan.vlanId}`,` description Management_${token(mgmt.vlan.name,'MGMT')}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)}`,' no shutdown',' exit');
+      }
+      if(!l3)L.push(`ip default-gateway ${clean(mgmt.subnet.gateway)}`);
     }
     ports(project,d.id).forEach(p=>{
       L.push(`interface ${clean(p.name||p.id)}`);
@@ -77,6 +117,9 @@
         L.push(' switchport mode trunk',` switchport trunk native vlan ${nativeVid(project,p)}`,` switchport trunk allowed vlan ${allowed(project,p).join(',')}`,' spanning-tree guard root');
       }else if(p.mode==='access'){
         L.push(' switchport mode access',` switchport access vlan ${accessVid(project,p)}`,' spanning-tree portfast',' spanning-tree bpduguard enable',' storm-control broadcast level 1.00 0.50',' storm-control multicast level 1.00 0.50');
+      }else if(p.mode==='routed'){
+        if(!/^loopback/i.test(clean(p.name||p.id)))L.push(' no switchport');
+        if(clean(p.l3Ip||p.routedIp)&&clean(p.l3Cidr||p.routedCidr))L.push(` ip address ${clean(p.l3Ip||p.routedIp)} ${ipv4Mask(p.l3Cidr||p.routedCidr)}`);
       }
       L.push(' no shutdown',' exit');
     });
@@ -101,6 +144,6 @@
     const L=[`; NetWizard switching profesional`,`hostname "${clean(d.name||'switch')}"`,'spanning-tree','spanning-tree mode rapid-pvst']; arr(project.vlans).forEach(v=>L.push(`vlan ${v.vlanId}`,` name "${clean(v.name||'VLAN')}"`,' exit'));
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); if(p.mode==='trunk')L.push(`interface ${n}`,` tagged vlan ${allowed(project,p).join(',')}`,` untagged vlan ${nativeVid(project,p)}`,' spanning-tree root-guard',' exit'); else if(p.mode==='access')L.push(`interface ${n}`,` untagged vlan ${accessVid(project,p)}`,' spanning-tree admin-edge-port',' spanning-tree bpdu-protection',' exit'); }); return L.join('\n')+'\n';
   }
-  function render(project,deviceId,vendor){ const d=device(project,deviceId); if(!isSwitch(d))return ''; const v=clean(vendor||d.vendorOs); if(v==='cisco_ios')return cisco(project,d); if(v==='juniper_junos')return junos(project,d); if(v==='huawei_vrp')return huawei(project,d); if(v==='mikrotik_routeros')return mikrotik(project,d); if(v==='aruba_aoss')return aruba(project,d); return ''; }
-  const api={version:'netwizard-switching-generator-v1',render,cisco,ciscoVtp,junos,huawei,mikrotik,aruba}; root.NetWizardSwitchingGenerator=api; if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  function render(project,deviceId,vendor,options){ const d=device(project,deviceId); if(!isSwitch(d))return ''; const v=clean(vendor||d.vendorOs); if(v==='cisco_ios')return cisco(project,d,options); if(v==='juniper_junos')return junos(project,d); if(v==='huawei_vrp')return huawei(project,d); if(v==='mikrotik_routeros')return mikrotik(project,d); if(v==='aruba_aoss')return aruba(project,d); return ''; }
+  const api={version:'netwizard-switching-generator-v1',render,cisco,ciscoVtp,junos,huawei,mikrotik,aruba,isL3Switch,ownedGatewayVlans}; root.NetWizardSwitchingGenerator=api; if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

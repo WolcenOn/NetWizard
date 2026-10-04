@@ -1,0 +1,2619 @@
+{
+  "format": "netwizard-project",
+  "schemaVersion": "3.50.0",
+  "exportedAt": "2026-10-03T18:30:00.000Z",
+  "project": {
+    "_schemaVersion": "3.50.0",
+    "step": "dash",
+    "projName": "Golden Path · Datacenter leaf-spine moderno",
+    "workflow": {
+      "mode": "design"
+    },
+    "customDeviceModels": [],
+    "devices": [
+      {
+        "id": "dc_spine1",
+        "name": "DC-SPINE-01",
+        "type": "l3switch",
+        "kind": "switch",
+        "l3Capable": "yes",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9500X",
+        "modelSource": "manual",
+        "rackId": "dc_rack_a",
+        "rackUnit": 40,
+        "rackUnits": 1,
+        "powerDrawWatts": 350,
+        "powerDomain": "dc_power_a",
+        "coolingZone": "dc_cooling_a",
+        "locationId": "dc_room_a",
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_spine2",
+        "name": "DC-SPINE-02",
+        "type": "l3switch",
+        "kind": "switch",
+        "l3Capable": "yes",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9500X",
+        "modelSource": "manual",
+        "rackId": "dc_rack_b",
+        "rackUnit": 40,
+        "rackUnits": 1,
+        "powerDrawWatts": 350,
+        "powerDomain": "dc_power_b",
+        "coolingZone": "dc_cooling_b",
+        "locationId": "dc_room_b",
+        "physicalLocation": "Datacenter · Sala B"
+      },
+      {
+        "id": "dc_leaf1",
+        "name": "DC-LEAF-01",
+        "type": "l3switch",
+        "kind": "switch",
+        "l3Capable": "yes",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300X",
+        "modelSource": "manual",
+        "rackId": "dc_rack_a",
+        "rackUnit": 38,
+        "rackUnits": 1,
+        "powerDrawWatts": 250,
+        "powerDomain": "dc_power_a",
+        "coolingZone": "dc_cooling_a",
+        "locationId": "dc_room_a",
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_leaf2",
+        "name": "DC-LEAF-02",
+        "type": "l3switch",
+        "kind": "switch",
+        "l3Capable": "yes",
+        "vendorOs": "cisco_ios",
+        "manufacturer": "Cisco",
+        "model": "Catalyst 9300X",
+        "modelSource": "manual",
+        "rackId": "dc_rack_b",
+        "rackUnit": 38,
+        "rackUnits": 1,
+        "powerDrawWatts": 250,
+        "powerDomain": "dc_power_b",
+        "coolingZone": "dc_cooling_b",
+        "locationId": "dc_room_b",
+        "physicalLocation": "Datacenter · Sala B"
+      }
+    ],
+    "ports": [
+      {
+        "id": "dc_spine1_loop0",
+        "deviceId": "dc_spine1",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.11",
+        "l3Cidr": "10.255.255.11/32"
+      },
+      {
+        "id": "dc_s1_l1",
+        "deviceId": "dc_spine1",
+        "name": "FortyGigabitEthernet1/0/1",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.1",
+        "l3Cidr": "10.255.90.0/30",
+        "desc": "OSPF underlay a DC-LEAF-01",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t901"
+      },
+      {
+        "id": "dc_s1_l2",
+        "deviceId": "dc_spine1",
+        "name": "FortyGigabitEthernet1/0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.9",
+        "l3Cidr": "10.255.90.8/30",
+        "desc": "OSPF underlay a DC-LEAF-02",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t903"
+      },
+      {
+        "id": "dc_spine2_loop0",
+        "deviceId": "dc_spine2",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.12",
+        "l3Cidr": "10.255.255.12/32"
+      },
+      {
+        "id": "dc_s2_l1",
+        "deviceId": "dc_spine2",
+        "name": "FortyGigabitEthernet1/0/1",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.5",
+        "l3Cidr": "10.255.90.4/30",
+        "desc": "OSPF underlay a DC-LEAF-01",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t902"
+      },
+      {
+        "id": "dc_s2_l2",
+        "deviceId": "dc_spine2",
+        "name": "FortyGigabitEthernet1/0/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.13",
+        "l3Cidr": "10.255.90.12/30",
+        "desc": "OSPF underlay a DC-LEAF-02",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t904"
+      },
+      {
+        "id": "dc_leaf1_loop0",
+        "deviceId": "dc_leaf1",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.21",
+        "l3Cidr": "10.255.255.21/32"
+      },
+      {
+        "id": "dc_l1_s1",
+        "deviceId": "dc_leaf1",
+        "name": "FortyGigabitEthernet1/1/1",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.2",
+        "l3Cidr": "10.255.90.0/30",
+        "desc": "OSPF underlay a DC-SPINE-01",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t901"
+      },
+      {
+        "id": "dc_l1_s2",
+        "deviceId": "dc_leaf1",
+        "name": "FortyGigabitEthernet1/1/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.6",
+        "l3Cidr": "10.255.90.4/30",
+        "desc": "OSPF underlay a DC-SPINE-02",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t902"
+      },
+      {
+        "id": "dc_l1_fe",
+        "deviceId": "dc_leaf1",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v110",
+        "desc": "Servidor frontend A",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l1_be",
+        "deviceId": "dc_leaf1",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v120",
+        "desc": "Servidor backend A",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l1_db",
+        "deviceId": "dc_leaf1",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v130",
+        "desc": "Servidor database A",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l1_st",
+        "deviceId": "dc_leaf1",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v140",
+        "desc": "Nodo storage A",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l1_mgmt",
+        "deviceId": "dc_leaf1",
+        "name": "GigabitEthernet1/0/5",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v160",
+        "desc": "Estacion de gestion",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_leaf2_loop0",
+        "deviceId": "dc_leaf2",
+        "name": "Loopback0",
+        "mode": "routed",
+        "role": "loopback",
+        "media": "virtual",
+        "l3Ip": "10.255.255.22",
+        "l3Cidr": "10.255.255.22/32"
+      },
+      {
+        "id": "dc_l2_s1",
+        "deviceId": "dc_leaf2",
+        "name": "FortyGigabitEthernet1/1/1",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.10",
+        "l3Cidr": "10.255.90.8/30",
+        "desc": "OSPF underlay a DC-SPINE-01",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t903"
+      },
+      {
+        "id": "dc_l2_s2",
+        "deviceId": "dc_leaf2",
+        "name": "FortyGigabitEthernet1/1/2",
+        "mode": "routed",
+        "role": "transit",
+        "media": "QSFP",
+        "l3Ip": "10.255.90.14",
+        "l3Cidr": "10.255.90.12/30",
+        "desc": "OSPF underlay a DC-SPINE-02",
+        "transceiver": "QSFP-40G-SR4",
+        "transitVlanRef": "dc_t904"
+      },
+      {
+        "id": "dc_l2_fe",
+        "deviceId": "dc_leaf2",
+        "name": "GigabitEthernet1/0/1",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v111",
+        "desc": "Servidor frontend B",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l2_be",
+        "deviceId": "dc_leaf2",
+        "name": "GigabitEthernet1/0/2",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v121",
+        "desc": "Servidor backend B",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l2_db",
+        "deviceId": "dc_leaf2",
+        "name": "GigabitEthernet1/0/3",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v131",
+        "desc": "Servidor database B",
+        "portFast": true,
+        "bpduGuard": true
+      },
+      {
+        "id": "dc_l2_st",
+        "deviceId": "dc_leaf2",
+        "name": "GigabitEthernet1/0/4",
+        "mode": "access",
+        "role": "edge",
+        "accessVlanRef": "dc_v141",
+        "desc": "Nodo storage B",
+        "portFast": true,
+        "bpduGuard": true
+      }
+    ],
+    "vlans": [
+      {
+        "id": "dc_v110",
+        "vlanId": 110,
+        "name": "DC-Frontend-A",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 45,
+          "growthHosts": 20,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_v111",
+        "vlanId": 111,
+        "name": "DC-Frontend-B",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 45,
+          "growthHosts": 20,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_v120",
+        "vlanId": 120,
+        "name": "DC-Backend-A",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 35,
+          "growthHosts": 15,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_v121",
+        "vlanId": 121,
+        "name": "DC-Backend-B",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 35,
+          "growthHosts": 15,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_v130",
+        "vlanId": 130,
+        "name": "DC-Database-A",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 25,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_v131",
+        "vlanId": 131,
+        "name": "DC-Database-B",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 25,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_v140",
+        "vlanId": 140,
+        "name": "DC-Storage-A",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 25,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_v141",
+        "vlanId": 141,
+        "name": "DC-Storage-B",
+        "intent": {
+          "type": "servers",
+          "expectedHosts": 25,
+          "growthHosts": 10,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_v160",
+        "vlanId": 160,
+        "name": "DC-Gestion",
+        "intent": {
+          "type": "management",
+          "expectedHosts": 15,
+          "growthHosts": 5,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "high"
+        }
+      },
+      {
+        "id": "dc_v199",
+        "vlanId": 199,
+        "name": "DC-Native-Blackhole",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 0,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "isolated",
+          "criticality": "low"
+        }
+      },
+      {
+        "id": "dc_t901",
+        "vlanId": 901,
+        "name": "DC-TRANSIT-S1-L1",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_t902",
+        "vlanId": 902,
+        "name": "DC-TRANSIT-S2-L1",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_t903",
+        "vlanId": 903,
+        "name": "DC-TRANSIT-S1-L2",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      },
+      {
+        "id": "dc_t904",
+        "vlanId": 904,
+        "name": "DC-TRANSIT-S2-L2",
+        "intent": {
+          "type": "transit",
+          "expectedHosts": 2,
+          "growthHosts": 0,
+          "dhcp": false,
+          "internet": false,
+          "isolation": "restricted",
+          "criticality": "critical"
+        }
+      }
+    ],
+    "subnets": [
+      {
+        "id": "dc_s110",
+        "vlanRef": "dc_v110",
+        "cidr": "10.90.10.0/25",
+        "gateway": "10.90.10.1",
+        "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_s111",
+        "vlanRef": "dc_v111",
+        "cidr": "10.90.11.0/25",
+        "gateway": "10.90.11.1",
+        "gatewayDeviceRef": "dc_leaf2"
+      },
+      {
+        "id": "dc_s120",
+        "vlanRef": "dc_v120",
+        "cidr": "10.90.20.0/26",
+        "gateway": "10.90.20.1",
+        "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_s121",
+        "vlanRef": "dc_v121",
+        "cidr": "10.90.21.0/26",
+        "gateway": "10.90.21.1",
+        "gatewayDeviceRef": "dc_leaf2"
+      },
+      {
+        "id": "dc_s130",
+        "vlanRef": "dc_v130",
+        "cidr": "10.90.30.0/26",
+        "gateway": "10.90.30.1",
+        "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_s131",
+        "vlanRef": "dc_v131",
+        "cidr": "10.90.31.0/26",
+        "gateway": "10.90.31.1",
+        "gatewayDeviceRef": "dc_leaf2"
+      },
+      {
+        "id": "dc_s140",
+        "vlanRef": "dc_v140",
+        "cidr": "10.90.40.0/26",
+        "gateway": "10.90.40.1",
+        "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_s141",
+        "vlanRef": "dc_v141",
+        "cidr": "10.90.41.0/26",
+        "gateway": "10.90.41.1",
+        "gatewayDeviceRef": "dc_leaf2"
+      },
+      {
+        "id": "dc_s160",
+        "vlanRef": "dc_v160",
+        "cidr": "10.90.60.0/27",
+        "gateway": "10.90.60.1",
+        "gatewayDeviceRef": "dc_leaf1"
+      },
+      {
+        "id": "dc_ts901",
+        "vlanRef": "dc_t901",
+        "cidr": "10.255.90.0/30",
+        "gateway": "10.255.90.1"
+      },
+      {
+        "id": "dc_ts902",
+        "vlanRef": "dc_t902",
+        "cidr": "10.255.90.4/30",
+        "gateway": "10.255.90.5"
+      },
+      {
+        "id": "dc_ts903",
+        "vlanRef": "dc_t903",
+        "cidr": "10.255.90.8/30",
+        "gateway": "10.255.90.9"
+      },
+      {
+        "id": "dc_ts904",
+        "vlanRef": "dc_t904",
+        "cidr": "10.255.90.12/30",
+        "gateway": "10.255.90.13"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "dc_fe_a",
+        "name": "WEB-FE-A01",
+        "type": "server",
+        "vlanRef": "dc_v110",
+        "portRef": "dc_l1_fe",
+        "ipMode": "static",
+        "staticIp": "10.90.10.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_be_a",
+        "name": "APP-BE-A01",
+        "type": "server",
+        "vlanRef": "dc_v120",
+        "portRef": "dc_l1_be",
+        "ipMode": "static",
+        "staticIp": "10.90.20.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_db_a",
+        "name": "DB-A01",
+        "type": "server",
+        "vlanRef": "dc_v130",
+        "portRef": "dc_l1_db",
+        "ipMode": "static",
+        "staticIp": "10.90.30.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_st_a",
+        "name": "STORAGE-A01",
+        "type": "server",
+        "vlanRef": "dc_v140",
+        "portRef": "dc_l1_st",
+        "ipMode": "static",
+        "staticIp": "10.90.40.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_admin",
+        "name": "ADMIN-DC-01",
+        "type": "pc",
+        "vlanRef": "dc_v160",
+        "portRef": "dc_l1_mgmt",
+        "ipMode": "static",
+        "staticIp": "10.90.60.20",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala A"
+      },
+      {
+        "id": "dc_fe_b",
+        "name": "WEB-FE-B01",
+        "type": "server",
+        "vlanRef": "dc_v111",
+        "portRef": "dc_l2_fe",
+        "ipMode": "static",
+        "staticIp": "10.90.11.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala B"
+      },
+      {
+        "id": "dc_be_b",
+        "name": "APP-BE-B01",
+        "type": "server",
+        "vlanRef": "dc_v121",
+        "portRef": "dc_l2_be",
+        "ipMode": "static",
+        "staticIp": "10.90.21.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala B"
+      },
+      {
+        "id": "dc_db_b",
+        "name": "DB-B01",
+        "type": "server",
+        "vlanRef": "dc_v131",
+        "portRef": "dc_l2_db",
+        "ipMode": "static",
+        "staticIp": "10.90.31.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala B"
+      },
+      {
+        "id": "dc_st_b",
+        "name": "STORAGE-B01",
+        "type": "server",
+        "vlanRef": "dc_v141",
+        "portRef": "dc_l2_st",
+        "ipMode": "static",
+        "staticIp": "10.90.41.10",
+        "poeRequired": false,
+        "physicalLocation": "Datacenter · Sala B"
+      }
+    ],
+    "links": [
+      {
+        "id": "dc_link_s1_l1",
+        "name": "SPINE1 ↔ LEAF1",
+        "aPortId": "dc_s1_l1",
+        "bPortId": "dc_l1_s1",
+        "medium": "fiber",
+        "cableType": "om4",
+        "lengthM": 22,
+        "speed": "40G",
+        "capacityMbps": 40000,
+        "physicalPath": "Sala A · OM4",
+        "transitVlanRef": "dc_t901"
+      },
+      {
+        "id": "dc_link_s2_l1",
+        "name": "SPINE2 ↔ LEAF1",
+        "aPortId": "dc_s2_l1",
+        "bPortId": "dc_l1_s2",
+        "medium": "fiber",
+        "cableType": "om4",
+        "lengthM": 34,
+        "speed": "40G",
+        "capacityMbps": 40000,
+        "physicalPath": "Sala B → Sala A · OM4",
+        "transitVlanRef": "dc_t902"
+      },
+      {
+        "id": "dc_link_s1_l2",
+        "name": "SPINE1 ↔ LEAF2",
+        "aPortId": "dc_s1_l2",
+        "bPortId": "dc_l2_s1",
+        "medium": "fiber",
+        "cableType": "om4",
+        "lengthM": 34,
+        "speed": "40G",
+        "capacityMbps": 40000,
+        "physicalPath": "Sala A → Sala B · OM4",
+        "transitVlanRef": "dc_t903"
+      },
+      {
+        "id": "dc_link_s2_l2",
+        "name": "SPINE2 ↔ LEAF2",
+        "aPortId": "dc_s2_l2",
+        "bPortId": "dc_l2_s2",
+        "medium": "fiber",
+        "cableType": "om4",
+        "lengthM": 22,
+        "speed": "40G",
+        "capacityMbps": 40000,
+        "physicalPath": "Sala B · OM4",
+        "transitVlanRef": "dc_t904"
+      }
+    ],
+    "fwRules": [
+      {
+        "id": "dc_allow_dc_v110",
+        "name": "Permitir tráfico no bloqueado desde dc_v110",
+        "src": "10.90.10.0/25",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v110"
+      },
+      {
+        "id": "dc_allow_dc_v111",
+        "name": "Permitir tráfico no bloqueado desde dc_v111",
+        "src": "10.90.11.0/25",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v111"
+      },
+      {
+        "id": "dc_allow_dc_v120",
+        "name": "Permitir tráfico no bloqueado desde dc_v120",
+        "src": "10.90.20.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v120"
+      },
+      {
+        "id": "dc_allow_dc_v121",
+        "name": "Permitir tráfico no bloqueado desde dc_v121",
+        "src": "10.90.21.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v121"
+      },
+      {
+        "id": "dc_allow_dc_v130",
+        "name": "Permitir tráfico no bloqueado desde dc_v130",
+        "src": "10.90.30.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v130"
+      },
+      {
+        "id": "dc_allow_dc_v131",
+        "name": "Permitir tráfico no bloqueado desde dc_v131",
+        "src": "10.90.31.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v131"
+      },
+      {
+        "id": "dc_allow_dc_v140",
+        "name": "Permitir tráfico no bloqueado desde dc_v140",
+        "src": "10.90.40.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v140"
+      },
+      {
+        "id": "dc_allow_dc_v141",
+        "name": "Permitir tráfico no bloqueado desde dc_v141",
+        "src": "10.90.41.0/26",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v141"
+      },
+      {
+        "id": "dc_allow_dc_v160",
+        "name": "Permitir tráfico no bloqueado desde dc_v160",
+        "src": "10.90.60.0/27",
+        "dst": "any",
+        "proto": "any",
+        "port": "any",
+        "action": "allow",
+        "dir": "out",
+        "prio": 900,
+        "enabled": true,
+        "vlanRef": "dc_v160"
+      }
+    ],
+    "vlanMatrix": {
+      "dc_v110_dc_v130": false,
+      "dc_v110_dc_v131": false,
+      "dc_v110_dc_v140": false,
+      "dc_v110_dc_v141": false,
+      "dc_v110_dc_v160": false,
+      "dc_v111_dc_v130": false,
+      "dc_v111_dc_v131": false,
+      "dc_v111_dc_v140": false,
+      "dc_v111_dc_v141": false,
+      "dc_v111_dc_v160": false,
+      "dc_v130_dc_v110": false,
+      "dc_v130_dc_v111": false,
+      "dc_v130_dc_v140": false,
+      "dc_v130_dc_v141": false,
+      "dc_v131_dc_v110": false,
+      "dc_v131_dc_v111": false,
+      "dc_v131_dc_v140": false,
+      "dc_v131_dc_v141": false,
+      "dc_v140_dc_v110": false,
+      "dc_v140_dc_v111": false,
+      "dc_v140_dc_v130": false,
+      "dc_v140_dc_v131": false,
+      "dc_v141_dc_v110": false,
+      "dc_v141_dc_v111": false,
+      "dc_v141_dc_v130": false,
+      "dc_v141_dc_v131": false,
+      "dc_v120_dc_v160": false,
+      "dc_v121_dc_v160": false,
+      "dc_v110_dc_v120": true,
+      "dc_v110_dc_v121": true,
+      "dc_v111_dc_v120": true,
+      "dc_v111_dc_v121": true,
+      "dc_v120_dc_v110": true,
+      "dc_v120_dc_v111": true,
+      "dc_v120_dc_v130": true,
+      "dc_v120_dc_v131": true,
+      "dc_v120_dc_v140": true,
+      "dc_v120_dc_v141": true,
+      "dc_v121_dc_v110": true,
+      "dc_v121_dc_v111": true,
+      "dc_v121_dc_v130": true,
+      "dc_v121_dc_v131": true,
+      "dc_v121_dc_v140": true,
+      "dc_v121_dc_v141": true,
+      "dc_v130_dc_v120": true,
+      "dc_v130_dc_v121": true,
+      "dc_v131_dc_v120": true,
+      "dc_v131_dc_v121": true,
+      "dc_v140_dc_v120": true,
+      "dc_v140_dc_v121": true,
+      "dc_v141_dc_v120": true,
+      "dc_v141_dc_v121": true,
+      "dc_v160_dc_v110": true,
+      "dc_v160_dc_v111": true,
+      "dc_v160_dc_v120": true,
+      "dc_v160_dc_v121": true,
+      "dc_v160_dc_v130": true,
+      "dc_v160_dc_v131": true,
+      "dc_v160_dc_v140": true,
+      "dc_v160_dc_v141": true
+    },
+    "dhcp": {},
+    "security": {
+      "bpdu": "yes",
+      "ps": "yes",
+      "ds": "no",
+      "dsV": "",
+      "dai": "no",
+      "ipsg": "no",
+      "qV": ""
+    },
+    "roas": {},
+    "vtp": {
+      "domain": "NW-DC",
+      "password": "",
+      "version": "3",
+      "pruning": "no",
+      "roles": {
+        "dc_spine1": "transparent",
+        "dc_spine2": "transparent",
+        "dc_leaf1": "transparent",
+        "dc_leaf2": "transparent"
+      }
+    },
+    "observedState": {
+      "observedAt": "2026-10-03T18:00:00.000Z",
+      "vtpDevices": {
+        "dc_spine1": {
+          "domain": "NW-DC",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T18:00:00.000Z"
+        },
+        "dc_spine2": {
+          "domain": "NW-DC",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T18:00:00.000Z"
+        },
+        "dc_leaf1": {
+          "domain": "NW-DC",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T18:00:00.000Z"
+        },
+        "dc_leaf2": {
+          "domain": "NW-DC",
+          "version": "3",
+          "mode": "transparent",
+          "revision": 0,
+          "primary": false,
+          "primaryId": "",
+          "primaryConflict": false,
+          "digestErrors": 0,
+          "revisionErrors": 0,
+          "observedAt": "2026-10-03T18:00:00.000Z"
+        }
+      },
+      "ospfNeighbors": {
+        "dc_spine1": [
+          {
+            "localPortId": "dc_s1_l1",
+            "peerDeviceId": "dc_leaf1",
+            "peerRouterId": "10.255.255.21",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          },
+          {
+            "localPortId": "dc_s1_l2",
+            "peerDeviceId": "dc_leaf2",
+            "peerRouterId": "10.255.255.22",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          }
+        ],
+        "dc_spine2": [
+          {
+            "localPortId": "dc_s2_l1",
+            "peerDeviceId": "dc_leaf1",
+            "peerRouterId": "10.255.255.21",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          },
+          {
+            "localPortId": "dc_s2_l2",
+            "peerDeviceId": "dc_leaf2",
+            "peerRouterId": "10.255.255.22",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          }
+        ],
+        "dc_leaf1": [
+          {
+            "localPortId": "dc_l1_s1",
+            "peerDeviceId": "dc_spine1",
+            "peerRouterId": "10.255.255.11",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          },
+          {
+            "localPortId": "dc_l1_s2",
+            "peerDeviceId": "dc_spine2",
+            "peerRouterId": "10.255.255.12",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          }
+        ],
+        "dc_leaf2": [
+          {
+            "localPortId": "dc_l2_s1",
+            "peerDeviceId": "dc_spine1",
+            "peerRouterId": "10.255.255.11",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          },
+          {
+            "localPortId": "dc_l2_s2",
+            "peerDeviceId": "dc_spine2",
+            "peerRouterId": "10.255.255.12",
+            "area": "0",
+            "state": "full",
+            "observedAt": "2026-10-03T18:00:00.000Z"
+          }
+        ]
+      }
+    },
+    "topo": {
+      "pos": {}
+    },
+    "physicalLocations": [
+      {
+        "id": "dc_site",
+        "name": "Datacenter principal",
+        "type": "site"
+      },
+      {
+        "id": "dc_room_a",
+        "name": "Datacenter · Sala A",
+        "type": "room",
+        "parentId": "dc_site"
+      },
+      {
+        "id": "dc_room_b",
+        "name": "Datacenter · Sala B",
+        "type": "room",
+        "parentId": "dc_site"
+      }
+    ],
+    "hostPhysicalLocations": [],
+    "uiSort": {},
+    "racks": [
+      {
+        "id": "dc_rack_a",
+        "name": "RACK-DC-A",
+        "locationId": "dc_room_a",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1200,
+        "maxLoadKg": 1000,
+        "powerCapacityWatts": 8000,
+        "coolingCapacityWatts": 6500,
+        "numberingDirection": "bottom-up"
+      },
+      {
+        "id": "dc_rack_b",
+        "name": "RACK-DC-B",
+        "locationId": "dc_room_b",
+        "rackUnits": 42,
+        "widthMm": 600,
+        "depthMm": 1200,
+        "maxLoadKg": 1000,
+        "powerCapacityWatts": 8000,
+        "coolingCapacityWatts": 6500,
+        "numberingDirection": "bottom-up"
+      }
+    ],
+    "rackItems": [
+      {
+        "id": "rackitem_dc_patch_a",
+        "rackId": "dc_rack_a",
+        "type": "patch-panel",
+        "patchPanelId": "dc_patch_a",
+        "label": "PP-DC-A",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "dc_cm_a",
+        "rackId": "dc_rack_a",
+        "type": "cable-manager",
+        "label": "Pasacables DC-A",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "rackitem_dc_patch_b",
+        "rackId": "dc_rack_b",
+        "type": "patch-panel",
+        "patchPanelId": "dc_patch_b",
+        "label": "PP-DC-B",
+        "startUnit": 42,
+        "heightUnits": 1,
+        "face": "front"
+      },
+      {
+        "id": "dc_cm_b",
+        "rackId": "dc_rack_b",
+        "type": "cable-manager",
+        "label": "Pasacables DC-B",
+        "startUnit": 41,
+        "heightUnits": 1,
+        "face": "front"
+      }
+    ],
+    "patchPanels": [
+      {
+        "id": "dc_patch_a",
+        "rackId": "dc_rack_a",
+        "name": "PP-DC-A",
+        "portCount": 24,
+        "category": "Cat6A",
+        "rackUnit": 42
+      },
+      {
+        "id": "dc_patch_b",
+        "rackId": "dc_rack_b",
+        "name": "PP-DC-B",
+        "portCount": 24,
+        "category": "Cat6A",
+        "rackUnit": 42
+      }
+    ],
+    "telecomOutlets": [
+      {
+        "id": "dc_to_fe_a",
+        "locationId": "dc_room_a",
+        "name": "TO-DC-FE-A",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_be_a",
+        "locationId": "dc_room_a",
+        "name": "TO-DC-BE-A",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_db_a",
+        "locationId": "dc_room_a",
+        "name": "TO-DC-DB-A",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_st_a",
+        "locationId": "dc_room_a",
+        "name": "TO-DC-ST-A",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_mgmt",
+        "locationId": "dc_room_a",
+        "name": "TO-DC-MGMT",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_fe_b",
+        "locationId": "dc_room_b",
+        "name": "TO-DC-FE-B",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_be_b",
+        "locationId": "dc_room_b",
+        "name": "TO-DC-BE-B",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_db_b",
+        "locationId": "dc_room_b",
+        "name": "TO-DC-DB-B",
+        "portCount": 1,
+        "category": "Cat6A"
+      },
+      {
+        "id": "dc_to_st_b",
+        "locationId": "dc_room_b",
+        "name": "TO-DC-ST-B",
+        "portCount": 1,
+        "category": "Cat6A"
+      }
+    ],
+    "cableRuns": [
+      {
+        "id": "dc_run_fe_a",
+        "name": "WEB-FE-A01",
+        "label": "WEB-FE-A01",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 1,
+        "outletId": "dc_to_fe_a",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-A → WEB-FE-A01"
+      },
+      {
+        "id": "dc_run_be_a",
+        "name": "APP-BE-A01",
+        "label": "APP-BE-A01",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 2,
+        "outletId": "dc_to_be_a",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-A → APP-BE-A01"
+      },
+      {
+        "id": "dc_run_db_a",
+        "name": "DB-A01",
+        "label": "DB-A01",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 3,
+        "outletId": "dc_to_db_a",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-A → DB-A01"
+      },
+      {
+        "id": "dc_run_st_a",
+        "name": "STORAGE-A01",
+        "label": "STORAGE-A01",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 4,
+        "outletId": "dc_to_st_a",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-A → STORAGE-A01"
+      },
+      {
+        "id": "dc_run_mgmt",
+        "name": "ADMIN-DC-01",
+        "label": "ADMIN-DC-01",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 5,
+        "outletId": "dc_to_mgmt",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 8,
+        "route": "Rack DC-A → ADMIN-DC-01"
+      },
+      {
+        "id": "dc_run_fe_b",
+        "name": "WEB-FE-B01",
+        "label": "WEB-FE-B01",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 1,
+        "outletId": "dc_to_fe_b",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-B → WEB-FE-B01"
+      },
+      {
+        "id": "dc_run_be_b",
+        "name": "APP-BE-B01",
+        "label": "APP-BE-B01",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 2,
+        "outletId": "dc_to_be_b",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-B → APP-BE-B01"
+      },
+      {
+        "id": "dc_run_db_b",
+        "name": "DB-B01",
+        "label": "DB-B01",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 3,
+        "outletId": "dc_to_db_b",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-B → DB-B01"
+      },
+      {
+        "id": "dc_run_st_b",
+        "name": "STORAGE-B01",
+        "label": "STORAGE-B01",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 4,
+        "outletId": "dc_to_st_b",
+        "outletPort": 1,
+        "cableType": "Cat6A",
+        "lengthM": 3,
+        "route": "Rack DC-B → STORAGE-B01"
+      }
+    ],
+    "patchConnections": [
+      {
+        "id": "patch_dc_run_fe_a",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 1,
+        "switchPortId": "dc_l1_fe",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_be_a",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 2,
+        "switchPortId": "dc_l1_be",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_db_a",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 3,
+        "switchPortId": "dc_l1_db",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_st_a",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 4,
+        "switchPortId": "dc_l1_st",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_mgmt",
+        "patchPanelId": "dc_patch_a",
+        "patchPort": 5,
+        "switchPortId": "dc_l1_mgmt",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_fe_b",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 1,
+        "switchPortId": "dc_l2_fe",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_be_b",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 2,
+        "switchPortId": "dc_l2_be",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_db_b",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 3,
+        "switchPortId": "dc_l2_db",
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "patch_dc_run_st_b",
+        "patchPanelId": "dc_patch_b",
+        "patchPort": 4,
+        "switchPortId": "dc_l2_st",
+        "patchCordLengthM": 1
+      }
+    ],
+    "hostOutletConnections": [
+      {
+        "id": "hostcord_dc_run_fe_a",
+        "hostId": "dc_fe_a",
+        "outletId": "dc_to_fe_a",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_be_a",
+        "hostId": "dc_be_a",
+        "outletId": "dc_to_be_a",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_db_a",
+        "hostId": "dc_db_a",
+        "outletId": "dc_to_db_a",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_st_a",
+        "hostId": "dc_st_a",
+        "outletId": "dc_to_st_a",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_mgmt",
+        "hostId": "dc_admin",
+        "outletId": "dc_to_mgmt",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_fe_b",
+        "hostId": "dc_fe_b",
+        "outletId": "dc_to_fe_b",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_be_b",
+        "hostId": "dc_be_b",
+        "outletId": "dc_to_be_b",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_db_b",
+        "hostId": "dc_db_b",
+        "outletId": "dc_to_db_b",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      },
+      {
+        "id": "hostcord_dc_run_st_b",
+        "hostId": "dc_st_b",
+        "outletId": "dc_to_st_b",
+        "outletPort": 1,
+        "patchCordLengthM": 1
+      }
+    ],
+    "pdus": [
+      {
+        "id": "dc_pdu_a1",
+        "rackId": "dc_rack_a",
+        "name": "PDU-DC-A1",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 32,
+        "maxPowerWatts": 7360,
+        "outletCount": 24
+      },
+      {
+        "id": "dc_pdu_a2",
+        "rackId": "dc_rack_a",
+        "name": "PDU-DC-A2",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 32,
+        "maxPowerWatts": 7360,
+        "outletCount": 24
+      },
+      {
+        "id": "dc_pdu_b1",
+        "rackId": "dc_rack_b",
+        "name": "PDU-DC-B1",
+        "feed": "A",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 32,
+        "maxPowerWatts": 7360,
+        "outletCount": 24
+      },
+      {
+        "id": "dc_pdu_b2",
+        "rackId": "dc_rack_b",
+        "name": "PDU-DC-B2",
+        "feed": "B",
+        "mounting": "vertical-rear",
+        "voltage": 230,
+        "maxCurrentAmps": 32,
+        "maxPowerWatts": 7360,
+        "outletCount": 24
+      }
+    ],
+    "powerConnections": [
+      {
+        "id": "dc_pwr_s1a",
+        "deviceId": "dc_spine1",
+        "powerSupplyIndex": 0,
+        "pduId": "dc_pdu_a1",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "dc_pwr_s1b",
+        "deviceId": "dc_spine1",
+        "powerSupplyIndex": 1,
+        "pduId": "dc_pdu_a2",
+        "outlet": 1,
+        "feed": "B"
+      },
+      {
+        "id": "dc_pwr_l1a",
+        "deviceId": "dc_leaf1",
+        "powerSupplyIndex": 0,
+        "pduId": "dc_pdu_a1",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "dc_pwr_l1b",
+        "deviceId": "dc_leaf1",
+        "powerSupplyIndex": 1,
+        "pduId": "dc_pdu_a2",
+        "outlet": 2,
+        "feed": "B"
+      },
+      {
+        "id": "dc_pwr_s2a",
+        "deviceId": "dc_spine2",
+        "powerSupplyIndex": 0,
+        "pduId": "dc_pdu_b1",
+        "outlet": 1,
+        "feed": "A"
+      },
+      {
+        "id": "dc_pwr_s2b",
+        "deviceId": "dc_spine2",
+        "powerSupplyIndex": 1,
+        "pduId": "dc_pdu_b2",
+        "outlet": 1,
+        "feed": "B"
+      },
+      {
+        "id": "dc_pwr_l2a",
+        "deviceId": "dc_leaf2",
+        "powerSupplyIndex": 0,
+        "pduId": "dc_pdu_b1",
+        "outlet": 2,
+        "feed": "A"
+      },
+      {
+        "id": "dc_pwr_l2b",
+        "deviceId": "dc_leaf2",
+        "powerSupplyIndex": 1,
+        "pduId": "dc_pdu_b2",
+        "outlet": 2,
+        "feed": "B"
+      }
+    ],
+    "iot": {
+      "accessNodes": [],
+      "devices": [],
+      "map": {
+        "show": {
+          "network": true,
+          "port": false,
+          "access": true,
+          "iot": true,
+          "wifi": true,
+          "lora": true,
+          "zigbee": true,
+          "thread": true,
+          "mqtt": true
+        },
+        "scale": 1,
+        "panX": 0,
+        "panY": 0
+      }
+    },
+    "visual": {
+      "locs": [
+        {
+          "id": "vloc_dc_a",
+          "name": "DC · Sala A",
+          "color": "#10233c",
+          "x": 160,
+          "y": 130,
+          "type": "room",
+          "physicalLocationId": "dc_room_a"
+        },
+        {
+          "id": "vloc_dc_b",
+          "name": "DC · Sala B",
+          "color": "#1f3654",
+          "x": 560,
+          "y": 130,
+          "type": "room",
+          "physicalLocationId": "dc_room_b"
+        }
+      ],
+      "assign": {
+        "devices": {
+          "dc_spine1": "vloc_dc_a",
+          "dc_leaf1": "vloc_dc_a",
+          "dc_spine2": "vloc_dc_b",
+          "dc_leaf2": "vloc_dc_b"
+        },
+        "hosts": {
+          "dc_fe_a": "vloc_dc_a",
+          "dc_be_a": "vloc_dc_a",
+          "dc_db_a": "vloc_dc_a",
+          "dc_st_a": "vloc_dc_a",
+          "dc_admin": "vloc_dc_a",
+          "dc_fe_b": "vloc_dc_b",
+          "dc_be_b": "vloc_dc_b",
+          "dc_db_b": "vloc_dc_b",
+          "dc_st_b": "vloc_dc_b"
+        }
+      },
+      "pos": {},
+      "view": {
+        "px": 60,
+        "py": 50,
+        "zoom": 1
+      },
+      "sel": null
+    },
+    "vrfs": [],
+    "wanCircuits": [],
+    "linkAggregations": [],
+    "trafficProfiles": [
+      {
+        "id": "dc_traffic_1",
+        "name": "Carga underlay SPINE1 ↔ LEAF1",
+        "linkRef": "dc_link_s1_l1",
+        "averageMbps": 6000,
+        "peakMbps": 18000,
+        "criticalMbps": 12000,
+        "latencyMaxMs": 2,
+        "jitterMaxMs": 1,
+        "lossMaxPercent": 0.1
+      },
+      {
+        "id": "dc_traffic_2",
+        "name": "Carga underlay SPINE2 ↔ LEAF1",
+        "linkRef": "dc_link_s2_l1",
+        "averageMbps": 6000,
+        "peakMbps": 18000,
+        "criticalMbps": 12000,
+        "latencyMaxMs": 2,
+        "jitterMaxMs": 1,
+        "lossMaxPercent": 0.1
+      },
+      {
+        "id": "dc_traffic_3",
+        "name": "Carga underlay SPINE1 ↔ LEAF2",
+        "linkRef": "dc_link_s1_l2",
+        "averageMbps": 6000,
+        "peakMbps": 18000,
+        "criticalMbps": 12000,
+        "latencyMaxMs": 2,
+        "jitterMaxMs": 1,
+        "lossMaxPercent": 0.1
+      },
+      {
+        "id": "dc_traffic_4",
+        "name": "Carga underlay SPINE2 ↔ LEAF2",
+        "linkRef": "dc_link_s2_l2",
+        "averageMbps": 6000,
+        "peakMbps": 18000,
+        "criticalMbps": 12000,
+        "latencyMaxMs": 2,
+        "jitterMaxMs": 1,
+        "lossMaxPercent": 0.1
+      }
+    ],
+    "internalServices": [
+      {
+        "id": "dns",
+        "name": "DNS interno Datacenter",
+        "type": "dns",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.90.20.10",
+            "hostname": "dns-a.dc.example"
+          },
+          {
+            "ip": "10.90.21.10",
+            "hostname": "dns-b.dc.example"
+          }
+        ]
+      },
+      {
+        "id": "ntp",
+        "name": "NTP Datacenter",
+        "type": "ntp",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.90.20.10",
+            "hostname": "ntp-a.dc.example"
+          },
+          {
+            "ip": "10.90.21.10",
+            "hostname": "ntp-b.dc.example"
+          }
+        ]
+      },
+      {
+        "id": "syslog",
+        "name": "Logging / SIEM Datacenter",
+        "type": "syslog",
+        "critical": true,
+        "endpoints": [
+          {
+            "ip": "10.90.20.10",
+            "hostname": "logs-a.dc.example"
+          },
+          {
+            "ip": "10.90.21.10",
+            "hostname": "logs-b.dc.example"
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "name": "Monitorización fabric y servicios",
+        "type": "monitoring",
+        "critical": false,
+        "dependsOn": [
+          "dns"
+        ],
+        "endpoints": [
+          {
+            "ip": "10.90.60.20",
+            "hostname": "monitor.dc.example"
+          }
+        ]
+      }
+    ],
+    "wifiControllers": [],
+    "wifiAccessPoints": [],
+    "wifiSsids": [],
+    "ipv6Networks": [
+      {
+        "id": "dc_v6_110",
+        "name": "DC-Frontend-A IPv6",
+        "prefix": "2001:db8:90:110::/64",
+        "vlanRef": "dc_v110",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:110::1"
+      },
+      {
+        "id": "dc_v6_111",
+        "name": "DC-Frontend-B IPv6",
+        "prefix": "2001:db8:90:111::/64",
+        "vlanRef": "dc_v111",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:111::1"
+      },
+      {
+        "id": "dc_v6_120",
+        "name": "DC-Backend-A IPv6",
+        "prefix": "2001:db8:90:120::/64",
+        "vlanRef": "dc_v120",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:120::1"
+      },
+      {
+        "id": "dc_v6_121",
+        "name": "DC-Backend-B IPv6",
+        "prefix": "2001:db8:90:121::/64",
+        "vlanRef": "dc_v121",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:121::1"
+      },
+      {
+        "id": "dc_v6_130",
+        "name": "DC-Database-A IPv6",
+        "prefix": "2001:db8:90:130::/64",
+        "vlanRef": "dc_v130",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:130::1"
+      },
+      {
+        "id": "dc_v6_131",
+        "name": "DC-Database-B IPv6",
+        "prefix": "2001:db8:90:131::/64",
+        "vlanRef": "dc_v131",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:131::1"
+      },
+      {
+        "id": "dc_v6_140",
+        "name": "DC-Storage-A IPv6",
+        "prefix": "2001:db8:90:140::/64",
+        "vlanRef": "dc_v140",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:140::1"
+      },
+      {
+        "id": "dc_v6_141",
+        "name": "DC-Storage-B IPv6",
+        "prefix": "2001:db8:90:141::/64",
+        "vlanRef": "dc_v141",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:141::1"
+      },
+      {
+        "id": "dc_v6_160",
+        "name": "DC-Gestion IPv6",
+        "prefix": "2001:db8:90:160::/64",
+        "vlanRef": "dc_v160",
+        "slaac": true,
+        "routerAdvertisement": true,
+        "gateway": "2001:db8:90:160::1"
+      }
+    ],
+    "failureScenarios": [
+      {
+        "id": "dc_fail_spine1",
+        "name": "Fallo completo de SPINE-01",
+        "events": [
+          {
+            "type": "device",
+            "targetRef": "dc_spine1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "device",
+            "ref": "dc_spine2"
+          },
+          {
+            "type": "link",
+            "ref": "dc_link_s2_l1"
+          },
+          {
+            "type": "link",
+            "ref": "dc_link_s2_l2"
+          }
+        ],
+        "requireWan": false
+      },
+      {
+        "id": "dc_fail_leaf1_s1",
+        "name": "Fallo enlace LEAF1-SPINE1",
+        "events": [
+          {
+            "type": "link",
+            "targetRef": "dc_link_s1_l1"
+          }
+        ],
+        "mustSurvive": [
+          {
+            "type": "link",
+            "ref": "dc_link_s2_l1"
+          }
+        ],
+        "requireWan": false
+      }
+    ],
+    "stacks": [],
+    "mlagDomains": [],
+    "haGroups": [],
+    "diversityPolicies": [
+      {
+        "id": "dc_div_spines",
+        "name": "Spines en dominios físicos distintos",
+        "deviceIds": [
+          "dc_spine1",
+          "dc_spine2"
+        ],
+        "requiredDistinct": [
+          "rackId",
+          "powerDomain",
+          "coolingZone"
+        ]
+      },
+      {
+        "id": "dc_div_leaves",
+        "name": "Leaves en dominios físicos distintos",
+        "deviceIds": [
+          "dc_leaf1",
+          "dc_leaf2"
+        ],
+        "requiredDistinct": [
+          "rackId",
+          "powerDomain",
+          "coolingZone"
+        ]
+      }
+    ],
+    "routing": {
+      "strategy": "ospf",
+      "protocol": "ospf",
+      "ospf": {
+        "devices": {
+          "dc_spine1": {
+            "processId": 10,
+            "routerId": "10.255.255.11",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "dc_spine1_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "dc_s1_l1": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "dc_s1_l2": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "dc_spine2": {
+            "processId": 10,
+            "routerId": "10.255.255.12",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "dc_spine2_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "dc_s2_l1": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "dc_s2_l2": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "dc_leaf1": {
+            "processId": 10,
+            "routerId": "10.255.255.21",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "dc_leaf1_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "dc_l1_s1": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "dc_l1_s2": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          },
+          "dc_leaf2": {
+            "processId": 10,
+            "routerId": "10.255.255.22",
+            "defaultArea": "0",
+            "passiveDefault": true,
+            "interfaces": {
+              "dc_leaf2_loop0": {
+                "enabled": true,
+                "area": "0",
+                "passive": true,
+                "cost": 1
+              },
+              "dc_l2_s1": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              },
+              "dc_l2_s2": {
+                "enabled": true,
+                "area": "0",
+                "passive": false,
+                "cost": 10
+              }
+            }
+          }
+        }
+      }
+    },
+    "highAvailability": {
+      "devices": {}
+    },
+    "accessSecurity": {
+      "dhcpSnooping": false,
+      "arpInspection": false,
+      "portSecurity": true,
+      "maxMac": 4,
+      "violation": "restrict",
+      "sticky": false,
+      "dhcpRateLimit": 15
+    },
+    "management": {
+      "domain": "dc.example",
+      "ssh": true,
+      "sourceNetworks": [
+        "10.90.60.0/27"
+      ],
+      "aaa": false,
+      "snmpv3": false,
+      "syslogServers": [
+        "10.90.20.10",
+        "10.90.21.10"
+      ],
+      "ntpServers": [
+        "10.90.20.10",
+        "10.90.21.10"
+      ],
+      "dnsServers": [
+        "10.90.20.10",
+        "10.90.21.10"
+      ],
+      "banner": "Fabric Datacenter gestionado. Acceso administrativo restringido y registrado.",
+      "backup": false
+    },
+    "budget": {
+      "version": "netwizard-budget-v1",
+      "currency": "EUR",
+      "taxRatePct": 21,
+      "defaultMarginPct": 25,
+      "scope": "full",
+      "resourcePricing": {
+        "rack:dc_rack_a": {
+          "unitCost": 1100,
+          "unitPrice": 1500,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Rack Datacenter 42U"
+        },
+        "rack:dc_rack_b": {
+          "unitCost": 1100,
+          "unitPrice": 1500,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Rack Datacenter 42U"
+        },
+        "pdu:dc_pdu_a1": {
+          "unitCost": 350,
+          "unitPrice": 480,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU 32A monitorizada"
+        },
+        "pdu:dc_pdu_a2": {
+          "unitCost": 350,
+          "unitPrice": 480,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU 32A monitorizada"
+        },
+        "pdu:dc_pdu_b1": {
+          "unitCost": 350,
+          "unitPrice": 480,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU 32A monitorizada"
+        },
+        "pdu:dc_pdu_b2": {
+          "unitCost": 350,
+          "unitPrice": 480,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "PDU 32A monitorizada"
+        },
+        "patchPanel:dc_patch_a": {
+          "unitCost": 140,
+          "unitPrice": 210,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Patch panel Cat6A 24 puertos"
+        },
+        "patchPanel:dc_patch_b": {
+          "unitCost": 140,
+          "unitPrice": 210,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Patch panel Cat6A 24 puertos"
+        },
+        "telecomOutlet:dc_to_fe_a": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_be_a": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_db_a": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_st_a": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_mgmt": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_fe_b": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_be_b": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_db_b": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "telecomOutlet:dc_to_st_b": {
+          "unitCost": 16,
+          "unitPrice": 26,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Terminación Cat6A"
+        },
+        "cableRun:dc_run_fe_a": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_be_a": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_db_a": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_st_a": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_mgmt": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_fe_b": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_be_b": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_db_b": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "cableRun:dc_run_st_b": {
+          "unitCost": 0.8,
+          "unitPrice": 1.35,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Cable Cat6A por metro"
+        },
+        "patchConnection:patch_dc_run_fe_a": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_be_a": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_db_a": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_st_a": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_mgmt": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_fe_b": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_be_b": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_db_b": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "patchConnection:patch_dc_run_st_b": {
+          "unitCost": 5,
+          "unitPrice": 8,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo rack Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_fe_a": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_be_a": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_db_a": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_st_a": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_mgmt": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_fe_b": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_be_b": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_db_b": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "hostOutletConnection:hostcord_dc_run_st_b": {
+          "unitCost": 6,
+          "unitPrice": 10,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Latiguillo servidor Cat6A"
+        },
+        "rackItem:dc_cm_a": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Pasacables 1U"
+        },
+        "rackItem:dc_cm_b": {
+          "unitCost": 35,
+          "unitPrice": 55,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Pasacables 1U"
+        },
+        "port:dc_s1_l1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s1_l2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s2_l1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_s2_l2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l1_s1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l1_s2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l2_s1": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        },
+        "port:dc_l2_s2": {
+          "unitCost": 160,
+          "unitPrice": 230,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "QSFP-40G-SR4 + latiguillo OM4 del enlace leaf-spine"
+        }
+      },
+      "modelPricing": {
+        "manual:cisco|catalyst 9500x|": {
+          "unitCost": 10500,
+          "unitPrice": 13200,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Spine L3 de referencia"
+        },
+        "manual:cisco|catalyst 9300x|": {
+          "unitCost": 6500,
+          "unitPrice": 8200,
+          "chargeType": "one-time",
+          "capexOpex": "capex",
+          "billingPeriodMonths": 1,
+          "note": "Leaf L3 de referencia"
+        }
+      },
+      "serviceLines": [
+        {
+          "id": "svc-dc-design",
+          "description": "Diseño leaf-spine, underlay OSPF y segmentación east-west",
+          "quantity": 40,
+          "unit": "h",
+          "unitCost": 60,
+          "unitPrice": 105,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-dc-build",
+          "description": "Implantación, hardening, cableado y pruebas de resiliencia",
+          "quantity": 48,
+          "unit": "h",
+          "unitCost": 55,
+          "unitPrice": 95,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        },
+        {
+          "id": "svc-dc-doc",
+          "description": "As-Built, runbook operativo y documentación de límites del fabric",
+          "quantity": 16,
+          "unit": "h",
+          "unitCost": 55,
+          "unitPrice": 95,
+          "chargeType": "one-time",
+          "capexOpex": "opex",
+          "billingPeriodMonths": 1
+        }
+      ]
+    }
+  }
+}

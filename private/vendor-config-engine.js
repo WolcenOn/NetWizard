@@ -41,6 +41,9 @@ function safeName(v,fallback){
   return ascii.replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^[.-]+|[.-]+$/g,'').slice(0,100)||fallback||'device';
 }
 function isSwitch(device){return !!device&&/switch/i.test(clean(device.kind||device.type));}
+function isRoutingDevice(device){
+  return !!device&&Ospf&&typeof Ospf.isRoutingDevice==='function'&&Ospf.isRoutingDevice(device);
+}
 function subnetOwnerId(subnet){
   return clean(subnet&&(subnet.gatewayDeviceRef||subnet.gatewayDeviceId||subnet.ownerDeviceRef||subnet.routingDeviceRef),256);
 }
@@ -70,6 +73,12 @@ function policyRuleVlanRef(project,rule){
   const subnet=arr(p.subnets).find(s=>s&&clean(s.cidr,120)===clean(r.src,120));
   return clean(subnet&&subnet.vlanRef,256);
 }
+function policyVlanRefsForDevice(project,deviceId){
+  return [...new Set([
+    ...effectivePolicyRulesForDevice(project,deviceId).map(rule=>policyRuleVlanRef(project,rule)).filter(Boolean),
+    ...arr(CiscoSegmentation.sourcePolicies(project,deviceId)).map(item=>item&&item.sourceVlanRef).filter(Boolean)
+  ])];
+}
 function canonicalWanContext(project,device){
   const p=obj(project),d=obj(device);
   const circuits=arr(p.wanCircuits).filter(x=>x&&x.enabled!==false&&x.deviceId===d.id);
@@ -79,6 +88,9 @@ function canonicalWanContext(project,device){
   const routes=arr(haDevice.defaultRoutes);
   const route=(primary&&routes.find(x=>x&&x.circuitRef===primary.id))||routes.slice().sort((a,b)=>(Number(a&&a.distance)||1)-(Number(b&&b.distance)||1))[0]||null;
   return{primary,port,route};
+}
+function aclRemark(value){
+  return clean(value,160).replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim();
 }
 function formatWild(cidr){
   const parsed=Network.parseCidr(cidr);
@@ -265,10 +277,47 @@ function configReadiness(project,device,output){
         if(!block||!block.includes('ip address '+mgmt.ip+' '+maskForCidr(mgmt.subnet.cidr))){
           reasons.push('El switch no configura su SVI de gestión con la mgmtIp declarada.');
         }
-        if(!text.includes('ip default-gateway '+clean(mgmt.subnet.gateway,80))){
+        if(!isRoutingDevice(d)&&!text.includes('ip default-gateway '+clean(mgmt.subnet.gateway,80))){
           reasons.push('El switch no configura el gateway de la red de gestión.');
         }
       }
+    }
+  }
+  if(isSwitch(d)&&isRoutingDevice(d)){
+    if(!/^ip routing$/m.test(text))reasons.push('El switch L3 no habilita ip routing.');
+    for(const port of arr(p.ports).filter(x=>x&&x.deviceId===d.id&&clean(x.mode,40).toLowerCase()==='routed')){
+      const block=interfaceBlock(text,clean(port.name||port.id,120));
+      if(!/^loopback/i.test(clean(port.name||port.id,120))&&!block.includes('no switchport'))reasons.push('La interfaz routed '+clean(port.name||port.id,120)+' no desactiva switching L2.');
+      if(clean(port.l3Ip||port.routedIp,80)&&clean(port.l3Cidr||port.routedCidr,80)&&!block.includes('ip address '+clean(port.l3Ip||port.routedIp,80)+' '+maskForCidr(port.l3Cidr||port.routedCidr))){
+        reasons.push('La interfaz routed '+clean(port.name||port.id,120)+' no materializa su IPv4 canónica.');
+      }
+    }
+    const owned=arr(p.subnets).filter(sn=>sn&&subnetOwnerId(sn)===d.id&&clean(sn.gateway,80)&&clean(sn.cidr,80));
+    for(const sn of owned){
+      const vlan=arr(p.vlans).find(v=>v&&v.id===sn.vlanRef);if(!vlan||clean(vlan&&vlan.intent&&vlan.intent.type,40).toLowerCase()==='transit')continue;
+      const block=interfaceBlock(text,'Vlan'+vlan.vlanId);
+      if(!block.includes('ip address '+clean(sn.gateway,80)+' '+maskForCidr(sn.cidr)))reasons.push('La VLAN '+vlan.vlanId+' no materializa su gateway IPv4 canónico en SVI.');
+      const v6=ipv6NetworkForVlan(p,vlan.id);
+      if(v6&&clean(v6.gateway,120)&&clean(v6.prefix,120)){
+        const expected=clean(v6.gateway,120)+'/'+ipv6PrefixLength(v6.prefix);
+        if(!/^ipv6 unicast-routing$/m.test(text))reasons.push('El switch L3 tiene redes IPv6 canónicas pero no habilita ipv6 unicast-routing.');
+        if(!block.includes('ipv6 address '+expected))reasons.push('La VLAN '+vlan.vlanId+' no materializa su gateway IPv6 '+expected+'.');
+      }
+    }
+    const policyRefs=policyVlanRefsForDevice(p,d.id),acl6=firewallIpv6Acl(p,d.id);
+    if(policyRefs.length){
+      if(!/ip access-list extended FW_POLICY/m.test(text))reasons.push('Existe política inter-VLAN en el switch L3, pero no se generó FW_POLICY.');
+      for(const ref of policyRefs){
+        const vlan=arr(p.vlans).find(v=>v&&v.id===ref),sn=arr(p.subnets).find(x=>x&&x.vlanRef===ref&&subnetOwnerId(x)===d.id);
+        if(!vlan||!sn)continue;
+        const block=interfaceBlock(text,'Vlan'+vlan.vlanId);
+        if(!block.includes('ip access-group FW_POLICY in'))reasons.push('La VLAN '+vlan.vlanId+' no vincula FW_POLICY inbound en su SVI.');
+        if(ipv6NetworkForVlan(p,ref)){
+          if(!/ipv6 access-list FW_POLICY_V6/m.test(text))reasons.push('Existe política IPv6 inter-VLAN en el switch L3, pero no se generó FW_POLICY_V6.');
+          if(!block.includes('ipv6 traffic-filter FW_POLICY_V6 in'))reasons.push('La VLAN '+vlan.vlanId+' no vincula FW_POLICY_V6 inbound en su SVI.');
+        }
+      }
+      if(acl6.unsupported.length)reasons.push('Hay '+acl6.unsupported.length+' reglas IPv4 sin traducción inequívoca a la política IPv6.');
     }
   }
   if(/gateway RoaS inferido automáticamente/i.test(text))reasons.push('La interfaz/gateway RoaS fue inferida; debe declararse explícitamente para una aplicación automática.');
@@ -312,11 +361,11 @@ function configReadiness(project,device,output){
       }
     }
   }
-  if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='static'){
+  if(isRoutingDevice(d)&&RoutingPlan.strategyFor(p)==='static'){
     const plan=RoutingPlan.build(p),devicePlan=arr(plan&&plan.devices).find(item=>item&&item.deviceId===d.id);
     for(const issue of arr(devicePlan&&devicePlan.staticRouteIssues))reasons.push('Routing estático: '+clean(issue&&issue.message,300));
   }
-  if(!isSwitch(d)&&RoutingPlan.strategyFor(p)==='ospf'){
+  if(isRoutingDevice(d)&&RoutingPlan.strategyFor(p)==='ospf'){
     const validation=Ospf.validateProject(p);
     for(const issue of arr(validation&&validation.issues).filter(item=>item&&item.deviceId===d.id)){
       reasons.push('OSPF: '+clean(issue.message,300));
@@ -340,7 +389,8 @@ function firewallAcl(project,deviceId){
   const lines=['!','! FW Policy ACL unified (intent/manual + vlanMatrix)','ip access-list extended FW_POLICY'];
   for(const policy of matrixPolicies){
     for(const dst of arr(policy.blocked)){
-      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard+' ! vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dst.vlanId);
+      lines.push(' deny ip '+policy.sourceNetwork+' '+policy.sourceWildcard+' '+dst.network+' '+dst.wildcard);
     }
   }
   for(const rule of rules){
@@ -351,15 +401,17 @@ function firewallAcl(project,deviceId){
     const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
     for(const portValue of ports){
       const port=portValue?' eq '+portValue:'';
-      const label=clean(rule.name,80);
-      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':'')+' ! '+label);
+      const label=aclRemark(rule.name);
+      if(label)lines.push(' remark '+label);
+      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+(rule.action==='log'?' log':''));
       else{
-        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
-        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+        lines.push(' '+action+' tcp '+src+' '+dst+port);
+        lines.push(' '+action+' udp '+src+' '+dst+port);
       }
     }
   }
-  lines.push(' deny ip any any log ! Implicit deny');
+  lines.push(' remark Implicit deny');
+  lines.push(' deny ip any any log');
   return lines.join('\n');
 }
 function firewallIpv6Acl(project,deviceId){
@@ -379,7 +431,8 @@ function firewallIpv6Acl(project,deviceId){
     for(const dstPolicy of arr(policy.blocked)){
       const dstNet=ipv6NetworkForVlan(p,dstPolicy.vlanRef);
       if(!dstNet||!clean(dstNet.prefix,160))continue;
-      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160)+' ! vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);
+      lines.push(' remark vlanMatrix '+policy.sourceVlanId+'->'+dstPolicy.vlanId);
+      lines.push(' deny ipv6 '+clean(srcNet.prefix,160)+' '+clean(dstNet.prefix,160));
     }
   }
   for(const rule of rules){
@@ -399,15 +452,17 @@ function firewallIpv6Acl(project,deviceId){
     const proto=rule.proto==='any'?'ipv6':(rule.proto==='tcp_udp'?null:rule.proto);
     const ports=(rule.port&&rule.port!=='any')?splitPorts(rule.port):[''];
     for(const portValue of ports){
-      const port=portValue?' eq '+portValue:'',label=clean(rule.name,80),log=rule.action==='log'?' log':'';
-      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+log+' ! '+label);
+      const port=portValue?' eq '+portValue:'',label=aclRemark(rule.name),log=rule.action==='log'?' log':'';
+      if(label)lines.push(' remark '+label);
+      if(proto)lines.push(' '+action+' '+proto+' '+src+' '+dst+port+log);
       else{
-        lines.push(' '+action+' tcp '+src+' '+dst+port+' ! '+label+' [TCP]');
-        lines.push(' '+action+' udp '+src+' '+dst+port+' ! '+label+' [UDP]');
+        lines.push(' '+action+' tcp '+src+' '+dst+port);
+        lines.push(' '+action+' udp '+src+' '+dst+port);
       }
     }
   }
-  lines.push(' deny ipv6 any any log ! Implicit deny');
+  lines.push(' remark Implicit deny');
+  lines.push(' deny ipv6 any any log');
   return{text:lines.join('\n'),unsupported,vlanRefs:Array.from(vlanRefs)};
 }
 function extension(vendor){
@@ -456,7 +511,14 @@ function create(project){
   pipeline.registerRenderer({
     id:'device.switching',priority:250,
     supports(ctx){return isSwitch(ctx.device)&&PRIVATE_VENDORS.has(ctx.vendor);},
-    render(ctx){return Switching.render(ctx.project,ctx.deviceId,ctx.vendor);}
+    render(ctx){
+      const ipv6=firewallIpv6Acl(ctx.project,ctx.deviceId);
+      return Switching.render(ctx.project,ctx.deviceId,ctx.vendor,{
+        ipv4Acl:firewallAcl(ctx.project,ctx.deviceId),
+        ipv6Acl:ipv6.text,
+        policyVlanRefs:policyVlanRefsForDevice(ctx.project,ctx.deviceId)
+      });
+    }
   });
   pipeline.registerRenderer({
     id:'edge.firewall',priority:300,
@@ -465,7 +527,7 @@ function create(project){
   });
   pipeline.registerStage({
     id:'routing.cisco',order:100,
-    supports(ctx){return ctx.vendor==='cisco_ios'&&!isSwitch(ctx.device);},
+    supports(ctx){return ctx.vendor==='cisco_ios'&&isRoutingDevice(ctx.device);},
     apply(config,ctx){return CiscoRouting.appendToConfig(config,ctx.project,ctx.deviceId);}
   });
   pipeline.registerStage({

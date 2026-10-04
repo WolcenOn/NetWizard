@@ -69,6 +69,20 @@ assert.strictEqual(route.edges.length,2);
 assert.strictEqual(route.edges[0].link.id,'l1');
 assert.strictEqual(route.edges[1].link.id,'l2');
 
+const matrixDeny=JSON.parse(JSON.stringify(project));
+matrixDeny.vlanMatrix={v10_v20:false};
+matrixDeny.fwRules=[{id:'late-allow',name:'Catch all allow',src:'VLAN 10',dst:'any',proto:'any',port:'any',action:'allow',prio:900,enabled:true}];
+const matrixDecision=model.firewallDecision(matrixDeny,{vlanRef:'v10',ip:'10.0.10.1'},{vlanRef:'v20',ip:'10.0.20.1'},'https');
+assert.strictEqual(matrixDecision.allowed,false,'vlanMatrix deny debe preceder a permits fwRules posteriores');
+assert.strictEqual(matrixDecision.matched.source,'vlanMatrix');
+
+const matrixAllow=JSON.parse(JSON.stringify(project));
+matrixAllow.vlanMatrix={v10_v20:true};
+matrixAllow.fwRules=[];
+const matrixAllowDecision=model.firewallDecision(matrixAllow,{vlanRef:'v10',ip:'10.0.10.1'},{vlanRef:'v20',ip:'10.0.20.1'},'https');
+assert.strictEqual(matrixAllowDecision.allowed,true);
+assert.strictEqual(matrixAllowDecision.matched.source,'vlanMatrix');
+
 const dns=model.simulate(project,'host:h1','host:h2','dns');
 assert.strictEqual(dns.ok,true);
 assert.strictEqual(dns.partial,false);

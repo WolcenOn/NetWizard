@@ -223,6 +223,92 @@ const badOspfResult=Engine.generateAll(badOspf);
 assert.strictEqual(badOspfResult.configReadiness['ospf-r1'].status,'review-required');
 assert.ok(badOspfResult.configReadiness['ospf-r1'].reasons.some(x=>/OSPF: .*no tiene vecino esperado compatible/i.test(x)));
 
+const l3FabricProject={
+  _schemaVersion:'3.50.0',
+  projName:'Private L3 switch OSPF fabric',
+  devices:[
+    {id:'leaf-a',name:'LEAF-A',type:'l3switch',kind:'switch',vendorOs:'cisco_ios',l3Capable:'yes'},
+    {id:'leaf-b',name:'LEAF-B',type:'l3switch',kind:'switch',vendorOs:'cisco_ios',l3Capable:'yes'}
+  ],
+  ports:[
+    {id:'leaf-a-b',deviceId:'leaf-a',name:'TenGigabitEthernet1/0/49',mode:'routed',role:'transit',l3Ip:'10.255.91.1',l3Cidr:'10.255.91.0/30'},
+    {id:'leaf-b-a',deviceId:'leaf-b',name:'TenGigabitEthernet1/0/49',mode:'routed',role:'transit',l3Ip:'10.255.91.2',l3Cidr:'10.255.91.0/30'}
+  ],
+  links:[{id:'fabric-ab',aPortId:'leaf-a-b',bPortId:'leaf-b-a',medium:'fiber',speed:'10G'}],
+  vlans:[
+    {id:'v110',vlanId:110,name:'Frontend-A',intent:{type:'servers',internet:false,isolation:'restricted'}},
+    {id:'v120',vlanId:120,name:'Database-B',intent:{type:'servers',internet:false,isolation:'restricted'}}
+  ],
+  subnets:[
+    {id:'s110',vlanRef:'v110',cidr:'10.91.10.0/24',gateway:'10.91.10.1',gatewayDeviceRef:'leaf-a'},
+    {id:'s120',vlanRef:'v120',cidr:'10.91.20.0/24',gateway:'10.91.20.1',gatewayDeviceRef:'leaf-b'}
+  ],
+  ipv6Networks:[
+    {id:'v6-110',vlanRef:'v110',prefix:'2001:db8:91:10::/64',gateway:'2001:db8:91:10::1',slaac:true,routerAdvertisement:true},
+    {id:'v6-120',vlanRef:'v120',prefix:'2001:db8:91:20::/64',gateway:'2001:db8:91:20::1',slaac:true,routerAdvertisement:true}
+  ],
+  vlanMatrix:{'v110_v120':false,'v120_v110':false},
+  hosts:[],fwRules:[],dhcp:{},roas:{},vtp:{roles:{}},
+  routing:{strategy:'ospf',protocol:'ospf',ospf:{devices:{
+    'leaf-a':{processId:10,routerId:'10.255.255.21',defaultArea:'0',passiveDefault:true,interfaces:{
+      'leaf-a-b':{enabled:true,area:'0',passive:false,cost:10}
+    }},
+    'leaf-b':{processId:10,routerId:'10.255.255.22',defaultArea:'0',passiveDefault:true,interfaces:{
+      'leaf-b-a':{enabled:true,area:'0',passive:false,cost:10}
+    }}
+  }}},
+  management:{},highAvailability:{},accessSecurity:{},linkAggregations:[],wanCircuits:[]
+};
+const l3FabricResult=Engine.generateAll(l3FabricProject);
+assert.strictEqual(l3FabricResult.ok,true,JSON.stringify(l3FabricResult.issues));
+for(const id of ['leaf-a','leaf-b']){
+  const cfg=l3FabricResult.configs[id];
+  assert.strictEqual(l3FabricResult.configReadiness[id].status,'apply-ready',id+': '+JSON.stringify(l3FabricResult.configReadiness[id].reasons));
+  assert.match(cfg,/^ip routing$/m);
+  assert.match(cfg,/no switchport/);
+  assert.match(cfg,/router ospf 10/);
+  assert.match(cfg,/no passive-interface TenGigabitEthernet1\/0\/49/);
+  assert.match(cfg,/ip access-list extended FW_POLICY/);
+  assert.match(cfg,/ipv6 access-list FW_POLICY_V6/);
+  assert.doesNotMatch(cfg,/ip access-list extended NW_SEG_/);
+  assert.strictEqual((cfg.match(/^configure terminal$/gm)||[]).length,1);
+  assert.strictEqual((cfg.match(/^end$/gm)||[]).length,1);
+  assert.strictEqual((cfg.match(/^write memory$/gm)||[]).length,1);
+}
+assert.match(l3FabricResult.configs['leaf-a'],/interface Vlan110[\s\S]*ip address 10\.91\.10\.1 255\.255\.255\.0[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
+assert.match(l3FabricResult.configs['leaf-b'],/interface Vlan120[\s\S]*ip address 10\.91\.20\.1 255\.255\.255\.0[\s\S]*ip access-group FW_POLICY in[\s\S]*ipv6 traffic-filter FW_POLICY_V6 in/);
+
+const aclRemarkProject={
+  _schemaVersion:'3.50.0',
+  devices:[{id:'r1',name:'R1',type:'router',kind:'router',vendorOs:'cisco_ios'}],
+  ports:[{id:'lan',deviceId:'r1',name:'GigabitEthernet0/1',mode:'trunk',role:'lan',allowedVlans:[10,20]}],
+  vlans:[
+    {id:'v10',vlanId:10,name:'Users',intent:{type:'users'}},
+    {id:'v20',vlanId:20,name:'Servers',intent:{type:'servers'}}
+  ],
+  subnets:[
+    {id:'s10',vlanRef:'v10',cidr:'10.10.10.0/24',gateway:'10.10.10.1',gatewayDeviceRef:'r1'},
+    {id:'s20',vlanRef:'v20',cidr:'10.10.20.0/24',gateway:'10.10.20.1',gatewayDeviceRef:'r1'}
+  ],
+  vlanMatrix:{'v10_v20':false},
+  fwRules:[{id:'allow-users',name:'Users catch all',src:'10.10.10.0/24',dst:'any',proto:'any',port:'any',action:'allow',enabled:true,prio:900,vlanRef:'v10'}],
+  ipv6Networks:[
+    {id:'v6-10',vlanRef:'v10',prefix:'2001:db8:10:10::/64',gateway:'2001:db8:10:10::1'},
+    {id:'v6-20',vlanRef:'v20',prefix:'2001:db8:10:20::/64',gateway:'2001:db8:10:20::1'}
+  ],
+  routing:{strategy:'static',staticRoutesByDevice:{}},highAvailability:{devices:{}},wanCircuits:[],linkAggregations:[],
+  accessSecurity:{},management:{},hosts:[],links:[],dhcp:{},roas:{gwId:'r1',lanIf:'GigabitEthernet0/1'},vtp:{roles:{}}
+};
+const aclV4=Engine.firewallAcl(aclRemarkProject,'r1');
+const aclV6=Engine.firewallIpv6Acl(aclRemarkProject,'r1').text;
+assert.match(aclV4,/^ remark vlanMatrix 10->20$/m);
+assert.match(aclV4,/^ deny ip 10\.10\.10\.0 0\.0\.0\.255 10\.10\.20\.0 0\.0\.0\.255$/m);
+assert.match(aclV4,/^ remark Users catch all$/m);
+assert.doesNotMatch(aclV4,/^[ \t]*(?:permit|deny)[ \t]+[^\r\n]*[ \t]![ \t]+/m);
+assert.match(aclV6,/^ remark vlanMatrix 10->20$/m);
+assert.match(aclV6,/^ deny ipv6 2001:db8:10:10::\/64 2001:db8:10:20::\/64$/m);
+assert.doesNotMatch(aclV6,/^[ \t]*(?:permit|deny)[ \t]+[^\r\n]*[ \t]![ \t]+/m);
+
 const wanResilienceProject={
   _schemaVersion:'3.50.0',
   projName:'Private WAN resilience',

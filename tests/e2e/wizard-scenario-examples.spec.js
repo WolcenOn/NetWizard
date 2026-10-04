@@ -226,3 +226,61 @@ test('Empresa mediana carga una Golden moderna y READY', async ({page})=>{
     expect.objectContaining({id:'ssid_corp_guest',security:'wpa3-personal',clientIsolation:true})
   ]));
 });
+
+
+test('Datacenter carga una Golden leaf-spine L3 y READY', async ({page})=>{
+  await resetStorage(page);
+  page.on('dialog',dialog=>dialog.accept());
+
+  await page.click('[data-step="wiz"]');
+  await page.click('[data-sc="dc"]');
+
+  await expect(page.locator('#wModeCard')).toBeVisible();
+  await expect(page.locator('#wLoadExample')).toBeVisible();
+  await expect(page.locator('#wLoadExample')).toContainText('Golden Path · Datacenter leaf-spine moderno');
+
+  await page.click('#wLoadExample');
+  await expect(page.locator('#pg-dash')).toBeVisible();
+
+  const result=await page.evaluate(()=>{
+    const p=window.NetWizardState.getSnapshot();
+    const gate=window.NetWizardProductionGate.runProductionGate(p,{productionMode:true,strict:true});
+    return{
+      name:p.projName,
+      devices:p.devices.map(d=>({id:d.id,name:d.name,type:d.type,kind:d.kind,l3Capable:d.l3Capable})),
+      links:p.links.map(l=>({id:l.id,speed:l.speed,medium:l.medium})),
+      routing:p.routing&&p.routing.strategy,
+      vlans:p.vlans.map(v=>({id:v.id,name:v.name})),
+      wan:p.wanCircuits.length,
+      wifi:p.wifiSsids.length,
+      ipv6:p.ipv6Networks.length,
+      racks:p.racks.length,
+      pdus:p.pdus.length,
+      status:gate.status,
+      warnings:gate.counts.warnings,
+      blocking:gate.counts.blocking
+    };
+  });
+
+  expect(result.name).toBe('Golden Path · Datacenter leaf-spine moderno');
+  expect(result.devices).toHaveLength(4);
+  expect(result.devices.every(d=>d.type==='switch'&&d.kind==='switch'&&d.l3Capable==='yes')).toBe(true);
+  expect(result.links).toHaveLength(4);
+  expect(result.links.every(l=>l.speed==='40G'&&l.medium==='fiber')).toBe(true);
+  expect(result.routing).toBe('ospf');
+  expect(result.wan).toBe(0);
+  expect(result.wifi).toBe(0);
+  expect(result.ipv6).toBe(9);
+  expect(result.racks).toBe(2);
+  expect(result.pdus).toBe(4);
+  expect(result.status).toBe('ready');
+  expect(result.warnings).toBe(0);
+  expect(result.blocking).toBe(0);
+  expect(result.vlans).toEqual(expect.arrayContaining([
+    expect.objectContaining({id:'dc_v110',name:'DC-Frontend-A'}),
+    expect.objectContaining({id:'dc_v120',name:'DC-Backend-A'}),
+    expect.objectContaining({id:'dc_v130',name:'DC-Database-A'}),
+    expect.objectContaining({id:'dc_v140',name:'DC-Storage-A'}),
+    expect.objectContaining({id:'dc_v160',name:'DC-Gestion'})
+  ]));
+});
