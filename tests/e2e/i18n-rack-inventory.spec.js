@@ -33,7 +33,12 @@ test('Rack e inventario físico cambian ES/EN sin mezclar textos dinámicos', as
   await expect(rack).not.toContainText('alimentación');
   await expect(rack).not.toContainText('Organizar');
 
+  await page.click('[data-action="edit-rack"][data-id="rack-i18n"]');
+  await page.click('[data-action="update-selected-rack"][data-id="rack-i18n"]');
+  await expect(rack).toContainText('Rack updated. Devices, passive material, PDUs and cabling were preserved.');
+
   await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
+  await expect(rack).toContainText('Rack actualizado. Se han conservado sus equipos, material pasivo, PDUs y cableado.');
   await expect(rack).toContainText('Racks, alimentación y material pasivo');
   await expect(rack).toContainText('Editor de racks y alimentación');
   await expect(rack).toContainText('Organizar');
