@@ -604,5 +604,6 @@
   "device.kind.firewall": "Firewall",
   "device.kind.access_point": "Access Point",
   "device.kind.wlan_controller": "WLAN Controller",
-  "device.kind.appliance": "Appliance"
+  "device.kind.appliance": "Appliance",
+  "ports.bulk.vlanLabel": "VLAN {id} · {name}"
 }
