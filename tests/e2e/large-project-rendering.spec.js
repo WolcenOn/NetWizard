@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 async function reset(page){
   await page.goto('/index.html');
-  await page.evaluate(()=>{localStorage.clear();sessionStorage.clear();});
+  await page.evaluate(()=>{localStorage.clear();localStorage.setItem('nw_locale_v1','es');sessionStorage.clear();});
   await page.reload();
 }
 

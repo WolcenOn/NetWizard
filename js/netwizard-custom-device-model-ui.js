@@ -9,6 +9,8 @@ function el(id){return root.document&&root.document.getElementById(id);}
 function state(){return root.NetWizardState||null;}
 function models(){return root.NetWizardCustomDeviceModels||null;}
 function mk(tag,attrs,text){const n=root.document.createElement(tag);for(const [k,v] of Object.entries(attrs||{})){if(k==='className')n.className=v;else if(k==='htmlFor')n.htmlFor=v;else if(k==='checked')n.checked=!!v;else n.setAttribute(k,v);}if(text!=null)n.textContent=String(text);return n;}
+function tr(key,params,fallback){const i=root.NetWizardI18n;if(i&&typeof i.t==='function')return i.t(key,params||{});return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
+function i18nNode(tag,attrs,key,fallback){const n=mk(tag,Object.assign({},attrs||{}, {'data-i18n':key}),tr(key,{},fallback));return n;}
 
 function parseSpeeds(raw){return clean(raw).split(',').map(x=>Number(x.trim())).filter(Number.isFinite).filter((v,i,a)=>v>=0&&a.indexOf(v)===i).sort((a,b)=>a-b);}
 function parsePortGroups(text){
@@ -93,9 +95,9 @@ function refreshSelect(selected){
   const snap=state()?.getSnapshot?.()||{};
   const current=selected||s.value;
   s.textContent='';
-  s.appendChild(mk('option',{value:''},'— modelo manual / catálogo global —'));
+  s.appendChild(mk('option',{value:''},tr('device.custom.selectManual',{},'— modelo manual / catálogo global —')));
   for(const m of arr(snap.customDeviceModels)){
-    s.appendChild(mk('option',{value:m.id},`${m.manufacturer||'Genérico'} · ${m.model||m.id}`));
+    s.appendChild(mk('option',{value:m.id},`${m.manufacturer||tr('device.custom.generic',{},'Genérico')} · ${m.model||m.id}`));
   }
   if(arr(snap.customDeviceModels).some(m=>m.id===current))s.value=current;
 }
@@ -103,7 +105,7 @@ function showEditor(show){const box=el('nwCustomModelEditor');if(box)box.style.d
 function saveModel(){
   const S=state();if(!S)return;
   const model=modelFromEditor();
-  if(!model.manufacturer||!model.model)return root.alert('Fabricante y modelo son obligatorios.');
+  if(!model.manufacturer||!model.model)return root.alert(tr('device.custom.alert.required',{},'Fabricante y modelo son obligatorios.'));
   const snap=S.getSnapshot(), list=arr(snap.customDeviceModels).slice();
   const idx=list.findIndex(x=>x.id===model.id);
   if(idx>=0)list[idx]=model;else list.push(model);
@@ -114,14 +116,14 @@ function saveModel(){
 async function promoteSelectedModel(){
   const id=clean(el('nwCustomModelSelect')?.value),snap=state()?.getSnapshot?.()||{};
   const model=models()?.get(snap,id),catalog=root.NetWizardGlobalDeviceCatalog;
-  if(!model)return root.alert('Selecciona un modelo local.');
-  if(!catalog||typeof catalog.promote!=='function')return root.alert('El catálogo global no está disponible.');
-  if(!catalog.canPromote())return root.alert('La promoción al catálogo global requiere una sesión de administrador.');
+  if(!model)return root.alert(tr('device.custom.alert.selectLocal',{},'Selecciona un modelo local.'));
+  if(!catalog||typeof catalog.promote!=='function')return root.alert(tr('device.custom.alert.catalogUnavailable',{},'El catálogo global no está disponible.'));
+  if(!catalog.canPromote())return root.alert(tr('device.custom.alert.adminRequired',{},'La promoción al catálogo global requiere una sesión de administrador.'));
   try{
     const result=await catalog.promote(model);
-    root.alert(`Modelo promovido al catálogo global: ${result.manufacturer||model.manufacturer} ${result.model||model.model}`);
+    root.alert(tr('device.custom.feedback.promoted',{manufacturer:result.manufacturer||model.manufacturer,model:result.model||model.model},'Modelo promovido al catálogo global: {manufacturer} {model}'));
   }catch(err){
-    root.alert('No se pudo promover el modelo: '+(err&&err.message||'error desconocido'));
+    root.alert(tr('device.custom.alert.promoteFailed',{error:err&&err.message||tr('common.unknownError',{},'error desconocido')},'No se pudo promover el modelo: {error}'));
   }
 }
 function refreshPromotionVisibility(){
@@ -132,10 +134,10 @@ function refreshPromotionVisibility(){
 function deleteModel(){
   const S=state(),id=clean(el('nwCustomModelSelect')?.value);if(!S||!id)return;
   const snap=S.getSnapshot();
-  if(arr(snap.devices).some(d=>d.modelSource==='custom'&&d.modelRef===id))return root.alert('No se puede borrar: hay dispositivos que usan este modelo.');
+  if(arr(snap.devices).some(d=>d.modelSource==='custom'&&d.modelRef===id))return root.alert(tr('device.custom.alert.inUse',{},'No se puede borrar: hay dispositivos que usan este modelo.'));
   const model=arr(snap.customDeviceModels).find(x=>x.id===id);
   if(!model)return;
-  if(!root.confirm(`¿Borrar el modelo personalizado "${model.manufacturer} ${model.model}"?`))return;
+  if(!root.confirm(tr('device.custom.confirmDelete',{manufacturer:model.manufacturer,model:model.model},'¿Borrar el modelo personalizado "{manufacturer} {model}"?')))return;
   snap.customDeviceModels=arr(snap.customDeviceModels).filter(x=>x.id!==id);
   S.replaceProject(snap,{source:'custom-device-model-ui'});
   refreshSelect('');showEditor(false);
@@ -148,7 +150,7 @@ function applySelectedToForm(){
   if(el('nwDeviceModelSource'))el('nwDeviceModelSource').value='custom';
   if(el('nwDeviceModelRef'))el('nwDeviceModelRef').value=model.id;
   const hint=el('nwCustomModelHint');
-  if(hint)hint.textContent=`${model.manufacturer} ${model.model} · ${model.rackUnits||'—'}U · ${model.powerTypicalWatts??'—'}W típico · ${arr(M.expandPortGroups(model)).length} puertos definidos`;
+  if(hint)hint.textContent=tr('device.custom.hint.summary',{manufacturer:model.manufacturer,model:model.model,rackUnits:model.rackUnits||'—',watts:model.powerTypicalWatts??'—',ports:arr(M.expandPortGroups(model)).length},'{manufacturer} {model} · {rackUnits}U · {watts}W típico · {ports} puertos definidos');
 }
 function generatePortsForDevice(snap,device,model){
   const M=models();if(!M)return 0;
@@ -169,7 +171,7 @@ function generatePortsForDevice(snap,device,model){
       speedMaxMbps:spec.speedMaxMbps,
       supportedSpeedsMbps:spec.supportedSpeedsMbps,
       poeCapable:spec.poeCapable,
-      desc:'Generado desde modelo personalizado'
+      desc:'🧩 '+(model.manufacturer||'')+' '+(model.model||'')
     });
     existing.add(clean(spec.name).toLowerCase());added++;
   }
@@ -225,60 +227,60 @@ function ensureUi(){
   const anchor=el('devModelHint');if(!anchor||!anchor.parentNode)return false;
   const block=mk('div',{id:'nwCustomModelBlock',className:'co co-ac'});
   block.style.marginTop='8px';
-  const title=mk('div',{className:'card-t'},'🧩 Modelo personalizado del proyecto');
+  const title=i18nNode('div',{className:'card-t'},'device.custom.title','🧩 Modelo personalizado del proyecto');
   const row=mk('div',{className:'row'});
-  const left=mk('div');left.append(mk('label',{className:'fl',htmlFor:'nwCustomModelSelect'},'Modelo local'),mk('select',{id:'nwCustomModelSelect'}));
-  const right=mk('div');right.append(mk('label',{className:'fl'},'Acciones'));
+  const left=mk('div');left.append(i18nNode('label',{className:'fl',htmlFor:'nwCustomModelSelect'},'device.custom.localModel','Modelo local'),mk('select',{id:'nwCustomModelSelect'}));
+  const right=mk('div');right.append(i18nNode('label',{className:'fl'},'device.custom.actions','Acciones'));
   const actions=mk('div',{className:'brow'});
   actions.append(
-    mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomNew'},'➕ Nuevo'),
-    mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomEdit'},'✏️ Editar'),
-    mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomDelete'},'🗑 Borrar'),
-    mk('button',{type:'button',className:'btn bp bsm',id:'nwCustomApply'},'Aplicar al equipo'),
-    mk('button',{type:'button',className:'btn bs bsm',id:'nwCustomPromote'},'☁ Promover a catálogo global')
+    i18nNode('button',{type:'button',className:'btn bs bsm',id:'nwCustomNew'},'device.custom.new','➕ Nuevo'),
+    i18nNode('button',{type:'button',className:'btn bs bsm',id:'nwCustomEdit'},'device.custom.edit','✏️ Editar'),
+    i18nNode('button',{type:'button',className:'btn bs bsm',id:'nwCustomDelete'},'device.custom.delete','🗑 Borrar'),
+    i18nNode('button',{type:'button',className:'btn bp bsm',id:'nwCustomApply'},'device.custom.apply','Aplicar al equipo'),
+    i18nNode('button',{type:'button',className:'btn bs bsm',id:'nwCustomPromote'},'device.custom.promote','☁ Promover a catálogo global')
   );
   right.append(actions);row.append(left,right);
-  const hint=mk('div',{id:'nwCustomModelHint',className:'hint'},'Los modelos locales viajan con el proyecto y no modifican el catálogo global.');
-  const gen=mk('label',{className:'chk'});gen.append(mk('input',{type:'checkbox',id:'nwGenerateModelPorts'}),root.document.createTextNode(' Generar los puertos del modelo al guardar el equipo'));
+  const hint=i18nNode('div',{id:'nwCustomModelHint',className:'hint'},'device.custom.scopeHint','Los modelos locales viajan con el proyecto y no modifican el catálogo global.');
+  const gen=mk('label',{className:'chk'});gen.append(mk('input',{type:'checkbox',id:'nwGenerateModelPorts'}),i18nNode('span',{},'device.custom.generatePorts',' Generar los puertos del modelo al guardar el equipo'));
   block.append(title,row,hint,gen,mk('input',{type:'hidden',id:'nwDeviceModelSource',value:'manual'}),mk('input',{type:'hidden',id:'nwDeviceModelRef'}));
 
   const editor=mk('div',{id:'nwCustomModelEditor'});editor.style.display='none';editor.style.marginTop='10px';
   editor.append(mk('input',{type:'hidden',id:'nwCustomModelId'}));
   const rows=[
-    [['Fabricante','nwCustomManufacturer','ACME'],['Modelo','nwCustomModel','X48P']],
-    [['SKU / part number','nwCustomSku','X48P-POE'],['Revisión','nwCustomRevision','Rev A']],
-    [['Altura (U)','nwCustomRackUnits','1'],['Peso (kg)','nwCustomWeightKg','4.8']],
-    [['Consumo típico (W)','nwCustomPowerTypical','82'],['Consumo máximo (W)','nwCustomPowerMax','370']],
-    [['PoE budget (W)','nwCustomPoeBudget','240'],['Número PSU','nwCustomPsuCount','2']],
-    [['Voltaje','nwCustomVoltage','230V'],['','nwCustomKind','']]
+    [['device.custom.manufacturer',tr('device.custom.manufacturer',{},'Fabricante'),'nwCustomManufacturer','ACME'],['form.model',tr('form.model',{},'Modelo'),'nwCustomModel','X48P']],
+    [['device.custom.sku',tr('device.custom.sku',{},'SKU / part number'),'nwCustomSku','X48P-POE'],['device.custom.revision',tr('device.custom.revision',{},'Revisión'),'nwCustomRevision','Rev A']],
+    [['device.custom.rackUnits',tr('device.custom.rackUnits',{},'Altura (U)'),'nwCustomRackUnits','1'],['device.custom.weight',tr('device.custom.weight',{},'Peso (kg)'),'nwCustomWeightKg','4.8']],
+    [['device.custom.typicalPower',tr('device.custom.typicalPower',{},'Consumo típico (W)'),'nwCustomPowerTypical','82'],['device.custom.maxPower',tr('device.custom.maxPower',{},'Consumo máximo (W)'),'nwCustomPowerMax','370']],
+    [['device.custom.poeBudget',tr('device.custom.poeBudget',{},'PoE budget (W)'),'nwCustomPoeBudget','240'],['device.custom.psuCount',tr('device.custom.psuCount',{},'Número PSU'),'nwCustomPsuCount','2']],
+    [['device.custom.voltage',tr('device.custom.voltage',{},'Voltaje'),'nwCustomVoltage','230V'],['form.type',tr('form.type',{},'Tipo'),'nwCustomKind','']]
   ];
   for(const pair of rows){
     const r=mk('div',{className:'row'});
-    pair.forEach(([label,id,placeholder])=>{
+    pair.forEach(([key,label,id,placeholder])=>{
       const w=mk('div');
       if(id==='nwCustomKind'){
-        w.append(mk('label',{className:'fl',htmlFor:id},'Tipo'));
+        w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label));
         const s=mk('select',{id});
-        [['switch','Switch'],['router','Router'],['firewall','Firewall'],['access_point','Access Point'],['wlan_controller','WLAN Controller'],['server','Servidor'],['appliance','Appliance']].forEach(([v,l])=>s.append(mk('option',{value:v},l)));
+        [['switch','device.kind.switch',tr('device.kind.switch',{},'Switch')],['router','device.kind.router',tr('device.kind.router',{},'Router')],['firewall','device.kind.firewall',tr('device.kind.firewall',{},'Firewall')],['access_point','device.kind.access_point',tr('device.kind.access_point',{},'Punto de acceso')],['wlan_controller','device.kind.wlan_controller',tr('device.kind.wlan_controller',{},'Controlador WLAN')],['server','device.kind.server',tr('device.kind.server',{},'Servidor gestionado')],['appliance','device.kind.appliance',tr('device.kind.appliance',{},'Appliance')]].forEach(([v,key,l])=>s.append(i18nNode('option',{value:v},key,l)));
         w.append(s);
       }else{
-        w.append(mk('label',{className:'fl',htmlFor:id},label),mk('input',{id,placeholder}));
+        w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label),mk('input',{id,placeholder}));
       }
       r.append(w);
     });editor.append(r);
   }
-  const red=mk('label',{className:'chk'});red.append(mk('input',{type:'checkbox',id:'nwCustomPsuRedundant'}),root.document.createTextNode(' PSU redundantes'));
-  editor.append(red,mk('label',{className:'fl',htmlFor:'nwCustomPortGroups'},'Grupos de puertos'));
+  const red=mk('label',{className:'chk'});red.append(mk('input',{type:'checkbox',id:'nwCustomPsuRedundant'}),i18nNode('span',{},'device.custom.redundantPsu',' PSU redundantes'));
+  editor.append(red,i18nNode('label',{className:'fl',htmlFor:'nwCustomPortGroups'},'device.custom.portGroups','Grupos de puertos'));
   const ta=mk('textarea',{id:'nwCustomPortGroups',rows:'5',placeholder:'Gi1/0/{n}|48|copper|1000|10,100,1000|yes\nSFP+{n}|4|sfp+|10000|1000,10000|no'});editor.append(ta);
-  editor.append(mk('div',{className:'hint'},'Formato por línea: patrón | cantidad | medio | velocidad máxima Mbps | velocidades soportadas | PoE yes/no'));
-  editor.append(mk('label',{className:'fl',htmlFor:'nwCustomNotes'},'Notas'),mk('textarea',{id:'nwCustomNotes',rows:'2'}));
-  const eb=mk('div',{className:'brow'});eb.append(mk('button',{type:'button',className:'btn bp',id:'nwCustomSave'},'💾 Guardar modelo'),mk('button',{type:'button',className:'btn bs',id:'nwCustomCancel'},'Cancelar'));editor.append(eb);
+  editor.append(i18nNode('div',{className:'hint'},'device.custom.portGroupsFormat','Formato por línea: patrón | cantidad | medio | velocidad máxima Mbps | velocidades soportadas | PoE yes/no'));
+  editor.append(i18nNode('label',{className:'fl',htmlFor:'nwCustomNotes'},'form.notes','Notas'),mk('textarea',{id:'nwCustomNotes',rows:'2'}));
+  const eb=mk('div',{className:'brow'});eb.append(i18nNode('button',{type:'button',className:'btn bp',id:'nwCustomSave'},'device.custom.save','💾 Guardar modelo'),i18nNode('button',{type:'button',className:'btn bs',id:'nwCustomCancel'},'actions.cancel','Cancelar'));editor.append(eb);
   block.append(editor);
   anchor.parentNode.insertBefore(block,anchor.nextSibling);
 
   refreshSelect('');
   el('nwCustomNew').onclick=()=>{setEditor(null);showEditor(true);};
-  el('nwCustomEdit').onclick=()=>{const m=models()?.get(state()?.getSnapshot?.(),el('nwCustomModelSelect').value);if(!m)return root.alert('Selecciona un modelo local.');setEditor(m);showEditor(true);};
+  el('nwCustomEdit').onclick=()=>{const m=models()?.get(state()?.getSnapshot?.(),el('nwCustomModelSelect').value);if(!m)return root.alert(tr('device.custom.alert.selectLocal',{},'Selecciona un modelo local.'));setEditor(m);showEditor(true);};
   el('nwCustomDelete').onclick=deleteModel;
   el('nwCustomApply').onclick=applySelectedToForm;
   el('nwCustomPromote').onclick=promoteSelectedModel;
@@ -295,6 +297,10 @@ function install(attempt){
   if(!wrapped&&(attempt||0)<50){root.setTimeout(()=>install((attempt||0)+1),100);return false;}
   bindEditSync();
   root.document.addEventListener('nw:project:changed',()=>refreshSelect(el('nwCustomModelSelect')?.value||''));
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{
+    refreshSelect(el('nwCustomModelSelect')?.value||'');
+    if(el('nwCustomModelSelect')?.value)applySelectedToForm();
+  });
   return true;
 }
 

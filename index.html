@@ -176,7 +176,7 @@
         <div class="hint" style="margin-bottom:10px;">Define una jerarquía de ubicaciones tipo árbol. Ejemplo: Almacén → Oficina → Producción. Los cambios se comparten entre V4 y V5.</div>
         <div class="row">
           <div><label class="fl">Nombre</label><input id="plName" placeholder="Edificio A / Planta 1 / Rack R1 / Sala 203"/></div>
-          <div><label class="fl">Tipo</label>
+          <div><label class="fl" data-i18n="form.type">Tipo</label>
             <select id="plType">
               <option value="site">Sede</option>
               <option value="campus">Campus</option>
@@ -213,13 +213,13 @@
 </div>
 
 <div class="pg" id="pg-dev">
-  <div class="ph"><h1>🖥 Dispositivos</h1><p>Switches, routers, firewalls y endpoints de red.</p></div>
+  <div class="ph"><h1 data-i18n="device.page.title">🖥 Dispositivos</h1><p data-i18n="device.page.subtitle">Switches, routers, firewalls y endpoints de red.</p></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">➕ Añadir dispositivo</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="device.form.title">➕ Añadir dispositivo</div>
         <div class="row">
-          <div><label class="fl">Nombre</label><input id="devName" placeholder="SW-CORE-01"/></div>
+          <div><label class="fl" data-i18n="form.name">Nombre</label><input id="devName" placeholder="SW-CORE-01"/></div>
           <div><label class="fl">Tipo</label>
             <select id="devType">
               <option value="switch">🔀 Switch</option>
@@ -227,67 +227,67 @@
           </div>
         </div>
         <div class="row">
-          <div><label class="fl">Vendor / OS</label>
+          <div><label class="fl" data-i18n="device.form.vendorOs">Vendor / OS</label>
             <select id="devVendor">
-              <option value="">— selecciona —</option>
+              <option value="" data-i18n="device.form.selectVendor">— selecciona —</option>
             </select>
           </div>
-          <div><label class="fl">IP gestión</label><input id="devMgmt" placeholder="10.0.99.1"/></div>
+          <div><label class="fl" data-i18n="device.form.managementIp">IP gestión</label><input id="devMgmt" placeholder="10.0.99.1"/></div>
         </div>
         <div class="row">
-          <div><label class="fl">Modelo / plantilla de capacidades</label><input id="devModel" list="devModelList" placeholder="Cisco ISR 1121-8P, UniFi U6 Pro..."/><datalist id="devModelList"></datalist></div>
-          <div><label class="fl">Rol inalámbrico</label><select id="devWifiRole"><option value="none">Sin Wi‑Fi/AP</option><option value="ap">Punto de acceso Wi‑Fi</option><option value="integrated_router_wifi">Router con Wi‑Fi integrado</option><option value="controller">Controlador WLAN</option></select></div>
+          <div><label class="fl" data-i18n="device.form.modelTemplate">Modelo / plantilla de capacidades</label><input id="devModel" list="devModelList" placeholder="Cisco ISR 1121-8P, UniFi U6 Pro..."/><datalist id="devModelList"></datalist></div>
+          <div><label class="fl" data-i18n="device.form.wifiRole">Rol inalámbrico</label><select id="devWifiRole"><option value="none" data-i18n="device.wifi.none">Sin Wi‑Fi/AP</option><option value="ap" data-i18n="device.wifi.ap">Punto de acceso Wi‑Fi</option><option value="integrated_router_wifi" data-i18n="device.wifi.integrated">Router con Wi‑Fi integrado</option><option value="controller" data-i18n="device.wifi.controller">Controlador WLAN</option></select></div>
         </div>
         <div class="co co-ac" id="devModelHint" style="display:none"></div>
-        <div class="brow"><button type="button" class="btn bs bsm" id="btnApplyModelCaps">⚙ Aplicar capacidades del modelo</button></div>
+        <div class="brow"><button type="button" class="btn bs bsm" id="btnApplyModelCaps" data-i18n="device.actions.applyModelCaps">⚙ Aplicar capacidades del modelo</button></div>
         <div id="devEdgeSec" style="display:none;">
           <div class="row">
-            <div><label class="fl">Internet Edge?</label>
-              <select id="devEdge"><option value="no">No</option><option value="yes">Sí (NAT + default route)</option></select>
+            <div><label class="fl" data-i18n="device.form.internetEdge">Internet Edge?</label>
+              <select id="devEdge"><option value="no" data-i18n="common.no">No</option><option value="yes" data-i18n="device.form.edgeYes">Sí (NAT + default route)</option></select>
             </div>
-            <div><label class="fl">Interfaz WAN</label><input id="devWanIf" placeholder="GigabitEthernet0/0"/></div>
+            <div><label class="fl" data-i18n="device.form.wanInterface">Interfaz WAN</label><input id="devWanIf" placeholder="GigabitEthernet0/0"/></div>
           </div>
         </div>
         <div class="row">
-          <div><label class="fl">Notas</label><input id="devNotes" placeholder="Observaciones, función, dependencia o contexto operativo…"/></div>
-          <div><label class="fl">Color identificativo</label><input id="devColor" type="color" value="#3b82f6" title="Color usado para identificar el dispositivo en listas de puertos"/></div>
+          <div><label class="fl" data-i18n="form.notes">Notas</label><input id="devNotes" data-i18n-placeholder="device.form.notesPlaceholder" placeholder="Observaciones, función, dependencia o contexto operativo…"/></div>
+          <div><label class="fl" data-i18n="device.form.labelColor">Color identificativo</label><input id="devColor" type="color" value="#3b82f6" data-i18n-title="device.form.labelColorTitle" title="Color usado para identificar el dispositivo en listas de puertos"/></div>
         </div>
         <input type="hidden" id="devEditId"/>
-        <div class="brow"><button class="btn bp bfull" id="btnAddDev">➕ Añadir dispositivo</button><button class="btn bs" id="btnCancelDevEdit" style="display:none;">Cancelar edición</button></div>
+        <div class="brow"><button class="btn bp bfull" id="btnAddDev" data-i18n="device.actions.add">➕ Añadir dispositivo</button><button class="btn bs" id="btnCancelDevEdit" style="display:none;" data-i18n="device.actions.cancelEdit">Cancelar edición</button></div>
       </div>
     </div>
     <div>
-      <div class="card"><div class="card-h"><div class="card-t">📋 Dispositivos registrados</div></div><div id="devsList"></div></div>
+      <div class="card"><div class="card-h"><div class="card-t" data-i18n="device.list.title">📋 Dispositivos registrados</div></div><div id="devsList"></div></div>
     </div>
   </div>
 </div>
 
 <!-- ═══════════ PUERTOS & INTERFACES ═══════════ -->
 <div class="pg" id="pg-ports">
-  <div class="ph"><h1>🔌 Puertos & Interfaces</h1><p>Gestiona puertos de switch e interfaces de router/firewall.</p></div>
+  <div class="ph"><h1 data-i18n="ports.page.title">🔌 Puertos & Interfaces</h1><p data-i18n="ports.page.subtitle">Gestiona puertos de switch e interfaces de router/firewall.</p></div>
   <div class="co co-ac">
-    <b>Switch:</b> puertos de acceso y trunk &nbsp;|&nbsp; <b>Router/Firewall:</b> interfaces LAN, WAN, subinterfaces<br>
-    Añade puertos manualmente o usa "Generar en bloque" para switches.
+    <b data-i18n="ports.help.switchLabel">Switch:</b> <span data-i18n="ports.help.switchText">puertos de acceso y trunk</span> &nbsp;|&nbsp; <b data-i18n="ports.help.routerLabel">Router/Firewall:</b> <span data-i18n="ports.help.routerText">interfaces LAN, WAN, subinterfaces</span><br>
+    <span data-i18n="ports.help.bulkHint">Añade puertos manualmente o usa "Generar en bloque" para switches.</span>
   </div>
 
   <!-- FORM AÑADIR PUERTO — ALWAYS VISIBLE, ADAPTS TO DEVICE TYPE -->
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card" id="portFormCard">
-        <div class="card-t" style="margin-bottom:11px;">➕ Añadir puerto / interfaz</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="ports.form.title">➕ Añadir puerto / interfaz</div>
         <div class="row">
           <div>
-            <label class="fl">Dispositivo</label>
+            <label class="fl" data-i18n="form.device">Dispositivo</label>
             <select id="pDev" style="border:2px solid var(--ac);"></select>
           </div>
           <div>
-            <label class="fl">Nombre del puerto</label>
+            <label class="fl" data-i18n="ports.form.portName">Nombre del puerto</label>
             <input id="pName" placeholder="GigabitEthernet0/1"/>
           </div>
         </div>
         <div class="row">
           <div>
-            <label class="fl">Tipo de medio</label>
+            <label class="fl" data-i18n="ports.form.mediaType">Tipo de medio</label>
             <select id="pMedia">
               <option value="GE">GE (Gigabit)</option>
               <option value="FE">FE (FastEthernet)</option>
@@ -296,70 +296,70 @@
             </select>
           </div>
           <div id="pRoleWrap">
-            <label class="fl">Rol / Modo</label>
+            <label class="fl" data-i18n="ports.form.roleMode">Rol / Modo</label>
             <select id="pRole">
               <!-- populated dynamically based on device type -->
             </select>
           </div>
         </div>
         <div id="pVlanWrap">
-          <label class="fl">VLAN (para modo access)</label>
+          <label class="fl" data-i18n="ports.form.accessVlan">VLAN (para modo access)</label>
           <select id="pVlan"></select>
         </div>
         <div id="pL2Wrap" style="display:none;">
           <div class="row">
-            <div><label class="fl">VLAN nativa (trunk)</label><select id="pNativeVlan"></select></div>
-            <div><label class="fl">VLANs permitidas (trunk)</label><input id="pAllowedVlans" placeholder="10,20,30 o 10-20"/></div>
+            <div><label class="fl" data-i18n="ports.form.nativeVlan">VLAN nativa (trunk)</label><select id="pNativeVlan"></select></div>
+            <div><label class="fl" data-i18n="ports.form.allowedVlans">VLANs permitidas (trunk)</label><input id="pAllowedVlans" data-i18n-placeholder="ports.form.allowedVlansPlaceholder" placeholder="10,20,30 o 10-20"/></div>
           </div>
           <div class="row">
-            <div><label class="fl">Uplink</label><select id="pUplink"><option value="auto">Auto</option><option value="yes">Sí</option><option value="no">No</option></select></div>
-            <div><label class="fl">Protección access</label><select id="pAccessProtection"><option value="default">Recomendado</option><option value="strict">PortFast + BPDU Guard</option><option value="off">Desactivado</option></select></div>
+            <div><label class="fl" data-i18n="ports.form.uplink">Uplink</label><select id="pUplink"><option value="auto">Auto</option><option value="yes" data-i18n="common.yes">Sí</option><option value="no" data-i18n="common.no">No</option></select></div>
+            <div><label class="fl" data-i18n="ports.form.accessProtection">Protección access</label><select id="pAccessProtection"><option value="default" data-i18n="ports.protection.recommended">Recomendado</option><option value="strict">PortFast + BPDU Guard</option><option value="off" data-i18n="ports.protection.off">Desactivado</option></select></div>
           </div>
         </div>
         <div>
-          <label class="fl">Descripción</label>
-          <input id="pDesc" placeholder="Ej: Uplink SW-DIST / PC-Ventas / WAN-ISP"/>
+          <label class="fl" data-i18n="form.description">Descripción</label>
+          <input id="pDesc" data-i18n-placeholder="ports.form.descriptionPlaceholder" placeholder="Ej: Uplink SW-DIST / PC-Ventas / WAN-ISP"/>
         </div>
         <div class="hint" id="pHint"></div>
         <input type="hidden" id="portEditId"/>
         <div class="brow">
-          <button class="btn bp" id="btnAddPort">➕ Añadir</button>
-          <button class="btn bs" id="btnCancelPortEdit" style="display:none;">Cancelar edición</button>
-          <button class="btn bs" id="btnQuick24">⚡ Generar 24 GE (switch)</button>
+          <button class="btn bp" id="btnAddPort" data-i18n="ports.actions.add">➕ Añadir</button>
+          <button class="btn bs" id="btnCancelPortEdit" style="display:none;" data-i18n="ports.actions.cancelEdit">Cancelar edición</button>
+          <button class="btn bs" id="btnQuick24" data-i18n="ports.actions.quick24">⚡ Generar 24 GE (switch)</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">📐 Layout switch (generación en bloque)</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="ports.layout.title">📐 Layout switch (generación en bloque)</div>
         <div class="row">
           <div><label class="fl">Switch</label><select id="lyDev"></select></div>
-          <div><label class="fl">Total puertos</label><input id="lyTotal" type="number" min="1" placeholder="24"/></div>
+          <div><label class="fl" data-i18n="ports.layout.totalPorts">Total puertos</label><input id="lyTotal" type="number" min="1" placeholder="24"/></div>
         </div>
         <div class="row">
-          <div><label class="fl">Columnas</label><input id="lyCols" type="number" min="2" max="16" value="12"/></div>
-          <div><label class="fl">Base naming</label><input id="lyBase" placeholder="0/  ó  0/0/  ó  1/1/"/></div>
+          <div><label class="fl" data-i18n="ports.layout.columns">Columnas</label><input id="lyCols" type="number" min="2" max="16" value="12"/></div>
+          <div><label class="fl" data-i18n="ports.layout.baseNaming">Base naming</label><input id="lyBase" data-i18n-placeholder="ports.layout.baseNamingPlaceholder" placeholder="0/  ó  0/0/  ó  1/1/"/></div>
         </div>
         <div class="row">
-          <div><label class="fl">VLAN access por defecto</label><select id="lyVlan"></select></div>
-          <div><label class="fl">Modo</label><select id="lyMode"><option value="replace">Reemplazar</option><option value="merge">Mezclar</option></select></div>
+          <div><label class="fl" data-i18n="ports.layout.defaultAccessVlan">VLAN access por defecto</label><select id="lyVlan"></select></div>
+          <div><label class="fl" data-i18n="form.mode">Modo</label><select id="lyMode"><option value="replace" data-i18n="ports.layout.replace">Reemplazar</option><option value="merge" data-i18n="ports.layout.merge">Mezclar</option></select></div>
         </div>
         <div class="brow">
-          <button class="btn bs" id="btnBuildLy">📐 Ver layout</button>
-          <button class="btn bp" id="btnApplyLy">✔ Generar puertos</button>
+          <button class="btn bs" id="btnBuildLy" data-i18n="ports.actions.viewLayout">📐 Ver layout</button>
+          <button class="btn bp" id="btnApplyLy" data-i18n="ports.actions.generatePorts">✔ Generar puertos</button>
         </div>
         <div id="lyEditor" style="margin-top:9px;"></div>
       </div>
     </div>
     <div>
       <details class="card" id="portsListPanel" open>
-        <summary><span class="card-t">🔌 Puertos registrados</span></summary>
+        <summary><span class="card-t" data-i18n="ports.list.title">🔌 Puertos registrados</span></summary>
         <div class="card-h">
           <span class="hint" id="portsPageInfo"></span>
           <select id="portFiltDev" style="font-size:11.5px;padding:4px 22px 4px 7px;"></select>
         </div>
         <div id="portsList"></div>
         <div class="brow" id="portsPager" style="justify-content:space-between;">
-          <button class="btn bs bsm" id="portsPrev" type="button">← Anterior</button>
-          <button class="btn bs bsm" id="portsNext" type="button">Siguiente →</button>
+          <button class="btn bs bsm" id="portsPrev" type="button" data-i18n="actions.previous">← Anterior</button>
+          <button class="btn bs bsm" id="portsNext" type="button" data-i18n="actions.next">Siguiente →</button>
         </div>
       </details>
     </div>
