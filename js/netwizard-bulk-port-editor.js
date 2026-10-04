@@ -43,7 +43,7 @@ function applyRows(project,rows){
 
 function el(tag,cls,text){const n=root.document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
 function trText(key,params,fallback){const i=root.NetWizardI18n;if(i&&typeof i.t==='function')return i.t(key,params||{});return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
-function i18nEl(tag,cls,key,fallback){const n=el(tag,cls,tr(key,{},fallback));n.dataset.i18n=key;return n;}
+function i18nEl(tag,cls,key,fallback){const n=el(tag,cls,trText(key,{},fallback));n.dataset.i18n=key;return n;}
 function opt(value,label,selected){const o=el('option');o.value=String(value);o.textContent=String(label);if(selected)o.selected=true;return o;}
 function current(){return root.NetWizardState&&root.NetWizardState.getSnapshot?root.NetWizardState.getSnapshot():{};}
 let previewRows=[];
