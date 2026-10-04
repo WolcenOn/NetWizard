@@ -42,23 +42,25 @@ function applyRows(project,rows){
 }
 
 function el(tag,cls,text){const n=root.document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
+function trText(key,params,fallback){const i=root.NetWizardI18n;if(i&&typeof i.t==='function')return i.t(key,params||{});return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
+function i18nEl(tag,cls,key,fallback){const n=el(tag,cls,tr(key,{},fallback));n.dataset.i18n=key;return n;}
 function opt(value,label,selected){const o=el('option');o.value=String(value);o.textContent=String(label);if(selected)o.selected=true;return o;}
 function current(){return root.NetWizardState&&root.NetWizardState.getSnapshot?root.NetWizardState.getSnapshot():{};}
 let previewRows=[];
 
 function renderDeviceOptions(sel,project){
-  sel.textContent='';sel.appendChild(opt('','— dispositivo —'));
+  sel.textContent='';sel.appendChild(opt('',trText('ports.bulk.selectDevice',{},'— dispositivo —')));
   arr(project.devices).forEach(d=>sel.appendChild(opt(d.id,d.name||d.id,false)));
 }
 function renderVlanOptions(sel,project,selected){
-  sel.textContent='';sel.appendChild(opt('','— sin VLAN —',!selected));
+  sel.textContent='';sel.appendChild(opt('',trText('ports.bulk.noVlan',{},'— sin VLAN —'),!selected));
   arr(project.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>sel.appendChild(opt(v.id,'VLAN '+v.vlanId+' · '+(v.name||''),v.id===selected)));
 }
 function renderPreview(host,project){
   host.textContent='';
-  if(!previewRows.length){host.appendChild(el('div','hint','Genera una previsualización para editar los puertos antes de guardarlos.'));return;}
+  if(!previewRows.length){host.appendChild(el('div','hint',trText('ports.bulk.previewEmpty',{},'Genera una previsualización para editar los puertos antes de guardarlos.')));return;}
   const wrap=el('div','tw'),table=el('table'),head=el('thead'),hr=el('tr');
-  ['Usar','Puerto','Medio','Modo','VLAN access','VLANs trunk','Descripción'].forEach(x=>hr.appendChild(el('th','',x)));head.appendChild(hr);table.appendChild(head);
+  [trText('ports.bulk.col.use',{},'Usar'),trText('form.port',{},'Puerto'),trText('ports.bulk.col.media',{},'Medio'),trText('form.mode',{},'Modo'),trText('ports.bulk.col.accessVlan',{},'VLAN access'),trText('ports.bulk.col.trunkVlans',{},'VLANs trunk'),trText('form.description',{},'Descripción')].forEach(x=>hr.appendChild(el('th','',x)));head.appendChild(hr);table.appendChild(head);
   const body=el('tbody');
   previewRows.forEach((row,index)=>{
     const tr=el('tr');
@@ -69,7 +71,7 @@ function renderPreview(host,project){
     const vlan=el('select');renderVlanOptions(vlan,project,row.accessVlanRef);vlan.disabled=row.mode!=='access';vlan.onchange=()=>row.accessVlanRef=vlan.value||null;td=el('td');td.appendChild(vlan);tr.appendChild(td);
     const allowed=el('input');allowed.value=arr(row.allowedVlans).join(',');allowed.disabled=row.mode!=='trunk';allowed.placeholder='10,20,30';allowed.oninput=()=>row.allowedVlans=allowed.value.split(',').map(x=>Number(x.trim())).filter(Number.isFinite);td=el('td');td.appendChild(allowed);tr.appendChild(td);
     const desc=el('input');desc.value=row.desc||'';desc.oninput=()=>row.desc=desc.value;td=el('td');td.appendChild(desc);tr.appendChild(td);
-    if(row.existing)tr.title='Puerto existente: se actualizará';
+    if(row.existing)tr.title=trText('ports.bulk.existingTitle',{},'Puerto existente: se actualizará');
     body.appendChild(tr);
   });
   table.appendChild(body);wrap.appendChild(table);host.appendChild(wrap);
@@ -79,8 +81,8 @@ function inject(){
   const pg=root.document.getElementById('pg-ports'),anchor=root.document.getElementById('portFormCard');
   if(!pg||!anchor)return;
   const card=el('div','card');card.id='nwBulkPortEditor';
-  card.appendChild(el('div','card-t','🧩 Creación y edición masiva de puertos'));
-  card.appendChild(el('div','hint','Previsualiza un rango, edita cada fila y aplica solo cuando la tabla sea correcta.'));
+  card.appendChild(i18nEl('div','card-t','ports.bulk.title','🧩 Creación y edición masiva de puertos'));
+  card.appendChild(i18nEl('div','hint','ports.bulk.hint','Previsualiza un rango, edita cada fila y aplica solo cuando la tabla sea correcta.'));
   const grid=el('div','g2');
   const left=el('div'),right=el('div');
   const dev=el('select');dev.id='nwBulkDev';renderDeviceOptions(dev,current());
@@ -91,29 +93,30 @@ function inject(){
   const mode=el('select');['access','trunk','routed'].forEach(v=>mode.appendChild(opt(v,v,v==='access')));
   const vlan=el('select');renderVlanOptions(vlan,current(),null);
   const allowed=el('input');allowed.placeholder='10,20,30';
-  const desc=el('input');desc.placeholder='Descripción base';
-  function field(label,node){const b=el('div');b.appendChild(el('label','fl',label));b.appendChild(node);return b;}
-  left.append(field('Dispositivo',dev),field('Raíz de nombre',rootInput));
-  const r1=el('div','row');r1.append(field('Inicio',start),field('Cantidad',count));left.appendChild(r1);
-  const r2=el('div','row');r2.append(field('Medio',media),field('Modo',mode));left.appendChild(r2);
-  const r3=el('div','row');r3.append(field('VLAN access',vlan),field('VLANs trunk',allowed));left.appendChild(r3);left.append(field('Descripción',desc));
-  const buttons=el('div','brow'),preview=el('button','btn bs','👁 Previsualizar'),apply=el('button','btn bp','💾 Aplicar cambios');
+  const desc=el('input');desc.placeholder=trText('ports.bulk.baseDescription',{},'Descripción base');desc.dataset.i18nPlaceholder='ports.bulk.baseDescription';
+  function field(key,label,node){const b=el('div');b.appendChild(i18nEl('label','fl',key,label));b.appendChild(node);return b;}
+  left.append(field('form.device','Dispositivo',dev),field('ports.bulk.rootName','Raíz de nombre',rootInput));
+  const r1=el('div','row');r1.append(field('ports.bulk.start','Inicio',start),field('ports.bulk.count','Cantidad',count));left.appendChild(r1);
+  const r2=el('div','row');r2.append(field('ports.bulk.media','Medio',media),field('form.mode','Modo',mode));left.appendChild(r2);
+  const r3=el('div','row');r3.append(field('ports.bulk.accessVlan','VLAN access',vlan),field('ports.bulk.trunkVlans','VLANs trunk',allowed));left.appendChild(r3);left.append(field('form.description','Descripción',desc));
+  const buttons=el('div','brow'),preview=i18nEl('button','btn bs','ports.bulk.preview','👁 Previsualizar'),apply=i18nEl('button','btn bp','ports.bulk.apply','💾 Aplicar cambios');
   buttons.append(preview,apply);left.appendChild(buttons);
   const previewHost=el('div');right.appendChild(previewHost);grid.append(left,right);card.appendChild(grid);
   anchor.parentElement.insertAdjacentElement('afterend',card);
   const rebuild=()=>{const p=current();renderDeviceOptions(dev,p);renderVlanOptions(vlan,p,vlan.value);renderPreview(previewHost,p);};
   root.document.addEventListener('nw:project:changed',rebuild);
+  root.addEventListener&&root.addEventListener('netwizard:i18n',rebuild);
   preview.onclick=()=>{
-    if(!dev.value){root.alert&&root.alert('Selecciona un dispositivo.');return;}
+    if(!dev.value){root.alert&&root.alert(trText('ports.alert.selectDevice',{},'Selecciona un dispositivo.'));return;}
     const p=current(),allowedVlans=allowed.value.split(',').map(x=>Number(x.trim())).filter(Number.isFinite);
     previewRows=buildRows(p,{deviceId:dev.value,root:rootInput.value,start:Number(start.value)||1,count:Number(count.value)||24,media:media.value,mode:mode.value,accessVlanRef:vlan.value||null,allowedVlans,desc:desc.value});
     renderPreview(previewHost,p);
   };
   apply.onclick=()=>{
-    if(!previewRows.length){root.alert&&root.alert('Genera primero la previsualización.');return;}
+    if(!previewRows.length){root.alert&&root.alert(trText('ports.bulk.alert.previewFirst',{},'Genera primero la previsualización.'));return;}
     const next=applyRows(current(),previewRows);
     root.NetWizardState.replaceProject(next,{source:'bulk-port-editor'});
-    root.alert&&root.alert('✓ Puertos aplicados correctamente.');
+    root.alert&&root.alert(trText('ports.bulk.feedback.applied',{},'✓ Puertos aplicados correctamente.'));
   };
   renderPreview(previewHost,current());
 }
