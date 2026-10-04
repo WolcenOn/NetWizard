@@ -29,7 +29,7 @@
   function createIssue(input){
     const i = input || {};
     const severity = normalizeSeverity(i.severity || SEVERITY.WARNING);
-    return {
+    const out = {
       code: cleanStr(i.code || 'NW-GEN-000'),
       severity,
       category: cleanStr(i.category || 'general'),
@@ -43,6 +43,12 @@
       source: cleanStr(i.source || ''),
       createdAt: i.createdAt || nowIso()
     };
+    const messageKey=cleanStr(i.messageKey || '');
+    if(messageKey){
+      out.messageKey=messageKey;
+      out.messageParams=i.messageParams&&typeof i.messageParams==='object'&&!Array.isArray(i.messageParams)?Object.assign({},i.messageParams):{};
+    }
+    return out;
   }
 
   function normalizeIssue(issue, fallback){
