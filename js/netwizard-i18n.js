@@ -634,7 +634,8 @@
     "device.kind.firewall": "Firewall",
     "device.kind.access_point": "Punto de acceso",
     "device.kind.wlan_controller": "Controlador WLAN",
-    "device.kind.appliance": "Appliance"
+    "device.kind.appliance": "Appliance",
+    "ports.bulk.vlanLabel": "VLAN {id} · {name}"
   },
   "en": {
     "app.title": "NetWizard Pro",
@@ -1242,7 +1243,8 @@
     "device.kind.firewall": "Firewall",
     "device.kind.access_point": "Access Point",
     "device.kind.wlan_controller": "WLAN Controller",
-    "device.kind.appliance": "Appliance"
+    "device.kind.appliance": "Appliance",
+    "ports.bulk.vlanLabel": "VLAN {id} · {name}"
   }
 };
   const SUPPORTED=localeMeta.map(x=>String(x.code||'').trim()).filter(Boolean);
