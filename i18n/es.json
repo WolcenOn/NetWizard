@@ -683,5 +683,15 @@
   "dhcp.validation.includesStatic": "VLAN {vlan}: el pool DHCP incluye IP estática {ip} ({host}).",
   "dhcp.validation.invalidExclusion": "VLAN {vlan}: exclusión DHCP inválida {range}.",
   "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusión fuera de subnet {range}.",
-  "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: reserva DHCP fuera de subnet ({ip})."
+  "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: reserva DHCP fuera de subnet ({ip}).",
+  "subnet.validation.selectVlan": "Selecciona una VLAN.",
+  "subnet.validation.invalidCidr": "CIDR inválido. Usa formato tipo 10.10.10.0/24.",
+  "subnet.validation.invalidGateway": "Gateway inválido.",
+  "subnet.validation.gatewayOutside": "El gateway no pertenece a la subnet indicada.",
+  "subnet.validation.gatewayReserved": "El gateway no puede ser la dirección de red ni broadcast.",
+  "subnet.validation.overlap": "La subnet {cidr} se solapa con {existing}.",
+  "subnet.validation.normalized": "CIDR normalizado a {cidr}.",
+  "dhcp.placeholders.start": "inicio pool",
+  "dhcp.placeholders.end": "fin pool",
+  "dhcp.placeholders.domain": "empresa.local"
 }
