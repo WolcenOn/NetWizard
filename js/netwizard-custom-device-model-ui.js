@@ -247,12 +247,12 @@ function ensureUi(){
   const editor=mk('div',{id:'nwCustomModelEditor'});editor.style.display='none';editor.style.marginTop='10px';
   editor.append(mk('input',{type:'hidden',id:'nwCustomModelId'}));
   const rows=[
-    [['device.custom.manufacturer','Fabricante','nwCustomManufacturer','ACME'],['form.model','Modelo','nwCustomModel','X48P']],
-    [['device.custom.sku','SKU / part number','nwCustomSku','X48P-POE'],['device.custom.revision','Revisión','nwCustomRevision','Rev A']],
-    [['device.custom.rackUnits','Altura (U)','nwCustomRackUnits','1'],['device.custom.weight','Peso (kg)','nwCustomWeightKg','4.8']],
-    [['device.custom.typicalPower','Consumo típico (W)','nwCustomPowerTypical','82'],['device.custom.maxPower','Consumo máximo (W)','nwCustomPowerMax','370']],
-    [['device.custom.poeBudget','PoE budget (W)','nwCustomPoeBudget','240'],['device.custom.psuCount','Número PSU','nwCustomPsuCount','2']],
-    [['device.custom.voltage','Voltaje','nwCustomVoltage','230V'],['form.type','Tipo','nwCustomKind','']]
+    [['device.custom.manufacturer',tr('device.custom.manufacturer',{},'Fabricante'),'nwCustomManufacturer','ACME'],['form.model',tr('form.model',{},'Modelo'),'nwCustomModel','X48P']],
+    [['device.custom.sku',tr('device.custom.sku',{},'SKU / part number'),'nwCustomSku','X48P-POE'],['device.custom.revision',tr('device.custom.revision',{},'Revisión'),'nwCustomRevision','Rev A']],
+    [['device.custom.rackUnits',tr('device.custom.rackUnits',{},'Altura (U)'),'nwCustomRackUnits','1'],['device.custom.weight',tr('device.custom.weight',{},'Peso (kg)'),'nwCustomWeightKg','4.8']],
+    [['device.custom.typicalPower',tr('device.custom.typicalPower',{},'Consumo típico (W)'),'nwCustomPowerTypical','82'],['device.custom.maxPower',tr('device.custom.maxPower',{},'Consumo máximo (W)'),'nwCustomPowerMax','370']],
+    [['device.custom.poeBudget',tr('device.custom.poeBudget',{},'PoE budget (W)'),'nwCustomPoeBudget','240'],['device.custom.psuCount',tr('device.custom.psuCount',{},'Número PSU'),'nwCustomPsuCount','2']],
+    [['device.custom.voltage',tr('device.custom.voltage',{},'Voltaje'),'nwCustomVoltage','230V'],['form.type',tr('form.type',{},'Tipo'),'nwCustomKind','']]
   ];
   for(const pair of rows){
     const r=mk('div',{className:'row'});
@@ -261,7 +261,7 @@ function ensureUi(){
       if(id==='nwCustomKind'){
         w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label));
         const s=mk('select',{id});
-        [['switch','device.kind.switch','Switch'],['router','device.kind.router','Router'],['firewall','device.kind.firewall','Firewall'],['access_point','device.kind.access_point','Punto de acceso'],['wlan_controller','device.kind.wlan_controller','Controlador WLAN'],['server','device.kind.server','Servidor gestionado'],['appliance','device.kind.appliance','Appliance']].forEach(([v,key,l])=>s.append(i18nNode('option',{value:v},key,l)));
+        [['switch','device.kind.switch',tr('device.kind.switch',{},'Switch')],['router','device.kind.router',tr('device.kind.router',{},'Router')],['firewall','device.kind.firewall',tr('device.kind.firewall',{},'Firewall')],['access_point','device.kind.access_point',tr('device.kind.access_point',{},'Punto de acceso')],['wlan_controller','device.kind.wlan_controller',tr('device.kind.wlan_controller',{},'Controlador WLAN')],['server','device.kind.server',tr('device.kind.server',{},'Servidor gestionado')],['appliance','device.kind.appliance',tr('device.kind.appliance',{},'Appliance')]].forEach(([v,key,l])=>s.append(i18nNode('option',{value:v},key,l)));
         w.append(s);
       }else{
         w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label),mk('input',{id,placeholder}));
