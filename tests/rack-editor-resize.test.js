@@ -113,4 +113,28 @@ const invalid=RackUi.updateRack(project,'rack1',{rackUnits:0});
 assert.strictEqual(invalid.ok,false);
 assert.match(invalid.message,/al menos 1U/);
 
+const tooTall=RackUi.updateRack(project,'rack1',{rackUnits:101});
+assert.strictEqual(tooTall.ok,false);
+assert.match(tooTall.message,/100U/);
+
+for(const [key,value] of [
+  ['widthMm',-1],['depthMm',-1],['maxLoadKg',-1],['powerCapacityWatts',-1],['coolingCapacityWatts',-1]
+]){
+  const result=RackUi.updateRack(project,'rack1',{rackUnits:42,[key]:value});
+  assert.strictEqual(result.ok,false,key+' negativo debe rechazarse');
+  assert.match(result.message,/no puede ser negativo/);
+}
+
+const fractional=JSON.parse(JSON.stringify(project));
+fractional.rackItems.push({id:'half-device',rackId:'rack1',type:'shelf',label:'Bandeja 1.5U',startUnit:10,heightUnits:1.5,face:'rear'});
+const fractionalOccupancy=RackModel.rackOccupancy(fractional,'rack1');
+assert.ok(fractionalOccupancy.entries.some(x=>x.id==='half-device'&&x.endUnit===11),'1.5U desde U10 debe extenderse hasta U11');
+const fractionalResize=RackModel.validateRackResize(fractional,'rack1',10);
+assert.strictEqual(fractionalResize.ok,false);
+assert.ok(fractionalResize.blockers.some(x=>x.id==='half-device'));
+
+const clampedCreate=RackUi.addRack({racks:[],rackItems:[],pdus:[],powerConnections:[]},{name:'Rack enorme',rackUnits:100000,widthMm:-1});
+assert.strictEqual(clampedCreate.racks[0].rackUnits,100);
+assert.strictEqual(clampedCreate.racks[0].widthMm,null);
+
 console.log('✓ Rack editor redimensiona con seguridad, recomienda tamaño y preserva referencias físicas');
