@@ -67,7 +67,7 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
   await expect(portPage).toContainText('Registered ports');
   await expect(page.locator('#nwBulkPortEditor')).toContainText('Bulk port creation and editing');
   await expect(page.locator('#nwBulkPortEditor')).toContainText('Name root');
-  await expect(page.locator('#portsPageInfo')).toContainText('1 ports · page 1/1');
+  await expect(page.locator('#portsPageInfo')).toContainText('2 ports · page 1/1');
 
   await page.locator('[data-ep="trunk-i18n"]').click();
   await expect(page.locator('#btnAddPort')).toContainText('Save changes');
@@ -80,6 +80,6 @@ test('Dispositivos y Puertos cambian ES/EN sin mezclar sus superficies dinámica
   await expect(portPage).toContainText('Puertos & Interfaces');
   await expect(portPage).toContainText('Añadir puerto / interfaz');
   await expect(page.locator('#nwBulkPortEditor')).toContainText('Creación y edición masiva de puertos');
-  await expect(page.locator('#portsPageInfo')).toContainText('1 puertos · página 1/1');
+  await expect(page.locator('#portsPageInfo')).toContainText('2 puertos · página 1/1');
   await expect(page.locator('#btnAddPort')).toContainText('Guardar cambios');
 });
