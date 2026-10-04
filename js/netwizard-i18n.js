@@ -618,7 +618,17 @@
     "ports.bulk.preview": "👁 Previsualizar",
     "ports.bulk.apply": "💾 Aplicar cambios",
     "ports.bulk.alert.previewFirst": "Genera primero la previsualización.",
-    "ports.bulk.feedback.applied": "✓ Puertos aplicados correctamente."
+    "ports.bulk.feedback.applied": "✓ Puertos aplicados correctamente.",
+    "device.catalog.isr1121_8p.note": "Router ISR de sucursal con variante de 8 puertos LAN.",
+    "device.catalog.isr1121_4p.note": "Router ISR de sucursal con variante de 4 puertos LAN.",
+    "device.catalog.886vaw.note": "Router ISR 880 con WLAN integrada según variante.",
+    "device.catalog.ir1800.note": "Router industrial con opciones 5G/LTE/Wi‑Fi según módulo.",
+    "device.catalog.u6pro.note": "AP Wi‑Fi 6. Uplink normalmente trunk hacia VLANs de SSID y gestión.",
+    "device.catalog.u7pro.note": "AP Wi‑Fi 7. Uplink trunk recomendado para múltiples SSID/VLAN.",
+    "device.catalog.huaweiAp.note": "AP Huawei gestionado por controlador/AC o cloud según modelo.",
+    "device.catalog.galgusAp.note": "AP Galgus gestionado por plataforma/cloud.",
+    "device.catalog.omadaAp.note": "AP Omada con SSID/VLAN desde controlador.",
+    "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet."
   },
   "en": {
     "app.title": "NetWizard Pro",
@@ -1210,7 +1220,17 @@
     "ports.bulk.preview": "👁 Preview",
     "ports.bulk.apply": "💾 Apply changes",
     "ports.bulk.alert.previewFirst": "Generate the preview first.",
-    "ports.bulk.feedback.applied": "✓ Ports applied successfully."
+    "ports.bulk.feedback.applied": "✓ Ports applied successfully.",
+    "device.catalog.isr1121_8p.note": "ISR branch router with an 8-port LAN variant.",
+    "device.catalog.isr1121_4p.note": "ISR branch router with a 4-port LAN variant.",
+    "device.catalog.886vaw.note": "ISR 880 router with integrated WLAN depending on the variant.",
+    "device.catalog.ir1800.note": "Industrial router with optional 5G/LTE/Wi‑Fi modules.",
+    "device.catalog.u6pro.note": "Wi‑Fi 6 AP. The uplink is typically a trunk carrying SSID and management VLANs.",
+    "device.catalog.u7pro.note": "Wi‑Fi 7 AP. A trunk uplink is recommended for multiple SSIDs/VLANs.",
+    "device.catalog.huaweiAp.note": "Huawei AP managed by controller/AC or cloud depending on the model.",
+    "device.catalog.galgusAp.note": "Galgus AP managed through its platform/cloud.",
+    "device.catalog.omadaAp.note": "Omada AP with SSID/VLAN management from the controller.",
+    "device.catalog.hapAx3.note": "Router with integrated Wi‑Fi and Ethernet ports."
   }
 };
   const SUPPORTED=localeMeta.map(x=>String(x.code||'').trim()).filter(Boolean);
