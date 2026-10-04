@@ -23,11 +23,12 @@ function walk(dir, files=[]){
   }
   return files;
 }
-function maskTranslationCalls(text){
+function maskTranslationCalls(text,rel){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const starts=['tr(','localized(','field('].map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
+    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');
+    const starts=tokens.map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
     if(!starts.length)break;
     const start=Math.min(...starts);
     const open=text.indexOf('(',start);
@@ -55,7 +56,7 @@ for(const file of walk(root)){
   const rel = path.relative(root, file).replace(/\\/g,'/');
   if(skipFiles.has(rel)) continue;
   const raw = fs.readFileSync(file, 'utf8');
-  const text = strictFiles.has(rel) ? maskTranslationCalls(raw) : raw;
+  const text = strictFiles.has(rel) ? maskTranslationCalls(raw,rel) : raw;
   let m;
   while((m = candidate.exec(text))){
     const line = text.slice(0,m.index).split(/\r?\n/).length;
