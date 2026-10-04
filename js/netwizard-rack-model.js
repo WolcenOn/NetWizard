@@ -25,9 +25,15 @@ function rackOccupancy(project,rackId){
  const units=new Set(),entries=[];
  const representedPanels=new Set(items.filter(x=>x&&x.patchPanelId).map(x=>x.patchPanelId));
  for(const item of items){
-   const occupied=occupiedUnits(item);
-   occupied.forEach(u=>units.add(u));
-   if(occupied.length)entries.push({id:item.id,label:item.label||item.name||item.id,type:item.type||'rack-item',startUnit:Math.min(...occupied),endUnit:Math.max(...occupied)});
+   const start=num(item&&item.startUnit),height=num(item&&item.heightUnits);
+   if(start==null||height==null||height<=0)continue;
+   const first=Math.max(1,Math.floor(start));
+   const end=Math.max(first,Math.ceil(start+height-1));
+   for(let u=first;u<=end;u++)units.add(u);
+   entries.push({
+     id:item.id,label:item.label||item.name||item.id,type:item.type||'rack-item',
+     startUnit:start,endUnit:end,heightUnits:height
+   });
  }
  for(const panel of arr(project&&project.patchPanels).filter(x=>x&&x.rackId===rackId&&!representedPanels.has(x.id))){
    const u=num(panel.rackUnit);
@@ -55,6 +61,7 @@ function validateRackResize(project,rackId,rackUnits){
  const rack=byId(project&&project.racks,rackId),units=Math.floor(num(rackUnits)||0);
  if(!rack)return{ok:false,rack:null,rackId,rackUnits:units,blockers:[],message:'Rack inexistente.'};
  if(units<1)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack debe ser al menos 1U.'};
+ if(units>100)return{ok:false,rack:normalizeRack(rack),rackId,rackUnits:units,blockers:[],message:'La altura del rack no puede superar 100U.'};
  const summary=rackOccupancy(project,rackId);
  const blockers=summary.entries.filter(x=>x.endUnit>units).sort((a,b)=>b.endUnit-a.endUnit);
  const recommendation=recommendedRackUnits(project,rackId);
