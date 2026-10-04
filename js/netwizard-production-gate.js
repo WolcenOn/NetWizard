@@ -101,8 +101,11 @@ Mantenimiento:
 
   function categoryMeta(category){ return CATEGORY_META[clean(category)] || CATEGORY_META.general; }
 
-  function remediationForIssue(issue){
+  function localizedIssueMessage(issue, locale){const i=normalizeIssue(issue);return i.messageKey?tr(i.messageKey,i.messageParams||{},locale):i.message;}
+
+  function remediationForIssue(issue, options){
     const i = normalizeIssue(issue);
+    const loc=localeForReport(options);
     const cat = categoryMeta(i.category);
     let match = null;
     for(const [re, data] of CODE_REMEDIATION){ if(re.test(i.code)){ match = data; break; } }
@@ -112,7 +115,7 @@ Mantenimiento:
       severity:i.severity,
       category:i.category || 'general',
       title:`${cat.label}: ${i.code}`,
-      message:i.message,
+      message:localizedIssueMessage(i,loc),
       why:(match && match.why) || cat.why,
       section:cat.section,
       steps:steps.slice(),
@@ -125,7 +128,7 @@ Mantenimiento:
     const list = arr(report && report.issues).map(normalizeIssue).filter(i => opts.includeInfo || i.severity !== 'info');
     const priority = {error:0, warning:1, info:2};
     const sorted = list.sort((a,b) => (priority[a.severity]??9) - (priority[b.severity]??9) || String(a.category).localeCompare(String(b.category)) || String(a.code).localeCompare(String(b.code)));
-    return sorted.slice(0, opts.limit).map(remediationForIssue);
+    return sorted.slice(0, opts.limit).map(i=>remediationForIssue(i,opts));
   }
 
   function summarizeRemediationGuide(report, options){
