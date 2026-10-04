@@ -1363,7 +1363,7 @@ $('btnAddManualSn').onclick=()=>{
   const cidr=($('mSnCidr').value||'').trim();
   const gateway=($('mSnGw').value||'').trim()||null;
   const ex=snByVRef(vRef);
-  const check=validateSubnetAssignment({vlanRef:vRef,cidr,gateway,existingSubnetId:ex?.id||''},S.subnets);
+  const check=validateSubnetAssignment({vlanRef:vRef,cidr,gateway,existingSubnetId:ex?.id||''},S.subnets,{locale:window.NetWizardI18n?.getLocale?.()});
   if(!check.ok)return alert(check.msg);
   if(ex){ex.cidr=check.cidr;ex.gateway=check.gateway;}
   else S.subnets.push({id:uid('sn'),vlanRef:vRef,cidr:check.cidr,gateway:check.gateway});
@@ -2178,10 +2178,10 @@ function renderDhcp(){
     const controls=document.createElement('div'); controls.style.display='flex'; controls.style.gap='5px'; controls.style.flexWrap='wrap'; controls.style.alignItems='center';
     const en=document.createElement('select'); en.dataset.en=k; en.style.fontSize='12px'; en.style.padding='3px';
     [['0',i18nText('common.no',{},'No')],['1',i18nText('common.yes',{},'Sí')]].forEach(([val,txt])=>{ const o=document.createElement('option'); o.value=val; o.textContent=txt; if((val==='1')===!!cfg.enabled)o.selected=true; en.appendChild(o); }); addField(controls,'DHCP',en);
-    const start=document.createElement('input'); start.dataset.dhStart=k; start.value=cfg.start||''; start.placeholder='pool start'; start.style.width='92px'; start.style.fontSize='12px'; start.style.padding='3px'; addField(controls,i18nText('dhcp.fields.start',{},'Inicio'),start);
-    const end=document.createElement('input'); end.dataset.dhEnd=k; end.value=cfg.end||''; end.placeholder='pool end'; end.style.width='92px'; end.style.fontSize='12px'; end.style.padding='3px'; addField(controls,i18nText('dhcp.fields.end',{},'Fin'),end);
+    const start=document.createElement('input'); start.dataset.dhStart=k; start.value=cfg.start||''; start.placeholder=i18nText('dhcp.placeholders.start',{},'inicio pool'); start.style.width='92px'; start.style.fontSize='12px'; start.style.padding='3px'; addField(controls,i18nText('dhcp.fields.start',{},'Inicio'),start);
+    const end=document.createElement('input'); end.dataset.dhEnd=k; end.value=cfg.end||''; end.placeholder=i18nText('dhcp.placeholders.end',{},'fin pool'); end.style.width='92px'; end.style.fontSize='12px'; end.style.padding='3px'; addField(controls,i18nText('dhcp.fields.end',{},'Fin'),end);
     const dns=document.createElement('input'); dns.dataset.dns=k; dns.value=cfg.dns||''; dns.placeholder='8.8.8.8,1.1.1.1'; dns.style.width='120px'; dns.style.fontSize='12px'; dns.style.padding='3px'; addField(controls,'DNS',dns);
-    const domain=document.createElement('input'); domain.dataset.dhDomain=k; domain.value=cfg.domain||''; domain.placeholder='empresa.local'; domain.style.width='105px'; domain.style.fontSize='12px'; domain.style.padding='3px'; addField(controls,i18nText('dhcp.fields.domain',{},'Dominio'),domain);
+    const domain=document.createElement('input'); domain.dataset.dhDomain=k; domain.value=cfg.domain||''; domain.placeholder=i18nText('dhcp.placeholders.domain',{},'empresa.local'); domain.style.width='105px'; domain.style.fontSize='12px'; domain.style.padding='3px'; addField(controls,i18nText('dhcp.fields.domain',{},'Dominio'),domain);
     const lease=document.createElement('input'); lease.dataset.ls=k; lease.type='number'; lease.min='1'; lease.max='365'; lease.value=cfg.lease||1; lease.style.width='58px'; lease.style.fontSize='12px'; lease.style.padding='3px'; addField(controls,i18nText('dhcp.fields.leaseDays',{},'Lease días'),lease);
     row.appendChild(controls); box.appendChild(row);
   });
