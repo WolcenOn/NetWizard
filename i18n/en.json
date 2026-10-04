@@ -683,5 +683,15 @@
   "dhcp.validation.includesStatic": "VLAN {vlan}: DHCP pool includes static IP {ip} ({host}).",
   "dhcp.validation.invalidExclusion": "VLAN {vlan}: invalid DHCP exclusion {range}.",
   "dhcp.validation.exclusionOutsideSubnet": "VLAN {vlan}: exclusion is outside the subnet {range}.",
-  "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: DHCP reservation is outside the subnet ({ip})."
+  "dhcp.validation.reservationOutsideSubnet": "VLAN {vlan}: DHCP reservation is outside the subnet ({ip}).",
+  "subnet.validation.selectVlan": "Select a VLAN.",
+  "subnet.validation.invalidCidr": "Invalid CIDR. Use a format such as 10.10.10.0/24.",
+  "subnet.validation.invalidGateway": "Invalid gateway.",
+  "subnet.validation.gatewayOutside": "The gateway does not belong to the selected subnet.",
+  "subnet.validation.gatewayReserved": "The gateway cannot be the network or broadcast address.",
+  "subnet.validation.overlap": "Subnet {cidr} overlaps with {existing}.",
+  "subnet.validation.normalized": "CIDR normalized to {cidr}.",
+  "dhcp.placeholders.start": "pool start",
+  "dhcp.placeholders.end": "pool end",
+  "dhcp.placeholders.domain": "example.local"
 }
