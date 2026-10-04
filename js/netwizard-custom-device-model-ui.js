@@ -261,7 +261,7 @@ function ensureUi(){
       if(id==='nwCustomKind'){
         w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label));
         const s=mk('select',{id});
-        [['switch','Switch'],['router','Router'],['firewall','Firewall'],['access_point','Access Point'],['wlan_controller','WLAN Controller'],['server',tr('device.kind.server',{},'Servidor')],['appliance','Appliance']].forEach(([v,l])=>s.append(mk('option',{value:v},l)));
+        [['switch','device.kind.switch','Switch'],['router','device.kind.router','Router'],['firewall','device.kind.firewall','Firewall'],['access_point','device.kind.access_point','Punto de acceso'],['wlan_controller','device.kind.wlan_controller','Controlador WLAN'],['server','device.kind.server','Servidor gestionado'],['appliance','device.kind.appliance','Appliance']].forEach(([v,key,l])=>s.append(i18nNode('option',{value:v},key,l)));
         w.append(s);
       }else{
         w.append(i18nNode('label',{className:'fl',htmlFor:id},key,label),mk('input',{id,placeholder}));
