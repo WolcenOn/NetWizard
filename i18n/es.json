@@ -439,7 +439,7 @@
   "common.yes": "Sí",
   "common.no": "No",
   "common.unknownError": "error desconocido",
-  "device.kind.server": "Servidor",
+  "device.kind.server": "Servidor gestionado",
   "device.page.title": "🖥 Dispositivos",
   "device.page.subtitle": "Switches, routers, firewalls y endpoints de red.",
   "device.form.title": "➕ Añadir dispositivo",
@@ -598,5 +598,11 @@
   "device.catalog.huaweiAp.note": "AP Huawei gestionado por controlador/AC o cloud según modelo.",
   "device.catalog.galgusAp.note": "AP Galgus gestionado por plataforma/cloud.",
   "device.catalog.omadaAp.note": "AP Omada con SSID/VLAN desde controlador.",
-  "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet."
+  "device.catalog.hapAx3.note": "Router con Wi‑Fi integrado y puertos Ethernet.",
+  "device.kind.switch": "Switch",
+  "device.kind.router": "Router",
+  "device.kind.firewall": "Firewall",
+  "device.kind.access_point": "Punto de acceso",
+  "device.kind.wlan_controller": "Controlador WLAN",
+  "device.kind.appliance": "Appliance"
 }
