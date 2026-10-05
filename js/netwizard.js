@@ -1341,6 +1341,7 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     fillLinkPickers();fillSwDevSels();
     for(const [id,val] of [['lnkA',keep.a],['lnkB',keep.b],['lnkTransit',keep.transit],['visDev',keep.dev]])if(val&&$(id)&&Array.from($(id).options).some(o=>o.value===val))$(id).value=val;
     renderVisPorts();renderLinks();
+    if($('upHint')?.dataset.vlans)$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:$('upHint').dataset.vlans},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');
   }
 });
 
@@ -1886,8 +1887,9 @@ function renderIpMap(){
 function fillSwDevSels(){
   const sw=S.devices.filter(isSwitchDevice);
   const opts=sw.map(d=>makeOption(d.id,d.name));
-  setOptions($('lyDev'),opts,'Sin switches');
-  setOptions($('visDev'),sw.map(d=>makeOption(d.id,d.name)),'Sin switches');
+  const noSwitches=i18nText('links.portView.noSwitches',{},'Sin switches.');
+  setOptions($('lyDev'),opts,noSwitches);
+  setOptions($('visDev'),sw.map(d=>makeOption(d.id,d.name)),noSwitches);
 }
 function fillLinkPickers(){
   const all=S.ports.slice().sort((a,b)=>portDisp(a).localeCompare(portDisp(b)));
@@ -2025,8 +2027,8 @@ $('btnAddLink').onclick=()=>{
   // Auto-trunk suggestion
   const pA=S.ports.find(p=>p.id===a),pB=S.ports.find(p=>p.id===b);
   const dA=devById(pA?.deviceId),dB=devById(pB?.deviceId);
-  if(dA?.type==='switch'&&dB?.type==='switch'){const tv=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:tv.join(',')},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');}
-  else $('upHint').textContent='';
+  if(dA?.type==='switch'&&dB?.type==='switch'){const tv=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);$('upHint').dataset.vlans=tv.join(',');$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:$('upHint').dataset.vlans},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');}
+  else {delete $('upHint').dataset.vlans;$('upHint').textContent='';}
   save();refresh();
 };
 
