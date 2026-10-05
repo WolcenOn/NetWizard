@@ -13,7 +13,9 @@ const strictRegionMarkers = {
     ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
     ["$('lyDev').onchange=", "$('visDev').onchange=renderVisPorts;"],
     ['// 08. VLANS Y SUBNETS','// ─────────────────── HOSTS ───────────────────'],
-    ['function fillRoasSels(){','function renderVendorPills(']
+    ['function fillRoasSels(){','function renderVendorPills('],
+    ['function updSnHint(){',"if($('btnCancelPhysLocEdit'))"],
+    ["$('hPhysLocSel').onchange=",'// ─────────────────── PORT LAYOUT / LINKS']
   ]
 };
 const skipFiles = new Set(['js/netwizard-i18n.js']);

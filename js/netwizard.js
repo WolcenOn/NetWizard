@@ -50,6 +50,7 @@ const devLabel=d=>NWDevice?NWDevice.label(d):devKind(d);
 const DESIGN_STEP_ORDER=['dash','wiz','loc','dev','physical','ports','vlan','hosts','iot','graphs','links','fw','validate','cfg'];
 const INVENTORY_STEP_ORDER=['dash','loc','dev','physical','ports','links','vlan','hosts','iot','graphs','fw','validate','cfg'];
 const HT={pc:{l:'PC/Desktop',i:'🖥'},laptop:{l:'Portátil',i:'💻'},server:{l:'Servidor',i:'🗄'},printer:{l:'Impresora',i:'🖨'},phone:{l:'Teléfono IP',i:'📞'},camera:{l:'Cámara IP',i:'📷'},ap:{l:'AP WiFi',i:'📡'},iot:{l:'IoT',i:'🔌'}};
+const hostTypeText=type=>i18nText('hosts.typeLabel.'+type,{},HT[type]?.l||type||'');
 const VCOLS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#e879f9','#84cc16','#14b8a6'];
 
 const SCENARIOS=[
@@ -1324,6 +1325,14 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
     if($('dhcpPanel')?.open)renderDhcp();
   }
+  if(S.step==='hosts'){
+    const keep={dev:$('hConnDev')?.value||'',managed:$('hDeviceRef')?.value||'',port:$('hPort')?.value||'',loc:$('hLoc')?.value||'',phys:$('hPhysLocSel')?.value||''};
+    fillVlanSels();fillHostDeviceSel();if(keep.dev&&Array.from($('hConnDev').options).some(o=>o.value===keep.dev))$('hConnDev').value=keep.dev;
+    fillHostManagedDeviceSel(keep.managed);fillHostPortSel($('hConnDev').value,keep.port);fillHostLocSel();if(keep.loc&&Array.from($('hLoc').options).some(o=>o.value===keep.loc))$('hLoc').value=keep.loc;
+    fillHostPhysLocSel();if(keep.phys&&Array.from($('hPhysLocSel').options).some(o=>o.value===keep.phys))$('hPhysLocSel').value=keep.phys;
+    syncHostI18nLabels();updateHostDeviceHint();renderHosts();if($('ipMapPanel')?.open)renderIpMap();
+    if($('hostEditId')?.value){$('btnAddHost').dataset.i18n='hosts.actions.saveChanges';$('btnAddHost').textContent=i18nText('hosts.actions.saveChanges',{},'💾 Guardar cambios');}
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
@@ -1470,7 +1479,7 @@ $('hVlan').onchange=updSnHint;
 // 09. HOSTS Y MAPA IP
 // Alta/edición de hosts, asignación de puertos, filtros, mapa IP y comprobaciones de subnet.
 // =========================================================
-function updSnHint(){const ref=$('hVlan').value;if(!ref){$('hSnHint').textContent='';return;}const sn=snByVRef(ref);if(!sn){$('hSnHint').textContent='Sin subnet en esta VLAN.';return;}const ci=parseCidr(sn.cidr);$('hSnHint').textContent=`${sn.cidr} · GW: ${sn.gateway||'—'} · Rango: ${ci?.fh?ip4s(ci.fh):'?'}–${ci?.lh?ip4s(ci.lh):'?'}`;}
+function updSnHint(){const ref=$('hVlan').value;if(!ref){$('hSnHint').textContent='';return;}const sn=snByVRef(ref);if(!sn){$('hSnHint').textContent=i18nText('hosts.subnet.none',{},'Sin subnet en esta VLAN.');return;}const ci=parseCidr(sn.cidr);$('hSnHint').textContent=i18nText('hosts.subnet.summary',{cidr:sn.cidr,gateway:sn.gateway||'—',first:ci?.fh?ip4s(ci.fh):'?',last:ci?.lh?ip4s(ci.lh):'?'},'{cidr} · GW: {gateway} · Rango: {first}–{last}');}
 function structuredHostAccess(hostOrId){
   const hostId=typeof hostOrId==='string'?hostOrId:hostOrId?.id;
   const api=window.NetWizardStructuredCabling;
@@ -1565,13 +1574,13 @@ function candidateDevicesForHostLocation(hostLocId){
 }
 function autoAssignHostToLocation(hostId,locId,opts={}){
   const h=S.hosts.find(x=>x.id===hostId);
-  if(!h||!locId)return {ok:false,reason:'Host o ubicación no encontrados'};
+  if(!h||!locId)return {ok:false,reason:i18nText('hosts.autoAssign.notFound',{},'Host o ubicación no encontrados')};
   const loc=vLocById(locId);
   if(loc){
     const pl=loc.physicalLocationId?physLocById(loc.physicalLocationId):null;
     h.physicalLocation=pl?.name||loc.name||h.physicalLocation||'';
   }
-  if((h.portAssignMode||'auto')==='manual' && !opts.force)return {ok:false,reason:'Modo manual'};
+  if((h.portAssignMode||'auto')==='manual' && !opts.force)return {ok:false,reason:i18nText('hosts.autoAssign.manualMode',{},'Modo manual')};
   const candidates=candidateDevicesForHostLocation(locId);
   for(const d of candidates){
     const pId=suggestHostPort(d.id,h.id,h);
@@ -1581,16 +1590,16 @@ function autoAssignHostToLocation(hostId,locId,opts={}){
     }
   }
   setHostVisualLoc(h.id,locId);
-  return {ok:false,reason:'No hay puertos libres compatibles en esta ubicación'};
+  return {ok:false,reason:i18nText('hosts.autoAssign.noCompatiblePorts',{},'No hay puertos libres compatibles en esta ubicación')};
 }
 function fillHostDeviceSel(){
-  const opts=[makeOption('','— Sin equipo —'), ...connectableDevices().map(d=>makeOption(d.id,`${d.name||''} · ${d.type||'equipo'}`))];
+  const opts=[makeOption('',i18nText('hosts.select.noDevice',{},'— Sin equipo —')), ...connectableDevices().map(d=>makeOption(d.id,`${d.name||''} · ${d.type||i18nText('hosts.device.generic',{},'equipo')}`))];
   setOptions($('hConnDev'),opts);
 }
 function fillHostManagedDeviceSel(keepValue){
   const eligible=S.devices.filter(d=>['server','access_point','appliance'].includes(devKind(d))).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const prev=keepValue!==undefined?keepValue:($('hDeviceRef')?.value||'');
-  setOptions($('hDeviceRef'),[makeOption('','— No representa dispositivo gestionado —'),...eligible.map(d=>makeOption(d.id,`${d.name||d.id} · ${devLabel(d)} · ${d.vendorOs||'sin vendor'}`))]);
+  setOptions($('hDeviceRef'),[makeOption('',i18nText('hosts.select.noManagedDevice',{},'— No representa dispositivo gestionado —')),...eligible.map(d=>makeOption(d.id,`${d.name||d.id} · ${devLabel(d)} · ${d.vendorOs||i18nText('hosts.device.noVendor',{},'sin vendor')}`))]);
   if(prev&&eligible.some(d=>d.id===prev))$('hDeviceRef').value=prev;
 }
 function fillHostPortSel(deviceId,keepValue){
@@ -1598,13 +1607,14 @@ function fillHostPortSel(deviceId,keepValue){
   const prev=keepValue!==undefined?keepValue:($('hPort')?.value||'');
   const pts=hostAssignablePorts(devId);
   const curHost=$('hostEditId').value||null;
-  setOptions($('hPort'),[makeOption('','Sin puerto asignado'), ...pts.map(p=>makeOption(p.id,`${p.name||''}${hostPortUsedByOther(p.id,curHost)?' · ocupado':''}`))]);
+  setOptions($('hPort'),[makeOption('',i18nText('hosts.select.noPort',{},'Sin puerto asignado')), ...pts.map(p=>makeOption(p.id,`${p.name||''}${hostPortUsedByOther(p.id,curHost)?i18nText('hosts.port.occupiedSuffix',{},' · ocupado'):''}`))]);
   if(prev && pts.some(p=>p.id===prev))$('hPort').value=prev;
 }
 function fillHostLocSel(){
   ensureVisualModel();
-  setOptions($('hLoc'),[makeOption('','Automática / según equipo'), ...vLocs().map(l=>makeOption(l.id,l.name||''))]);
+  setOptions($('hLoc'),[makeOption('',i18nText('hosts.select.autoLocation',{},'Automática / según equipo')), ...vLocs().map(l=>makeOption(l.id,l.name||''))]);
 }
+function syncHostI18nLabels(){ if($('hUseHint'))$('hUseHint').value=i18nText('hosts.form.useValue',{},'Servidor/AP/appliance · generación vendor'); }
 function setHostConnectionControlsLocked(locked){
   ['hConnDev','hPortMode','hPort'].forEach(id=>{if($(id))$(id).disabled=!!locked;});
 }
@@ -1613,7 +1623,7 @@ function applyStructuredHostAuthority(h){
   const hint=$('hConnAuthority');
   if(!access?.structured){
     setHostConnectionControlsLocked(false);
-    if(hint)hint.textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.';
+    if(hint)hint.textContent=i18nText('hosts.connection.directAuthority',{},'Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.');
     return false;
   }
   setHostConnectionControlsLocked(true);
@@ -1626,14 +1636,14 @@ function applyStructuredHostAuthority(h){
   if(p){
     setOptions($('hPort'),[makeOption(p.id,p.name||p.id)]);
     $('hPort').value=p.id;
-  }else setOptions($('hPort'),[makeOption('','Ruta física incompleta')]);
+  }else setOptions($('hPort'),[makeOption('',i18nText('hosts.connection.incompleteRoute',{},'Ruta física incompleta'))]);
   $('hPortMode').value='manual';
-  $('hDevHint').value=access.complete&&d&&p?`Físico → ${d.name} · ${p.name}`:'Cableado estructurado incompleto';
+  $('hDevHint').value=access.complete&&d&&p?i18nText('hosts.connection.physicalSummary',{device:d.name,port:p.name},'Físico → {device} · {port}'):i18nText('hosts.connection.structuredIncomplete',{},'Cableado estructurado incompleto');
   if(hint)hint.textContent=access.ambiguous
-    ? 'Inventario físico es autoritativo, pero el host aparece conectado a más de una toma. Corrige esa ambigüedad en Cableado estructurado.'
+    ? i18nText('hosts.connection.ambiguous',{},'Inventario físico es autoritativo, pero el host aparece conectado a más de una toma. Corrige esa ambigüedad en Cableado estructurado.')
     : (access.complete
-      ? 'Derivado de Inventario físico. Para cambiar equipo o puerto, modifica toma, tramo permanente o parcheo rack.'
-      : 'Inventario físico es autoritativo. Completa la ruta toma → patch panel → switch para resolver el puerto.');
+      ? i18nText('hosts.connection.derived',{},'Derivado de Inventario físico. Para cambiar equipo o puerto, modifica toma, tramo permanente o parcheo rack.')
+      : i18nText('hosts.connection.completeRoute',{},'Inventario físico es autoritativo. Completa la ruta toma → patch panel → switch para resolver el puerto.'));
   if(d && !$('hLoc').value)$('hLoc').value=deviceVisualLoc(d.id)||'';
   return true;
 }
@@ -1653,12 +1663,12 @@ function updateHostDeviceHint(){
   const pid=$('hPort').value||'';
   const p=pid?S.ports.find(x=>x.id===pid):null;
   const finalDev=p?devById(p.deviceId):dev;
-  $('hDevHint').value=finalDev?(mode==='auto'?`Auto → ${finalDev.name}${p?` · ${p.name}`:''}`:`Manual → ${finalDev.name}${p?` · ${p.name}`:''}`):'Sin equipo asociado';
-  const hint=$('hConnAuthority');if(hint)hint.textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.';
+  $('hDevHint').value=finalDev?(mode==='auto'?i18nText('hosts.connection.autoSummary',{device:finalDev.name,port:p?` · ${p.name}`:''},'Auto → {device}{port}'):i18nText('hosts.connection.manualSummary',{device:finalDev.name,port:p?` · ${p.name}`:''},'Manual → {device}{port}')):i18nText('hosts.connection.noDevice',{},'Sin equipo asociado');
+  const hint=$('hConnAuthority');if(hint)hint.textContent=i18nText('hosts.connection.directAuthority',{},'Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.');
   if(finalDev && !$('hLoc').value)$('hLoc').value=deviceVisualLoc(finalDev.id)||'';
 }
-function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType').value='pc'; $('hVlan').value=''; $('hIpMode').value='dhcp'; $('hStaticIp').value=''; $('hMac').value=''; $('hPhysLoc').value=''; if($('hPhysLocSel'))$('hPhysLocSel').value=''; $('hNotes').value=''; fillHostDeviceSel(); fillHostManagedDeviceSel(''); fillHostLocSel(); setHostConnectionControlsLocked(false); $('hConnDev').value=''; $('hPortMode').value='auto'; fillHostPortSel(''); $('hPort').value=''; $('hLoc').value=''; $('hDevHint').value='Sin equipo asociado'; if($('hConnAuthority'))$('hConnAuthority').textContent='Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.'; $('hStaticSec').style.display='none'; $('btnAddHost').textContent='➕ Añadir host'; $('btnCancelHostEdit').style.display='none'; $('hSnHint').textContent=''; }
-function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostManagedDeviceSel(h.deviceRef||''); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; const resolvedPortId=hostResolvedPortId(h); $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,resolvedPortId||''); $('hPort').value=resolvedPortId||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').textContent='💾 Guardar cambios'; $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
+function clearHostForm(){ $('hostEditId').value=''; $('hName').value='';$('hType').value='pc'; $('hVlan').value=''; $('hIpMode').value='dhcp'; $('hStaticIp').value=''; $('hMac').value=''; $('hPhysLoc').value=''; if($('hPhysLocSel'))$('hPhysLocSel').value=''; $('hNotes').value=''; fillHostDeviceSel(); fillHostManagedDeviceSel(''); fillHostLocSel(); setHostConnectionControlsLocked(false); $('hConnDev').value=''; $('hPortMode').value='auto'; fillHostPortSel(''); $('hPort').value=''; $('hLoc').value=''; $('hDevHint').value=i18nText('hosts.connection.noDevice',{},'Sin equipo asociado'); if($('hConnAuthority'))$('hConnAuthority').textContent=i18nText('hosts.connection.directAuthority',{},'Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.'); $('hStaticSec').style.display='none'; $('btnAddHost').dataset.i18n='hosts.actions.add'; $('btnAddHost').textContent=i18nText('hosts.actions.add',{},'➕ Añadir host'); $('btnCancelHostEdit').style.display='none'; $('hSnHint').textContent=''; }
+function startHostEdit(id){ const h=S.hosts.find(x=>x.id===id); if(!h)return; $('hostEditId').value=id; fillHostDeviceSel(); fillHostManagedDeviceSel(h.deviceRef||''); fillHostLocSel(); $('hName').value=h.name||''; $('hType').value=h.type||'pc'; $('hVlan').value=h.vlanRef||''; $('hIpMode').value=h.ipMode||'dhcp'; $('hStaticIp').value=h.staticIp||''; $('hMac').value=h.mac||''; $('hPhysLoc').value=h.physicalLocation||''; if($('hPhysLocSel'))$('hPhysLocSel').value=h.physicalLocation||''; $('hNotes').value=h.notes||''; const resolvedPortId=hostResolvedPortId(h); $('hConnDev').value=hostConnectedDeviceId(h)||''; $('hPortMode').value=h.portAssignMode||'auto'; fillHostPortSel($('hConnDev').value,resolvedPortId||''); $('hPort').value=resolvedPortId||''; $('hLoc').value=hostVisualLoc(h.id)||''; updateHostDeviceHint(); $('hStaticSec').style.display=(h.ipMode==='static')?'':'none'; updSnHint(); $('btnAddHost').dataset.i18n='hosts.actions.saveChanges'; $('btnAddHost').textContent=i18nText('hosts.actions.saveChanges',{},'💾 Guardar cambios'); $('btnCancelHostEdit').style.display=''; navTo('hosts'); window.scrollTo({top:0,behavior:'smooth'}); }
 if($('btnCancelPhysLocEdit')) $('btnCancelPhysLocEdit').onclick=()=>clearPhysicalLocationForm();
 if($('btnAddPhysLoc')) $('btnAddPhysLoc').onclick=()=>{
   const payload={
@@ -1690,12 +1700,12 @@ $('btnAddHost').onclick=()=>{
     else if(existingHost){portRef=existingHost.portRef||null;connectedDeviceId=existingHost.connectedDeviceId||null;portAssignMode=existingHost.portAssignMode||'auto';}
   }
   if(physicalLocation)rememberPhysicalLocation(physicalLocation);
-  if(!name)return alert(i18nText('device.alert.nameRequired',{},'Nombre requerido.'));if(!vRef)return alert('Selecciona VLAN.');
-  if(ipMode==='static'){if(!sip)return alert('IP estática requerida.');if(parseIp(sip)===null)return alert('IP inválida.');const sn=snByVRef(vRef);if(sn&&!ipInSn(sip,sn.cidr))return alert(`La IP ${sip} no está en ${sn.cidr}.`);if(S.hosts.some(h=>h.id!==editId&&h.staticIp===sip&&h.vlanRef===vRef))return alert('IP duplicada.');if(snByVRef(vRef)?.gateway===sip)return alert('Esa IP es el gateway.');}
+  if(!name)return alert(i18nText('device.alert.nameRequired',{},'Nombre requerido.'));if(!vRef)return alert(i18nText('hosts.alert.selectVlan',{},'Selecciona VLAN.'));
+  if(ipMode==='static'){if(!sip)return alert(i18nText('hosts.alert.staticRequired',{},'IP estática requerida.'));if(parseIp(sip)===null)return alert(i18nText('hosts.alert.invalidIp',{},'IP inválida.'));const sn=snByVRef(vRef);if(sn&&!ipInSn(sip,sn.cidr))return alert(i18nText('hosts.alert.ipOutsideSubnet',{ip:sip,cidr:sn.cidr},'La IP {ip} no está en {cidr}.'));if(S.hosts.some(h=>h.id!==editId&&h.staticIp===sip&&h.vlanRef===vRef))return alert(i18nText('hosts.alert.duplicateIp',{},'IP duplicada.'));if(snByVRef(vRef)?.gateway===sip)return alert(i18nText('hosts.alert.gatewayIp',{},'Esa IP es el gateway.'));}
   if(!physicalAccess?.structured&&connectedDeviceId && portAssignMode==='auto')portRef=suggestHostPort(connectedDeviceId,editId)||null;
-  if(portRef){const port=S.ports.find(p=>p.id===portRef);if(!port)return alert('El puerto seleccionado ya no existe.');if(connectedDeviceId&&port.deviceId!==connectedDeviceId)return alert('El puerto no pertenece al equipo seleccionado.');if(hostPortUsedByOther(portRef,editId))return alert('Ese puerto ya está asociado a otro host.');}
+  if(portRef){const port=S.ports.find(p=>p.id===portRef);if(!port)return alert(i18nText('hosts.alert.portMissing',{},'El puerto seleccionado ya no existe.'));if(connectedDeviceId&&port.deviceId!==connectedDeviceId)return alert(i18nText('hosts.alert.portWrongDevice',{},'El puerto no pertenece al equipo seleccionado.'));if(hostPortUsedByOther(portRef,editId))return alert(i18nText('hosts.alert.portInUse',{},'Ese puerto ya está asociado a otro host.'));}
   const locVal=$('hLoc').value||'';
-  if(editId){ const h=S.hosts.find(x=>x.id===editId); if(!h)return alert('No se encontró el host a editar.'); Object.assign(h,{name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode,deviceRef}); if(locVal)setHostVisualLoc(editId,locVal); else if(connectedDeviceId)setHostVisualLoc(editId,deviceVisualLoc(connectedDeviceId)||hostVisualLoc(editId)||''); }
+  if(editId){ const h=S.hosts.find(x=>x.id===editId); if(!h)return alert(i18nText('hosts.alert.editMissing',{},'No se encontró el host a editar.')); Object.assign(h,{name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode,deviceRef}); if(locVal)setHostVisualLoc(editId,locVal); else if(connectedDeviceId)setHostVisualLoc(editId,deviceVisualLoc(connectedDeviceId)||hostVisualLoc(editId)||''); }
   else { const id=uid('h'); S.hosts.push({id,name,type,vlanRef:vRef,ipMode,staticIp:sip,mac,portRef,notes,physicalLocation,connectedDeviceId,portAssignMode,deviceRef}); if(locVal)setHostVisualLoc(id,locVal); else if(connectedDeviceId)setHostVisualLoc(id,deviceVisualLoc(connectedDeviceId)||''); }
   clearHostForm(); save();refresh();
 };
@@ -1705,14 +1715,14 @@ $('bulkAdd').onclick=()=>{
   const lines=$('bulkTxt').value.split('\n').map(l=>l.trim()).filter(Boolean);let ok=0,errs=[];
   for(const line of lines){
     const p=line.split(',').map(s=>s.trim());
-    if(p.length<3){errs.push(`"${line}": formato inválido`);continue;}
+    if(p.length<3){errs.push(i18nText('hosts.bulk.invalidFormat',{line},'"{line}": formato inválido'));continue;}
     const [name,typeRaw,vidStr,ipRaw,physicalLocationRaw,visualLocRaw]=p;
     const vid=parseInt(vidStr,10); const v=vByNum(vid);
-    if(!v){errs.push(`VLAN ${vidStr} no existe`);continue;}
+    if(!v){errs.push(i18nText('hosts.bulk.vlanMissing',{vlan:vidStr},'VLAN {vlan} no existe'));continue;}
     const t=Object.keys(HT).includes((typeRaw||'').toLowerCase())?(typeRaw||'').toLowerCase():'iot';
     const im=(ipRaw||'dhcp').toLowerCase()==='dhcp'?'dhcp':'static';
     const sip=im==='static'?(ipRaw||'').trim():null;
-    if(im==='static'&&sip&&parseIp(sip)===null){errs.push(`IP inválida: ${sip}`);continue;}
+    if(im==='static'&&sip&&parseIp(sip)===null){errs.push(i18nText('hosts.bulk.invalidIp',{ip:sip},'IP inválida: {ip}'));continue;}
     const physicalLocation=cleanStr(physicalLocationRaw)||null;
     if(physicalLocation)rememberPhysicalLocation(physicalLocation);
     const id=uid('h');
@@ -1725,7 +1735,7 @@ $('bulkAdd').onclick=()=>{
     ok++;
   }
   $('bulkModal').classList.remove('on');$('bulkTxt').value='';save();refresh();
-  alert(`${ok} hosts añadidos.${errs.length ? ('\nErrores:\n' + errs.join('\n')) : ''}`);
+  alert(i18nText('hosts.bulk.result',{count:ok},'{count} hosts añadidos.')+(errs.length?('\n'+i18nText('hosts.bulk.errorsTitle',{},'Errores:')+'\n'+errs.join('\n')):''));
 };
 $('hFiltV').onchange=$('hFiltT').onchange=()=>{hostsPage=0;renderHosts();};
 if($('hostsPrev'))$('hostsPrev').onclick=()=>{if(hostsPage>0){hostsPage--;renderHosts();}};
@@ -1777,37 +1787,37 @@ function renderHosts(){
   };
   let hosts=S.hosts.slice();if(fv)hosts=hosts.filter(h=>h.vlanRef===fv);if(ft)hosts=hosts.filter(h=>h.type===ft);
   const sort=S.uiSort.hosts||{key:'name',dir:1};
-  hosts.sort((a,b)=>{const va=vlanByRef.get(a.vlanRef),vb=vlanByRef.get(b.vlanRef);let av='',bv='';switch(sort.key){case 'type':av=HT[a.type]?.l||a.type;bv=HT[b.type]?.l||b.type;break;case 'vlan':av=va?.vlanId||99999;bv=vb?.vlanId||99999;break;case 'ip':av=ipFor(a);bv=ipFor(b);break;case 'location':{const ma=metaFor(a),mb=metaFor(b);av=ma.loc?.name||a.physicalLocation||'';bv=mb.loc?.name||b.physicalLocation||'';break;}case 'connection':{const ma=metaFor(a),mb=metaFor(b);av=(ma.dev?.name||'')+' '+(ma.resolvedPortId||'');bv=(mb.dev?.name||'')+' '+(mb.resolvedPortId||'');break;}default:av=a.name;bv=b.name;}return sort.dir*cmpMixed(av,bv);});
-  $('hCnt').textContent=`${S.hosts.length} hosts`;
+  hosts.sort((a,b)=>{const va=vlanByRef.get(a.vlanRef),vb=vlanByRef.get(b.vlanRef);let av='',bv='';switch(sort.key){case 'type':av=hostTypeText(a.type);bv=hostTypeText(b.type);break;case 'vlan':av=va?.vlanId||99999;bv=vb?.vlanId||99999;break;case 'ip':av=ipFor(a);bv=ipFor(b);break;case 'location':{const ma=metaFor(a),mb=metaFor(b);av=ma.loc?.name||a.physicalLocation||'';bv=mb.loc?.name||b.physicalLocation||'';break;}case 'connection':{const ma=metaFor(a),mb=metaFor(b);av=(ma.dev?.name||'')+' '+(ma.resolvedPortId||'');bv=(mb.dev?.name||'')+' '+(mb.resolvedPortId||'');break;}default:av=a.name;bv=b.name;}return sort.dir*cmpMixed(av,bv);});
+  $('hCnt').textContent=i18nText('hosts.list.count',{count:S.hosts.length},'{count} hosts');
   const el=$('hostsList');
   el.textContent='';
   if(!hosts.length){
     hostsPage=0;
-    const info=$('hostsPageInfo');if(info)info.textContent='0 resultados';
+    const info=$('hostsPageInfo');if(info)info.textContent=i18nText('hosts.list.results',{count:0},'{count} resultados');
     const pager=$('hostsPager');if(pager)pager.style.display='none';
     if($('hostsPrev'))$('hostsPrev').disabled=true;if($('hostsNext'))$('hostsNext').disabled=true;
     const empty=document.createElement('div'); empty.className='empty';
     const icon=document.createElement('div'); icon.className='ei'; icon.textContent='💻';
-    const p=document.createElement('p'); p.textContent=S.hosts.length?'Sin resultados.':'Añade hosts arriba.';
+    const p=document.createElement('p'); p.textContent=S.hosts.length?i18nText('hosts.empty.filtered',{},'Sin resultados.'):i18nText('hosts.empty.none',{},'Añade hosts arriba.');
     empty.append(icon,p); el.appendChild(empty); return;
   }
   const totalPages=Math.max(1,Math.ceil(hosts.length/HOSTS_PAGE_SIZE));
   hostsPage=Math.min(Math.max(0,hostsPage),totalPages-1);
   const start=hostsPage*HOSTS_PAGE_SIZE,visible=hosts.slice(start,start+HOSTS_PAGE_SIZE);
-  const pageInfo=$('hostsPageInfo');if(pageInfo)pageInfo.textContent=`${hosts.length} resultados · página ${hostsPage+1}/${totalPages}`;
+  const pageInfo=$('hostsPageInfo');if(pageInfo)pageInfo.textContent=i18nText('hosts.list.page',{count:hosts.length,page:hostsPage+1,total:totalPages},'{count} resultados · página {page}/{total}');
   const prev=$('hostsPrev'),next=$('hostsNext'),pager=$('hostsPager');
   if(pager)pager.style.display=hosts.length>HOSTS_PAGE_SIZE?'flex':'none';
   if(prev)prev.disabled=hostsPage<=0;if(next)next.disabled=hostsPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw';
   const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
-  [['name','Nombre'],['type','Tipo'],['vlan','VLAN'],['ip','IP'],['location','Ubicación'],['connection','Conexión']].forEach(([k,l])=>trh.appendChild(createSortTh('hosts',k,l)));
+  [['name',i18nText('form.name',{},'Nombre')],['type',i18nText('form.type',{},'Tipo')],['vlan','VLAN'],['ip','IP'],['location',i18nText('hosts.list.location',{},'Ubicación')],['connection',i18nText('hosts.list.connection',{},'Conexión')]].forEach(([k,l])=>trh.appendChild(createSortTh('hosts',k,l)));
   trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
   visible.forEach(h=>{
     const v=vlanByRef.get(h.vlanRef); const {access,dev,resolvedPortId,port,loc}=metaFor(h);
     const tr=document.createElement('tr');
     const tdName=document.createElement('td'); const bName=document.createElement('b'); bName.textContent=h.name||''; const hint=document.createElement('div'); hint.className='hint'; hint.textContent=h.physicalLocation||'—'; tdName.append(bName,hint); tr.appendChild(tdName);
-    const tdType=document.createElement('td'); appendText(tdType,`${HT[h.type]?.i||''} ${HT[h.type]?.l||h.type||''}`); tr.appendChild(tdType);
+    const tdType=document.createElement('td'); appendText(tdType,`${HT[h.type]?.i||''} ${hostTypeText(h.type)}`); tr.appendChild(tdType);
     const tdVlan=document.createElement('td');
     if(v){ const inline=document.createElement('span'); inline.style.display='inline-flex'; inline.style.alignItems='center'; inline.style.gap='3px'; const dot=document.createElement('span'); dot.className='vd'; dot.style.background=v.color||vColor(v.id); inline.appendChild(dot); appendText(inline,`${v.vlanId} ${v.name||''}`); tdVlan.appendChild(inline); }
     else tdVlan.textContent='—';
@@ -1816,7 +1826,7 @@ function renderHosts(){
     if(h.ipMode==='static') tdIp.appendChild(makeBadge(h.staticIp||'—','b bgn')); else tdIp.appendChild(makeBadge('DHCP','b bac'));
     tr.appendChild(tdIp);
     const tdLoc=document.createElement('td'); appendText(tdLoc,loc?.name||'—'); const locHint=document.createElement('div'); locHint.className='hint'; locHint.textContent=h.physicalLocation||'—'; tdLoc.appendChild(locHint); tr.appendChild(tdLoc);
-    const tdConn=document.createElement('td'); const conn=document.createElement('div'); conn.textContent=dev?dev.name:(access?.structured?'Ruta física incompleta':'Sin equipo'); const portHint=document.createElement('div'); portHint.className='hint mono'; portHint.textContent=port?port.name:(access?.structured?'Inventario físico':(h.portAssignMode==='auto'?'Auto':'—')); tdConn.append(conn,portHint); if(access?.structured)tdConn.appendChild(makeBadge('Físico','b bgr')); tr.appendChild(tdConn);
+    const tdConn=document.createElement('td'); const conn=document.createElement('div'); conn.textContent=dev?dev.name:(access?.structured?i18nText('hosts.connection.incompleteRoute',{},'Ruta física incompleta'):i18nText('hosts.connection.noDeviceShort',{},'Sin equipo')); const portHint=document.createElement('div'); portHint.className='hint mono'; portHint.textContent=port?port.name:(access?.structured?i18nText('hosts.connection.physicalInventory',{},'Inventario físico'):(h.portAssignMode==='auto'?i18nText('hosts.portMode.autoShort',{},'Auto'):'—')); tdConn.append(conn,portHint); if(access?.structured)tdConn.appendChild(makeBadge(i18nText('hosts.connection.physicalBadge',{},'Físico'),'b bgr')); tr.appendChild(tdConn);
     const tdActions=document.createElement('td'); tdActions.style.display='flex'; tdActions.style.gap='4px';
     const edit=document.createElement('button'); edit.className='btn bs bxs'; edit.type='button'; edit.dataset.eh=h.id; edit.textContent='✎';
     const del=document.createElement('button'); del.className='btn bd bxs'; del.type='button'; del.dataset.dh=h.id; del.textContent='🗑';
@@ -1825,20 +1835,20 @@ function renderHosts(){
   });
   table.appendChild(tbody); wrap.appendChild(table); el.appendChild(wrap);
   el.querySelectorAll('[data-eh]').forEach(b=>b.onclick=()=>startHostEdit(b.dataset.eh));
-  el.querySelectorAll('[data-dh]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar host?')){const hostId=b.dataset.dh;S.hosts=S.hosts.filter(x=>x.id!==hostId);if(Array.isArray(S.hostOutletConnections))S.hostOutletConnections=S.hostOutletConnections.filter(x=>x.hostId!==hostId); delete vv().assign.hosts[hostId]; delete vv().pos[hostId]; save();refresh();}});
+  el.querySelectorAll('[data-dh]').forEach(b=>b.onclick=()=>{if(confirm(i18nText('hosts.confirm.delete',{},'¿Eliminar host?'))){const hostId=b.dataset.dh;S.hosts=S.hosts.filter(x=>x.id!==hostId);if(Array.isArray(S.hostOutletConnections))S.hostOutletConnections=S.hostOutletConnections.filter(x=>x.hostId!==hostId); delete vv().assign.hosts[hostId]; delete vv().pos[hostId]; save();refresh();}});
 }
 function renderIpMap(){
   const el=$('ipMap'); clearNode(el);
   const vlans=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
-  if(!vlans.length){ setSingleHint(el,'Sin VLANs configuradas.'); return; }
+  if(!vlans.length){ setSingleHint(el,i18nText('hosts.ipMap.noVlans',{},'Sin VLANs configuradas.')); return; }
   vlans.forEach(v=>{
     const sn=snByVRef(v.id); const hosts=S.hosts.filter(h=>h.vlanRef===v.id); const color=v.color||vColor(v.id);
     const block=document.createElement('div'); block.style.marginBottom='12px';
     const title=document.createElement('div'); title.style.display='flex'; title.style.alignItems='center'; title.style.gap='5px'; title.style.fontSize='12px'; title.style.fontWeight='700'; title.style.marginBottom='4px';
     const dot=makeEl('span','vd'); dot.style.background=color; title.append(dot, document.createTextNode(`VLAN ${v.vlanId} — ${v.name||''} `), makeEl('span','b bgr',hosts.length)); block.appendChild(title);
-    if(!sn){ block.appendChild(makeEl('div','hint','Sin subnet.')); el.appendChild(block); return; }
+    if(!sn){ block.appendChild(makeEl('div','hint',i18nText('hosts.ipMap.noSubnet',{},'Sin subnet.'))); el.appendChild(block); return; }
     const ci=parseCidr(sn.cidr); const total=ci?.fh&&ci?.lh?ci.lh-ci.fh+1:0;
-    block.appendChild(makeEl('div','mono hint',`${sn.cidr} · GW: ${sn.gateway||'—'} · ${total} disponibles`));
+    block.appendChild(makeEl('div','mono hint',i18nText('hosts.ipMap.summary',{cidr:sn.cidr,gateway:sn.gateway||'—',count:total},'{cidr} · GW: {gateway} · {count} disponibles')));
     const statics=hosts.filter(h=>h.ipMode==='static'&&h.staticIp); const dhcpC=hosts.filter(h=>h.ipMode==='dhcp').length;
     if(ci&&ci.fh&&total>0){
       const gP=1/total*100; const sP=Math.min(statics.length/total*100,99-gP); const dP=Math.min(dhcpC/total*100,99-gP-sP);
@@ -3077,6 +3087,7 @@ function renderActiveStep(){
       fillHostPortSel();
       fillHostLocSel();
       fillHostPhysLocSel();
+      syncHostI18nLabels();
       updateHostDeviceHint();
       renderHosts();
       if($('ipMapPanel')?.open)renderIpMap();
