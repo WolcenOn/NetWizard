@@ -777,40 +777,40 @@
 
 <!-- ═══════════ VALIDATION / ANALYSIS ═══════════ -->
 <div class="pg" id="pg-validate">
-  <div class="ph"><h1>🧪 Validación & análisis</h1><p>Comprueba compatibilidad, capacidad, resiliencia, servicios y diferencias frente al estado observado antes de desplegar.</p></div>
+  <div class="ph"><h1 data-i18n="validation.page.title">🧪 Validación & análisis</h1><p data-i18n="validation.page.subtitle">Comprueba compatibilidad, capacidad, resiliencia, servicios y diferencias frente al estado observado antes de desplegar.</p></div>
   <div class="co co-ac" style="margin-bottom:12px;">
-    Esta sección reúne comprobaciones derivadas. No es otra fuente de verdad: corrige los datos en sus pantallas canónicas y vuelve aquí para validar.
+    <span data-i18n="validation.page.derivedHint">Esta sección reúne comprobaciones derivadas. No es otra fuente de verdad: corrige los datos en sus pantallas canónicas y vuelve aquí para validar.</span>
   </div>
   <div class="card" id="observedConfigCard">
-    <div class="card-h"><div class="card-t">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
-    <div class="hint" style="margin-bottom:9px;">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
+    <div class="card-h"><div class="card-t" data-i18n="validation.observed.title">🔎 Estado observado y cambio incremental</div><span class="b bac">3.50</span></div>
+    <div class="hint" style="margin-bottom:9px;" data-i18n="validation.observed.hint">Pega una captura reciente del equipo real. NetWizard la conserva por dispositivo y solo genera comandos cuando el adaptador puede demostrar un delta y un rollback seguros.</div>
     <div class="row">
-      <div><label class="fl" for="observedDevice">Dispositivo</label><select id="observedDevice"></select></div>
-      <div><label class="fl" for="observedSource">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador"/></div>
+      <div><label class="fl" for="observedDevice" data-i18n="validation.observed.device">Dispositivo</label><select id="observedDevice"></select></div>
+      <div><label class="fl" for="observedSource" data-i18n="validation.observed.source">Origen de la captura</label><input id="observedSource" maxlength="160" placeholder="show running-config / operador" data-i18n-placeholder="validation.observed.sourcePlaceholder"/></div>
     </div>
     <div class="row">
-      <div><label class="fl" for="observedCapturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
-      <div><label class="fl" for="observedMaxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
+      <div><label class="fl" for="observedCapturedAt" data-i18n="validation.observed.capturedAt">Fecha de captura</label><input id="observedCapturedAt" type="datetime-local"/></div>
+      <div><label class="fl" for="observedMaxAge" data-i18n="validation.observed.maxAge">Antigüedad máxima (horas)</label><input id="observedMaxAge" type="number" min="1" value="24"/></div>
     </div>
-    <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> Exigir candidato incremental ejecutable para todos los cambios del ZIP</label>
-    <label class="fl" for="observedConfig" style="margin-top:9px;">Configuración observada</label>
-    <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" style="min-height:180px;"></textarea>
+    <label class="fl"><input id="observedRequireExecutable" type="checkbox"/> <span data-i18n="validation.observed.requireExecutable">Exigir candidato incremental ejecutable para todos los cambios del ZIP</span></label>
+    <label class="fl" for="observedConfig" style="margin-top:9px;" data-i18n="validation.observed.config">Configuración observada</label>
+    <textarea class="cfg" id="observedConfig" spellcheck="false" maxlength="262144" placeholder="Pega aquí la configuración capturada directamente del dispositivo…" data-i18n-placeholder="validation.observed.configPlaceholder" style="min-height:180px;"></textarea>
     <div class="brow">
-      <button class="btn bg" id="observedSave">💾 Guardar y analizar</button>
-      <button class="btn bp" id="observedPreflight">🧪 Analizar sin guardar</button>
-      <button class="btn bd" id="observedRemove">✕ Eliminar captura</button>
+      <button class="btn bg" id="observedSave" data-i18n="validation.observed.saveAnalyze">💾 Guardar y analizar</button>
+      <button class="btn bp" id="observedPreflight" data-i18n="validation.observed.preflight">🧪 Analizar sin guardar</button>
+      <button class="btn bd" id="observedRemove" data-i18n="validation.observed.remove">✕ Eliminar captura</button>
     </div>
-    <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;">Sin captura observada.</pre>
+    <pre class="cfg" id="observedStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="validation.observed.noCapture">Sin captura observada.</pre>
     <div class="g2">
       <div>
-        <div class="card-t" style="margin:8px 0 6px;">Candidato incremental</div>
+        <div class="card-t" style="margin:8px 0 6px;" data-i18n="validation.observed.candidate">Candidato incremental</div>
         <textarea class="cfg" id="observedCandidate" readonly style="min-height:180px;"></textarea>
-        <button class="btn bs bsm" id="observedDownloadCandidate" disabled>⬇ Descargar candidato</button>
+        <button class="btn bs bsm" id="observedDownloadCandidate" disabled data-i18n="validation.observed.downloadCandidate">⬇ Descargar candidato</button>
       </div>
       <div>
-        <div class="card-t" style="margin:8px 0 6px;">Rollback candidato</div>
+        <div class="card-t" style="margin:8px 0 6px;" data-i18n="validation.observed.rollback">Rollback candidato</div>
         <textarea class="cfg" id="observedRollback" readonly style="min-height:180px;"></textarea>
-        <button class="btn bs bsm" id="observedDownloadRollback" disabled>⬇ Descargar rollback</button>
+        <button class="btn bs bsm" id="observedDownloadRollback" disabled data-i18n="validation.observed.downloadRollback">⬇ Descargar rollback</button>
       </div>
     </div>
   </div>
