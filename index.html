@@ -220,7 +220,7 @@
         <div class="card-t" style="margin-bottom:11px;" data-i18n="device.form.title">➕ Añadir dispositivo</div>
         <div class="row">
           <div><label class="fl" data-i18n="form.name">Nombre</label><input id="devName" placeholder="SW-CORE-01"/></div>
-          <div><label class="fl">Tipo</label>
+          <div><label class="fl" data-i18n="form.type">Tipo</label>
             <select id="devType">
               <option value="switch">🔀 Switch</option>
             </select>
@@ -463,82 +463,82 @@
 
 <!-- ═══════════ HOSTS ═══════════ -->
 <div class="pg" id="pg-hosts">
-  <div class="ph"><h1>💻 Hosts & Mapa IP</h1></div>
+  <div class="ph"><h1 data-i18n="hosts.page.title">💻 Hosts & Mapa IP</h1></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">➕ Nuevo host</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="hosts.form.title">➕ Nuevo host</div>
         <div class="row">
-          <div><label class="fl">Nombre</label><input id="hName" placeholder="PC-Ventas-01"/></div>
+          <div><label class="fl" data-i18n="form.name">Nombre</label><input id="hName" placeholder="PC-Ventas-01"/></div>
           <div><label class="fl">Tipo</label>
             <select id="hType">
-              <option value="pc">🖥 PC/Desktop</option>
-              <option value="laptop">💻 Portátil</option>
-              <option value="server">🗄 Servidor</option>
-              <option value="printer">🖨 Impresora</option>
-              <option value="phone">📞 Teléfono IP</option>
-              <option value="camera">📷 Cámara IP</option>
-              <option value="ap">📡 Punto de acceso</option>
-              <option value="iot">🔌 IoT / Otro</option>
+              <option value="pc" data-i18n="hosts.type.pc">🖥 PC/Desktop</option>
+              <option value="laptop" data-i18n="hosts.type.laptop">💻 Portátil</option>
+              <option value="server" data-i18n="hosts.type.server">🗄 Servidor</option>
+              <option value="printer" data-i18n="hosts.type.printer">🖨 Impresora</option>
+              <option value="phone" data-i18n="hosts.type.phone">📞 Teléfono IP</option>
+              <option value="camera" data-i18n="hosts.type.camera">📷 Cámara IP</option>
+              <option value="ap" data-i18n="hosts.type.ap">📡 Punto de acceso</option>
+              <option value="iot" data-i18n="hosts.type.iot">🔌 IoT / Otro</option>
             </select>
           </div>
         </div>
         <div class="row">
           <div><label class="fl">VLAN</label><select id="hVlan"></select></div>
-          <div><label class="fl">IP</label><select id="hIpMode"><option value="dhcp">DHCP</option><option value="static">Estática</option></select></div>
+          <div><label class="fl">IP</label><select id="hIpMode"><option value="dhcp">DHCP</option><option value="static" data-i18n="hosts.ipMode.static">Estática</option></select></div>
         </div>
         <div id="hStaticSec" style="display:none;">
-          <label class="fl">IP estática</label><input id="hStaticIp" placeholder="10.10.10.50"/>
+          <label class="fl" data-i18n="hosts.form.staticIp">IP estática</label><input id="hStaticIp" placeholder="10.10.10.50"/>
           <div class="hint" id="hSnHint"></div>
         </div>
         <div class="row">
-          <div><label class="fl">MAC (opcional)</label><input id="hMac" placeholder="aa:bb:cc:dd:ee:ff"/></div>
-          <div><label class="fl">Ubicación en esquema</label><select id="hLoc"></select></div>
+          <div><label class="fl" data-i18n="hosts.form.macOptional">MAC (opcional)</label><input id="hMac" placeholder="aa:bb:cc:dd:ee:ff"/></div>
+          <div><label class="fl" data-i18n="hosts.form.diagramLocation">Ubicación en esquema</label><select id="hLoc"></select></div>
         </div>
         <div class="row">
-          <div><label class="fl">Ubicación física / puesto</label><select id="hPhysLocSel"></select><input id="hPhysLoc" placeholder="Planta 1 · Mesa 12 · Sala A" style="margin-top:6px;"/></div>
-          <div><label class="fl">Equipo conectado</label><select id="hConnDev"></select></div>
+          <div><label class="fl" data-i18n="hosts.form.physicalLocation">Ubicación física / puesto</label><select id="hPhysLocSel"></select><input id="hPhysLoc" placeholder="Planta 1 · Mesa 12 · Sala A" data-i18n-placeholder="hosts.form.physicalLocationPlaceholder" style="margin-top:6px;"/></div>
+          <div><label class="fl" data-i18n="hosts.form.connectedDevice">Equipo conectado</label><select id="hConnDev"></select></div>
         </div>
         <div class="row">
-          <div><label class="fl">Asignación de puerto</label><select id="hPortMode"><option value="auto">Automática</option><option value="manual">Manual</option></select></div>
-          <div><label class="fl">Puerto del equipo</label><select id="hPort"></select></div>
+          <div><label class="fl" data-i18n="hosts.form.portAssignment">Asignación de puerto</label><select id="hPortMode"><option value="auto" data-i18n="hosts.portMode.auto">Automática</option><option value="manual" data-i18n="hosts.portMode.manual">Manual</option></select></div>
+          <div><label class="fl" data-i18n="hosts.form.devicePort">Puerto del equipo</label><select id="hPort"></select></div>
         </div>
         <div class="row">
-          <div><label class="fl">Dispositivo gestionado representado</label><select id="hDeviceRef"></select></div>
-          <div><label class="fl">Uso</label><input value="Servidor/AP/appliance · generación vendor" readonly/></div>
+          <div><label class="fl" data-i18n="hosts.form.managedDevice">Dispositivo gestionado representado</label><select id="hDeviceRef"></select></div>
+          <div><label class="fl" data-i18n="hosts.form.use">Uso</label><input value="Servidor/AP/appliance · generación vendor" data-i18n-value="hosts.form.useValue" readonly/></div>
         </div>
-        <div class="hint">Esta relación identifica el dispositivo que representa el host. No sustituye “Equipo conectado”, que documenta el switch/router de acceso.</div>
-        <div class="hint" id="hConnAuthority">Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.</div>
-        <label class="fl">Resumen conexión</label><input id="hDevHint" placeholder="Selecciona equipo y puerto" readonly/>
-        <label class="fl">Notas host</label><input id="hNotes" placeholder="Observaciones, servicio, toma, usuario…"/>
+        <div class="hint" data-i18n="hosts.form.managedDeviceHint">Esta relación identifica el dispositivo que representa el host. No sustituye “Equipo conectado”, que documenta el switch/router de acceso.</div>
+        <div class="hint" id="hConnAuthority" data-i18n="hosts.connection.directAuthority">Conexión directa: el puerto puede asignarse aquí. Si documentas toma/cableado en Inventario físico, esa ruta pasará a ser autoritativa.</div>
+        <label class="fl" data-i18n="hosts.form.connectionSummary">Resumen conexión</label><input id="hDevHint" placeholder="Selecciona equipo y puerto" data-i18n-placeholder="hosts.form.connectionSummaryPlaceholder" readonly/>
+        <label class="fl" data-i18n="hosts.form.notes">Notas host</label><input id="hNotes" placeholder="Observaciones, servicio, toma, usuario…" data-i18n-placeholder="hosts.form.notesPlaceholder"/>
         <input type="hidden" id="hostEditId"/>
         <div class="brow">
-          <button class="btn bp" id="btnAddHost">➕ Añadir host</button>
-          <button class="btn bs" id="btnCancelHostEdit" style="display:none;">Cancelar edición</button>
-          <button class="btn bs" id="btnBulk">📋 Carga masiva</button>
+          <button class="btn bp" id="btnAddHost" data-i18n="hosts.actions.add">➕ Añadir host</button>
+          <button class="btn bs" id="btnCancelHostEdit" style="display:none;" data-i18n="hosts.actions.cancelEdit">Cancelar edición</button>
+          <button class="btn bs" id="btnBulk" data-i18n="hosts.actions.bulk">📋 Carga masiva</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:9px;">🔍 Filtros</div>
+        <div class="card-t" style="margin-bottom:9px;" data-i18n="hosts.filters.title">🔍 Filtros</div>
         <div class="row">
-          <div><label class="fl">VLAN</label><select id="hFiltV"><option value="">Todas</option></select></div>
-          <div><label class="fl">Tipo</label>
-            <select id="hFiltT"><option value="">Todos</option><option value="pc">PC</option><option value="server">Servidor</option><option value="printer">Impresora</option><option value="camera">Cámara</option><option value="ap">AP</option><option value="iot">IoT</option></select>
+          <div><label class="fl">VLAN</label><select id="hFiltV"><option value="" data-i18n="common.all">Todas</option></select></div>
+          <div><label class="fl" data-i18n="form.type">Tipo</label>
+            <select id="hFiltT"><option value="" data-i18n="common.all">Todos</option><option value="pc">PC</option><option value="server" data-i18n="hosts.type.serverPlain">Servidor</option><option value="printer" data-i18n="hosts.type.printerPlain">Impresora</option><option value="camera" data-i18n="hosts.type.cameraPlain">Cámara</option><option value="ap">AP</option><option value="iot">IoT</option></select>
           </div>
         </div>
       </div>
     </div>
     <div>
-      <details class="card" id="ipMapPanel"><summary><span class="card-t">🗺 Mapa IP por VLAN</span></summary><div id="ipMap"></div></details>
+      <details class="card" id="ipMapPanel"><summary><span class="card-t" data-i18n="hosts.ipMap.title">🗺 Mapa IP por VLAN</span></summary><div id="ipMap"></div></details>
     </div>
   </div>
   <details class="card" id="hostsPanel" open>
-    <summary><span class="card-t">💻 Hosts</span> <span class="b bac" id="hCnt">0</span></summary>
+    <summary><span class="card-t" data-i18n="hosts.list.title">💻 Hosts</span> <span class="b bac" id="hCnt">0</span></summary>
     <div class="card-h"><span class="hint" id="hostsPageInfo"></span></div>
     <div id="hostsList"></div>
     <div class="brow" id="hostsPager" style="justify-content:space-between;">
-      <button class="btn bs bsm" id="hostsPrev" type="button">← Anterior</button>
-      <button class="btn bs bsm" id="hostsNext" type="button">Siguiente →</button>
+      <button class="btn bs bsm" id="hostsPrev" type="button" data-i18n="actions.previous">← Anterior</button>
+      <button class="btn bs bsm" id="hostsNext" type="button" data-i18n="actions.next">Siguiente →</button>
     </div>
   </details>
 </div>
@@ -922,12 +922,12 @@
 <!-- BULK MODAL -->
 <div class="mbk" id="bulkModal">
   <div class="modal">
-    <div class="mh"><h3>📋 Carga masiva de hosts</h3><button class="btn bs bsm" id="bulkClose">✕</button></div>
-    <div class="co co-ac">Formato: <code>Nombre, tipo, VLAN-ID, ip-o-dhcp, ubicación-física, ubicación-esquema</code><br>Tipos: pc, laptop, server, printer, phone, camera, ap, iot. Los dos últimos campos son opcionales.</div>
+    <div class="mh"><h3 data-i18n="hosts.bulk.title">📋 Carga masiva de hosts</h3><button class="btn bs bsm" id="bulkClose">✕</button></div>
+    <div class="co co-ac" data-i18n="hosts.bulk.hint">Formato: Nombre, tipo, VLAN-ID, ip-o-dhcp, ubicación-física, ubicación-esquema. Tipos: pc, laptop, server, printer, phone, camera, ap, iot. Los dos últimos campos son opcionales.</div>
     <textarea class="cfg" id="bulkTxt" style="min-height:130px;" placeholder="PC-Ventas-01, pc, 10, 10.10.10.50, Planta 1 · Mesa 12, Oficina
 Impresora-01, printer, 10, dhcp, Recepción, Recepción
 SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
-    <div class="mf"><button class="btn bs" id="bulkCancel">Cancelar</button><button class="btn bp" id="bulkAdd">➕ Añadir</button></div>
+    <div class="mf"><button class="btn bs" id="bulkCancel" data-i18n="actions.cancel">Cancelar</button><button class="btn bp" id="bulkAdd" data-i18n="hosts.actions.add">➕ Añadir</button></div>
   </div>
 </div>
 
