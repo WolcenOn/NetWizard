@@ -23,7 +23,7 @@ assert.deepStrictEqual(Object.keys(es).sort(),Object.keys(en).sort(),'ES y EN de
 for(const key of [
   'graphs.page.title','graphs.v5.title','graphs.topology.title','graphs.panel.title',
   'graphs.layout.treeBlocks','graphs.trace.blocked','graphs.iot.editDevice',
-  'graphs.confirm.deleteLocationImpact','iot.tech.controller','iot.tech.generic'
+  'graphs.confirm.deleteLocationImpact','graphs.canvas.autoPending','graphs.trace.reason.firewallRule','iot.tech.controller','iot.tech.generic'
 ]){
   assert.ok(es[key],key+' falta en ES');
   assert.ok(en[key],key+' falta en EN');
@@ -56,6 +56,9 @@ for(const file of [
 const main=fs.readFileSync(path.join(root,'js','netwizard.js'),'utf8');
 assert.ok(main.includes("if(S.step==='graphs')"),'Falta rerender Graphs en cambio de locale');
 assert.ok(main.includes("i18nText('graphs.confirm.deleteLocation'"),'Falta confirmación localizada de ubicación');
+const connectivity=fs.readFileSync(path.join(root,'js','netwizard-connectivity-model.js'),'utf8');
+assert.ok(connectivity.includes("messageKey:'graphs.trace.reason.firewallRule'")||connectivity.includes("reasonKey:'graphs.trace.reason.firewallRule'"),'Falta razón estable para bloqueo firewall');
+assert.ok(connectivity.includes("messageKey:'graphs.trace.reason.policyBlocked'"),'Falta razón estable para bloqueo de matriz');
 
 const auditRun=spawnSync(process.execPath,['scripts/i18n-audit-hardcoded.js','--check'],{cwd:root,encoding:'utf8'});
 assert.strictEqual(auditRun.status,0,(auditRun.stdout||'')+'\n'+(auditRun.stderr||''));
