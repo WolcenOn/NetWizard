@@ -8,7 +8,7 @@
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
 const I18N=root.NetWizardI18n||null;
-const i18nText=(key,params={},fallback='')=>I18N&&typeof I18N.t==='function'?I18N.i18nText(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
+const i18nText=(key,params={},fallback='')=>I18N&&typeof I18N.t==='function'?I18N.t(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
 function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
 function uid(prefix){
   if(root.crypto&&typeof root.crypto.randomUUID==='function')return prefix+'_'+root.crypto.randomUUID().replace(/-/g,'').slice(0,12);
