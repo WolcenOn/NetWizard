@@ -86,14 +86,16 @@
         return createIssue(Object.assign({}, i, {
           severity: SEVERITY.ERROR,
           blocking: true,
-          message: 'Producción: ' + i.message
+          message: tr('validation.audit.productionPrefix',{message:i.message},'es','Producción: {message}'),
+          messageKey: 'validation.audit.productionPrefix',
+          messageParams: {baseMessageKey:i.messageKey||'',baseMessageParams:i.messageParams||{},message:i.message}
         }));
       }
       return i;
     });
   }
 
-  function localizeIssue(issue,locale){ const i=normalizeIssue(issue); if(i.messageKey) i.message=tr(i.messageKey,i.messageParams||{},locale,i.message||i.messageKey); return i; }
+  function localizeIssue(issue,locale){ const i=normalizeIssue(issue); if(i.messageKey){ const params=Object.assign({},i.messageParams||{}); if(i.messageKey==='validation.audit.productionPrefix'&&params.baseMessageKey) params.message=tr(params.baseMessageKey,params.baseMessageParams||{},locale,params.message||params.baseMessageKey); i.message=tr(i.messageKey,params,locale,i.message||i.messageKey); } return i; }
 
   function summarizeIssues(issues, options){
     const opts = options || {}, locale=opts.locale;
@@ -138,7 +140,7 @@
       const title = doc.createElement('div'); title.className = 'card-t'; title.dataset.i18n='validation.mode.title'; title.textContent = tr('validation.mode.title',{},null,'🛡️ Modo de ejecución'); card.appendChild(title);
       const copy = doc.createElement('div'); copy.className = 'co co-ac'; copy.dataset.i18n='validation.mode.help'; copy.textContent = tr('validation.mode.help',{},null,'Demo permite diseños incompletos. Producción bloquea exportaciones y acciones si hay errores críticos.'); card.appendChild(copy);
       const selMode = doc.createElement('select'); selMode.id = 'nwRunMode';
-      [['demo','validation.mode.demo','Demo / formación'], ['production','validation.mode.production','Producción']].forEach(([value,key,label]) => { const opt = doc.createElement('option'); opt.value = value; opt.dataset.i18n=key; opt.textContent = tr(key,{},null,label); selMode.appendChild(opt); });
+      [['demo','validation.mode.demo'], ['production','validation.mode.production']].forEach(([value,key]) => { const opt = doc.createElement('option'); opt.value = value; opt.dataset.i18n=key; opt.textContent = tr(key,{},null,value==='demo'?'Demo / formación':'Producción'); selMode.appendChild(opt); });
       card.appendChild(selMode);
       const hintBox = doc.createElement('div'); hintBox.className = 'hint'; hintBox.id = 'nwRunModeHint'; hintBox.style.marginTop = '8px'; card.appendChild(hintBox);
       target.appendChild(card);
