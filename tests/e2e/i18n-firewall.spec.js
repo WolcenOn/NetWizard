@@ -66,3 +66,20 @@ test('Firewall cambia ES/EN en caliente con reglas, matriz, hardening y polític
   await expect(page.locator('#fwTplList')).toContainText('Basic: DNS + HTTP/HTTPS');
   await expect(page.locator('#policyIntentCnt')).toContainText('proposals');
 });
+
+
+test('El snapshot de políticas conserva etiqueta locale-neutral y se traduce al mostrarla', async ({page})=>{
+  await resetStorage(page);
+
+  await page.evaluate(()=>{
+    window.NetWizardHistory.createSnapshot('policy-intent-apply',{source:'policy'});
+  });
+  await page.locator('[data-step="dash"]').first().click();
+  await expect(page.locator('#historyList')).toContainText('Before applying intent-based policies');
+
+  await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
+  await expect(page.locator('#historyList')).toContainText('Antes de aplicar políticas por intención');
+
+  const stored=await page.evaluate(()=>window.NetWizardHistory.listSnapshots().find(s=>s.source==='policy')?.label);
+  expect(stored).toBe('policy-intent-apply');
+});
