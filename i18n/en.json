@@ -869,7 +869,7 @@
   "iot.plan.actionsHeading": "## Suggested network actions",
   "iot.plan.action.port": "- Port {port}: configure for {type}; management VLAN {management}, service {service}.",
   "iot.plan.action.wifi": "- Create SSID {ssid} associated with {vlan} and enable client isolation when applicable.",
-  "iot.plan.action.lora": "- Allow LoRaWAN gateway -> Network Server ({server}), typically UDP 1700 or MQTT/HTTPS depending on the gateway.",
+  "iot.plan.action.lora": "- Allow LoRaWAN gateway → Network Server ({server}), typically UDP 1700 or MQTT/HTTPS depending on the gateway.",
   "iot.plan.action.mqtt": "- MQTT broker: prefer TLS 8883, per-device users and topic ACLs.",
   "iot.access.editTitle": "Edit IoT infrastructure",
   "iot.access.addTitle": "Add IoT infrastructure",
