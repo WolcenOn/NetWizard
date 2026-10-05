@@ -86,7 +86,7 @@ function traceDirection(project,sourceSubnet,targetSubnet){
     if(!route)return setReason(result,'validation.reach.reason.noRoute',{cidr:targetSubnet.cidr,device:labelDevice(project,current)},'No existe ruta hacia '+targetSubnet.cidr+' en '+labelDevice(project,current)+'.');
     const peer=peerForNextHop(project,current,route);
     result.hops.push({kind:'route',deviceId:current,destination:route.destination,nextHop:route.nextHop,outPortId:route.outPortId||'',outPortName:route.outPortName||'',source:route.source||'inferred',distance:Number(route.distance||1),label:route.destination+' → '+route.nextHop});
-    if(!peer)return setReason(result,'validation.reach.reason.nextHopUnresolved',{nextHop:route.nextHop,device:labelDevice(project,current),interface:route.outPortName||route.outPortId||'la interfaz de salida'},'El next-hop '+route.nextHop+' de '+labelDevice(project,current)+' no resuelve a un vecino enlazado por '+(route.outPortName||route.outPortId||'la interfaz de salida')+'.');
+    if(!peer)return setReason(result,'validation.reach.reason.nextHopUnresolved',{nextHop:route.nextHop,device:labelDevice(project,current),interface:route.outPortName||route.outPortId||'—'},'El next-hop '+route.nextHop+' de '+labelDevice(project,current)+' no resuelve a un vecino enlazado por '+(route.outPortName||route.outPortId||'la interfaz de salida')+'.');
     result.hops.push({kind:'link',linkId:peer.linkId,fromDeviceId:current,toDeviceId:peer.deviceId,label:labelDevice(project,current)+' → '+labelDevice(project,peer.deviceId)});
     current=peer.deviceId;
   }
