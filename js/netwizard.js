@@ -1336,6 +1336,12 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     syncHostI18nLabels();updateHostDeviceHint();renderHosts();if($('ipMapPanel')?.open)renderIpMap();
     if($('hostEditId')?.value){$('btnAddHost').dataset.i18n='hosts.actions.saveChanges';$('btnAddHost').textContent=i18nText('hosts.actions.saveChanges',{},'💾 Guardar cambios');}
   }
+  if(S.step==='links'){
+    const keep={a:$('lnkA')?.value||'',b:$('lnkB')?.value||'',transit:$('lnkTransit')?.value||'',dev:$('visDev')?.value||''};
+    fillLinkPickers();fillSwDevSels();
+    for(const [id,val] of [['lnkA',keep.a],['lnkB',keep.b],['lnkTransit',keep.transit],['visDev',keep.dev]])if(val&&$(id)&&Array.from($(id).options).some(o=>o.value===val))$(id).value=val;
+    renderVisPorts();renderLinks();
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
@@ -1886,11 +1892,11 @@ function fillSwDevSels(){
 function fillLinkPickers(){
   const all=S.ports.slice().sort((a,b)=>portDisp(a).localeCompare(portDisp(b)));
   const opts=all.map(p=>makeOption(p.id,`${portDisp(p)}${isLinked(p.id)?' ⚡':''}`));
-  setOptions($('lnkA'),opts,'Sin puertos'); setOptions($('lnkB'),all.map(p=>makeOption(p.id,`${portDisp(p)}${isLinked(p.id)?' ⚡':''}`)),'Sin puertos');
+  setOptions($('lnkA'),opts,i18nText('links.select.noPorts',{},'Sin puertos')); setOptions($('lnkB'),all.map(p=>makeOption(p.id,`${portDisp(p)}${isLinked(p.id)?' ⚡':''}`)),i18nText('links.select.noPorts',{},'Sin puertos'));
   if($('lnkTransit')){
     const transitVlans=S.vlans.filter(v=>{ const t=(v.intent&&v.intent.type)||''; return t==='transit' || /transit|tránsito|transito|p2p|punto/i.test((v.name||'')+' '+(v.desc||'')); });
     const candidates=transitVlans.length?transitVlans:S.vlans;
-    const tOpts=[makeOption('','— sin tránsito L3 —'), ...candidates.map(v=>makeOption(v.id,`VLAN ${v.vlanId} · ${v.name||''}`))];
+    const tOpts=[makeOption('',i18nText('links.select.noTransit',{},'— sin tránsito L3 —')), ...candidates.map(v=>makeOption(v.id,`VLAN ${v.vlanId} · ${v.name||''}`))];
     setOptions($('lnkTransit'),tOpts);
   }
 }
@@ -1941,9 +1947,9 @@ function portChips(p,context=null){
 }
 function renderVisPorts(){
   const devId=$('visDev').value;const grid=$('portGrid');clearNode(grid);
-  if(!devId){setSingleHint(grid,'Sin switches.');return;}
+  if(!devId){setSingleHint(grid,i18nText('links.portView.noSwitches',{},'Sin switches.'));return;}
   const d=devById(devId);
-  if(!d?.layout?.total){setSingleHint(grid,'Este switch no tiene layout. Usa "Layout switch" o añade puertos en la sección Puertos.');return;}
+  if(!d?.layout?.total){setSingleHint(grid,i18nText('links.portView.noLayout',{},'Este switch no tiene layout. Usa "Layout switch" o añade puertos en la sección Puertos.'));return;}
   const pbp=new Map();for(const p of portsByDev(devId))if(p.position)pbp.set(p.position,p);
   const linkedPorts=new Set();for(const link of S.links||[]){if(link.aPortId)linkedPorts.add(link.aPortId);if(link.bPortId)linkedPorts.add(link.bPortId);}
   const hostCountByPort=new Map();for(const host of S.hosts||[]){const pid=hostResolvedPortId(host);if(pid)hostCountByPort.set(pid,(hostCountByPort.get(pid)||0)+1);}
@@ -1969,7 +1975,7 @@ const LINKS_PAGE_SIZE=100;
 function renderLinks(){
   const el=$('linksList');
   el.textContent='';
-  if(!S.links.length){linksPage=0;const info=$('linksPageInfo');if(info)info.textContent='0 enlaces';const pager=$('linksPager');if(pager)pager.style.display='none';if($('linksPrev'))$('linksPrev').disabled=true;if($('linksNext'))$('linksNext').disabled=true;const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin enlaces.'; empty.appendChild(p); el.appendChild(empty); return;}
+  if(!S.links.length){linksPage=0;const info=$('linksPageInfo');if(info)info.textContent=i18nText('links.list.count',{count:0},'{count} enlaces');const pager=$('linksPager');if(pager)pager.style.display='none';if($('linksPrev'))$('linksPrev').disabled=true;if($('linksNext'))$('linksNext').disabled=true;const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent=i18nText('links.empty.none',{},'Sin enlaces.'); empty.appendChild(p); el.appendChild(empty); return;}
   const portById=new Map(S.ports.map(p=>[p.id,p])),deviceById=new Map(S.devices.map(d=>[d.id,d])),vlanByRef=new Map(S.vlans.map(v=>[v.id,v]));
   const portDispFast=p=>`${deviceById.get(p?.deviceId)?.name||'?'} :: ${p?.name||''}`;
   const lrows=S.links.slice(); const lsort=S.uiSort.links||{key:'a',dir:1};
@@ -1977,14 +1983,14 @@ function renderLinks(){
   const totalPages=Math.max(1,Math.ceil(lrows.length/LINKS_PAGE_SIZE));
   linksPage=Math.min(Math.max(0,linksPage),totalPages-1);
   const start=linksPage*LINKS_PAGE_SIZE,visible=lrows.slice(start,start+LINKS_PAGE_SIZE);
-  const pageInfo=$('linksPageInfo');if(pageInfo)pageInfo.textContent=`${lrows.length} enlaces · página ${linksPage+1}/${totalPages}`;
+  const pageInfo=$('linksPageInfo');if(pageInfo)pageInfo.textContent=i18nText('links.list.page',{count:lrows.length,page:linksPage+1,total:totalPages},'{count} enlaces · página {page}/{total}');
   const prev=$('linksPrev'),next=$('linksNext'),pager=$('linksPager');
   if(pager)pager.style.display=lrows.length>LINKS_PAGE_SIZE?'flex':'none';
   if(prev)prev.disabled=linksPage<=0;if(next)next.disabled=linksPage>=totalPages-1;
   const wrap=document.createElement('div'); wrap.className='tw';
   const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
-  [['a','Puerto A'],['b','Puerto B'],['notes','Notas']].forEach(([k,l])=>trh.appendChild(createSortTh('links',k,l)));
-  ['Cableado','Tránsito',''].forEach(l=>{const th=document.createElement('th'); th.textContent=l; trh.appendChild(th);});
+  [['a',i18nText('links.form.portA',{},'Puerto A')],['b',i18nText('links.form.portB',{},'Puerto B')],['notes',i18nText('form.notes',{},'Notas')]].forEach(([k,l])=>trh.appendChild(createSortTh('links',k,l)));
+  [i18nText('links.list.cabling',{},'Cableado'),i18nText('links.list.transit',{},'Tránsito'),''].forEach(l=>{const th=document.createElement('th'); th.textContent=l; trh.appendChild(th);});
   thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
   visible.forEach(l=>{
@@ -2012,14 +2018,14 @@ $('btnAddLink').onclick=()=>{
   const lengthRaw=$('lnkLengthM')?$('lnkLengthM').value:'';
   const lengthM=lengthRaw===''?null:Number(lengthRaw);
   const speed=$('lnkSpeed')?($('lnkSpeed').value||'auto'):'auto';
-  if(!a||!b)return alert('Selecciona dos puertos.');if(a===b)return alert('Mismo puerto.');
-  if(lengthM!==null && (!Number.isFinite(lengthM)||lengthM<0))return alert('La longitud del cable debe ser un número positivo.');
-  if(isLinked(a)||isLinked(b))return alert('Uno de los puertos ya está enlazado.');
+  if(!a||!b)return alert(i18nText('links.alert.selectTwoPorts',{},'Selecciona dos puertos.'));if(a===b)return alert(i18nText('links.alert.samePort',{},'Mismo puerto.'));
+  if(lengthM!==null && (!Number.isFinite(lengthM)||lengthM<0))return alert(i18nText('links.alert.invalidLength',{},'La longitud del cable debe ser un número positivo.'));
+  if(isLinked(a)||isLinked(b))return alert(i18nText('links.alert.portAlreadyLinked',{},'Uno de los puertos ya está enlazado.'));
   S.links.push({id:uid('lnk'),aPortId:a,bPortId:b,notes,transitVlanRef,medium,cableType,lengthM,speed});$('lnkNotes').value=''; if($('lnkTransit'))$('lnkTransit').value=''; if($('lnkLengthM'))$('lnkLengthM').value='';
   // Auto-trunk suggestion
   const pA=S.ports.find(p=>p.id===a),pB=S.ports.find(p=>p.id===b);
   const dA=devById(pA?.deviceId),dB=devById(pB?.deviceId);
-  if(dA?.type==='switch'&&dB?.type==='switch'){const tv=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);$('upHint').textContent=`💡 Uplink entre switches: considera configurar trunk con VLANs ${tv.join(',')}`;}
+  if(dA?.type==='switch'&&dB?.type==='switch'){const tv=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:tv.join(',')},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');}
   else $('upHint').textContent='';
   save();refresh();
 };
