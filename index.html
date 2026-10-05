@@ -546,41 +546,41 @@
 
 <!-- ═══════════ IOT EMBEDDED ═══════════ -->
 <div class="pg" id="pg-iot">
-  <div class="ph"><h1>🛰 IoT & Gateways</h1><p>Dispositivos IoT, APs, gateways LoRaWAN, coordinadores Zigbee, Thread Border Routers y brokers MQTT integrados en el mapa común de NetWizard.</p></div>
+  <div class="ph"><h1 data-i18n="iot.page.title">🛰 IoT & Gateways</h1><p data-i18n="iot.page.subtitle">Dispositivos IoT, APs, gateways LoRaWAN, coordinadores Zigbee, Thread Border Routers y brokers MQTT integrados en el mapa común de NetWizard.</p></div>
   <div class="stats" id="iotStats"></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
-        <div class="card-h"><div class="card-t">📶 Infraestructura de acceso IoT</div><button class="btn bp bsm" id="iotAddAccess">➕ Añadir acceso</button></div>
-        <div class="co co-ac"><b>Capa intermedia.</b> Un dispositivo IoT no siempre cuelga directamente de una VLAN: puede depender de un AP Wi‑Fi, gateway LoRaWAN, coordinador Zigbee, border router Thread, broker MQTT, NVR o controlador Home Assistant.</div>
+        <div class="card-h"><div class="card-t" data-i18n="iot.access.title">📶 Infraestructura de acceso IoT</div><button class="btn bp bsm" id="iotAddAccess" data-i18n="iot.actions.addAccess">➕ Añadir acceso</button></div>
+        <div class="co co-ac" data-i18n="iot.access.hint">Capa intermedia. Un dispositivo IoT no siempre cuelga directamente de una VLAN: puede depender de un AP Wi‑Fi, gateway LoRaWAN, coordinador Zigbee, border router Thread, broker MQTT, NVR o controlador Home Assistant.</div>
         <div id="iotAccessList"></div>
       </div>
     </div>
     <div>
       <div class="card">
-        <div class="card-h"><div class="card-t">🔌 Dispositivos IoT finales</div><button class="btn bp bsm" id="iotAddDevice">➕ Añadir IoT</button></div>
+        <div class="card-h"><div class="card-t" data-i18n="iot.devices.title">🔌 Dispositivos IoT finales</div><button class="btn bp bsm" id="iotAddDevice" data-i18n="iot.actions.addDevice">➕ Añadir IoT</button></div>
         <div id="iotDeviceList"></div>
       </div>
     </div>
   </div>
   <div class="card">
-    <div class="card-h"><div class="card-t">🗺 Mapa unificado IoT + Red</div><button class="btn bs bsm" id="iotMapRefresh">↻ Actualizar mapa</button></div>
+    <div class="card-h"><div class="card-t" data-i18n="iot.map.title">🗺 Mapa unificado IoT + Red</div><button class="btn bs bsm" id="iotMapRefresh" data-i18n="iot.actions.refreshMap">↻ Actualizar mapa</button></div>
     <div class="iot-filterbar">
-      <label><input type="checkbox" data-iot-filter="network" checked> Red</label>
-      <label><input type="checkbox" data-iot-filter="port"> Puertos</label>
-      <label><input type="checkbox" data-iot-filter="access" checked> Accesos IoT</label>
-      <label><input type="checkbox" data-iot-filter="iot" checked> Dispositivos IoT</label>
+      <label><input type="checkbox" data-iot-filter="network" checked> <span data-i18n="iot.filter.network">Red</span></label>
+      <label><input type="checkbox" data-iot-filter="port"> <span data-i18n="iot.filter.ports">Puertos</span></label>
+      <label><input type="checkbox" data-iot-filter="access" checked> <span data-i18n="iot.filter.access">Accesos IoT</span></label>
+      <label><input type="checkbox" data-iot-filter="iot" checked> <span data-i18n="iot.filter.devices">Dispositivos IoT</span></label>
       <label><input type="checkbox" data-iot-filter="wifi" checked> Wi‑Fi</label>
       <label><input type="checkbox" data-iot-filter="lora" checked> LoRa</label>
       <label><input type="checkbox" data-iot-filter="zigbee" checked> Zigbee</label>
       <label><input type="checkbox" data-iot-filter="thread" checked> Thread</label>
       <label><input type="checkbox" data-iot-filter="mqtt" checked> MQTT</label>
-      <button class="btn bs bxs" id="iotMapFit">⊞ Auto</button>
+      <button class="btn bs bxs" id="iotMapFit" data-i18n="iot.actions.fitMap">⊞ Auto</button>
     </div>
-    <div class="iot-map-wrap"><canvas id="iotUnifiedMap"></canvas><div id="iotMapPanel" class="iot-map-panel">Haz clic en un nodo para editar o inspeccionar.</div></div>
+    <div class="iot-map-wrap"><canvas id="iotUnifiedMap"></canvas><div id="iotMapPanel" class="iot-map-panel" data-i18n="iot.map.panelHint">Haz clic en un nodo para editar o inspeccionar.</div></div>
   </div>
   <div class="card">
-    <div class="card-h"><div class="card-t">📄 Plan de configuración IoT</div><button class="btn bs bsm" id="iotCopyPlan">📋 Copiar</button></div>
+    <div class="card-h"><div class="card-t" data-i18n="iot.plan.title">📄 Plan de configuración IoT</div><button class="btn bs bsm" id="iotCopyPlan" data-i18n="iot.actions.copy">📋 Copiar</button></div>
     <textarea class="cfg" id="iotPlanOut" readonly style="min-height:220px;"></textarea>
   </div>
 </div>
@@ -968,60 +968,60 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <!-- IOT EMBEDDED MODALS -->
 <div class="mbk" id="iotAccessModal">
   <div class="modal" style="width:min(820px,100%);">
-    <div class="mh"><h3 id="iotAccessTitle">Infraestructura IoT</h3><button class="btn bs bsm" id="iotAccessClose">✕</button></div>
+    <div class="mh"><h3 id="iotAccessTitle" data-i18n="iot.access.modalTitle">Infraestructura IoT</h3><button class="btn bs bsm" id="iotAccessClose">✕</button></div>
     <input type="hidden" id="iotAccessId"/>
     <div class="g2">
-      <div><label class="fl">Nombre</label><input id="iotAccessName" placeholder="AP Almacén / Gateway LoRa / Coordinador Zigbee"/></div>
-      <div><label class="fl">Tipo</label><select id="iotAccessType"></select></div>
+      <div><label class="fl" data-i18n="form.name">Nombre</label><input id="iotAccessName" placeholder="AP Almacén / Gateway LoRa / Coordinador Zigbee" data-i18n-placeholder="iot.access.namePlaceholder"/></div>
+      <div><label class="fl" data-i18n="form.type">Tipo</label><select id="iotAccessType"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">Vendor / plataforma</label><select id="iotAccessVendor"></select></div>
-      <div><label class="fl">Modelo</label><input id="iotAccessModel" placeholder="U6 Pro, RAK, Sonoff, HomePod, Mosquitto..."/></div>
+      <div><label class="fl" data-i18n="iot.fields.vendorPlatform">Vendor / plataforma</label><select id="iotAccessVendor"></select></div>
+      <div><label class="fl" data-i18n="form.model">Modelo</label><input id="iotAccessModel" placeholder="U6 Pro, RAK, Sonoff, HomePod, Mosquitto..."/></div>
     </div>
     <div class="g2">
-      <div><label class="fl">IP gestión</label><input id="iotAccessMgmtIp" placeholder="10.10.99.21"/></div>
-      <div><label class="fl">Segmento/VLAN gestión</label><select id="iotAccessMgmtVlan"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.managementIp">IP gestión</label><input id="iotAccessMgmtIp" placeholder="10.10.99.21"/></div>
+      <div><label class="fl" data-i18n="iot.fields.managementVlan">Segmento/VLAN gestión</label><select id="iotAccessMgmtVlan"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">Conectado a dispositivo NetWizard</label><select id="iotAccessParentDevice"></select></div>
-      <div><label class="fl">Puerto físico NetWizard</label><select id="iotAccessParentPort"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.parentDevice">Conectado a dispositivo NetWizard</label><select id="iotAccessParentDevice"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.parentPort">Puerto físico NetWizard</label><select id="iotAccessParentPort"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">Ubicación física</label><select id="iotAccessLocation"></select></div>
-      <div><label class="fl">SSID / Network Server / Broker / Controlador</label><input id="iotAccessService" placeholder="IoT-Sensors, TTN/ChirpStack, mqtt.local, Home Assistant"/></div>
+      <div><label class="fl" data-i18n="iot.fields.physicalLocation">Ubicación física</label><select id="iotAccessLocation"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.service">SSID / Network Server / Broker / Controlador</label><input id="iotAccessService" placeholder="IoT-Sensors, TTN/ChirpStack, mqtt.local, Home Assistant"/></div>
     </div>
     <div class="g2">
-      <div><label class="fl">VLAN/segmento de servicio</label><select id="iotAccessServiceVlan"></select></div>
-      <div><label class="fl">Rol en ubicación</label><input id="iotAccessLocationRole" placeholder="AP sala, gateway rack, broker core..."/></div>
+      <div><label class="fl" data-i18n="iot.fields.serviceVlan">VLAN/segmento de servicio</label><select id="iotAccessServiceVlan"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.locationRole">Rol en ubicación</label><input id="iotAccessLocationRole" placeholder="AP sala, gateway rack, broker core..." data-i18n-placeholder="iot.access.locationRolePlaceholder"/></div>
     </div>
-    <label class="fl">Notas de configuración</label><textarea id="iotAccessNotes" placeholder="Canal Zigbee, región LoRaWAN, aislamiento de clientes, AP group, ACL topics..."></textarea>
-    <div class="mf"><button class="btn bs" id="iotAccessCancel">Cancelar</button><button class="btn bp" id="iotAccessSave">Guardar acceso</button></div>
+    <label class="fl" data-i18n="iot.fields.configNotes">Notas de configuración</label><textarea id="iotAccessNotes" placeholder="Canal Zigbee, región LoRaWAN, aislamiento de clientes, AP group, ACL topics..." data-i18n-placeholder="iot.access.notesPlaceholder"></textarea>
+    <div class="mf"><button class="btn bs" id="iotAccessCancel" data-i18n="actions.cancel">Cancelar</button><button class="btn bp" id="iotAccessSave" data-i18n="iot.actions.saveAccess">Guardar acceso</button></div>
   </div>
 </div>
 
 <div class="mbk" id="iotDeviceModal">
   <div class="modal" style="width:min(820px,100%);">
-    <div class="mh"><h3 id="iotDeviceTitle">Dispositivo IoT</h3><button class="btn bs bsm" id="iotDeviceClose">✕</button></div>
+    <div class="mh"><h3 id="iotDeviceTitle" data-i18n="iot.devices.modalTitle">Dispositivo IoT</h3><button class="btn bs bsm" id="iotDeviceClose">✕</button></div>
     <input type="hidden" id="iotDeviceId"/>
     <div class="g2">
-      <div><label class="fl">Nombre</label><input id="iotDeviceName" placeholder="Sensor temperatura / Cámara entrada"/></div>
-      <div><label class="fl">Tipo</label><select id="iotDeviceType"></select></div>
+      <div><label class="fl" data-i18n="form.name">Nombre</label><input id="iotDeviceName" placeholder="Sensor temperatura / Cámara entrada" data-i18n-placeholder="iot.devices.namePlaceholder"/></div>
+      <div><label class="fl" data-i18n="form.type">Tipo</label><select id="iotDeviceType"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">Tecnología</label><select id="iotDeviceTech"></select></div>
-      <div><label class="fl">Conectar a infraestructura</label><select id="iotDeviceAccess"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.technology">Tecnología</label><select id="iotDeviceTech"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.connectToAccess">Conectar a infraestructura</label><select id="iotDeviceAccess"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">IP / DevEUI / identificador</label><input id="iotDeviceIdentifier" placeholder="IP, MAC, DevEUI, IEEE address..."/></div>
-      <div><label class="fl">Segmento/VLAN</label><select id="iotDeviceVlan"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.identifier">IP / DevEUI / identificador</label><input id="iotDeviceIdentifier" placeholder="IP, MAC, DevEUI, IEEE address..."/></div>
+      <div><label class="fl" data-i18n="iot.fields.vlan">Segmento/VLAN</label><select id="iotDeviceVlan"></select></div>
     </div>
     <div class="g2">
-      <div><label class="fl">Ubicación física</label><select id="iotDeviceLocation"></select></div>
-      <div><label class="fl">Rol / posición</label><input id="iotDeviceLocationRole" placeholder="estantería, aula 2, zona cámara..."/></div>
+      <div><label class="fl" data-i18n="iot.fields.physicalLocation">Ubicación física</label><select id="iotDeviceLocation"></select></div>
+      <div><label class="fl" data-i18n="iot.fields.rolePosition">Rol / posición</label><input id="iotDeviceLocationRole" placeholder="estantería, aula 2, zona cámara..." data-i18n-placeholder="iot.devices.locationRolePlaceholder"/></div>
     </div>
-    <label class="fl">Parámetros / credencial alias</label><input id="iotDeviceCredential" placeholder="wifi-iot-main, lora-appkey-sensor-01, mqtt-user-sensor"/>
-    <label class="fl">Notas</label><textarea id="iotDeviceNotes" placeholder="Pairing, QR Matter, canal, topics MQTT, ubicación..."></textarea>
-    <div class="mf"><button class="btn bs" id="iotDeviceCancel">Cancelar</button><button class="btn bp" id="iotDeviceSave">Guardar dispositivo</button></div>
+    <label class="fl" data-i18n="iot.fields.credentialAlias">Parámetros / credencial alias</label><input id="iotDeviceCredential" placeholder="wifi-iot-main, lora-appkey-sensor-01, mqtt-user-sensor"/>
+    <label class="fl" data-i18n="form.notes">Notas</label><textarea id="iotDeviceNotes" placeholder="Pairing, QR Matter, canal, topics MQTT, ubicación..." data-i18n-placeholder="iot.devices.notesPlaceholder"></textarea>
+    <div class="mf"><button class="btn bs" id="iotDeviceCancel" data-i18n="actions.cancel">Cancelar</button><button class="btn bp" id="iotDeviceSave" data-i18n="iot.actions.saveDevice">Guardar dispositivo</button></div>
   </div>
 </div>
 

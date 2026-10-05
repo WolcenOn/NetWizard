@@ -16,6 +16,9 @@ const strictRegionMarkers = {
     ['function fillRoasSels(){','function renderVendorPills('],
     ['function updSnHint(){',"if($('btnCancelPhysLocEdit'))"],
     ["$('hPhysLocSel').onchange=",'// ─────────────────── PORT LAYOUT / LINKS']
+  ],
+  'js/netwizard-iot-embedded.js': [
+    ['function fillAccessTypes','window.NetWizardIoTEmbedded=']
   ]
 };
 const skipFiles = new Set(['js/netwizard-i18n.js']);
