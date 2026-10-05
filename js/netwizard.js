@@ -1343,6 +1343,11 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     renderVisPorts();renderLinks();
     if($('upHint')?.dataset.vlans)$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:$('upHint').dataset.vlans},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');
   }
+  if(S.step==='fw'){
+    renderFwRules();
+    if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
+    if($('fwTplModal')?.classList.contains('on'))renderFwTplModal();
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
