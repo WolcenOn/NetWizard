@@ -36,6 +36,7 @@ test('Links y tránsito inter-site cambian ES/EN en caliente', async ({page})=>{
   await expect(page.locator('#linksList')).toContainText('Cabling');
   await expect(page.locator('#nwInterSiteTransitCard')).toContainText('Inter-site L3 transit');
   await expect(page.locator('#nwInterSiteTransitCard')).toContainText('Create L3 transit');
+  await page.locator('#nwTransitPortA').fill('Gi0/9');
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
 
@@ -45,6 +46,7 @@ test('Links y tránsito inter-site cambian ES/EN en caliente', async ({page})=>{
   await expect(page.locator('#linksList')).toContainText('Cableado');
   await expect(page.locator('#nwInterSiteTransitCard')).toContainText('Tránsito L3 inter-sede');
   await expect(page.locator('#nwInterSiteTransitCard')).toContainText('Crear tránsito L3');
+  await expect(page.locator('#nwTransitPortA')).toHaveValue('Gi0/9');
   await expect(page.locator('#lnkNotes')).toHaveAttribute('placeholder','Uplink / WAN…');
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
