@@ -1195,5 +1195,6 @@
   "firewall.policy.noGenerated": "No rules generated from intent.",
   "firewall.policy.context.objects": "Detected VLAN/Zone objects:",
   "firewall.policy.context.zones": "Logical zones:",
-  "firewall.policy.noSubnet": "no subnet"
+  "firewall.policy.noSubnet": "no subnet",
+  "firewall.policy.history.applySnapshot": "Before applying intent-based policies"
 }
