@@ -1029,5 +1029,6 @@
   "graphs.trace.missingData": "Faltan datos para validar todos los saltos.",
   "graphs.trace.coherent": "Todos los controles modelados son coherentes.",
   "iot.tech.generic": "Genérico",
-  "iot.tech.controller": "Controlador"
+  "iot.tech.controller": "Controlador",
+  "graphs.fields.accessVlan": "VLAN access"
 }
