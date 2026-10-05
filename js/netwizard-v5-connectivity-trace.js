@@ -9,6 +9,8 @@
   const V5=window.NetWizardV5;
   const CORE=window.NetWizardV5Core;
   const state={result:null,raf:0,wrapped:false,resizeObserver:null};
+  const i18n=window.NetWizardI18n||null;
+  const tr=(key,params={},fallback='')=>i18n&&typeof i18n.t==='function'?i18n.t(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
 
   function project(){return V5?.project?.()||{};}
   function arr(v){return Array.isArray(v)?v:[];}
@@ -50,7 +52,7 @@
     btn.id='v5TraceClear';
     btn.className='btn bs bsm';
     btn.type='button';
-    btn.textContent='✕ Limpiar ruta';
+    btn.textContent=tr('graphs.trace.clear',{},'✕ Limpiar ruta');
     btn.hidden=true;
     btn.style.display='none';
     btn.onclick=clear;
@@ -258,7 +260,7 @@
       if(from&&to){
         const mx=(from.x+to.x)/2,my=(from.y+to.y)/2;
         drawBlockMarker(ctx,mx,my);
-        drawLabel(ctx,mx,my-20,'FALTA ENLACE FÍSICO','#ef4444');
+        drawLabel(ctx,mx,my-20,tr('graphs.trace.physicalGap',{},'FALTA ENLACE FÍSICO'),'#ef4444');
       }
     }
 
@@ -266,9 +268,9 @@
     drawEndpoint(ctx,trace.source,true,!!block&&(block.endpointId===trace.source?.endpointId||block.portId===trace.source?.portId));
     drawEndpoint(ctx,trace.target,false,!!block&&(block.endpointId===trace.target?.endpointId||block.portId===trace.target?.portId));
 
-    const service=result.service?.label||'Diagnóstico';
-    const status=result.ok?(result.partial?'VALIDACIÓN PARCIAL':'RUTA PERMITIDA'):'BLOQUEO DETECTADO';
-    const reason=block?.reason||(!result.ok?'Revisar validaciones del diagnóstico.':result.partial?'Faltan datos para validar todos los saltos.':'Todos los controles modelados son coherentes.');
+    const service=result.service?.label||tr('graphs.trace.diagnostic',{},'Diagnóstico');
+    const status=result.ok?(result.partial?tr('graphs.trace.partial',{},'VALIDACIÓN PARCIAL'):tr('graphs.trace.allowed',{},'RUTA PERMITIDA')):tr('graphs.trace.blocked',{},'BLOQUEO DETECTADO');
+    const reason=block?.messageKey?tr(block.messageKey,block.messageParams||{},block.reason||''):(block?.reason||(!result.ok?tr('graphs.trace.review',{},'Revisar validaciones del diagnóstico.'):result.partial?tr('graphs.trace.missingData',{},'Faltan datos para validar todos los saltos.'):tr('graphs.trace.coherent',{},'Todos los controles modelados son coherentes.')));
     badge.hidden=false;
     badge.style.borderColor=result.ok?(result.partial?'#f59e0b':'#22c55e'):'#ef4444';
     badge.textContent=`${status} · ${service} · ${reason}`;
@@ -316,6 +318,7 @@
     });
     document.addEventListener('netwizard:connectivity-trace-clear',()=>{if(state.result){state.result=null;schedule();}});
     window.addEventListener('resize',schedule);
+    window.addEventListener('netwizard:i18n',()=>{const btn=$('v5TraceClear');if(btn)btn.textContent=tr('graphs.trace.clear',{},'✕ Limpiar ruta');schedule();});
     document.addEventListener('fullscreenchange',()=>setTimeout(schedule,40));
     document.addEventListener('mousemove',event=>{if(state.result&&event.target?.closest?.('#v5Layout'))schedule();},{passive:true});
     document.addEventListener('wheel',event=>{if(state.result&&event.target?.closest?.('#v5Layout'))schedule();},{passive:true});

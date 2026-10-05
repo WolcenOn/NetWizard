@@ -50,8 +50,8 @@
     <div class="sb-it" data-step="hosts"><div class="sb-num">4</div>💻 Hosts & IP Map</div>
     <div class="sb-it" data-step="iot"><div class="sb-num">5</div>🛰 IoT & Gateways</div>
     <div class="sb-div"></div>
-    <div class="sb-sec">Visualización</div>
-    <div class="sb-it" data-step="graphs"><div class="sb-num">🧭</div>🧭 Vistas gráficas</div>
+    <div class="sb-sec" data-i18n="sidebar.sec.visual">Visualización</div>
+    <div class="sb-it" data-step="graphs"><div class="sb-num">🧭</div><span class="sb-label" data-i18n="nav.graphs">🧭 Vistas gráficas</span></div>
     <div class="sb-div"></div>
     <div class="sb-sec">Conectividad</div>
     <div class="sb-it" data-step="links"><div class="sb-num">6</div>🔗 Enlaces</div>
@@ -718,34 +718,34 @@
 
 <!-- ═══════════ GRAPH VIEWS ═══════════ -->
 <div class="pg" id="pg-graphs">
-  <div class="ph"><h1>🧭 Vistas gráficas</h1><p>Dos vistas con propósito claro: V5 para operar el diseño y topología física para revisar cableado, puertos y enlaces.</p></div>
+  <div class="ph"><h1 data-i18n="graphs.page.title">🧭 Vistas gráficas</h1><p data-i18n="graphs.page.subtitle">Dos vistas con propósito claro: V5 para operar el diseño y topología física para revisar cableado, puertos y enlaces.</p></div>
   <div class="tabs">
-    <button class="tab on" data-tab="graphs-v5">🧭 V5 principal</button>
-    <button class="tab" data-tab="graphs-topo">🗺 Topología física</button>
+    <button class="tab on" data-tab="graphs-v5" data-i18n="graphs.tabs.v5">🧭 V5 principal</button>
+    <button class="tab" data-tab="graphs-topo" data-i18n="graphs.tabs.topology">🗺 Topología física</button>
   </div>
 
   <div class="tc on" id="graphs-v5">
     <div class="card">
-      <div class="card-h"><div class="card-t">🧭 Vista visual V5 — mapa principal Red + IoT</div><span class="b bcy">Vista operativa</span></div>
-      <div class="hint" style="margin-bottom:10px;">Vista visual principal: muestra red tradicional, hosts, infraestructura IoT y dispositivos IoT. Usa filtros por tipo/tecnología y haz clic en nodos para editar.</div>
+      <div class="card-h"><div class="card-t" data-i18n="graphs.v5.title">🧭 Vista visual V5 — mapa principal Red + IoT</div><span class="b bcy" data-i18n="graphs.v5.operational">Vista operativa</span></div>
+      <div class="hint" style="margin-bottom:10px;" data-i18n="graphs.v5.hint">Vista visual principal: muestra red tradicional, hosts, infraestructura IoT y dispositivos IoT. Usa filtros por tipo/tecnología y haz clic en nodos para editar.</div>
       <div class="v5-toolbar">
-        <button class="btn bs bsm" id="v5AutoLoc">🪄 Auto-ubicar</button>
-        <button class="btn bs bsm" id="v5AddLoc">📍 Nueva ubicación</button>
-        <button class="btn bs bsm" id="v5Fit">⊞ Ajustar vista</button>
-        <button class="btn bs bsm" id="v5Fs">⛶ Pantalla completa</button>
-        <button class="btn bs bsm" id="v5Connectivity">🧪 Diagnosticar ruta</button>
+        <button class="btn bs bsm" id="v5AutoLoc" data-i18n="graphs.actions.autoLocate">🪄 Auto-ubicar</button>
+        <button class="btn bs bsm" id="v5AddLoc" data-i18n="graphs.actions.addLocation">📍 Nueva ubicación</button>
+        <button class="btn bs bsm" id="v5Fit" data-i18n="graphs.actions.fit">⊞ Ajustar vista</button>
+        <button class="btn bs bsm" id="v5Fs" data-i18n="graphs.actions.fullscreen">⛶ Pantalla completa</button>
+        <button class="btn bs bsm" id="v5Connectivity" data-i18n="graphs.actions.trace">🧪 Diagnosticar ruta</button>
       </div>
       <div class="v5-filterbar" id="v5FilterBar">
         <label><input type="checkbox" data-v5-filter="switch"> Switch</label>
         <label><input type="checkbox" data-v5-filter="router"> Router</label>
         <label><input type="checkbox" data-v5-filter="firewall"> Firewall</label>
-        <label><input type="checkbox" data-v5-filter="hosts"> Hosts</label>
-        <label><input type="checkbox" data-v5-filter="server"> Servidores</label>
-        <label><input type="checkbox" data-v5-filter="camera"> Cámaras</label>
-        <label><input type="checkbox" data-v5-filter="ap"> AP/hosts</label>
-        <label><input type="checkbox" data-v5-filter="iotCandidate"> IoT host</label>
-        <label><input type="checkbox" data-v5-filter="iotAccess"> Infra IoT</label>
-        <label><input type="checkbox" data-v5-filter="iotDevice"> Dispositivo IoT</label>
+        <label><input type="checkbox" data-v5-filter="hosts"> <span data-i18n="graphs.filters.hosts">Hosts</span></label>
+        <label><input type="checkbox" data-v5-filter="server"> <span data-i18n="graphs.filters.servers">Servidores</span></label>
+        <label><input type="checkbox" data-v5-filter="camera"> <span data-i18n="graphs.filters.cameras">Cámaras</span></label>
+        <label><input type="checkbox" data-v5-filter="ap"> <span data-i18n="graphs.filters.apHosts">AP/hosts</span></label>
+        <label><input type="checkbox" data-v5-filter="iotCandidate"> <span data-i18n="graphs.filters.iotHost">IoT host</span></label>
+        <label><input type="checkbox" data-v5-filter="iotAccess"> <span data-i18n="graphs.filters.iotAccess">Infra IoT</span></label>
+        <label><input type="checkbox" data-v5-filter="iotDevice"> <span data-i18n="graphs.filters.iotDevice">Dispositivo IoT</span></label>
         <label><input type="checkbox" data-v5-filter="wifi"> Wi‑Fi</label>
         <label><input type="checkbox" data-v5-filter="lora"> LoRa</label>
         <label><input type="checkbox" data-v5-filter="zigbee"> Zigbee</label>
@@ -764,12 +764,12 @@
 
   <div class="tc" id="graphs-topo">
     <div class="card">
-      <div class="card-h"><div class="card-t">🗺 Topología física y enlaces</div><span class="b bgr">Cableado / trunks / puertos</span></div>
-      <div class="co co-ac">Esta vista se mantiene para validar enlaces físicos entre equipos, puertos y trunks. No pretende sustituir V5: aporta una lectura rápida de la conectividad cableada tradicional.</div>
+      <div class="card-h"><div class="card-t" data-i18n="graphs.topology.title">🗺 Topología física y enlaces</div><span class="b bgr" data-i18n="graphs.topology.badge">Cableado / trunks / puertos</span></div>
+      <div class="co co-ac" data-i18n="graphs.topology.hint">Esta vista se mantiene para validar enlaces físicos entre equipos, puertos y trunks. No pretende sustituir V5: aporta una lectura rápida de la conectividad cableada tradicional.</div>
       <div class="cw"><canvas id="topo"></canvas>
-        <div class="ctools"><button class="btn bs bsm" id="fitTopo">⊞ Auto</button><button class="btn bs bsm" id="reLy">⟳ Reset</button></div>
+        <div class="ctools"><button class="btn bs bsm" id="fitTopo" data-i18n="graphs.actions.auto">⊞ Auto</button><button class="btn bs bsm" id="reLy" data-i18n="graphs.actions.reset">⟳ Reset</button></div>
       </div>
-      <div class="hint" style="margin-top:5px;">Clic en dispositivo → ver configuración. Arrastra para mover.</div>
+      <div class="hint" style="margin-top:5px;" data-i18n="graphs.topology.interactionHint">Clic en dispositivo → ver configuración. Arrastra para mover.</div>
     </div>
   </div>
 
@@ -880,7 +880,7 @@
   <div class="bnit" data-step="vlan"><span class="ni">🏷</span>VLANs</div>
   <div class="bnit" data-step="hosts"><span class="ni">💻</span>Hosts</div>
   <div class="bnit" data-step="iot"><span class="ni">🛰</span>IoT</div>
-  <div class="bnit" data-step="graphs"><span class="ni">🧭</span>Mapas</div>
+  <div class="bnit" data-step="graphs"><span class="ni">🧭</span><span data-i18n="nav.graphs">Mapas</span></div>
   <div class="bnit" data-step="fw"><span class="ni">🔒</span>FW</div>
   <div class="bnit" data-step="cfg"><span class="ni">🚀</span>Deploy</div>
 </div></nav>

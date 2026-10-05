@@ -51,10 +51,10 @@
     if(d.type==='firewall')return'hsl(8 84% 66%)';
     return colorFromSeed((d.name||devId)+'-'+(d.type||'dev'));
   }
-  function compactLinkLabel(visual,host,dev,port){
+  function compactLinkLabel(visual,host,dev,port,labels={}){
     const compact=visual?.compactLabels!==false;
-    if(compact)return `${dev?.name||'equipo'}${port?` · ${port.name}`:''}`.slice(0,24);
-    return `${dev?.name||'equipo'}${port?` · ${port.name}`:' · auto/pendiente'}`.slice(0,42);
+    if(compact)return `${dev?.name||labels.device||'device'}${port?` · ${port.name}`:''}`.slice(0,24);
+    return `${dev?.name||labels.device||'device'}${port?` · ${port.name}`:(labels.autoPending||' · auto/pending')}`.slice(0,42);
   }
   function networkLinkGeometry(visual,project,a,b,metrics){
     if(!CORE)return null;
@@ -98,7 +98,7 @@
     ctx.beginPath();ctx.arc(geometry.midX,geometry.midY,outer+1,0,Math.PI*2);ctx.stroke();ctx.restore();
     return{x:geometry.midX,y:geometry.midY,r:Math.max(10,outer+5)};
   }
-  function drawDeviceNode(ctx,{visual,device,bounds,selected=false,accent}){
+  function drawDeviceNode(ctx,{visual,device,bounds,selected=false,accent,labels={}}){
     if(!CORE||!device||!bounds)return false;
     const z=Number(visual?.view?.zoom||1),np=CORE.worldToScreen(visual,bounds.x,bounds.y),dw=bounds.w*z,dh=bounds.h*z,dr=nodeRadius(dw,dh,z,10);
     ctx.fillStyle='rgba(7,12,20,.96)';roundPath(ctx,np.x,np.y,dw,dh,dr);ctx.fill();
@@ -107,11 +107,11 @@
     if(readableZoom(visual)){
       ctx.fillStyle='#e2eaf7';ctx.font='600 '+Math.max(8,12*z)+'px Space Grotesk,sans-serif';ctx.fillText((device.name||'').slice(0,22),np.x+10*z,np.y+16*z);
       ctx.fillStyle='#8fa3c0';ctx.font=Math.max(7,10*z)+'px Fira Code,monospace';
-      drawTextLines(ctx,np.x+10*z,np.y+31*z,[((device.type||'')+' · '+(device.mgmtIp||'sin mgmt')).slice(0,28),((device.vendorOs||'—')+(device.internetEdge==='yes'?' · EDGE':'' )).slice(0,28)],z);
+      drawTextLines(ctx,np.x+10*z,np.y+31*z,[((device.type||'')+' · '+(device.mgmtIp||labels.noMgmt||'no mgmt')).slice(0,28),((device.vendorOs||'—')+(device.internetEdge==='yes'?' · EDGE':'' )).slice(0,28)],z);
     }else{ctx.fillStyle='#e2eaf7';ctx.font='700 9px Space Grotesk,sans-serif';ctx.fillText((device.type||'D').slice(0,2).toUpperCase(),np.x+6,np.y+12);}
     return true;
   }
-  function drawHostNode(ctx,{visual,host,bounds,selected=false,accent,vlanLabel}){
+  function drawHostNode(ctx,{visual,host,bounds,selected=false,accent,vlanLabel,labels={}}){
     if(!CORE||!host||!bounds)return false;
     const z=Number(visual?.view?.zoom||1),np=CORE.worldToScreen(visual,bounds.x,bounds.y),hw=bounds.w*z,hh=bounds.h*z,hr=nodeRadius(hw,hh,z,10);
     ctx.fillStyle='rgba(9,16,26,.96)';roundPath(ctx,np.x,np.y,hw,hh,hr);ctx.fill();
@@ -119,7 +119,7 @@
     ctx.strokeStyle=selected?'#a78bfa':accent;ctx.lineWidth=Math.max(.7,1.5*z);roundPath(ctx,np.x,np.y,hw,hh,hr);ctx.stroke();
     if(readableZoom(visual)){
       ctx.fillStyle='#e2eaf7';ctx.font='600 '+Math.max(7.5,10.5*z)+'px Space Grotesk,sans-serif';ctx.fillText((host.name||'').slice(0,20),np.x+8*z,np.y+14*z);
-      const chip=vlanLabel||'sin VLAN';ctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
+      const chip=vlanLabel||labels.noVlan||'—';ctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
       ctx.fillStyle='rgba(15,23,42,.78)';roundPath(ctx,np.x+8*z,np.y+22*z,chipW,14*z,Math.max(2,7*z));ctx.fill();ctx.fillStyle=accent;ctx.fillText(chip,np.x+14*z,np.y+32*z);
     }else{ctx.fillStyle=accent;ctx.beginPath();ctx.arc(np.x+Math.max(5,hw/2),np.y+Math.max(5,hh/2),Math.max(2,Math.min(5,Math.min(hw,hh)/4)),0,Math.PI*2);ctx.fill();}
     return true;

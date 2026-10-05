@@ -1,7 +1,7 @@
 /* =========================================================
    NetWizard v2.8.1 - V5 Tree Block Layout Hotfix
    - Base estable v2.7: no toca netwizard.js ni drawV5().
-   - Añade layout "Árbol · bloques por puerto" sin reescribir el motor V5.
+   - Adds the tree-block layout without rewriting the V5 engine.
    - Cada ubicación se calcula como bloques verticales:
      [router/switch/AP] a la izquierda + hosts asociados en UNA columna a la derecha.
    - Las ubicaciones raíz se colocan por árbol de conectividad con separación garantizada.
@@ -12,12 +12,14 @@
   const V5=window.NetWizardV5;
   const CORE=window.NetWizardV5Core;
   const SK = 'netwizard_v5_layout_manager_v29';
+  const i18n=window.NetWizardI18n||null;
+  const tr=(key,fallback)=>i18n&&typeof i18n.t==='function'?i18n.t(key):fallback;
   const MODES = {
-    treeBlocks: 'Árbol · bloques por puerto',
-    locationColumns: 'Por ubicación · columnas',
-    hierarchy: 'Jerárquico',
-    radial: 'Radial por ubicación',
-    forceLite: 'Fuerzas suave'
+    treeBlocks: ()=>tr('graphs.layout.treeBlocks','Árbol · bloques por puerto'),
+    locationColumns: ()=>tr('graphs.layout.locationColumns','Por ubicación · columnas'),
+    hierarchy: ()=>tr('graphs.layout.hierarchy','Jerárquico'),
+    radial: ()=>tr('graphs.layout.radial','Radial por ubicación'),
+    forceLite: ()=>tr('graphs.layout.forceLite','Fuerzas suave')
   };
 
   function $(id){ return document.getElementById(id); }
@@ -87,10 +89,10 @@
     const span = document.createElement('span');
     span.className = 'v5-layout-controls';
     const select = document.createElement('select');
-    select.id='v5LayoutMode'; select.className='v5-layout-select'; select.title='Algoritmo de ordenación V5';
-    Object.entries(MODES).forEach(([k,v])=>addOption(select,k,v,cfg0.v5Mode===k));
+    select.id='v5LayoutMode'; select.className='v5-layout-select'; select.title=tr('graphs.layout.title','Algoritmo de ordenación V5');
+    Object.entries(MODES).forEach(([k,v])=>addOption(select,k,v(),cfg0.v5Mode===k));
     const button = document.createElement('button');
-    button.className='btn bp bsm'; button.id='v5ApplyLayout'; button.type='button'; button.textContent='🧠 Ordenar V5';
+    button.className='btn bp bsm'; button.id='v5ApplyLayout'; button.type='button'; button.textContent=tr('graphs.layout.apply','🧠 Ordenar V5');
     span.appendChild(select); span.appendChild(button);
     const autoBtn = $('v5AutoLoc');
     if(autoBtn && autoBtn.nextSibling) bar.insertBefore(span, autoBtn.nextSibling); else bar.appendChild(span);
@@ -364,8 +366,10 @@
     const bounds={}; vLocs().forEach(l=>{ bounds[l.id]={x:l.x,y:l.y,w:Math.max(430,l.w||430),h:Math.max(205,l.h||205)}; }); V().proBounds=bounds; return bounds;
   };
 
+  function syncLabels(){const sel=$('v5LayoutMode');if(sel){sel.title=tr('graphs.layout.title','Algoritmo de ordenación V5');Array.from(sel.options).forEach(opt=>{const fn=MODES[opt.value];if(fn)opt.textContent=fn();});}const btn=$('v5ApplyLayout');if(btn)btn.textContent=tr('graphs.layout.apply','🧠 Ordenar V5');}
   function init(){
     injectV5Controls();
+    window.addEventListener('netwizard:i18n',()=>{syncLabels();});
     document.addEventListener('click', e=>{
       if(e.target.closest('[data-tab="graphs-v5"], [data-step="graphs"]')) setTimeout(injectV5Controls,100);
     });

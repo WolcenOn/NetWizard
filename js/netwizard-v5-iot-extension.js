@@ -5,6 +5,8 @@
 ========================================================= */
 (function(){
   'use strict';
+  const i18n=window.NetWizardI18n||null;
+  const tr=(key,params={},fallback='')=>i18n&&typeof i18n.t==='function'?i18n.t(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
   const TECH = {
     wifi:{label:'Wi‑Fi', color:'#06b6d4', dash:[0,0], icon:'📶'},
     lora:{label:'LoRaWAN', color:'#f97316', dash:[8,6], icon:'📡'},
@@ -13,10 +15,10 @@
     mqtt:{label:'MQTT', color:'#38bdf8', dash:[10,4,2,4], icon:'🛰'},
     ble:{label:'BLE', color:'#60a5fa', dash:[2,4], icon:'🔵'},
     ethernet:{label:'Ethernet', color:'#64748b', dash:[], icon:'🔌'},
-    camera:{label:'Cámara/NVR', color:'#ef4444', dash:[6,3], icon:'🎥'},
-    controller:{label:'Controlador', color:'#10b981', dash:[], icon:'🏠'},
+    camera:{label:'Camera/NVR', color:'#ef4444', dash:[6,3], icon:'🎥'},
+    controller:{label:'Controller', color:'#10b981', dash:[], icon:'🏠'},
     cloud:{label:'Cloud/API', color:'#a78bfa', dash:[4,4], icon:'☁️'},
-    generic:{label:'Genérico', color:'#8fa3c0', dash:[], icon:'🌉'}
+    generic:{label:'Generic', color:'#8fa3c0', dash:[], icon:'🌉'}
   };
   const ACCESS_TECH = {
     wifi_ap:'wifi', lorawan_gateway:'lora', zigbee_coordinator:'zigbee', thread_border_router:'thread',
@@ -54,7 +56,7 @@
   function filters(){try{return window.v5Filters?window.v5Filters():{};}catch{return {};}}
   function on(k){const f=filters();return f[k]!==false;}
   function techOfAccess(a){return ACCESS_TECH[a?.type]||'generic';}
-  function techMeta(t){return TECH[t]||TECH.generic;}
+  function techMeta(t){const m=TECH[t]||TECH.generic;return {...m,label:tr('iot.tech.'+(TECH[t]?t:'generic'),{},m.label)};}
   function v2sSafe(x,y){try{return window.v2s(x,y);}catch{return {x,y};}}
   function nodeBoundsSafe(kind,id){try{return window.visualNodeBounds(kind,id);}catch{return {x:0,y:0,w:160,h:50};}}
   function deviceShown(id){try{const b=nodeBoundsSafe('dev',id);return Number.isFinite(b.x)&&Number.isFinite(b.y);}catch{return false;}}
@@ -175,24 +177,24 @@
       const a=(st.accessNodes||[]).find(x=>x.id===sel.id); if(!a)return false; const tech=techOfAccess(a); const meta=techMeta(tech);
       clear();
       const title=document.createElement('div'); title.className='card-t'; title.textContent=`${ACCESS_ICON[a.type]||'🌉'} ${a.name||''}`; box.appendChild(title);
-      box.appendChild(metaRow([['b bcy','Infra IoT'],['b bgr',meta.label],['b bac',a.vendor||'generic']]));
-      const r=row2([field('Nombre',a.name||'',false), field('Tipo',a.type||'',true)]);
+      box.appendChild(metaRow([['b bcy',tr('graphs.iot.accessBadge',{},'Infra IoT')],['b bgr',meta.label],['b bac',a.vendor||'generic']]));
+      const r=row2([field(tr('form.name',{},'Nombre'),a.name||'',false), field(tr('form.type',{},'Tipo'),a.type||'',true)]);
       r.querySelector('input')?.addEventListener('focus',()=>window.NetWizardIoTEmbedded?.openAccess?.(a.id));
       box.appendChild(r);
-      const note=document.createElement('div'); note.className='v5-note'; note.textContent='Edita la configuración completa desde el módulo IoT embebido. El nodo se muestra en V5 conectado a su equipo/puerto NetWizard.'; box.appendChild(note);
-      box.appendChild(metaRow([['b bgr',`Ubicación: ${a.physicalLocation||'—'}`],['b bgr',`Gestión: ${a.mgmtIp||'—'}`],['b bgr',`Servicio: ${a.serviceName||'—'}`]]));
-      const brow=document.createElement('div'); brow.className='brow'; brow.appendChild(button('Editar infraestructura IoT','btn bp',()=>window.NWV5OpenIotAccess?.(a.id))); brow.appendChild(button('Abrir IoT & Gateways','btn bs',()=>document.querySelector('[data-step=iot]')?.click())); box.appendChild(brow);
+      const note=document.createElement('div'); note.className='v5-note'; note.textContent=tr('graphs.iot.accessHint',{},'Edita la configuración completa desde el módulo IoT embebido. El nodo se muestra en V5 conectado a su equipo/puerto NetWizard.'); box.appendChild(note);
+      box.appendChild(metaRow([['b bgr',tr('graphs.iot.location',{value:a.physicalLocation||'—'},'Ubicación: {value}')],['b bgr',tr('graphs.iot.management',{value:a.mgmtIp||'—'},'Gestión: {value}')],['b bgr',tr('graphs.iot.service',{value:a.serviceName||'—'},'Servicio: {value}')]]));
+      const brow=document.createElement('div'); brow.className='brow'; brow.appendChild(button(tr('graphs.iot.editAccess',{},'Editar infraestructura IoT'),'btn bp',()=>window.NWV5OpenIotAccess?.(a.id))); brow.appendChild(button(tr('graphs.iot.openWorkspace',{},'Abrir IoT & Gateways'),'btn bs',()=>document.querySelector('[data-step=iot]')?.click())); box.appendChild(brow);
       return true;
     }
     if(sel?.t==='iotDevice'){
       const d=(st.devices||[]).find(x=>x.id===sel.id); if(!d)return false; const meta=techMeta(d.tech||'generic'); const acc=(st.accessNodes||[]).find(a=>a.id===d.accessNodeId);
       clear();
       const title=document.createElement('div'); title.className='card-t'; title.textContent=`${TYPE_ICON[d.type]||'📦'} ${d.name||''}`; box.appendChild(title);
-      box.appendChild(metaRow([['b bgn','Dispositivo IoT'],['b bgr',meta.label],['b bac',d.type||'iot']]));
-      box.appendChild(row2([field('Tecnología',meta.label,true), field('Acceso',acc?acc.name:'—',true)]));
-      box.appendChild(row2([field('Ubicación',d.physicalLocation||'—',true), field('ID/IP/EUI',d.identifier||'',true), field('Credencial/alias',d.credentialAlias||'',true)]));
-      const note=document.createElement('div'); note.className='v5-note'; note.textContent=`La conexión inalámbrica se dibuja con la leyenda propia de ${meta.label}.`; box.appendChild(note);
-      const brow=document.createElement('div'); brow.className='brow'; brow.appendChild(button('Editar dispositivo IoT','btn bp',()=>window.NWV5OpenIotDevice?.(d.id))); brow.appendChild(button('Abrir IoT & Gateways','btn bs',()=>document.querySelector('[data-step=iot]')?.click())); box.appendChild(brow);
+      box.appendChild(metaRow([['b bgn',tr('graphs.iot.deviceBadge',{},'Dispositivo IoT')],['b bgr',meta.label],['b bac',d.type||'iot']]));
+      box.appendChild(row2([field(tr('iot.fields.technology',{},'Tecnología'),meta.label,true), field(tr('graphs.iot.accessField',{},'Acceso'),acc?acc.name:'—',true)]));
+      box.appendChild(row2([field(tr('graphs.fields.location',{},'Ubicación'),d.physicalLocation||'—',true), field('ID/IP/EUI',d.identifier||'',true), field(tr('graphs.iot.credentialAlias',{},'Credencial/alias'),d.credentialAlias||'',true)]));
+      const note=document.createElement('div'); note.className='v5-note'; note.textContent=tr('graphs.iot.wirelessLegendHint',{technology:meta.label},'La conexión inalámbrica se dibuja con la leyenda propia de {technology}.'); box.appendChild(note);
+      const brow=document.createElement('div'); brow.className='brow'; brow.appendChild(button(tr('graphs.iot.editDevice',{},'Editar dispositivo IoT'),'btn bp',()=>window.NWV5OpenIotDevice?.(d.id))); brow.appendChild(button(tr('graphs.iot.openWorkspace',{},'Abrir IoT & Gateways'),'btn bs',()=>document.querySelector('[data-step=iot]')?.click())); box.appendChild(brow);
       return true;
     }
     return false;
@@ -257,6 +259,7 @@
     canvas()?.addEventListener('click',onClick,true);
     syncFilters();
     document.addEventListener('nw:iot:changed',()=>{try{window.drawV5();window.renderV5Panel();}catch{}});
+    window.addEventListener('netwizard:i18n',()=>{try{window.drawV5();window.renderV5Panel();}catch{}});
     document.addEventListener('click',e=>{
       if(e.target.closest('[data-step="graphs"], .bnit[data-step="graphs"]'))setTimeout(()=>{syncFilters();window.drawTopo?.();window.resizeV5?.();window.drawV5?.();},180);
       const tab=e.target.closest('[data-tab^="graphs-"]');

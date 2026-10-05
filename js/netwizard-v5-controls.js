@@ -15,6 +15,8 @@
     const doc=o.document||(typeof document!=='undefined'?document:null);
     const win=o.window||(typeof window!=='undefined'?window:null);
     const cleanup=[];
+    const i18n=typeof globalThis!=='undefined'?globalThis.NetWizardI18n:null;
+    const tr=(key,fallback)=>i18n&&typeof i18n.t==='function'?i18n.t(key):fallback;
     let bound=false;
 
     const el=id=>doc&&doc.getElementById?doc.getElementById(id):null;
@@ -53,7 +55,7 @@
       if(doc&&doc.body&&doc.body.classList)doc.body.classList.toggle('v5-fs-lock',on);
       if(o.setFullscreenState)o.setFullscreenState(on);
       const button=fsButton();
-      if(button)button.textContent=on?'🗗 Salir pantalla completa':'⛶ Pantalla completa';
+      if(button)button.textContent=on?tr('graphs.actions.exitFullscreen','🗗 Salir pantalla completa'):tr('graphs.actions.fullscreen','⛶ Pantalla completa');
       if(o.afterFullscreenSync)schedule(()=>o.afterFullscreenSync(on));
       return on;
     }
@@ -101,6 +103,7 @@
       listen(doc,'fullscreenchange',syncFullscreen);
       listen(win,'keydown',onKeydown);
       listen(win,'resize',onResize);
+      listen(win,'netwizard:i18n',()=>syncFullscreen());
       syncFilters();
       syncFullscreen();
     }

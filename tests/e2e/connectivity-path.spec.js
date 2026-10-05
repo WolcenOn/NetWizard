@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 async function resetStorage(page){
   await page.goto('/index.html');
-  await page.evaluate(()=>{ localStorage.clear(); sessionStorage.clear(); });
+  await page.evaluate(()=>{ localStorage.clear(); sessionStorage.clear(); localStorage.setItem('nw_locale_v1','es'); });
   await page.reload();
 }
 
@@ -84,6 +84,11 @@ test('V5 diagnostica una ruta física y diferencia servicios firewall', async ({
   await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-block-kind','firewall');
   await expect(page.locator('#v5TraceStatus')).toContainText('BLOQUEO DETECTADO');
   await expect(page.locator('#v5TraceStatus')).toContainText('Bloquear HTTPS');
+
+  await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
+  await expect(page.locator('#v5TraceStatus')).toContainText('BLOCK DETECTED');
+  await expect(page.locator('#v5TraceStatus')).toContainText('Rule Bloquear HTTPS: deny.');
+  await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
 
   await page.getByRole('button',{name:'✕ Cerrar'}).click();
   await expect(page.locator('#nwV5ConnectivityDrawer')).toBeHidden();

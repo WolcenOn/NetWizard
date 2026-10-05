@@ -124,13 +124,13 @@
   function portVlanCheck(project,endpoint,options){
     const access=endpointAccess(project,endpoint,options);
     if(endpoint.kind!=='host'){
-      if(access.accessNode||access.device)return{ok:true,msg:'Acceso IoT documentado.',access};
-      return{ok:null,msg:'Endpoint IoT sin acceso físico completo; se valida parcialmente por VLAN.',access};
+      if(access.accessNode||access.device)return{ok:true,msg:'Acceso IoT documentado.',messageKey:'graphs.trace.reason.iotAccessDocumented',messageParams:{},access};
+      return{ok:null,msg:'Endpoint IoT sin acceso físico completo; se valida parcialmente por VLAN.',messageKey:'graphs.trace.reason.iotPartialAccess',messageParams:{},access};
     }
-    if(!access.port)return{ok:false,msg:'Host sin puerto físico asignado.',access};
-    if(access.port.mode!=='access')return{ok:false,msg:`El puerto ${access.port.name||access.port.id} no está en modo access.`,access};
-    if(access.port.accessVlanRef!==endpoint.vlanRef)return{ok:false,msg:`El puerto ${access.port.name||access.port.id} no tiene la VLAN del host.`,access};
-    return{ok:true,msg:`Puerto OK: ${access.device&&access.device.name||'?'} / ${access.port.name||access.port.id} en access.`,access};
+    if(!access.port)return{ok:false,msg:'Host sin puerto físico asignado.',messageKey:'graphs.trace.reason.missingPort',messageParams:{},access};
+    if(access.port.mode!=='access')return{ok:false,msg:`El puerto ${access.port.name||access.port.id} no está en modo access.`,messageKey:'graphs.trace.reason.wrongPortMode',messageParams:{port:access.port.name||access.port.id},access};
+    if(access.port.accessVlanRef!==endpoint.vlanRef)return{ok:false,msg:`El puerto ${access.port.name||access.port.id} no tiene la VLAN del host.`,messageKey:'graphs.trace.reason.wrongHostVlan',messageParams:{port:access.port.name||access.port.id},access};
+    return{ok:true,msg:`Puerto OK: ${access.device&&access.device.name||'?'} / ${access.port.name||access.port.id} en access.`,messageKey:'graphs.trace.reason.portOk',messageParams:{device:access.device&&access.device.name||'?',port:access.port.name||access.port.id},access};
   }
 
   function sameSubnet(project,a,b){
@@ -196,13 +196,13 @@
     const matrixKey=a&&a.vlanRef&&b&&b.vlanRef?`${a.vlanRef}_${b.vlanRef}`:'';
     const hasMatrix=!!matrixKey&&Object.prototype.hasOwnProperty.call(matrix,matrixKey);
     if(hasMatrix&&matrix[matrixKey]===false){
-      return{allowed:false,matched:{id:matrixKey,source:'vlanMatrix',action:'deny'},profile,reason:'La matriz inter-VLAN bloquea explícitamente este flujo.'};
+      return{allowed:false,matched:{id:matrixKey,source:'vlanMatrix',action:'deny'},profile,reason:'La matriz inter-VLAN bloquea explícitamente este flujo.',reasonKey:'graphs.trace.reason.matrixExplicitDeny',reasonParams:{}};
     }
     const rules=arr(project&&project.fwRules).filter(r=>r&&r.enabled!==false).slice().sort((x,y)=>Number(x.prio||100)-Number(y.prio||100));
     if(!rules.length){
       return hasMatrix
-        ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.'}
-        :{allowed:true,matched:null,profile,reason:'Sin reglas firewall explícitas.'};
+        ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.',reasonKey:'graphs.trace.reason.matrixExplicitAllow',reasonParams:{}}
+        :{allowed:true,matched:null,profile,reason:'Sin reglas firewall explícitas.',reasonKey:'graphs.trace.reason.noFirewallRules',reasonParams:{}};
     }
     for(const rule of rules){
       if(!protocolMatches(rule.proto,profile))continue;
@@ -210,11 +210,11 @@
       if(!addressMatches(project,rule.src,a)||!addressMatches(project,rule.dst,b))continue;
       const action=lower(rule.action);
       const allowed=action!=='deny'&&action!=='reject';
-      return{allowed,matched:rule,profile,reason:`Regla ${rule.name||rule.id||'sin nombre'}: ${action||'allow'}.`};
+      return{allowed,matched:rule,profile,reason:`Regla ${rule.name||rule.id||'sin nombre'}: ${action||'allow'}.`,reasonKey:'graphs.trace.reason.firewallRule',reasonParams:{rule:rule.name||rule.id||'sin nombre',action:action||'allow'}};
     }
     return hasMatrix
-      ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.'}
-      :{allowed:true,matched:null,profile,reason:'No hay una regla coincidente; el simulador no detecta bloqueo explícito.'};
+      ?{allowed:true,matched:{id:matrixKey,source:'vlanMatrix',action:'allow'},profile,reason:'La matriz inter-VLAN permite explícitamente este flujo.',reasonKey:'graphs.trace.reason.matrixExplicitAllow',reasonParams:{}}
+      :{allowed:true,matched:null,profile,reason:'No hay una regla coincidente; el simulador no detecta bloqueo explícito.',reasonKey:'graphs.trace.reason.noMatchingRule',reasonParams:{}};
   }
 
   function buildDeviceGraph(project){
@@ -332,9 +332,9 @@
     let ok=true,partial=false,blockage=null;
     const block=value=>{if(!blockage)blockage=value;};
     if(!a||!b)return{ok:false,partial:false,service:profile,steps:[{ok:false,msg:'Selecciona origen y destino.'}],path:[],visualTrace:null};
-    if(a.id===b.id)return{ok:false,partial:false,service:profile,source:a,target:b,steps:[{ok:false,msg:'Origen y destino no pueden ser el mismo.'}],path:[],visualTrace:{source:{kind:a.kind,entityId:a.entityId,endpointId:a.id},target:{kind:b.kind,entityId:b.entityId,endpointId:b.id},deviceIds:[],linkIds:[],blockage:{kind:'endpoint',endpointId:a.id,entityId:a.entityId,reason:'Origen y destino son el mismo endpoint.'}}};
+    if(a.id===b.id)return{ok:false,partial:false,service:profile,source:a,target:b,steps:[{ok:false,msg:'Origen y destino no pueden ser el mismo.'}],path:[],visualTrace:{source:{kind:a.kind,entityId:a.entityId,endpointId:a.id},target:{kind:b.kind,entityId:b.entityId,endpointId:b.id},deviceIds:[],linkIds:[],blockage:{kind:'endpoint',endpointId:a.id,entityId:a.entityId,reason:'Origen y destino son el mismo endpoint.',messageKey:'graphs.trace.reason.sameEndpoint',messageParams:{}}}};
 
-    if(!a.vlanRef||!b.vlanRef){ok=false;block({kind:'endpoint',endpointId:!a.vlanRef?a.id:b.id,entityId:!a.vlanRef?a.entityId:b.entityId,reason:'Falta VLAN en uno de los extremos.'});steps.push({ok:false,msg:'Falta VLAN en origen o destino.'});}
+    if(!a.vlanRef||!b.vlanRef){ok=false;block({kind:'endpoint',endpointId:!a.vlanRef?a.id:b.id,entityId:!a.vlanRef?a.entityId:b.entityId,reason:'Falta VLAN en uno de los extremos.',messageKey:'graphs.trace.reason.missingVlan',messageParams:{}});steps.push({ok:false,msg:'Falta VLAN en origen o destino.'});}
 
     const accessChecks=[];
     for(const endpoint of [a,b]){
@@ -342,7 +342,7 @@
       accessChecks.push(check);
       if(check.ok===false){
         ok=false;
-        block({kind:check.access&&check.access.port?'port':'endpoint',endpointId:endpoint.id,entityId:endpoint.entityId,portId:check.access&&check.access.port&&check.access.port.id||null,deviceId:check.access&&check.access.device&&check.access.device.id||null,reason:check.msg});
+        block({kind:check.access&&check.access.port?'port':'endpoint',endpointId:endpoint.id,entityId:endpoint.entityId,portId:check.access&&check.access.port&&check.access.port.id||null,deviceId:check.access&&check.access.device&&check.access.device.id||null,reason:check.msg,messageKey:check.messageKey||null,messageParams:check.messageParams||{}});
       }
       if(check.ok==null)partial=true;
       steps.push({ok:check.ok,msg:`${endpoint.name}: ${check.msg}`});
@@ -359,7 +359,7 @@
         steps.push({ok:true,msg:`Ruta física documentada: ${names.join(' → ')}.`});
       }else{
         ok=false;
-        block({kind:'physical-gap',fromDeviceId:aDevice.id,toDeviceId:bDevice.id,deviceId:aDevice.id,reason:`No hay ruta física documentada hasta ${deviceLabel(project,bDevice.id)}.`});
+        block({kind:'physical-gap',fromDeviceId:aDevice.id,toDeviceId:bDevice.id,deviceId:aDevice.id,reason:`No hay ruta física documentada hasta ${deviceLabel(project,bDevice.id)}.`,messageKey:'graphs.trace.reason.physicalGap',messageParams:{device:deviceLabel(project,bDevice.id)}});
         steps.push({ok:false,msg:`No hay ruta física documentada entre ${deviceLabel(project,aDevice.id)} y ${deviceLabel(project,bDevice.id)}.`});
       }
     }else{
@@ -369,25 +369,25 @@
 
     if(a.vlanRef&&b.vlanRef&&a.vlanRef===b.vlanRef){
       if(sameSubnet(project,a,b)||(!a.ip||!b.ip))steps.push({ok:true,msg:'Misma VLAN/subnet: la conectividad L2 es coherente con los datos disponibles.'});
-      else{ok=false;block({kind:'vlan',vlanRef:a.vlanRef,deviceId:aDevice&&aDevice.id||null,reason:'Las IP no pertenecen a la misma subnet documentada.'});steps.push({ok:false,msg:'Misma VLAN pero las IP no pertenecen a la misma subnet documentada.'});}
+      else{ok=false;block({kind:'vlan',vlanRef:a.vlanRef,deviceId:aDevice&&aDevice.id||null,reason:'Las IP no pertenecen a la misma subnet documentada.',messageKey:'graphs.trace.reason.subnetMismatch',messageParams:{}});steps.push({ok:false,msg:'Misma VLAN pero las IP no pertenecen a la misma subnet documentada.'});}
     }else if(a.vlanRef&&b.vlanRef){
       if(!hasGateway(project,a)||!hasGateway(project,b)){
         ok=false;
         const missing=!hasGateway(project,a)?a:b;
-        block({kind:'gateway',vlanRef:missing.vlanRef,deviceId:policyDeviceId(project,deviceRoute)||(missing===a&&aDevice&&aDevice.id)||(bDevice&&bDevice.id)||null,reason:'Falta gateway/subnet para routing inter-VLAN.'});
+        block({kind:'gateway',vlanRef:missing.vlanRef,deviceId:policyDeviceId(project,deviceRoute)||(missing===a&&aDevice&&aDevice.id)||(bDevice&&bDevice.id)||null,reason:'Falta gateway/subnet para routing inter-VLAN.',messageKey:'graphs.trace.reason.missingGateway',messageParams:{}});
         steps.push({ok:false,msg:'Inter-VLAN requiere gateway/subnet en ambas VLANs.'});
       }else steps.push({ok:true,msg:'Gateways de ambas VLAN presentes para routing inter-VLAN.'});
 
       if(!matrixAllows(project,a,b)){
         ok=false;
-        block({kind:'policy',deviceId:policyDeviceId(project,deviceRoute),reason:'La matriz inter-VLAN bloquea este flujo.'});
+        block({kind:'policy',deviceId:policyDeviceId(project,deviceRoute),reason:'La matriz inter-VLAN bloquea este flujo.',messageKey:'graphs.trace.reason.policyBlocked',messageParams:{}});
         steps.push({ok:false,msg:'La matriz inter-VLAN bloquea este flujo.'});
       }else steps.push({ok:true,msg:'La matriz inter-VLAN permite este flujo.'});
 
       const fw=firewallDecision(project,a,b,profile.id);
       if(!fw.allowed){
         ok=false;
-        block({kind:'firewall',deviceId:policyDeviceId(project,deviceRoute),ruleId:fw.matched&&fw.matched.id||null,reason:fw.reason});
+        block({kind:'firewall',deviceId:policyDeviceId(project,deviceRoute),ruleId:fw.matched&&fw.matched.id||null,reason:fw.reason,messageKey:fw.reasonKey||null,messageParams:fw.reasonParams||{}});
       }
       steps.push({ok:fw.allowed,msg:`Firewall / ${profile.label}: ${fw.reason}`,ruleId:fw.matched&&fw.matched.id||null});
     }
