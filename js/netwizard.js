@@ -1325,6 +1325,14 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
     if($('dhcpPanel')?.open)renderDhcp();
   }
+  if(S.step==='hosts'){
+    const keep={dev:$('hConnDev')?.value||'',managed:$('hDeviceRef')?.value||'',port:$('hPort')?.value||'',loc:$('hLoc')?.value||'',phys:$('hPhysLocSel')?.value||''};
+    fillVlanSels();fillHostDeviceSel();if(keep.dev&&Array.from($('hConnDev').options).some(o=>o.value===keep.dev))$('hConnDev').value=keep.dev;
+    fillHostManagedDeviceSel(keep.managed);fillHostPortSel($('hConnDev').value,keep.port);fillHostLocSel();if(keep.loc&&Array.from($('hLoc').options).some(o=>o.value===keep.loc))$('hLoc').value=keep.loc;
+    fillHostPhysLocSel();if(keep.phys&&Array.from($('hPhysLocSel').options).some(o=>o.value===keep.phys))$('hPhysLocSel').value=keep.phys;
+    syncHostI18nLabels();updateHostDeviceHint();renderHosts();if($('ipMapPanel')?.open)renderIpMap();
+    if($('hostEditId')?.value){$('btnAddHost').dataset.i18n='hosts.actions.saveChanges';$('btnAddHost').textContent=i18nText('hosts.actions.saveChanges',{},'💾 Guardar cambios');}
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
