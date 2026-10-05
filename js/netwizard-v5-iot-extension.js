@@ -15,10 +15,10 @@
     mqtt:{label:'MQTT', color:'#38bdf8', dash:[10,4,2,4], icon:'🛰'},
     ble:{label:'BLE', color:'#60a5fa', dash:[2,4], icon:'🔵'},
     ethernet:{label:'Ethernet', color:'#64748b', dash:[], icon:'🔌'},
-    camera:{label:'Cámara/NVR', color:'#ef4444', dash:[6,3], icon:'🎥'},
-    controller:{label:'Controlador', color:'#10b981', dash:[], icon:'🏠'},
+    camera:{label:'Camera/NVR', color:'#ef4444', dash:[6,3], icon:'🎥'},
+    controller:{label:'Controller', color:'#10b981', dash:[], icon:'🏠'},
     cloud:{label:'Cloud/API', color:'#a78bfa', dash:[4,4], icon:'☁️'},
-    generic:{label:'Genérico', color:'#8fa3c0', dash:[], icon:'🌉'}
+    generic:{label:'Generic', color:'#8fa3c0', dash:[], icon:'🌉'}
   };
   const ACCESS_TECH = {
     wifi_ap:'wifi', lorawan_gateway:'lora', zigbee_coordinator:'zigbee', thread_border_router:'thread',
