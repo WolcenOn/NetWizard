@@ -2812,7 +2812,7 @@ function colorFromSeed(seed){return V5RENDER.colorFromSeed(seed);}
 function rgbaFromCss(css,alpha){return V5RENDER.rgbaFromCss(css,alpha);}
 function linkedDeviceIds(devId){return V5CORE?V5CORE.linkedDeviceIds(S,devId):[];}
 function deviceAccentColor(devId,seen){return V5RENDER.deviceAccentColor(S,devId,seen);}
-function compactLinkLabel(host,dev,port){return V5RENDER.compactLinkLabel(vv(),host,dev,port);}
+function compactLinkLabel(host,dev,port){return V5RENDER.compactLinkLabel(vv(),host,dev,port,{device:i18nText('graphs.common.device',{},'Equipo'),autoPending:i18nText('graphs.canvas.autoPending',{},' · auto/pendiente')});}
 
 let v5LinkDots=[];
 function v5LinkTooltipEl(){
@@ -2901,7 +2901,14 @@ function drawV5(){
     vlanByRef:vByRef,
     hostPort:v5HostPort,
     proMode:v5ProMode(),
-    drag:v5DragController?v5DragController.getSession():null
+    drag:v5DragController?v5DragController.getSession():null,
+    labels:{
+      locationSummary:(devices,hosts)=>i18nText('graphs.panel.locationSummary',{devices,hosts},'{devices} equipos · {hosts} hosts'),
+      noVlan:i18nText('graphs.common.noVlan',{},'Sin VLAN'),
+      noMgmt:i18nText('graphs.common.noMgmt',{},'sin mgmt'),
+      device:i18nText('graphs.common.device',{},'Equipo'),
+      autoPending:i18nText('graphs.canvas.autoPending',{},' · auto/pendiente')
+    }
   });
   v5LinkDots=result.linkDots||[];
   window.NetWizardV5RenderState=result.renderState;
