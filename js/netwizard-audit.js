@@ -11,6 +11,7 @@
   const SEVERITY = { INFO:'info', WARNING:'warning', ERROR:'error' };
 
   function cleanStr(v){ return String(v==null?'':v).trim(); }
+  function tr(key,params,locale,fallback){ const i18n=root.NetWizardI18n; if(i18n&&typeof i18n.t==='function') return i18n.t(key,params||{},locale); return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):''); }
   function cleanList(v){ return Array.isArray(v) ? v.map(cleanStr).filter(Boolean) : []; }
   function cleanSuggestions(v){
     return (Array.isArray(v) ? v : []).map(item => ({
@@ -92,18 +93,20 @@
     });
   }
 
+  function localizeIssue(issue,locale){ const i=normalizeIssue(issue); if(i.messageKey) i.message=tr(i.messageKey,i.messageParams||{},locale,i.message||i.messageKey); return i; }
+
   function summarizeIssues(issues, options){
-    const opts = options || {};
-    const list = Array.isArray(issues) ? issues.map(normalizeIssue) : fromLegacyArrays(issues || {}, opts.defaults || {});
+    const opts = options || {}, locale=opts.locale;
+    const list = Array.isArray(issues) ? issues.map(x=>localizeIssue(x,locale)) : fromLegacyArrays(issues || {}, opts.defaults || {}).map(x=>localizeIssue(x,locale));
     const errors = list.filter(i=>i.severity===SEVERITY.ERROR);
     const warnings = list.filter(i=>i.severity===SEVERITY.WARNING);
     const info = list.filter(i=>i.severity===SEVERITY.INFO);
     const lines = [];
     if(opts.title) lines.push(opts.title);
-    if(errors.length) lines.push('ERRORES:\n' + errors.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
-    if(warnings.length) lines.push('AVISOS:\n' + warnings.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
-    if(info.length) lines.push('INFO:\n' + info.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
-    return lines.join('\n\n') || (opts.empty || 'Sin incidencias.');
+    if(errors.length) lines.push(tr('validation.audit.errors',{},locale,'ERRORES:')+'\n' + errors.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
+    if(warnings.length) lines.push(tr('validation.audit.warnings',{},locale,'AVISOS:')+'\n' + warnings.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
+    if(info.length) lines.push(tr('validation.audit.info',{},locale,'INFO:')+'\n' + info.map(i=>`• [${i.code}] ${i.message}`).join('\n'));
+    return lines.join('\n\n') || (opts.empty || tr('validation.audit.empty',{},locale,'Sin incidencias.'));
   }
 
   function hasBlockingIssues(issues){ return (Array.isArray(issues)?issues:[]).some(i=>normalizeIssue(i).blocking); }
@@ -132,10 +135,10 @@
       const target = pg.querySelector('.g2 > div:last-child') || pg;
       const card = doc.createElement('div');
       card.className = 'card';
-      const title = doc.createElement('div'); title.className = 'card-t'; title.textContent = '🛡️ Modo de ejecución'; card.appendChild(title);
-      const copy = doc.createElement('div'); copy.className = 'co co-ac'; copy.textContent = 'Demo permite diseños incompletos. Producción bloquea exportaciones y acciones si hay errores críticos.'; card.appendChild(copy);
+      const title = doc.createElement('div'); title.className = 'card-t'; title.dataset.i18n='validation.mode.title'; title.textContent = tr('validation.mode.title',{},null,'🛡️ Modo de ejecución'); card.appendChild(title);
+      const copy = doc.createElement('div'); copy.className = 'co co-ac'; copy.dataset.i18n='validation.mode.help'; copy.textContent = tr('validation.mode.help',{},null,'Demo permite diseños incompletos. Producción bloquea exportaciones y acciones si hay errores críticos.'); card.appendChild(copy);
       const selMode = doc.createElement('select'); selMode.id = 'nwRunMode';
-      [['demo','Demo / formación'], ['production','Producción']].forEach(([value,label]) => { const opt = doc.createElement('option'); opt.value = value; opt.textContent = label; selMode.appendChild(opt); });
+      [['demo','validation.mode.demo','Demo / formación'], ['production','validation.mode.production','Producción']].forEach(([value,key,label]) => { const opt = doc.createElement('option'); opt.value = value; opt.dataset.i18n=key; opt.textContent = tr(key,{},null,label); selMode.appendChild(opt); });
       card.appendChild(selMode);
       const hintBox = doc.createElement('div'); hintBox.className = 'hint'; hintBox.id = 'nwRunModeHint'; hintBox.style.marginTop = '8px'; card.appendChild(hintBox);
       target.appendChild(card);
@@ -148,19 +151,17 @@
       const hint = $('nwRunModeHint');
       if(!hint) return;
       hint.textContent = isProduction()
-        ? 'Modo producción activo: las validaciones críticas pueden bloquear exportación/aplicación.'
-        : 'Modo demo activo: útil para diseñar y aprender aunque falten datos.';
+        ? tr('validation.mode.productionHint',{},null,'Modo producción activo: las validaciones críticas pueden bloquear exportación/aplicación.')
+        : tr('validation.mode.demoHint',{},null,'Modo demo activo: útil para diseñar y aprender aunque falten datos.');
     }
     function boot(){ ensureModeCard(); }
     if(doc.readyState==='loading') doc.addEventListener('DOMContentLoaded', boot); else boot();
     doc.addEventListener('nw:project:changed', ()=>setTimeout(boot, 0));
-    root.addEventListener && root.addEventListener('nw:mode:changed', ()=>{
-      if($('nwRunMode')) $('nwRunMode').value = getMode();
-      paintHint();
-    });
+    root.addEventListener && root.addEventListener('nw:mode:changed', ()=>{ if($('nwRunMode')) $('nwRunMode').value = getMode(); paintHint(); });
+    root.addEventListener && root.addEventListener('netwizard:i18n', ()=>{ const card=$('nwRunMode')?.closest('.card'); if(card&&root.NetWizardI18n?.applyI18n) root.NetWizardI18n.applyI18n(card); paintHint(); });
   }
 
-  const api = {version:'netwizard-audit-v2', MODES, SEVERITY, createIssue, normalizeIssue, fromLegacyArrays, splitIssues, applyProductionPolicy, summarizeIssues, hasBlockingIssues, getMode, setMode, isProduction};
+  const api = {version:'netwizard-audit-v2', MODES, SEVERITY, createIssue, normalizeIssue, localizeIssue, fromLegacyArrays, splitIssues, applyProductionPolicy, summarizeIssues, hasBlockingIssues, getMode, setMode, isProduction};
   root.NetWizardAudit = api;
   if(typeof module!=='undefined' && module.exports) module.exports = api;
   bindBrowserUi();
