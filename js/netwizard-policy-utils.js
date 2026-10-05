@@ -16,6 +16,7 @@ Mantenimiento:
   function clone(v){ return JSON.parse(JSON.stringify(v == null ? null : v)); }
   function clean(s, max){ return String(s == null ? '' : s).replace(/[\u0000-\u001F\u007F]/g,' ').trim().slice(0, max || 240); }
   function lower(s){ return clean(s, 80).toLowerCase(); }
+  function tr(key,params,locale,fallback){ const i18n=root.NetWizardI18n; if(i18n&&typeof i18n.t==='function') return i18n.t(key,params||{},locale); return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):''); }
   function vlanLabel(v){ return `VLAN${v && v.vlanId ? v.vlanId : '?'}`; }
   function vlanName(v){ return clean((v && v.name) || vlanLabel(v), 80); }
   function normalizeIntent(vlan){
@@ -103,24 +104,24 @@ Mantenimiento:
     if(opts.replaceExistingGenerated!==false){ for(const r of currentGenerated){ if(!proposedByKey.has(manualRuleKey(r))) remove.push(r); } }
     return { add, update, unchanged, remove, proposed, manualCount:manual.length, currentGeneratedCount:currentGenerated.length, finalRuleCount: manual.length + proposed.length };
   }
-  function summarizePolicyApplyDiff(diff){
+  function summarizePolicyApplyDiff(diff, locale){
     const d=diff||{}; const lines=[];
-    lines.push('Vista previa de cambios en reglas firewall/ACL');
-    lines.push(`+ Añadir: ${arr(d.add).length}`);
-    lines.push(`~ Actualizar generadas: ${arr(d.update).length}`);
-    lines.push(`= Sin cambios: ${arr(d.unchanged).length}`);
-    lines.push(`- Retirar generadas obsoletas: ${arr(d.remove).length}`);
-    lines.push(`Total final estimado: ${d.finalRuleCount||0} reglas (${d.manualCount||0} manuales + ${arr(d.proposed).length} generadas)`);
+    lines.push(tr('firewall.policy.diff.title',{},locale,'Vista previa de cambios en reglas firewall/ACL'));
+    lines.push(tr('firewall.policy.diff.add',{count:arr(d.add).length},locale,'+ Añadir: {count}'));
+    lines.push(tr('firewall.policy.diff.update',{count:arr(d.update).length},locale,'~ Actualizar generadas: {count}'));
+    lines.push(tr('firewall.policy.diff.unchanged',{count:arr(d.unchanged).length},locale,'= Sin cambios: {count}'));
+    lines.push(tr('firewall.policy.diff.remove',{count:arr(d.remove).length},locale,'- Retirar generadas obsoletas: {count}'));
+    lines.push(tr('firewall.policy.diff.total',{total:d.finalRuleCount||0,manual:d.manualCount||0,generated:arr(d.proposed).length},locale,'Total final estimado: {total} reglas ({manual} manuales + {generated} generadas)'));
     function one(r){ return `${String(r.prio||500).padStart(4,'0')} ${String(r.action||'').toUpperCase().padEnd(5)} ${r.src} → ${r.dst} ${r.proto||'any'}:${r.port||'any'} · ${r.name||''}`; }
-    if(arr(d.add).length){ lines.push('\nReglas a añadir:'); arr(d.add).slice(0,40).forEach(r=>lines.push('+ '+one(r))); if(arr(d.add).length>40)lines.push(`... ${arr(d.add).length-40} más`); }
-    if(arr(d.update).length){ lines.push('\nReglas a actualizar:'); arr(d.update).slice(0,20).forEach(x=>lines.push('~ '+one(x.after))); if(arr(d.update).length>20)lines.push(`... ${arr(d.update).length-20} más`); }
-    if(arr(d.remove).length){ lines.push('\nReglas generadas que se retirarían:'); arr(d.remove).slice(0,20).forEach(r=>lines.push('- '+one(r))); if(arr(d.remove).length>20)lines.push(`... ${arr(d.remove).length-20} más`); }
+    if(arr(d.add).length){ lines.push('\n'+tr('firewall.policy.diff.addHeading',{},locale,'Reglas a añadir:')); arr(d.add).slice(0,40).forEach(r=>lines.push('+ '+one(r))); if(arr(d.add).length>40)lines.push(tr('firewall.policy.diff.more',{count:arr(d.add).length-40},locale,'... {count} más')); }
+    if(arr(d.update).length){ lines.push('\n'+tr('firewall.policy.diff.updateHeading',{},locale,'Reglas a actualizar:')); arr(d.update).slice(0,20).forEach(x=>lines.push('~ '+one(x.after))); if(arr(d.update).length>20)lines.push(tr('firewall.policy.diff.more',{count:arr(d.update).length-20},locale,'... {count} más')); }
+    if(arr(d.remove).length){ lines.push('\n'+tr('firewall.policy.diff.removeHeading',{},locale,'Reglas generadas que se retirarían:')); arr(d.remove).slice(0,20).forEach(r=>lines.push('- '+one(r))); if(arr(d.remove).length>20)lines.push(tr('firewall.policy.diff.more',{count:arr(d.remove).length-20},locale,'... {count} más')); }
     return lines.join('\n');
   }
   function mergeWithManualRules(project, options){ const opts=options||{}; const manual=arr(obj(project).fwRules).filter(r=>r.enabled!==false); const seen=new Set(manual.map(manualRuleKey)); const generated=buildIntentPolicyRules(project).filter(r=>opts.includeDuplicates||!seen.has(manualRuleKey(r))); return manual.concat(generated); }
   function applyGeneratedRules(project, options){ const opts=options||{}; const p=clone(project||{}); const diff=computePolicyApplyDiff(p,opts); p.fwRules=arr(p.fwRules).filter(r=>opts.replaceExistingGenerated ? !r.generatedFromIntent : true); const existing=new Set(p.fwRules.map(manualRuleKey)); const add=buildIntentPolicyRules(p).filter(r=>opts.includeDuplicates||!existing.has(manualRuleKey(r))); p.fwRules=p.fwRules.concat(add.map((r,i)=>Object.assign({},r,{id:r.id||`fw_intent_${Date.now()}_${i}`}))); return {project:p,added:add.length,rules:add,diff}; }
-  function validatePolicyForProject(project){ const NWA=root.NetWizardAudit; const create=NWA&&NWA.createIssue?NWA.createIssue:(x=>Object.assign({severity:'warning',blocking:false},x)); const p=obj(project); const issues=[]; const generated=buildIntentPolicyRules(p); const manual=arr(p.fwRules).filter(r=>r.enabled!==false); const all=manual.concat(generated); const bySrc=new Map(); for(const r of all){ const k=clean(r.src||'any',120); if(!bySrc.has(k)) bySrc.set(k,[]); bySrc.get(k).push(r); } for(const v of arr(p.vlans)){ const intent=normalizeIntent(v); if(intent.type==='transit') continue; const src=endpointForVlan(p,v); const rules=bySrc.get(src)||[]; const needsIsolation=intent.isolation==='isolated'||['guests','iot','cameras','dmz'].includes(intent.type); if(needsIsolation && !rules.some(r=>r.action==='deny'&&r.code==='NW-POL-DENY-INTERNAL')) issues.push(create({code:'NW-POL-001',severity:'warning',category:'policy',source:'policy',message:`${vlanLabel(v)} requiere aislamiento, pero no hay denegación interna propuesta o manual.`})); if(intent.internet && !rules.some(r=>r.action!=='deny'&&(r.dst==='any'||/0\.0\.0\.0/.test(r.dst)))) issues.push(create({code:'NW-POL-002',severity:'info',category:'policy',source:'policy',message:`${vlanLabel(v)} requiere Internet; revisa que exista regla/NAT de salida.`})); if(!cidrForVlan(p,v)) issues.push(create({code:'NW-POL-003',severity:'warning',category:'policy',source:'policy',message:`${vlanLabel(v)} no tiene subnet; las reglas se exportarán usando etiqueta VLAN en vez de CIDR.`})); } return {ok:!issues.some(i=>i.severity==='error'),issues,generatedRules:generated}; }
-  function summarizeRules(rules){ const list=arr(rules); if(!list.length) return 'No hay reglas generadas desde intención.'; return list.map(r=>`${String(r.prio||500).padStart(4,'0')} ${String(r.action||'').toUpperCase().padEnd(5)} ${r.src} → ${r.dst}  ${r.proto||'any'}:${r.port||'any'}  · ${r.name}`).join('\n'); }
+  function validatePolicyForProject(project){ const NWA=root.NetWizardAudit; const create=NWA&&NWA.createIssue?NWA.createIssue:(x=>Object.assign({severity:'warning',blocking:false},x)); const p=obj(project); const issues=[]; const generated=buildIntentPolicyRules(p); const manual=arr(p.fwRules).filter(r=>r.enabled!==false); const all=manual.concat(generated); const bySrc=new Map(); for(const r of all){ const k=clean(r.src||'any',120); if(!bySrc.has(k)) bySrc.set(k,[]); bySrc.get(k).push(r); } for(const v of arr(p.vlans)){ const intent=normalizeIntent(v); if(intent.type==='transit') continue; const src=endpointForVlan(p,v); const rules=bySrc.get(src)||[]; const needsIsolation=intent.isolation==='isolated'||['guests','iot','cameras','dmz'].includes(intent.type); if(needsIsolation && !rules.some(r=>r.action==='deny'&&r.code==='NW-POL-DENY-INTERNAL')) issues.push(create({code:'NW-POL-001',severity:'warning',category:'policy',source:'policy',message:`${vlanLabel(v)} requiere aislamiento, pero no hay denegación interna propuesta o manual.`,messageKey:'firewall.policy.issue.isolationMissing',messageParams:{vlan:vlanLabel(v)}})); if(intent.internet && !rules.some(r=>r.action!=='deny'&&(r.dst==='any'||/0\.0\.0\.0/.test(r.dst)))) issues.push(create({code:'NW-POL-002',severity:'info',category:'policy',source:'policy',message:`${vlanLabel(v)} requiere Internet; revisa que exista regla/NAT de salida.`,messageKey:'firewall.policy.issue.internetMissing',messageParams:{vlan:vlanLabel(v)}})); if(!cidrForVlan(p,v)) issues.push(create({code:'NW-POL-003',severity:'warning',category:'policy',source:'policy',message:`${vlanLabel(v)} no tiene subnet; las reglas se exportarán usando etiqueta VLAN en vez de CIDR.`,messageKey:'firewall.policy.issue.subnetMissing',messageParams:{vlan:vlanLabel(v)}})); } return {ok:!issues.some(i=>i.severity==='error'),issues,generatedRules:generated}; }
+  function summarizeRules(rules,locale){ const list=arr(rules); if(!list.length) return tr('firewall.policy.noGenerated',{},locale,'No hay reglas generadas desde intención.'); return list.map(r=>`${String(r.prio||500).padStart(4,'0')} ${String(r.action||'').toUpperCase().padEnd(5)} ${r.src} → ${r.dst}  ${r.proto||'any'}:${r.port||'any'}  · ${r.name}`).join('\n'); }
 
 
   function slug(s, fallback){
@@ -188,11 +189,11 @@ Mantenimiento:
     }
     return Array.from(byName.values()).sort((a,b)=>a.name.localeCompare(b.name));
   }
-  function summarizePolicyContext(project){
+  function summarizePolicyContext(project,locale){
     const ctx=buildPolicyContext(project); const lines=[];
-    lines.push('Objetos VLAN/Zona detectados:');
-    for(const v of ctx.vlanObjects) lines.push(`${v.objectName.padEnd(28)} ${String(v.cidr||'sin subnet').padEnd(18)} zone=${v.zone} intf=${v.interfaceName}`);
-    if(ctx.zones.length){ lines.push('\nZonas lógicas:'); for(const z of ctx.zones) lines.push(`${z.name}: ${z.interfaces.join(', ')}`); }
+    lines.push(tr('firewall.policy.context.objects',{},locale,'Objetos VLAN/Zona detectados:'));
+    for(const v of ctx.vlanObjects) lines.push(`${v.objectName.padEnd(28)} ${String(v.cidr||tr('firewall.policy.noSubnet',{},locale,'sin subnet')).padEnd(18)} zone=${v.zone} intf=${v.interfaceName}`);
+    if(ctx.zones.length){ lines.push('\n'+tr('firewall.policy.context.zones',{},locale,'Zonas lógicas:')); for(const z of ctx.zones) lines.push(`${z.name}: ${z.interfaces.join(', ')}`); }
     return lines.join('\n');
   }
 
