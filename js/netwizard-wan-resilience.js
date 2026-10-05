@@ -22,6 +22,7 @@ function circuitGroup(c){const WAN=wanModel();return WAN&&WAN.failoverGroupKey?W
 function circuitLabel(c){return clean(c&&(c.name||c.id))||'circuito';}
 function issue(code,message,blocking,extra){const meta=extra||{};return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'wan-resilience',message,messageKey:'validation.issue.wan.'+code,messageParams:Object.assign({},meta)},meta);}
 function scenario(id,key,params,name,events){return{id,name,nameKey:key,nameParams:params||{},events,source:'derived'};}
+function legacyReason(key,params,message){void key;void params;return message;}
 
 function circuitBySourceInterface(project,deviceId,name){
   const target=clean(name);if(!target)return null;
@@ -198,7 +199,7 @@ function simulateEvents(project,events,name){
   for(const [key,before] of baselineReachable){
     const now=after.get(key);
     if(now&&now.reachable)surviving.push({key,source:before.source,target:before.target,after:now});
-    else lost.push({key,source:before.source,target:before.target,after:now||null,reason:now?now.reason:'El par ya no puede evaluarse con la topología degradada.',reasonKey:now&&now.reasonKey||'validation.wan.reason.degradedUnevaluable',reasonParams:now&&now.reasonParams||{}});
+    else lost.push({key,source:before.source,target:before.target,after:now||null,reason:now?now.reason:legacyReason('validation.wan.reason.degradedUnevaluable',{},'El par ya no puede evaluarse con la topología degradada.'),reasonKey:now&&now.reasonKey||'validation.wan.reason.degradedUnevaluable',reasonParams:now&&now.reasonParams||{}});
   }
   const active=activeCircuitSummary(degradedProject);
   const groupsBefore=activeCircuitSummary(project),wanLost=[];
