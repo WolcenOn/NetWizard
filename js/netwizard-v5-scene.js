@@ -113,7 +113,7 @@
       for(const host of arr(hostsInLocation(loc.id))){
         const bounds=CORE.nodeBounds(visual,'host',host.id,metrics),linked=hostConnectedDeviceId(host);
         const accent=linked?RENDERER.deviceAccentColor(project,linked):'hsl(262 83% 74%)',vlan=vlanByRef(host.vlanRef);
-        RENDERER.drawHostNode(ctx,{visual,host,bounds,selected:!!(visual.sel&&visual.sel.t==='host'&&visual.sel.id===host.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):(labels.noVlan||'no VLAN'),labels});
+        RENDERER.drawHostNode(ctx,{visual,host,bounds,selected:!!(visual.sel&&visual.sel.t==='host'&&visual.sel.id===host.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):(labels.noVlan||'—'),labels});
       }
     }
 
