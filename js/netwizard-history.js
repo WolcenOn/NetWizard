@@ -102,6 +102,7 @@
     return `${s.devices||0} dev · ${s.vlans||0} VLAN · ${s.hosts||0} hosts · ${s.links||0} enlaces · ${s.iotDevices||0} IoT`;
   }
   function make(doc, tag, cls, text){ const el=doc.createElement(tag); if(cls)el.className=cls; if(text!==undefined)el.textContent=String(text); return el; }
+  function snapshotLabelText(label){ const raw=String(label||''); if(raw==='policy-intent-apply'){ const i18n=root.NetWizardI18n; return i18n&&typeof i18n.t==='function'?i18n.t('firewall.policy.history.applySnapshot',{}):'Antes de aplicar políticas por intención'; } return raw; }
   function ensureHistoryCard(){
     const doc = root.document;
     if(!doc || doc.getElementById('historyCard')) return;
@@ -149,7 +150,7 @@
     items.forEach(s=>{
       const tr=doc.createElement('tr');
       const tdDate=make(doc,'td','mono',formatDate(s.ts)); tr.appendChild(tdDate);
-      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=String(s.label||''); tdLabel.appendChild(b); const hint=make(doc,'div','hint',s.source||'manual'); tdLabel.appendChild(hint); tr.appendChild(tdLabel);
+      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=snapshotLabelText(s.label); tdLabel.appendChild(b); const hint=make(doc,'div','hint',s.source||'manual'); tdLabel.appendChild(hint); tr.appendChild(tdLabel);
       tr.appendChild(make(doc,'td','',summaryText(s.summary)));
       const tdAct=doc.createElement('td'); const actions=doc.createElement('div'); actions.style.display='flex'; actions.style.gap='4px'; actions.style.flexWrap='wrap';
       const restore=make(doc,'button','btn bs bxs','Restaurar'); restore.type='button'; restore.dataset.hrestore=String(s.id||'');
@@ -171,6 +172,7 @@
     if(root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', boot);
     else boot();
     root.document.addEventListener('nw:project:changed', () => { if(root.document.getElementById('historyCard')) renderHistoryCard(); });
+    root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{ if(root.document.getElementById('historyCard')) renderHistoryCard(); });
   }
 })(typeof window !== 'undefined' ? window : globalThis);
 
