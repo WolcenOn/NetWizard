@@ -4,10 +4,10 @@
 const arr=v=>Array.isArray(v)?v:[];
 function tr(key,params,fallback){const i18n=root.NetWizardI18n;if(i18n&&typeof i18n.t==='function')return i18n.t(key,params||{});return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
 function text(tag,value,cls){const el=root.document.createElement(tag);if(cls)el.className=cls;el.textContent=String(value==null?'':value);return el;}
-function renderInto(container,project){
+function renderInto(container,project,existingReport){
   if(!container||!root.NetWizardWanResilience)return null;
   container.textContent='';
-  const report=root.NetWizardWanResilience.analyzeProject(project||{});
+  const report=existingReport||root.NetWizardWanResilience.analyzeProject(project||{});
   const head=root.document.createElement('div');head.className='card-h';
   head.append(text('div',tr('validation.wan.title',{},'🛡 Resiliencia WAN'),'card-t'),text('span',tr('validation.common.derived',{},'Derived'),'b bac'));container.appendChild(head);
   container.appendChild(text('div',tr('validation.wan.hint',{},'Simula automáticamente pérdida de circuito, proveedor, router y VPN sobre una copia degradada del proyecto. Reachability decide qué tráfico realmente sobrevive.'),'hint'));
@@ -26,7 +26,7 @@ function renderInto(container,project){
   for(const s of report.scenarios.slice(0,30)){
     const row=root.document.createElement('div');row.style.cssText='padding:8px 0;border-top:1px solid rgba(127,127,127,.22)';
     row.appendChild(text('strong',(s.status==='failed'?'✗ ':'✓ ')+s.name));
-    row.appendChild(text('div',tr('validation.wan.scenarioSummary',{baseline:s.baselineReachablePairs,surviving:s.survivingReachablePairs,lost:s.lostReachability.length,groups:s.wanGroupsLost.join(', ')},s.wanGroupsLost.length?'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost} · WAN sin salida: {groups}':'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost}'),'hint'));
+    row.appendChild(text('div',tr(s.wanGroupsLost.length?'validation.wan.scenarioSummary':'validation.wan.scenarioSummaryNoGroups',{baseline:s.baselineReachablePairs,surviving:s.survivingReachablePairs,lost:s.lostReachability.length,groups:s.wanGroupsLost.join(', ')},s.wanGroupsLost.length?'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost} · WAN sin salida: {groups}':'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost}'),'hint'));
     if(s.lostReachability.length){
       s.lostReachability.slice(0,5).forEach(item=>{
         const src=item.source&&item.source.label||item.source&&item.source.cidr||item.source&&item.source.id||tr('validation.reach.sourceLower',{},'origen');
@@ -87,7 +87,7 @@ function install(){
   if(!root.document)return false;
   const active=()=>root.document.getElementById('pg-validate')?.classList.contains('on');
   root.document.addEventListener('nw:project:changed',()=>{markStale();if(active())ensurePanel();});
-  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='validate')ensurePanel();});root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(active()){root.document.getElementById('nwWanResiliencePanel')?.remove();ensurePanel();}});
+  root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='validate')ensurePanel();});root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(!active())return;const existing=root.NetWizardLastWanResilienceReport;root.document.getElementById('nwWanResiliencePanel')?.remove();ensurePanel();if(existing){const results=root.document.getElementById('nwWanResilienceResults'),status=root.document.getElementById('nwWanResilienceStatus');if(results)renderInto(results,projectSnapshot(),existing);root.NetWizardLastWanResilienceReport=existing;if(status)status.textContent=tr('validation.wan.updated',{},'Análisis actualizado');}});
   if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout(()=>{if(active())ensurePanel();},100));
   else root.setTimeout(()=>{if(active())ensurePanel();},0);
   return true;
