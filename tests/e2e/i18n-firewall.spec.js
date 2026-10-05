@@ -34,7 +34,9 @@ test('Firewall cambia ES/EN en caliente con reglas, matriz, hardening y polític
   await expect(root).toContainText('New rule');
   await expect(root).toContainText('Configured rules');
   await expect(page.locator('#fwRulesList')).toContainText('ALLOW');
-  await expect(page.locator('#policyIntentOut')).toContainText('No rules generated from intent').catch(()=>{});
+  await expect(page.locator('#policyIntentCnt')).toContainText('proposals');
+  await page.locator('#btnPolicyDiff').click();
+  await expect(page.locator('#policyIntentOut')).toContainText('Firewall/ACL rule change preview');
 
   await page.locator('[data-tab="fw-matrix"]').click();
   await expect(page.locator('#fw-matrix')).toContainText('Inter-VLAN matrix');
@@ -49,8 +51,11 @@ test('Firewall cambia ES/EN en caliente con reglas, matriz, hardening y polític
   await expect(root).toContainText('Nueva regla');
   await expect(page.locator('#fw-harden')).toContainText('Parámetros de hardening');
   await expect(page.locator('#fw-harden')).toContainText('Perfiles rápidos');
-
   await page.locator('[data-tab="fw-rules"]').click();
+  await expect(page.locator('#policyIntentCnt')).toContainText('propuestas');
+  await page.locator('#btnPolicyDiff').click();
+  await expect(page.locator('#policyIntentOut')).toContainText('Vista previa de cambios en reglas firewall/ACL');
+
   await page.locator('#btnFwTpl').click();
   await expect(page.locator('#fwTplModal')).toHaveClass(/on/);
   await expect(page.locator('#fwTplModal')).toContainText('Plantillas de reglas FW');
@@ -59,5 +64,5 @@ test('Firewall cambia ES/EN en caliente con reglas, matriz, hardening y polític
   await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
   await expect(page.locator('#fwTplModal')).toContainText('Firewall rule templates');
   await expect(page.locator('#fwTplList')).toContainText('Basic: DNS + HTTP/HTTPS');
-  await expect(page.locator('#policyIntentOut')).toContainText(/rule|Rule|No rules|Firewall\/ACL/);
+  await expect(page.locator('#policyIntentCnt')).toContainText('proposals');
 });
