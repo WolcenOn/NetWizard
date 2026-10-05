@@ -1325,6 +1325,9 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
     if($('dhcpPanel')?.open)renderDhcp();
   }
+  if(S.step==='graphs'){
+    drawTopo();resizeV5();renderV5Panel();
+  }
   if(S.step==='hosts'){
     const keep={dev:$('hConnDev')?.value||'',managed:$('hDeviceRef')?.value||'',port:$('hPort')?.value||'',loc:$('hLoc')?.value||'',phys:$('hPhysLocSel')?.value||''};
     fillVlanSels();fillHostDeviceSel();if(keep.dev&&Array.from($('hConnDev').options).some(o=>o.value===keep.dev))$('hConnDev').value=keep.dev;
@@ -2599,16 +2602,16 @@ function deletePhysicalLocation(id,askConfirm=true){
   ensurePhysicalLocationModel();
   if(!V5LOCATIONTX)return false;
   const plan=V5LOCATIONTX.planDelete(S,{id});
-  if(!plan.ok){console.warn(plan.error,id);alert(plan.error||'No se ha podido eliminar la ubicación.');return false;}
+  if(!plan.ok){console.warn(plan.error,id);alert(plan.error||i18nText('graphs.alert.deleteLocationFailed',{},'No se ha podido eliminar la ubicación.'));return false;}
   const i=plan.impact||{};
-  let msg='¿Eliminar la ubicación "'+(i.name||id)+'"?';
+  let msg=i18nText('graphs.confirm.deleteLocation',{name:i.name||id},'¿Eliminar la ubicación "{name}"?');
   const affected=(i.children||0)+(i.devices||0)+(i.hosts||0)+(i.racks||0)+(i.outlets||0);
   if(affected){
-    msg+='\n\nSe recolocarán '+(i.children||0)+' sububicación(es), '+(i.devices||0)+' equipo(s), '+(i.hosts||0)+' host(s), '+(i.racks||0)+' rack(s) y '+(i.outlets||0)+' toma(s) a '+(i.fallbackName?('"'+i.fallbackName+'"'):'sin ubicación')+'.';
+    msg+='\n\n'+i18nText('graphs.confirm.deleteLocationImpact',{children:i.children||0,devices:i.devices||0,hosts:i.hosts||0,racks:i.racks||0,outlets:i.outlets||0,target:i.fallbackName?('"'+i.fallbackName+'"'):i18nText('graphs.common.noLocation',{},'sin ubicación')},'Se recolocarán {children} sububicación(es), {devices} equipo(s), {hosts} host(s), {racks} rack(s) y {outlets} toma(s) a {target}.');
   }
   if(askConfirm&&!confirm(msg))return false;
   const result=v5ApplyCommand('deletePhysicalLocation',{id});
-  if(!result.changed){alert(result.error||'No se ha podido eliminar la ubicación.');return false;}
+  if(!result.changed){alert(result.error||i18nText('graphs.alert.deleteLocationFailed',{},'No se ha podido eliminar la ubicación.'));return false;}
   clearPhysicalLocationForm();
   return true;
 }
@@ -2829,19 +2832,19 @@ function v5HideLinkTooltip(){const el=document.getElementById('v5LinkTooltip'); 
 function v5RenderLinkTooltip(el,dot){
   clearNode(el);
   const h=dot.host, dev=dot.dev, p=dot.port, vlan=vByRef(h.vlanRef);
-  const mode=p?(p.mode||'access'):'pendiente';
+  const mode=p?(p.mode||'access'):i18nText('graphs.common.pending',{},'pendiente');
   const accessVlan=p&&p.accessVlanRef?vByRef(p.accessVlanRef):null;
-  const title=makeEl('div','',`${h.name||'Host'} → ${dev.name||'Equipo'}`);
+  const title=makeEl('div','',`${h.name||i18nText('graphs.common.host',{},'Host')} → ${dev.name||i18nText('graphs.common.device',{},'Equipo')}`);
   title.style.cssText='font-weight:700;margin-bottom:4px;color:#e2eaf7';
   el.appendChild(title);
   const addLine=(label,value,mono=false)=>{
     const line=makeEl('div',''); line.style.color='#8fa3c0'; appendText(line,label+': ');
-    const span=makeEl('span','',value); span.style.color=label==='Puerto'?'#bfdbfe':'#e2eaf7'; if(mono) span.style.fontFamily='Fira Code,monospace';
+    const span=makeEl('span','',value); span.style.color=label===i18nText('graphs.fields.port',{},'Puerto')?'#bfdbfe':'#e2eaf7'; if(mono) span.style.fontFamily='Fira Code,monospace';
     line.appendChild(span); el.appendChild(line);
   };
-  addLine('Puerto',p?p.name:'sin asignar',true);
-  addLine('Modo',`${mode} · VLAN host: ${vlan?('VLAN '+vlan.vlanId+' · '+vlan.name):'sin VLAN'}`,true);
-  addLine('VLAN puerto',accessVlan?('VLAN '+accessVlan.vlanId+' · '+accessVlan.name):(p&&p.accessVlanRef?p.accessVlanRef:'—'),false);
+  addLine(i18nText('graphs.fields.port',{},'Puerto'),p?p.name:i18nText('graphs.common.unassigned',{},'sin asignar'),true);
+  addLine(i18nText('graphs.fields.mode',{},'Modo'),i18nText('graphs.tooltip.modeVlan',{mode,vlan:vlan?('VLAN '+vlan.vlanId+' · '+vlan.name):i18nText('graphs.common.noVlanLower',{},'sin VLAN')},'{mode} · VLAN host: {vlan}'),true);
+  addLine(i18nText('graphs.tooltip.portVlan',{},'VLAN puerto'),accessVlan?('VLAN '+accessVlan.vlanId+' · '+accessVlan.name):(p&&p.accessVlanRef?p.accessVlanRef:'—'),false);
   addLine('IP',effectiveHostIp(h)||'—',true);
 }
 function v5DrawLinkDot(geometry,host,dev,port,accent){
@@ -2909,10 +2912,10 @@ function visualHit(wx,wy){return V5INTERACT.hitTest({point:{x:wx,y:wy},hosts:S.h
 function locAt(wx,wy){return V5INTERACT.locationAt({point:{x:wx,y:wy},locations:vLocs(),locationBounds:visualLocBounds});}
 function removeV5Location(id){
   ensureVisualModel();
-  if(vLocs().length<2)return alert('Debe quedar al menos una ubicación.');
+  if(vLocs().length<2)return alert(i18nText('graphs.alert.keepOneLocation',{},'Debe quedar al menos una ubicación.'));
   const loc=vLocById(id);
   const physical=loc?.physicalLocationId?physLocById(loc.physicalLocationId):physLocByName(loc?.name||'');
-  if(!physical)return alert('No se ha encontrado la ubicación física asociada.');
+  if(!physical)return alert(i18nText('graphs.alert.physicalLocationMissing',{},'No se ha encontrado la ubicación física asociada.'));
   return deletePhysicalLocation(physical.id,true);
 }
 function addV5Location(){
