@@ -140,6 +140,13 @@ if(root.document){
   else refresh();
   root.document.addEventListener('nw:project:changed',refresh);
   root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='links')refresh();});
-  root.addEventListener&&root.addEventListener('netwizard:i18n',refresh);
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{
+    if(!active())return;
+    const ids=['nwTransitDeviceA','nwTransitPortA','nwTransitDeviceB','nwTransitPortB','nwTransitCidr','nwTransitName','nwTransitIpA','nwTransitIpB','nwTransitNotes'];
+    const values=Object.fromEntries(ids.map(id=>[id,root.document.getElementById(id)?.value||'']));
+    root.document.getElementById('nwInterSiteTransitCard')?.remove();
+    install();
+    ids.forEach(id=>{const node=root.document.getElementById(id);if(node&&values[id]!==undefined)node.value=values[id];});
+  });
 }
 })(typeof window!=='undefined'?window:globalThis);
