@@ -181,7 +181,7 @@
     if(n.kind==='access'){
       const a=n.ref||{};
       addHint([
-        accessType(a.type).label,
+        accessTypeLabel(a.type),
         tr('iot.map.vendor',{vendor:a.vendor||'',model:a.model||''},'Vendor: {vendor} {model}'),
         tr('iot.map.management',{ip:a.mgmtIp||'—',vlan:vlanName(a.mgmtVlanRef)},'Gestión: {ip} / {vlan}'),
         tr('iot.map.connection',{device:devName(a.parentDeviceId),port:a.parentPortId?'/ '+portName(a.parentPortId):''},'Conexión: {device} {port}'),
@@ -192,7 +192,7 @@
     }else if(n.kind==='iot'){
       const d=n.ref||{};
       addHint([
-        IOT_TYPES[d.type]||d.type||'',
+        iotTypeText(d.type),
         tr('iot.map.technology',{technology:techText(d.tech)},'Tecnología: {technology}'),
         tr('iot.map.vlan',{vlan:vlanName(d.vlanRef)},'VLAN: {vlan}'),
         tr('iot.map.access',{access:state.accessNodes.find(a=>a.id===d.accessNodeId)?.name||'—'},'Acceso: {access}'),
