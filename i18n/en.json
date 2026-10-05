@@ -1028,5 +1028,6 @@
   "graphs.trace.review": "Review the diagnostic validations.",
   "graphs.trace.missingData": "Data is missing to validate every hop.",
   "graphs.trace.coherent": "All modeled controls are consistent.",
-  "iot.tech.generic": "Generic"
+  "iot.tech.generic": "Generic",
+  "iot.tech.controller": "Controller"
 }
