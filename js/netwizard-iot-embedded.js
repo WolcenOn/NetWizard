@@ -96,7 +96,7 @@
   function fillVendors(sel,val){ return setOptions(sel,VENDORS.map(v=>makeOption(v,v,v===val))); }
   function fillIotTypes(sel,val){ return setOptions(sel,Object.keys(IOT_TYPES).map(k=>makeOption(k,iotTypeText(k),k===val))); }
   function fillTechs(sel,val){ return setOptions(sel,Object.keys(TECHS).map(k=>makeOption(k,techText(k),k===val))); }
-  function fillVlans(sel,val){ const ss=segments(); const opts=[makeOption('',tr('iot.select.unassigned',{},'— sin asignar —'),!val)]; ss.forEach(s=>{const ref=s.ref||s.vlanRef||s.id;const num=s.vlanNumber||s.vlanId||'';opts.push(makeOption(ref,`${s.name}${num?` · VLAN ${num}`:''}${s.subnet?` · ${s.subnet}`:''}`,ref===val));}); return setOptions(sel,opts); }
+  function fillVlans(sel,val){ const ss=segments(); const opts=[makeOption('',tr('iot.select.unassigned',{},'— sin asignar —'),!val)]; ss.forEach(s=>{const ref=s.ref||s.vlanRef||s.id;const num=s.vlanNumber||s.vlanId||'';opts.push(makeOption(ref,`${s.name}${num?tr('iot.common.vlanSuffix',{num},' · VLAN {num}'):''}${s.subnet?` · ${s.subnet}`:''}`,ref===val));}); return setOptions(sel,opts); }
   function fillNetDevs(sel,val){ return setOptions(sel,[makeOption('',tr('iot.select.notConnected',{},'— no conectado —'),!val)].concat(deviceNodes().map(d=>makeOption(d.id,`${d.name} · ${d.type||'network'}`,d.id===val)))); }
   function fillPorts(sel,val,parent){ const ps=portNodes().filter(p=>!parent||p.parentNodeId===parent); return setOptions(sel,[makeOption('',tr('iot.select.noPort',{},'— puerto no indicado —'),!val)].concat(ps.map(p=>makeOption(p.id,`${p.name}${p.meta?.mode?` · ${p.meta.mode}`:''}`,p.id===val)))); }
   function fillAccess(sel,val,tech){ let arr=state.accessNodes;if(tech){arr=arr.filter(a=>accessType(a.type).tech===tech||a.type==='generic_gateway'||tech==='ethernet');} return setOptions(sel,[makeOption('',tr('iot.select.direct',{},'— directo / sin gateway —'),!val)].concat(arr.map(a=>makeOption(a.id,`${accessType(a.type).icon} ${a.name} · ${accessTypeLabel(a.type)}`,a.id===val)))); }
@@ -190,7 +190,7 @@
       addHint([
         IOT_TYPES[d.type]||d.type||'',
         tr('iot.map.technology',{technology:techText(d.tech)},'Tecnología: {technology}'),
-        `VLAN: ${vlanName(d.vlanRef)}`,
+        tr('iot.map.vlan',{vlan:vlanName(d.vlanRef)},'VLAN: {vlan}'),
         tr('iot.map.access',{access:state.accessNodes.find(a=>a.id===d.accessNodeId)?.name||'—'},'Acceso: {access}'),
         tr('iot.map.identifier',{identifier:d.identifier||'—'},'ID/IP/EUI: {identifier}'),
         tr('iot.map.location',{location:selectedLocName(d.locationId)},'Ubicación: {location}')
