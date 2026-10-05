@@ -6,6 +6,11 @@
 (function initNetWizardNetworkUtils(root){
   'use strict';
 
+  function tryRequire(p){ try{return require(p);}catch{return null;} }
+  function i18n(){ return root.NetWizardI18n || (typeof require==='function'?tryRequire('./netwizard-i18n.js'):null); }
+  function tr(key,params,fallback,locale){ const api=i18n(); if(api&&typeof api.t==='function'){const v=api.t(key,params||{},locale);if(v!==key)return v;} return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):''); }
+  function result(ok,code,key,params,fallback,extra,locale){ return Object.assign({ok,code,msg:tr(key,params,fallback,locale),messageKey:key,messageParams:Object.assign({},params||{})},extra||{}); }
+
   function parseIp(ip){
     const p=(ip||'').trim().split('.');
     if(p.length!==4)return null;
@@ -69,31 +74,33 @@
     return null;
   }
 
-  function validateSubnetAssignment(input, subnets){
+  function validateSubnetAssignment(input, subnets, options){
     const data=input||{};
     const vlanRef=data.vlanRef||'';
     const cidr=(data.cidr||'').trim();
     const gateway=(data.gateway||'').trim();
     const existingSubnetId=data.existingSubnetId||'';
-    if(!vlanRef)return {ok:false,code:'missing_vlan',msg:'Selecciona una VLAN.'};
+    const locale=options&&options.locale;
+    if(!vlanRef)return result(false,'missing_vlan','subnet.validation.selectVlan',{},'Selecciona una VLAN.',{},locale);
     const ci=parseCidr(cidr);
-    if(!ci)return {ok:false,code:'invalid_cidr',msg:'CIDR inválido. Usa formato tipo 10.10.10.0/24.'};
+    if(!ci)return result(false,'invalid_cidr','subnet.validation.invalidCidr',{},'CIDR inválido. Usa formato tipo 10.10.10.0/24.',{},locale);
     const normalized=`${ip4s(ci.net)}/${ci.pfx}`;
     if(gateway){
-      if(parseIp(gateway)===null)return {ok:false,code:'invalid_gateway',msg:'Gateway inválido.'};
-      if(!ipInSn(gateway,normalized))return {ok:false,code:'gateway_outside_subnet',msg:'El gateway no pertenece a la subnet indicada.'};
+      if(parseIp(gateway)===null)return result(false,'invalid_gateway','subnet.validation.invalidGateway',{},'Gateway inválido.',{},locale);
+      if(!ipInSn(gateway,normalized))return result(false,'gateway_outside_subnet','subnet.validation.gatewayOutside',{},'El gateway no pertenece a la subnet indicada.',{},locale);
       if(ci.pfx<31 && (parseIp(gateway)===ci.net || parseIp(gateway)===ci.bc)){
-        return {ok:false,code:'gateway_reserved',msg:'El gateway no puede ser la dirección de red ni broadcast.'};
+        return result(false,'gateway_reserved','subnet.validation.gatewayReserved',{},'El gateway no puede ser la dirección de red ni broadcast.',{},locale);
       }
     }
     const overlap=findSubnetOverlap(normalized,subnets,{ignoreSubnetId:existingSubnetId,ignoreVlanRef:vlanRef});
     if(overlap){
-      return {ok:false,code:'subnet_overlap',msg:`La subnet ${normalized} se solapa con ${overlap.subnet.cidr}.`,overlap};
+      return result(false,'subnet_overlap','subnet.validation.overlap',{cidr:normalized,existing:overlap.subnet.cidr},'La subnet {cidr} se solapa con {existing}.',{overlap},locale);
     }
-    return {ok:true,cidr:normalized,ci,gateway:gateway||null,msg:normalized!==cidr?`CIDR normalizado a ${normalized}.`:''};
+    if(normalized!==cidr)return result(true,'normalized','subnet.validation.normalized',{cidr:normalized},'CIDR normalizado a {cidr}.',{cidr:normalized,ci,gateway:gateway||null},locale);
+    return {ok:true,code:'ok',cidr:normalized,ci,gateway:gateway||null,msg:'',messageKey:'',messageParams:{}};
   }
 
-  const api={version:'netwizard-network-utils-v1',parseIp,ip4s,parseCidr,ipInSn,cidrOverlaps,findSubnetOverlap,validateSubnetAssignment};
+  const api={version:'netwizard-network-utils-v2',parseIp,ip4s,parseCidr,ipInSn,cidrOverlaps,findSubnetOverlap,validateSubnetAssignment};
   root.NetWizardNetworkUtils=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

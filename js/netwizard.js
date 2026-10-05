@@ -1319,6 +1319,11 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     if($('portEditId')&&$('portEditId').value){$('btnAddPort').dataset.i18n='ports.actions.saveChanges';$('btnAddPort').textContent=i18nText('ports.actions.saveChanges',{},'💾 Guardar cambios');}
     else if($('btnAddPort')){$('btnAddPort').dataset.i18n='ports.actions.add';$('btnAddPort').textContent=i18nText('ports.actions.add',{},'➕ Añadir');}
   }
+  if(S.step==='vlan'){
+    vlanSelectSignature='';
+    fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
+    if($('dhcpPanel')?.open)renderDhcp();
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
@@ -1336,19 +1341,20 @@ function fillVlanSels(){
   vlanSelectSignature=signature;
   const selected=new Map();
   ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan','hVlan','hFiltV'].forEach(id=>{const el=$(id);if(el)selected.set(id,el.value);});
-  const baseOpts=()=>[makeOption('','(ninguna)'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))];
+  const baseOpts=()=>[makeOption('',i18nText('common.none',{},'(ninguna)')), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))];
   ['aNatV','roasNatV','secQV','pmAV','pmNV','lyVlan','pVlan','pNativeVlan','mSnVlan'].forEach(id=>{const el=$(id);if(el){setOptions(el,baseOpts());if(selected.get(id)&&Array.from(el.options).some(o=>o.value===selected.get(id)))el.value=selected.get(id);}});
-  const hVlan=$('hVlan');if(hVlan){setOptions(hVlan,[makeOption('','(elige VLAN)'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hVlan')&&Array.from(hVlan.options).some(o=>o.value===selected.get('hVlan')))hVlan.value=selected.get('hVlan');}
-  const hFiltV=$('hFiltV');if(hFiltV){setOptions(hFiltV,[makeOption('','Todas'), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hFiltV')&&Array.from(hFiltV.options).some(o=>o.value===selected.get('hFiltV')))hFiltV.value=selected.get('hFiltV');}
+  const hVlan=$('hVlan');if(hVlan){setOptions(hVlan,[makeOption('',i18nText('vlan.select.choose',{},'(elige VLAN)')), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hVlan')&&Array.from(hVlan.options).some(o=>o.value===selected.get('hVlan')))hVlan.value=selected.get('hVlan');}
+  const hFiltV=$('hFiltV');if(hFiltV){setOptions(hFiltV,[makeOption('',i18nText('common.all',{},'Todas')), ...sorted.map(v=>makeOption(v.id,`${v.vlanId} — ${v.name||''}`))]);if(selected.get('hFiltV')&&Array.from(hFiltV.options).some(o=>o.value===selected.get('hFiltV')))hFiltV.value=selected.get('hFiltV');}
 }
 
+function syncSubnetAuthorityLabel(){if($('aSnAuthority'))$('aSnAuthority').value=i18nText('subnet.quick.authorityValue',{},'S.subnets · solo faltantes');}
 function updManualSnHint(){
   const ref=$('mSnVlan')?.value||'';
   const hint=$('mSnHint');
   if(!hint)return;
-  if(!ref){hint.textContent='Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.';return;}
+  if(!ref){hint.textContent=i18nText('subnet.form.hint',{},'Edición explícita de S.subnets. Si la VLAN ya tiene subnet, se actualiza esa misma asignación.');return;}
   const v=vByRef(ref);const sn=snByVRef(ref);
-  hint.textContent=sn?`Editando VLAN ${v?.vlanId||'—'}: ${sn.cidr} · GW ${sn.gateway||'—'}`:`Nueva subnet manual para VLAN ${v?.vlanId||'—'}.`;
+  hint.textContent=sn?i18nText('subnet.form.editing',{vlan:v?.vlanId||'—',cidr:sn.cidr,gateway:sn.gateway||'—'},'Editando VLAN {vlan}: {cidr} · GW {gateway}'):i18nText('subnet.form.newForVlan',{vlan:v?.vlanId||'—'},'Nueva subnet manual para VLAN {vlan}.');
   if(sn){$('mSnCidr').value=sn.cidr||'';$('mSnGw').value=sn.gateway||'';}
 }
 $('mSnVlan').onchange=updManualSnHint;
@@ -1357,7 +1363,7 @@ $('btnAddManualSn').onclick=()=>{
   const cidr=($('mSnCidr').value||'').trim();
   const gateway=($('mSnGw').value||'').trim()||null;
   const ex=snByVRef(vRef);
-  const check=validateSubnetAssignment({vlanRef:vRef,cidr,gateway,existingSubnetId:ex?.id||''},S.subnets);
+  const check=validateSubnetAssignment({vlanRef:vRef,cidr,gateway,existingSubnetId:ex?.id||''},S.subnets,{locale:window.NetWizardI18n?.getLocale?.()});
   if(!check.ok)return alert(check.msg);
   if(ex){ex.cidr=check.cidr;ex.gateway=check.gateway;}
   else S.subnets.push({id:uid('sn'),vlanRef:vRef,cidr:check.cidr,gateway:check.gateway});
@@ -1369,8 +1375,8 @@ $('btnAddManualSn').onclick=()=>{
 
 $('btnAddVlan').onclick=()=>{
   const vid=parseInt($('vId').value||'',10);const name=($('vName').value||'').trim()||`VLAN${vid}`;const color=$('vColor').value||VCOLS[S.vlans.length%VCOLS.length];
-  if(!isFinite(vid)||vid<1||vid>4094)return alert('VLAN ID inválida (1-4094).');
-  if(S.vlans.some(v=>v.vlanId===vid))return alert('Esa VLAN ya existe.');
+  if(!isFinite(vid)||vid<1||vid>4094)return alert(i18nText('vlan.alert.invalidId',{},'VLAN ID inválida (1-4094).'));
+  if(S.vlans.some(v=>v.vlanId===vid))return alert(i18nText('vlan.alert.duplicate',{},'Esa VLAN ya existe.'));
   S.vlans.push({id:uid('vlan'),vlanId:vid,name,color});
   $('vId').value='';$('vName').value='';
   for(const p of S.ports){if(p.mode==='trunk'&&!p.allowedVlans.includes(vid)){p.allowedVlans.push(vid);p.allowedVlans.sort((a,b)=>a-b);}}
@@ -1378,37 +1384,37 @@ $('btnAddVlan').onclick=()=>{
 };
 function buildQuickSubnetPlan(){
   const planner=window.NetWizardPlanner;
-  if(!planner||typeof planner.buildFixedSubnetPlan!=='function')return{ok:false,msg:'Motor común de subnetting no disponible.',plans:[],warnings:[]};
+  if(!planner||typeof planner.buildFixedSubnetPlan!=='function')return{ok:false,msg:i18nText('subnet.alert.engineUnavailable',{},'Motor común de subnetting no disponible.'),plans:[],warnings:[]};
   const rawBase=($('aBase').value||'').trim()||'10.10.0.0/16';
   const pfx=parseInt($('aSize').value||'24',10);
   return planner.buildFixedSubnetPlan(S,rawBase,pfx,{gatewayMode:$('aGw').value||'first'});
 }
 function quickSubnetPlanSummary(plan){
-  if(!plan?.ok)return plan?.msg||'Plan de subnetting inválido.';
+  if(!plan?.ok)return plan?.msg||i18nText('subnet.alert.invalidPlan',{},'Plan de subnetting inválido.');
   const cp=window.NetWizardChangePreview;
   const diffFn=cp&&(cp.computeSubnetPlanDiff||cp.computeVlsmDiff);
   if(diffFn&&typeof diffFn==='function'){
     const diff=diffFn.call(cp,S,plan,{assignMode:'none',replaceExisting:false});
-    return cp.summarizeDiff?cp.summarizeDiff(diff,'Asignación rápida · solo subnets faltantes'):'';
+    return cp.summarizeDiff?cp.summarizeDiff(diff,i18nText('subnet.quick.diffTitle',{},'Asignación rápida · solo subnets faltantes')):'';
   }
-  const lines=[`Base: ${plan.base} · prefijo /${plan.prefix}`];
+  const lines=[i18nText('subnet.quick.baseSummary',{base:plan.base,prefix:plan.prefix},'Base: {base} · prefijo /{prefix}')];
   for(const p of plan.plans||[])lines.push(`VLAN ${p.vlanId||p.vlanRef}: ${p.cidr} · GW ${p.gateway||'—'}`);
   if(plan.warnings?.length)lines.push('',...plan.warnings.map(x=>'! '+x));
   return lines.join('\n');
 }
 function runQuickSubnetPlan(apply){
-  if(!S.vlans.length){alert('Crea VLANs primero.');return;}
+  if(!S.vlans.length){alert(i18nText('vlan.alert.createFirst',{},'Crea VLANs primero.'));return;}
   const plan=buildQuickSubnetPlan(),out=$('aSnOut');
   if(out)out.textContent=quickSubnetPlanSummary(plan);
-  if(!plan.ok){if(apply)alert(plan.msg||'Plan de subnetting inválido.');return plan;}
+  if(!plan.ok){if(apply)alert(plan.msg||i18nText('subnet.alert.invalidPlan',{},'Plan de subnetting inválido.'));return plan;}
   if(!apply)return plan;
-  if(!plan.plans.length){alert('No hay VLANs sin subnet que completar.');return plan;}
+  if(!plan.plans.length){alert(i18nText('subnet.quick.noMissing',{},'No hay VLANs sin subnet que completar.'));return plan;}
   const planner=window.NetWizardPlanner;
   const next=planner.applySubnetPlan(S,plan,{replaceExisting:false,assignMode:'none'});
   const nv=$('aNatV').value;if(nv){next.roas=next.roas||{};next.roas.natVRef=nv;}
-  if(!confirm(`${quickSubnetPlanSummary(plan)}\n\n¿Aplicar ${plan.plans.length} subnet(s) faltante(s)? Las asignaciones existentes no se modificarán.`))return plan;
+  if(!confirm(quickSubnetPlanSummary(plan)+'\n\n'+i18nText('subnet.quick.confirm',{count:plan.plans.length},'¿Aplicar {count} subnet(s) faltante(s)? Las asignaciones existentes no se modificarán.')))return plan;
   replaceProject(next,{source:'quick-subnet-plan'});
-  if($('aSnOut'))$('aSnOut').textContent='✓ Plan aplicado sobre S.subnets. No se reemplazó ninguna subnet existente.';
+  if($('aSnOut'))$('aSnOut').textContent=i18nText('subnet.quick.applied',{},'✓ Plan aplicado sobre S.subnets. No se reemplazó ninguna subnet existente.');
   return plan;
 }
 $('btnAutoSnPreview').onclick=()=>runQuickSubnetPlan(false);
@@ -1417,9 +1423,9 @@ function renderVlans(){
   const vrows=S.vlans.slice(); const vsort=S.uiSort.vlans||{key:'id',dir:1};
   vrows.sort((a,b)=>vsort.dir*cmpMixed(vsort.key==='name'?a.name:a.vlanId, vsort.key==='name'?b.name:b.vlanId));
   const el=$('vlanList'); el.textContent='';
-  if(!S.vlans.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin VLANs'; empty.appendChild(p); el.appendChild(empty); return; }
+  if(!S.vlans.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent=i18nText('vlan.empty',{},'Sin VLANs'); empty.appendChild(p); el.appendChild(empty); return; }
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
-  const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.appendChild(document.createElement('th')); trh.appendChild(createSortTh('vlans','id','ID')); trh.appendChild(createSortTh('vlans','name','Nombre')); trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
+  const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.appendChild(document.createElement('th')); trh.appendChild(createSortTh('vlans','id','ID')); trh.appendChild(createSortTh('vlans','name',i18nText('form.name',{},'Nombre'))); trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
   vrows.forEach(v=>{
     const tr=document.createElement('tr');
@@ -1436,7 +1442,7 @@ function renderSubnets(){
   const srows=S.subnets.slice(); const ssort=S.uiSort.subnets||{key:'vlan',dir:1};
   srows.sort((a,b)=>{const va=vByRef(a.vlanRef),vb=vByRef(b.vlanRef); let av='',bv=''; switch(ssort.key){case 'cidr': av=a.cidr; bv=b.cidr; break; case 'gw': av=a.gateway||''; bv=b.gateway||''; break; default: av=va?.vlanId||99999; bv=vb?.vlanId||99999;} return ssort.dir*cmpMixed(av,bv);});
   const el=$('snList'); el.textContent='';
-  if(!S.subnets.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent='Sin subnets. Puedes definirlas manualmente, completar solo faltantes o usar el planificador VLSM.'; empty.appendChild(p); el.appendChild(empty); return; }
+  if(!S.subnets.length){ const empty=document.createElement('div'); empty.className='empty'; const p=document.createElement('p'); p.textContent=i18nText('subnet.empty',{},'Sin subnets. Puedes definirlas manualmente, completar solo faltantes o usar el planificador VLSM.'); empty.appendChild(p); el.appendChild(empty); return; }
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
   const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.appendChild(document.createElement('th')); trh.appendChild(createSortTh('subnets','vlan','VLAN')); trh.appendChild(createSortTh('subnets','cidr','CIDR')); trh.appendChild(createSortTh('subnets','gw','GW')); trh.appendChild(document.createElement('th')); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
@@ -2124,13 +2130,13 @@ function fillRoasSels(){
   const gws=S.devices.filter(d=>d.type!=='switch');
   const roasDev=$('roasDev');
   if(roasDev){
-    setOptions(roasDev,[makeOption('', '(selecciona)')].concat(gws.map(d=>makeOption(d.id, d.name||d.id, S.roas.gwId===d.id))));
+    setOptions(roasDev,[makeOption('',i18nText('common.select',{},'(selecciona)'))].concat(gws.map(d=>makeOption(d.id,d.name||d.id,S.roas.gwId===d.id))));
     roasDev.value=S.roas.gwId||'';
   }
   const gId=S.roas.gwId;const ifs=gId?portsByDev(gId):[];
   const roasLanIf=$('roasLanIf');
   if(roasLanIf){
-    setOptions(roasLanIf,[makeOption('', '(interfaz)')].concat(ifs.map(p=>makeOption(p.name, p.name||p.id, S.roas.lanIf===p.name))));
+    setOptions(roasLanIf,[makeOption('',i18nText('roas.interfacePlaceholder',{},'(interfaz)'))].concat(ifs.map(p=>makeOption(p.name,p.name||p.id,S.roas.lanIf===p.name))));
     roasLanIf.value=S.roas.lanIf||'';
   }
   $('wanCidr').value=S.roas.wanCidr||'';$('wanNh').value=S.roas.wanNh||'';$('roasNatV').value=S.roas.natVRef||'';
@@ -2141,21 +2147,22 @@ $('roasNatV').onchange=()=>{S.roas.natVRef=$('roasNatV').value||null;save();};
 $('wanCidr').onblur=()=>{S.roas.wanCidr=($('wanCidr').value||'').trim();save();};
 $('wanNh').onblur=()=>{S.roas.wanNh=($('wanNh').value||'').trim();save();};
 $('btnRoas').onclick=()=>{
-  if(!S.roas.gwId)return alert('Selecciona gateway.');if(!S.roas.lanIf)return alert('Selecciona interfaz LAN.');
+  if(!S.roas.gwId)return alert(i18nText('roas.alert.gatewayRequired',{},'Selecciona gateway.'));if(!S.roas.lanIf)return alert(i18nText('roas.alert.interfaceRequired',{},'Selecciona interfaz LAN.'));
   const gwPort=S.ports.find(p=>p.deviceId===S.roas.gwId&&p.name===S.roas.lanIf);
   if(gwPort){gwPort.mode='trunk';gwPort.allowedVlans=S.vlans.map(v=>v.vlanId).sort((a,b)=>a-b);}
-  save();refresh();alert('✓ RoaS aplicado.');
+  save();refresh();alert(i18nText('roas.applied',{},'✓ RoaS aplicado.'));
 };
 function renderDhcp(){
   const box=$('dhcpView'); box.textContent='';
-  if(!S.vlans.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent='Sin VLANs.'; box.appendChild(hint); return; }
+  const locale=window.NetWizardI18n?.getLocale?.();
+  if(!S.vlans.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent=i18nText('vlan.emptyPeriod',{},'Sin VLANs.'); box.appendChild(hint); return; }
   const dh=window.NetWizardDhcpUtils;
-  const audit=dh?dh.validateDhcpForProject(S):{issues:[]};
+  const audit=dh?dh.validateDhcpForProject(S,{locale}):{issues:[]};
   const top=document.createElement('div'); top.className='hrow'; top.style.marginBottom='8px'; top.style.gap='6px'; top.style.flexWrap='wrap';
-  const btnDiff=document.createElement('button'); btnDiff.type='button'; btnDiff.className='btn small'; btnDiff.id='btnDhcpDiff'; btnDiff.textContent='🧾 Ver diff DHCP';
-  const btnPropose=document.createElement('button'); btnPropose.type='button'; btnPropose.className='btn small'; btnPropose.id='btnDhcpPropose'; btnPropose.textContent='✨ Proponer pools DHCP';
-  const btnValidate=document.createElement('button'); btnValidate.type='button'; btnValidate.className='btn small'; btnValidate.id='btnDhcpValidate'; btnValidate.textContent='🧪 Validar DHCP';
-  const topHint=document.createElement('span'); topHint.className='hint'; topHint.textContent='Rangos, exclusiones y DNS por VLAN.';
+  const btnDiff=document.createElement('button'); btnDiff.type='button'; btnDiff.className='btn small'; btnDiff.id='btnDhcpDiff'; btnDiff.textContent=i18nText('dhcp.actions.diff',{},'🧾 Ver diff DHCP');
+  const btnPropose=document.createElement('button'); btnPropose.type='button'; btnPropose.className='btn small'; btnPropose.id='btnDhcpPropose'; btnPropose.textContent=i18nText('dhcp.actions.propose',{},'✨ Proponer pools DHCP');
+  const btnValidate=document.createElement('button'); btnValidate.type='button'; btnValidate.className='btn small'; btnValidate.id='btnDhcpValidate'; btnValidate.textContent=i18nText('dhcp.actions.validate',{},'🧪 Validar DHCP');
+  const topHint=document.createElement('span'); topHint.className='hint'; topHint.textContent=i18nText('dhcp.dynamicHint',{},'Rangos, exclusiones y DNS por VLAN.');
   top.append(btnDiff,btnPropose,btnValidate,topHint); box.appendChild(top);
   if(audit.issues&&audit.issues.length){ const warn=document.createElement('div'); warn.className='hint warn'; warn.style.margin='6px 0'; warn.textContent=audit.issues.map(i=>`[${i.code}] ${i.message}`).join(' · '); box.appendChild(warn); }
   function addField(parent,labelText,child){ const wrap=document.createElement('div'); const lab=document.createElement('label'); lab.className='fl'; lab.style.fontSize='9px'; lab.textContent=labelText; wrap.append(lab,child); parent.appendChild(wrap); return child; }
@@ -2166,16 +2173,16 @@ function renderDhcp(){
     const dot=document.createElement('span'); dot.className='vd'; dot.style.background=v.color||vColor(v.id); dot.style.marginTop='2px'; row.appendChild(dot);
     const info=document.createElement('div'); info.style.flex='1'; info.style.minWidth='120px';
     const title=document.createElement('div'); title.style.fontWeight='700'; title.style.fontSize='12px'; title.textContent=`VLAN ${v.vlanId} ${v.name||''}`;
-    const sub=document.createElement('div'); sub.className='hint'; sub.textContent=`${sn?sn.cidr:'—'} · GW ${sn?.gateway||'—'} · ${stc} IPs estáticas`;
+    const sub=document.createElement('div'); sub.className='hint'; sub.textContent=i18nText('dhcp.vlanSummary',{cidr:sn?sn.cidr:'—',gateway:sn?.gateway||'—',count:stc},'{cidr} · GW {gateway} · {count} IPs estáticas');
     info.append(title,sub); row.appendChild(info);
     const controls=document.createElement('div'); controls.style.display='flex'; controls.style.gap='5px'; controls.style.flexWrap='wrap'; controls.style.alignItems='center';
     const en=document.createElement('select'); en.dataset.en=k; en.style.fontSize='12px'; en.style.padding='3px';
-    [['0','No'],['1','Sí']].forEach(([val,txt])=>{ const o=document.createElement('option'); o.value=val; o.textContent=txt; if((val==='1')===!!cfg.enabled)o.selected=true; en.appendChild(o); }); addField(controls,'DHCP',en);
-    const start=document.createElement('input'); start.dataset.dhStart=k; start.value=cfg.start||''; start.placeholder='pool start'; start.style.width='92px'; start.style.fontSize='12px'; start.style.padding='3px'; addField(controls,'Inicio',start);
-    const end=document.createElement('input'); end.dataset.dhEnd=k; end.value=cfg.end||''; end.placeholder='pool end'; end.style.width='92px'; end.style.fontSize='12px'; end.style.padding='3px'; addField(controls,'Fin',end);
+    [['0',i18nText('common.no',{},'No')],['1',i18nText('common.yes',{},'Sí')]].forEach(([val,txt])=>{ const o=document.createElement('option'); o.value=val; o.textContent=txt; if((val==='1')===!!cfg.enabled)o.selected=true; en.appendChild(o); }); addField(controls,'DHCP',en);
+    const start=document.createElement('input'); start.dataset.dhStart=k; start.value=cfg.start||''; start.placeholder=i18nText('dhcp.placeholders.start',{},'inicio pool'); start.style.width='92px'; start.style.fontSize='12px'; start.style.padding='3px'; addField(controls,i18nText('dhcp.fields.start',{},'Inicio'),start);
+    const end=document.createElement('input'); end.dataset.dhEnd=k; end.value=cfg.end||''; end.placeholder=i18nText('dhcp.placeholders.end',{},'fin pool'); end.style.width='92px'; end.style.fontSize='12px'; end.style.padding='3px'; addField(controls,i18nText('dhcp.fields.end',{},'Fin'),end);
     const dns=document.createElement('input'); dns.dataset.dns=k; dns.value=cfg.dns||''; dns.placeholder='8.8.8.8,1.1.1.1'; dns.style.width='120px'; dns.style.fontSize='12px'; dns.style.padding='3px'; addField(controls,'DNS',dns);
-    const domain=document.createElement('input'); domain.dataset.dhDomain=k; domain.value=cfg.domain||''; domain.placeholder='empresa.local'; domain.style.width='105px'; domain.style.fontSize='12px'; domain.style.padding='3px'; addField(controls,'Dominio',domain);
-    const lease=document.createElement('input'); lease.dataset.ls=k; lease.type='number'; lease.min='1'; lease.max='365'; lease.value=cfg.lease||1; lease.style.width='58px'; lease.style.fontSize='12px'; lease.style.padding='3px'; addField(controls,'Lease días',lease);
+    const domain=document.createElement('input'); domain.dataset.dhDomain=k; domain.value=cfg.domain||''; domain.placeholder=i18nText('dhcp.placeholders.domain',{},'empresa.local'); domain.style.width='105px'; domain.style.fontSize='12px'; domain.style.padding='3px'; addField(controls,i18nText('dhcp.fields.domain',{},'Dominio'),domain);
+    const lease=document.createElement('input'); lease.dataset.ls=k; lease.type='number'; lease.min='1'; lease.max='365'; lease.value=cfg.lease||1; lease.style.width='58px'; lease.style.fontSize='12px'; lease.style.padding='3px'; addField(controls,i18nText('dhcp.fields.leaseDays',{},'Lease días'),lease);
     row.appendChild(controls); box.appendChild(row);
   });
   const ensure=(k)=>{if(!S.dhcp[k])S.dhcp[k]={enabled:false,dns:'8.8.8.8',lease:1,exclusions:[],reservations:[]};};
@@ -2185,9 +2192,9 @@ function renderDhcp(){
   box.querySelectorAll('[data-dh-start]').forEach(i=>i.onblur=()=>{ensure(i.dataset.dhStart);S.dhcp[i.dataset.dhStart].start=(i.value||'').trim();save();});
   box.querySelectorAll('[data-dh-end]').forEach(i=>i.onblur=()=>{ensure(i.dataset.dhEnd);S.dhcp[i.dataset.dhEnd].end=(i.value||'').trim();save();});
   box.querySelectorAll('[data-dh-domain]').forEach(i=>i.onblur=()=>{ensure(i.dataset.dhDomain);S.dhcp[i.dataset.dhDomain].domain=(i.value||'').trim();save();});
-  const bd=$('btnDhcpDiff');if(bd)bd.onclick=()=>{if(!dh)return alert('Módulo DHCP no disponible.');const cp=window.NetWizardChangePreview;if(!cp)return alert('Módulo de diff no disponible.');const diff=cp.computeDhcpDiff(S,{overwrite:false});alert(cp.summarizeDiff(diff,'Diff antes de proponer DHCP'));};
-  const bp=$('btnDhcpPropose');if(bp)bp.onclick=()=>{if(!dh)return alert('Módulo DHCP no disponible.');const cp=window.NetWizardChangePreview;if(cp){const diff=cp.computeDhcpDiff(S,{overwrite:false});const txt=cp.summarizeDiff(diff,'Diff antes de proponer DHCP');if(diff.add.length||diff.change.length||diff.remove.length){if(!confirm(txt+'\n\n¿Aplicar propuesta DHCP?'))return;}}const res=dh.proposeDhcpForProject(S,{overwrite:false});S=res.project;save();refresh();alert(res.changes.join('\n')||'No había cambios DHCP que proponer.');};
-  const bv=$('btnDhcpValidate');if(bv)bv.onclick=()=>{if(!dh)return alert('Módulo DHCP no disponible.');const res=dh.validateDhcpForProject(S);alert(res.issues.length?res.issues.map(i=>`[${i.severity}] ${i.code}: ${i.message}`).join('\n'):'✓ DHCP sin incidencias críticas.');renderDhcp();};
+  const bd=$('btnDhcpDiff');if(bd)bd.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const cp=window.NetWizardChangePreview;if(!cp)return alert(i18nText('dhcp.alert.diffUnavailable',{},'Módulo de diff no disponible.'));const diff=cp.computeDhcpDiff(S,{overwrite:false});alert(cp.summarizeDiff(diff,i18nText('dhcp.diffTitle',{},'Diff antes de proponer DHCP')));};
+  const bp=$('btnDhcpPropose');if(bp)bp.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const cp=window.NetWizardChangePreview;if(cp){const diff=cp.computeDhcpDiff(S,{overwrite:false});const txt=cp.summarizeDiff(diff,i18nText('dhcp.diffTitle',{},'Diff antes de proponer DHCP'));if(diff.add.length||diff.change.length||diff.remove.length){if(!confirm(txt+'\n\n'+i18nText('dhcp.confirmProposal',{},'¿Aplicar propuesta DHCP?')))return;}}const res=dh.proposeDhcpForProject(S,{overwrite:false,locale});S=res.project;save();refresh();alert(res.changes.join('\n')||i18nText('dhcp.noChanges',{},'No había cambios DHCP que proponer.'));};
+  const bv=$('btnDhcpValidate');if(bv)bv.onclick=()=>{if(!dh)return alert(i18nText('dhcp.alert.moduleUnavailable',{},'Módulo DHCP no disponible.'));const res=dh.validateDhcpForProject(S,{locale});alert(res.issues.length?res.issues.map(i=>`[${i.severity}] ${i.code}: ${i.message}`).join('\n'):i18nText('dhcp.validationOk',{},'✓ DHCP sin incidencias críticas.'));renderDhcp();};
 }
 function renderVendorPills(container, vendors, selected, dataKey, onSelect){
   container.textContent='';
@@ -3057,6 +3064,7 @@ function renderActiveStep(){
       renderVlans();
       renderSubnets();
       fillVlanSels();
+      syncSubnetAuthorityLabel();
       updManualSnHint();
       fillRoasSels();
       if($('dhcpPanel')?.open)renderDhcp();
