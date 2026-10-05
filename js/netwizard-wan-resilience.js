@@ -20,7 +20,7 @@ function circuit(project,id){return arr(project&&project.wanCircuits).find(x=>x&
 function deviceHa(project,deviceId){return obj(obj(obj(project&&project.highAvailability).devices)[deviceId]);}
 function circuitGroup(c){const WAN=wanModel();return WAN&&WAN.failoverGroupKey?WAN.failoverGroupKey(c):clean(c&&(c.siteRef||c.wanGroupRef||c.failoverGroupRef||c.locationRef||'global'));}
 function circuitLabel(c){return clean(c&&(c.name||c.id))||'circuito';}
-function issue(code,message,blocking,extra){const meta=extra||{};return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'wan-resilience',message,messageKey:'validation.issue.'+code,messageParams:Object.assign({},meta)},meta);}
+function issue(code,message,blocking,extra){const meta=extra||{};return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'wan-resilience',message,messageKey:'validation.issue.wan.'+code,messageParams:Object.assign({},meta)},meta);}
 
 function circuitBySourceInterface(project,deviceId,name){
   const target=clean(name);if(!target)return null;
