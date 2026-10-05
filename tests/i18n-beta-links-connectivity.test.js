@@ -49,6 +49,8 @@ assert.ok(html.includes('data-i18n-placeholder="links.form.notesPlaceholder"'));
 
 const source=fs.readFileSync(path.join(root,'js','netwizard-inter-site-transit-editor.js'),'utf8');
 assert.ok(source.includes("root.addEventListener&&root.addEventListener('netwizard:i18n'"),'Falta rerender de tránsito en cambio de locale');
+assert.ok(source.includes("typeof I18N.t==='function'?I18N.t(key,params)"),'El helper de tránsito debe delegar en NetWizardI18n.t');
+assert.ok(!source.includes('I18N.i18nText('),'No debe renombrarse accidentalmente la API runtime de i18n');
 assert.ok(!source.includes("'Tránsito inter-sede a '"),'No debe persistirse descripción traducida como dato canónico');
 assert.ok(source.includes("'Inter-site transit to '"),'El fallback persistido debe ser locale-neutral');
 
