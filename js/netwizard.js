@@ -2955,7 +2955,7 @@ function ensureV5PanelController(){
     deviceKind:devKind,
     deviceKindOptions:()=>NWDevice?NWDevice.kindOptions():[{value:'switch',label:'Switch'},{value:'router',label:'Router'},{value:'firewall',label:'Firewall'}],
     vendors:()=>ALL_VENDORS.map(v=>({value:v.id,label:v.l})),
-    hostTypeOptions:()=>Object.entries(HT).map(([k,v])=>({value:k,label:v.l})),
+    hostTypeOptions:()=>Object.keys(HT).map(k=>({value:k,label:hostTypeText(k)})),
     vlanByRef:vByRef,
     effectiveHostIp,
     deviceLabel:devLabel,
