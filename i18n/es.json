@@ -1195,5 +1195,6 @@
   "firewall.policy.noGenerated": "No hay reglas generadas desde intención.",
   "firewall.policy.context.objects": "Objetos VLAN/Zona detectados:",
   "firewall.policy.context.zones": "Zonas lógicas:",
-  "firewall.policy.noSubnet": "sin subnet"
+  "firewall.policy.noSubnet": "sin subnet",
+  "firewall.policy.history.applySnapshot": "Antes de aplicar políticas por intención"
 }
