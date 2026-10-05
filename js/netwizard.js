@@ -78,24 +78,24 @@ const DEV_PICKER=[
 ];
 
 const FW_TPLS=[
-  {name:'Básico: DNS + HTTP/HTTPS',rules:[
+  {name:'Básico: DNS + HTTP/HTTPS',nameKey:'firewall.template.basic',rules:[
     {name:'DNS',src:'any',dst:'any',proto:'udp',port:'53',action:'allow',dir:'both',prio:10},
     {name:'HTTP',src:'any',dst:'any',proto:'tcp',port:'80',action:'allow',dir:'out',prio:20},
     {name:'HTTPS',src:'any',dst:'any',proto:'tcp',port:'443',action:'allow',dir:'out',prio:30},
     {name:'Denegar resto',src:'any',dst:'any',proto:'any',port:'any',action:'deny',dir:'both',prio:9999},
   ]},
-  {name:'Servidores: web + SSH',rules:[
+  {name:'Servidores: web + SSH',nameKey:'firewall.template.servers',rules:[
     {name:'SSH Admin',src:'10.10.99.0/24',dst:'any',proto:'tcp',port:'22',action:'allow',dir:'in',prio:10},
     {name:'HTTP IN',src:'any',dst:'any',proto:'tcp',port:'80',action:'allow',dir:'in',prio:20},
     {name:'HTTPS IN',src:'any',dst:'any',proto:'tcp',port:'443',action:'allow',dir:'in',prio:30},
     {name:'ICMP',src:'any',dst:'any',proto:'icmp',port:'any',action:'allow',dir:'both',prio:40},
     {name:'Denegar resto IN',src:'any',dst:'any',proto:'any',port:'any',action:'deny',dir:'in',prio:9999},
   ]},
-  {name:'Cámaras: solo NVR tiene acceso',rules:[
+  {name:'Cámaras: solo NVR tiene acceso',nameKey:'firewall.template.cameras',rules:[
     {name:'NVR→Cámaras RTSP',src:'10.10.50.1',dst:'10.10.70.0/24',proto:'tcp',port:'554',action:'allow',dir:'both',prio:10},
     {name:'Bloquear acceso a cámaras',src:'any',dst:'10.10.70.0/24',proto:'any',port:'any',action:'deny',dir:'in',prio:20},
   ]},
-  {name:'Aislamiento VoIP',rules:[
+  {name:'Aislamiento VoIP',nameKey:'firewall.template.voip',rules:[
     {name:'VoIP SIP',src:'10.10.60.0/24',dst:'any',proto:'udp',port:'5060',action:'allow',dir:'both',prio:10},
     {name:'VoIP RTP',src:'10.10.60.0/24',dst:'any',proto:'udp',port:'range 10000-20000',action:'allow',dir:'both',prio:20},
     {name:'Bloquear entre VoIP y LAN',src:'10.10.60.0/24',dst:'10.10.0.0/8',proto:'any',port:'any',action:'deny',dir:'both',prio:30},
@@ -1343,6 +1343,11 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     renderVisPorts();renderLinks();
     if($('upHint')?.dataset.vlans)$('upHint').textContent=i18nText('links.feedback.switchUplink',{vlans:$('upHint').dataset.vlans},'💡 Uplink entre switches: considera configurar trunk con VLANs {vlans}');
   }
+  if(S.step==='fw'){
+    renderFwRules();
+    if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
+    if($('fwTplModal')?.classList.contains('on'))renderFwTplModal();
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
@@ -2067,7 +2072,7 @@ $('pmSave').onclick=()=>{
 $('btnAddFw').onclick=()=>{
   const name=($('fwN').value||'').trim();const action=$('fwAct').value;const src=($('fwSrc').value||'').trim()||'any';const dst=($('fwDst').value||'').trim()||'any';
   const proto=$('fwProto').value;const port=($('fwPort').value||'').trim()||'any';const dir=$('fwDir').value;const prio=parseInt($('fwPrio').value||'100')||100;
-  if(!name)return alert('Nombre/descripción requerida.');
+  if(!name)return alert(i18nText('firewall.alert.descriptionRequired',{},'Nombre/descripción requerida.'));
   S.fwRules.push({id:uid('fw'),name,action,src,dst,proto,port,dir,prio,enabled:true});
   $('fwN').value='';$('fwSrc').value='';$('fwDst').value='';$('fwPort').value='';$('fwPrio').value='100';
   save();refresh();
@@ -2085,23 +2090,23 @@ function renderFwTplModal(){
   FW_TPLS.forEach((t,i)=>{
     const row=document.createElement('div'); row.className='hrow'; row.style.cursor='pointer'; row.dataset.tpl=String(i);
     const ico=document.createElement('div'); ico.className='hico'; ico.textContent='📦'; row.appendChild(ico);
-    const info=document.createElement('div'); info.className='hinfo'; const hn=document.createElement('div'); hn.className='hn'; hn.textContent=t.name||''; const hm=document.createElement('div'); hm.className='hm'; hm.textContent=`${t.rules.length} reglas`; info.append(hn,hm); row.appendChild(info);
-    const btn=document.createElement('button'); btn.type='button'; btn.className='btn bg bsm'; btn.textContent='Aplicar'; row.appendChild(btn); el.appendChild(row);
+    const info=document.createElement('div'); info.className='hinfo'; const hn=document.createElement('div'); hn.className='hn'; hn.textContent=t.nameKey?i18nText(t.nameKey,{},t.name||''):(t.name||''); const hm=document.createElement('div'); hm.className='hm'; hm.textContent=i18nText('firewall.templates.ruleCount',{count:t.rules.length},'{count} reglas'); info.append(hn,hm); row.appendChild(info);
+    const btn=document.createElement('button'); btn.type='button'; btn.className='btn bg bsm'; btn.textContent=i18nText('actions.apply',{},'Aplicar'); row.appendChild(btn); el.appendChild(row);
   });
-  el.querySelectorAll('[data-tpl]').forEach(el=>el.onclick=()=>{const t=FW_TPLS[+el.dataset.tpl];for(const r of t.rules)S.fwRules.push({id:uid('fw'),...r,enabled:true});save();refresh();$('fwTplModal').classList.remove('on');alert(`✓ ${t.rules.length} reglas añadidas.`);});
+  el.querySelectorAll('[data-tpl]').forEach(el=>el.onclick=()=>{const t=FW_TPLS[+el.dataset.tpl];for(const r of t.rules)S.fwRules.push({id:uid('fw'),...r,enabled:true});save();refresh();$('fwTplModal').classList.remove('on');alert(i18nText('firewall.templates.applied',{count:t.rules.length},'✓ {count} reglas añadidas.'));});
 }
 function renderFwRules(){
-  $('fwCnt').textContent=`${S.fwRules.length} reglas`;
+  $('fwCnt').textContent=i18nText('firewall.list.count',{count:S.fwRules.length},'{count} reglas');
   const el=$('fwRulesList'); el.textContent='';
   if(!S.fwRules.length){
     const empty=document.createElement('div'); empty.className='empty';
     const icon=document.createElement('div'); icon.className='ei'; icon.textContent='🔒';
-    const p=document.createElement('p'); p.textContent='Sin reglas. Añade una arriba o usa las plantillas.';
+    const p=document.createElement('p'); p.textContent=i18nText('firewall.empty.rules',{},'Sin reglas. Añade una arriba o usa las plantillas.');
     empty.append(icon,p); el.appendChild(empty); return;
   }
   S.fwRules.slice().sort((a,b)=>(a.prio||100)-(b.prio||100)).forEach(r=>{
     const row=document.createElement('div'); row.className='fwrow'+(!r.enabled?' fwdis':'');
-    const action=(r.action||'deny').toLowerCase(); row.appendChild(makeBadge(action.toUpperCase(),`b ${action==='allow'?'bgn':action==='log'?'byw':'brd'}`));
+    const action=(r.action||'deny').toLowerCase(); const actionLabel=i18nText('firewall.rule.action.'+action,{},action.toUpperCase()); row.appendChild(makeBadge(actionLabel,`b ${action==='allow'?'bgn':action==='log'?'byw':'brd'}`));
     const name=document.createElement('span'); name.style.flex='1'; name.style.fontWeight='600'; name.style.fontSize='12px'; name.textContent=r.name||''; row.appendChild(name);
     const src=document.createElement('span'); src.className='mono'; src.style.fontSize='10px'; src.style.color='var(--t3)'; src.textContent=r.src||''; row.appendChild(src);
     const arrow=document.createElement('span'); arrow.style.color='var(--t4)'; arrow.textContent='→'; row.appendChild(arrow);
@@ -2114,14 +2119,14 @@ function renderFwRules(){
     el.appendChild(row);
   });
   el.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{const r=S.fwRules.find(x=>x.id===b.dataset.tog);if(r)r.enabled=!r.enabled;save();renderFwRules();});
-  el.querySelectorAll('[data-dfw]').forEach(b=>b.onclick=()=>{S.fwRules=S.fwRules.filter(x=>x.id!==b.dataset.dfw);save();renderFwRules();$('fwCnt').textContent=`${S.fwRules.length} reglas`;});
+  el.querySelectorAll('[data-dfw]').forEach(b=>b.onclick=()=>{S.fwRules=S.fwRules.filter(x=>x.id!==b.dataset.dfw);save();renderFwRules();$('fwCnt').textContent=i18nText('firewall.list.count',{count:S.fwRules.length},'{count} reglas');});
 }
 function renderVlanMatrix(){
   const el=$('vlanMatrix'); el.textContent='';
-  if(S.vlans.length<2){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent='Necesitas al menos 2 VLANs.'; el.appendChild(hint); return; }
+  if(S.vlans.length<2){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent=i18nText('firewall.matrix.needTwoVlans',{},'Necesitas al menos 2 VLANs.'); el.appendChild(hint); return; }
   const vs=S.vlans.slice().sort((a,b)=>a.vlanId-b.vlanId);
   const wrap=document.createElement('div'); wrap.className='tw'; const table=document.createElement('table');
-  const thead=document.createElement('thead'); const hr=document.createElement('tr'); const first=document.createElement('th'); first.textContent='↓ origen / destino →'; hr.appendChild(first);
+  const thead=document.createElement('thead'); const hr=document.createElement('tr'); const first=document.createElement('th'); first.textContent=i18nText('firewall.matrix.axis',{},'↓ origen / destino →'); hr.appendChild(first);
   vs.forEach(v=>{ const th=document.createElement('th'); th.style.fontSize='10px'; const dot=document.createElement('span'); dot.className='vd'; dot.style.background=safeColor(v.color, vColor(v.id)); th.appendChild(dot); th.appendChild(document.createTextNode(' '+v.vlanId)); hr.appendChild(th); });
   thead.appendChild(hr); table.appendChild(thead); const tbody=document.createElement('tbody');
   for(const va of vs){ const tr=document.createElement('tr'); const src=document.createElement('td'); const b=document.createElement('b'); b.style.fontSize='11px'; b.textContent=`${va.vlanId} ${va.name||''}`; src.appendChild(b); tr.appendChild(src);
@@ -2133,9 +2138,9 @@ function renderVlanMatrix(){
   $('matrixAcl').value=genVlanMatrixAcl();
 }
 // Hardening
-$('secTplL').onclick=()=>{Object.assign(S.security,{bpdu:'no',ps:'no',ds:'no',dai:'no',ipsg:'no'});save();refresh();alert('✓ Perfil mínimo aplicado.');};
-$('secTplM').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'no',ipsg:'no'});save();refresh();alert('✓ Perfil medio aplicado.');};
-$('secTplH').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'yes',ipsg:'yes'});save();refresh();alert('✓ Perfil alto aplicado.');};
+$('secTplL').onclick=()=>{Object.assign(S.security,{bpdu:'no',ps:'no',ds:'no',dai:'no',ipsg:'no'});save();refresh();alert(i18nText('firewall.profile.low.applied',{},'✓ Perfil mínimo aplicado.'));};
+$('secTplM').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'no',ipsg:'no'});save();refresh();alert(i18nText('firewall.profile.medium.applied',{},'✓ Perfil medio aplicado.'));};
+$('secTplH').onclick=()=>{Object.assign(S.security,{bpdu:'yes',ps:'yes',ds:'yes',dai:'yes',ipsg:'yes'});save();refresh();alert(i18nText('firewall.profile.high.applied',{},'✓ Perfil alto aplicado.'));};
 ['secBpdu','secPs','secDs','secDai','secIpsg'].forEach(id=>{$(id).onchange=()=>{const k=id.replace('sec','').toLowerCase();S.security[k]=$(id).value;save();};});
 $('secDsV').onblur=()=>{S.security.dsV=($('secDsV').value||'').trim();save();};
 $('secQV').onchange=()=>{S.security.qV=$('secQV').value||'';save();};
