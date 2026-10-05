@@ -1894,7 +1894,7 @@ function fillLinkPickers(){
   const opts=all.map(p=>makeOption(p.id,`${portDisp(p)}${isLinked(p.id)?' ⚡':''}`));
   setOptions($('lnkA'),opts,i18nText('links.select.noPorts',{},'Sin puertos')); setOptions($('lnkB'),all.map(p=>makeOption(p.id,`${portDisp(p)}${isLinked(p.id)?' ⚡':''}`)),i18nText('links.select.noPorts',{},'Sin puertos'));
   if($('lnkTransit')){
-    const transitVlans=S.vlans.filter(v=>{ const t=(v.intent&&v.intent.type)||''; return t==='transit' || /transit|tránsito|transito|p2p|punto/i.test((v.name||'')+' '+(v.desc||'')); });
+    const transitVlans=S.vlans.filter(v=>{ const t=(v.intent&&v.intent.type)||''; return t==='transit' || /transit|tr\u00e1nsito|transito|p2p|punto/i.test((v.name||'')+' '+(v.desc||'')); });
     const candidates=transitVlans.length?transitVlans:S.vlans;
     const tOpts=[makeOption('',i18nText('links.select.noTransit',{},'— sin tránsito L3 —')), ...candidates.map(v=>makeOption(v.id,`VLAN ${v.vlanId} · ${v.name||''}`))];
     setOptions($('lnkTransit'),tOpts);
