@@ -640,77 +640,77 @@
 
 <!-- ═══════════ FIREWALL ═══════════ -->
 <div class="pg" id="pg-fw">
-  <div class="ph"><h1>🔒 Firewall & Seguridad</h1></div>
+  <div class="ph"><h1 data-i18n="firewall.page.title">🔒 Firewall & Seguridad</h1></div>
   <div class="tabs" id="fwTabs">
-    <div class="tab on" data-tab="fw-rules">📋 Reglas</div>
-    <div class="tab" data-tab="fw-matrix">🔄 Inter-VLAN</div>
-    <div class="tab" data-tab="fw-harden">🔐 Hardening</div>
+    <div class="tab on" data-tab="fw-rules" data-i18n="firewall.tabs.rules">📋 Reglas</div>
+    <div class="tab" data-tab="fw-matrix" data-i18n="firewall.tabs.matrix">🔄 Inter-VLAN</div>
+    <div class="tab" data-tab="fw-harden" data-i18n="firewall.tabs.hardening">🔐 Hardening</div>
   </div>
   <div class="tc on" id="fw-rules">
     <div class="g2 nw-workspace-stack">
       <div>
         <div class="card">
-          <div class="card-t" style="margin-bottom:11px;">➕ Nueva regla</div>
+          <div class="card-t" style="margin-bottom:11px;" data-i18n="firewall.form.title">➕ Nueva regla</div>
           <div class="row">
-            <div><label class="fl">Descripción</label><input id="fwN" placeholder="Permitir HTTP desde LAN"/></div>
-            <div><label class="fl">Acción</label>
-              <select id="fwAct"><option value="allow">✅ PERMITIR</option><option value="deny">🚫 DENEGAR</option><option value="log">📝 LOG+permitir</option></select>
+            <div><label class="fl" data-i18n="firewall.form.description">Descripción</label><input id="fwN" placeholder="Permitir HTTP desde LAN" data-i18n-placeholder="firewall.form.descriptionPlaceholder"/></div>
+            <div><label class="fl" data-i18n="firewall.form.action">Acción</label>
+              <select id="fwAct"><option value="allow" data-i18n="firewall.action.allow">✅ PERMITIR</option><option value="deny" data-i18n="firewall.action.deny">🚫 DENEGAR</option><option value="log" data-i18n="firewall.action.log">📝 LOG+permitir</option></select>
             </div>
           </div>
           <div class="row">
-            <div><label class="fl">Origen</label><input id="fwSrc" placeholder="any  /  10.10.10.0/24  /  VLAN10"/></div>
-            <div><label class="fl">Destino</label><input id="fwDst" placeholder="any  /  10.10.20.5"/></div>
+            <div><label class="fl" data-i18n="firewall.form.source">Origen</label><input id="fwSrc" placeholder="any  /  10.10.10.0/24  /  VLAN10"/></div>
+            <div><label class="fl" data-i18n="firewall.form.destination">Destino</label><input id="fwDst" placeholder="any  /  10.10.20.5"/></div>
           </div>
           <div class="row">
-            <div><label class="fl">Protocolo</label>
+            <div><label class="fl" data-i18n="firewall.form.protocol">Protocolo</label>
               <select id="fwProto"><option value="any">any</option><option value="tcp">TCP</option><option value="udp">UDP</option><option value="icmp">ICMP</option><option value="tcp_udp">TCP+UDP</option></select>
             </div>
-            <div><label class="fl">Puerto destino</label><input id="fwPort" placeholder="80,443  /  range 8000-8080  /  any"/></div>
+            <div><label class="fl" data-i18n="firewall.form.destinationPort">Puerto destino</label><input id="fwPort" placeholder="80,443  /  range 8000-8080  /  any"/></div>
           </div>
           <div class="row">
-            <div><label class="fl">Dirección</label><select id="fwDir"><option value="in">entrante</option><option value="out">saliente</option><option value="both">ambas</option></select></div>
-            <div><label class="fl">Prioridad (1=alta)</label><input id="fwPrio" type="number" min="1" value="100"/></div>
+            <div><label class="fl" data-i18n="firewall.form.direction">Dirección</label><select id="fwDir"><option value="in" data-i18n="firewall.direction.in">entrante</option><option value="out" data-i18n="firewall.direction.out">saliente</option><option value="both" data-i18n="firewall.direction.both">ambas</option></select></div>
+            <div><label class="fl" data-i18n="firewall.form.priority">Prioridad (1=alta)</label><input id="fwPrio" type="number" min="1" value="100"/></div>
           </div>
           <div class="brow">
-            <button class="btn bp" id="btnAddFw">➕ Añadir regla</button>
-            <button class="btn bs" id="btnFwTpl">📦 Plantillas</button>
+            <button class="btn bp" id="btnAddFw" data-i18n="firewall.actions.addRule">➕ Añadir regla</button>
+            <button class="btn bs" id="btnFwTpl" data-i18n="firewall.actions.templates">📦 Plantillas</button>
           </div>
         </div>
       </div>
       <div>
         <div class="co co-ac">
-          <b>Origen/Destino:</b> <code>any</code>, <code>192.168.1.0/24</code>, <code>VLAN10</code><br>
-          <b>Puerto:</b> <code>80</code>, <code>80,443</code>, <code>range 8080-8090</code>, <code>any</code><br>
-          Las reglas se exportan como ACLs Cisco, políticas FortiGate o reglas pfSense.
+          <b data-i18n="firewall.help.endpointsLabel">Origen/Destino:</b> <code>any</code>, <code>192.168.1.0/24</code>, <code>VLAN10</code><br>
+          <b data-i18n="firewall.help.portLabel">Puerto:</b> <code>80</code>, <code>80,443</code>, <code>range 8080-8090</code>, <code>any</code><br>
+          <span data-i18n="firewall.help.export">Las reglas se exportan como ACLs Cisco, políticas FortiGate o reglas pfSense.</span>
         </div>
         <div class="co co-yw" style="margin-top:8px;">
-          Orden: menor número de prioridad = se aplica primero.<br>
-          Siempre hay un <code>deny any any</code> implícito al final.
+          <span data-i18n="firewall.help.order">Orden: menor número de prioridad = se aplica primero.</span><br>
+          <span data-i18n="firewall.help.defaultDeny">Siempre hay un deny any any implícito al final.</span>
         </div>
       </div>
     </div>
-    <div class="card"><div class="card-h"><div class="card-t">📋 Reglas configuradas</div><span class="b bac" id="fwCnt">0 reglas</span></div><div id="fwRulesList"></div></div>
+    <div class="card"><div class="card-h"><div class="card-t" data-i18n="firewall.list.title">📋 Reglas configuradas</div><span class="b bac" id="fwCnt">0 reglas</span></div><div id="fwRulesList"></div></div>
   </div>
   <div class="tc" id="fw-matrix">
-    <div class="co co-ac">Haz click en las celdas para alternar si las VLANs se pueden comunicar entre sí. Genera ACLs automáticamente.</div>
-    <div class="card"><div class="card-h"><div class="card-t">Matriz inter-VLAN</div></div><div id="vlanMatrix"></div><div class="hint" style="margin-top:6px;">✓ = permitido &nbsp; ✗ = bloqueado</div></div>
-    <div class="card"><div class="card-h"><div class="card-t">ACLs generadas</div></div><textarea class="cfg" id="matrixAcl" readonly style="min-height:100px;"></textarea></div>
+    <div class="co co-ac" data-i18n="firewall.matrix.hint">Haz click en las celdas para alternar si las VLANs se pueden comunicar entre sí. Genera ACLs automáticamente.</div>
+    <div class="card"><div class="card-h"><div class="card-t" data-i18n="firewall.matrix.title">Matriz inter-VLAN</div></div><div id="vlanMatrix"></div><div class="hint" style="margin-top:6px;" data-i18n="firewall.matrix.legend">✓ = permitido · ✗ = bloqueado</div></div>
+    <div class="card"><div class="card-h"><div class="card-t" data-i18n="firewall.matrix.generatedAcls">ACLs generadas</div></div><textarea class="cfg" id="matrixAcl" readonly style="min-height:100px;"></textarea></div>
   </div>
   <div class="tc" id="fw-harden">
     <div class="g2 nw-workspace-stack">
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">🔐 Parámetros de hardening</div>
-        <div class="row"><div><label class="fl">BPDU Guard + PortFast</label><select id="secBpdu"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div><div><label class="fl">Port-Security (máx 2 MACs)</label><select id="secPs"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div></div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="firewall.hardening.title">🔐 Parámetros de hardening</div>
+        <div class="row"><div><label class="fl">BPDU Guard + PortFast</label><select id="secBpdu"><option value="yes" data-i18n="common.enabled">✅ Activado</option><option value="no" data-i18n="common.no">❌ No</option></select></div><div><label class="fl">Port-Security (máx 2 MACs)</label><select id="secPs"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div></div>
         <div class="row"><div><label class="fl">DHCP Snooping</label><select id="secDs"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div><div><label class="fl">Dynamic ARP Inspection</label><select id="secDai"><option value="yes">✅ Activado</option><option value="no">❌ No</option></select></div></div>
-        <div class="row"><div><label class="fl">IP Source Guard</label><select id="secIpsg"><option value="no">❌ No</option><option value="yes">✅ Activado</option></select></div><div><label class="fl">VLANs DHCP snooping</label><input id="secDsV" placeholder="vacío=todas"/></div></div>
+        <div class="row"><div><label class="fl">IP Source Guard</label><select id="secIpsg"><option value="no">❌ No</option><option value="yes">✅ Activado</option></select></div><div><label class="fl" data-i18n="firewall.hardening.dhcpVlans">VLANs DHCP snooping</label><input id="secDsV" placeholder="vacío=todas" data-i18n-placeholder="firewall.hardening.allVlansPlaceholder"/></div></div>
         <hr class="sep"/>
-        <label class="fl">VLAN quarantine (puertos sin uso)</label><select id="secQV"></select>
+        <label class="fl" data-i18n="firewall.hardening.quarantineVlan">VLAN quarantine (puertos sin uso)</label><select id="secQV"></select>
       </div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">⚡ Perfiles rápidos</div>
-        <div class="hrow" style="cursor:pointer;" id="secTplL"><div class="hico">🟢</div><div class="hinfo"><div class="hn">Mínima — Lab/Home</div><div class="hm">Sin hardening, solo VLANs</div></div></div>
-        <div class="hrow" style="cursor:pointer;" id="secTplM"><div class="hico">🟡</div><div class="hinfo"><div class="hn">Media — Empresa pequeña</div><div class="hm">BPDU Guard + DHCP Snooping + Port-Security</div></div></div>
-        <div class="hrow" style="cursor:pointer;" id="secTplH"><div class="hico">🔴</div><div class="hinfo"><div class="hn">Alta — Producción</div><div class="hm">Todo: DAI + IP Source Guard + ACLs inter-VLAN</div></div></div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="firewall.hardening.quickProfiles">⚡ Perfiles rápidos</div>
+        <div class="hrow" style="cursor:pointer;" id="secTplL"><div class="hico">🟢</div><div class="hinfo"><div class="hn" data-i18n="firewall.profile.low.title">Mínima — Lab/Home</div><div class="hm" data-i18n="firewall.profile.low.subtitle">Sin hardening, solo VLANs</div></div></div>
+        <div class="hrow" style="cursor:pointer;" id="secTplM"><div class="hico">🟡</div><div class="hinfo"><div class="hn" data-i18n="firewall.profile.medium.title">Media — Empresa pequeña</div><div class="hm" data-i18n="firewall.profile.medium.subtitle">BPDU Guard + DHCP Snooping + Port-Security</div></div></div>
+        <div class="hrow" style="cursor:pointer;" id="secTplH"><div class="hico">🔴</div><div class="hinfo"><div class="hn" data-i18n="firewall.profile.high.title">Alta — Producción</div><div class="hm" data-i18n="firewall.profile.high.subtitle">Todo: DAI + IP Source Guard + ACLs inter-VLAN</div></div></div>
       </div>
     </div>
   </div>
@@ -934,7 +934,7 @@ SRV-Web, server, 20, 10.10.20.10, CPD, CPD"></textarea>
 <!-- FW TEMPLATES MODAL -->
 <div class="mbk" id="fwTplModal">
   <div class="modal">
-    <div class="mh"><h3>📦 Plantillas de reglas FW</h3><button class="btn bs bsm" id="fwTplClose">✕</button></div>
+    <div class="mh"><h3 data-i18n="firewall.templates.title">📦 Plantillas de reglas FW</h3><button class="btn bs bsm" id="fwTplClose">✕</button></div>
     <div id="fwTplList"></div>
     <div class="mf"><button class="btn bs" id="fwTplCancel">Cerrar</button></div>
   </div>
