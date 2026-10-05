@@ -119,7 +119,7 @@
     ctx.strokeStyle=selected?'#a78bfa':accent;ctx.lineWidth=Math.max(.7,1.5*z);roundPath(ctx,np.x,np.y,hw,hh,hr);ctx.stroke();
     if(readableZoom(visual)){
       ctx.fillStyle='#e2eaf7';ctx.font='600 '+Math.max(7.5,10.5*z)+'px Space Grotesk,sans-serif';ctx.fillText((host.name||'').slice(0,20),np.x+8*z,np.y+14*z);
-      const chip=vlanLabel||labels.noVlan||'no VLAN';ctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
+      const chip=vlanLabel||labels.noVlan||'—';ctx.font=Math.max(6.5,9*z)+'px Fira Code,monospace';const chipW=Math.max(32*z,(chip.length*6+12)*z);
       ctx.fillStyle='rgba(15,23,42,.78)';roundPath(ctx,np.x+8*z,np.y+22*z,chipW,14*z,Math.max(2,7*z));ctx.fill();ctx.fillStyle=accent;ctx.fillText(chip,np.x+14*z,np.y+32*z);
     }else{ctx.fillStyle=accent;ctx.beginPath();ctx.arc(np.x+Math.max(5,hw/2),np.y+Math.max(5,hh/2),Math.max(2,Math.min(5,Math.min(hw,hh)/4)),0,Math.PI*2);ctx.fill();}
     return true;
