@@ -18,7 +18,7 @@ function renderInto(container,project){
 
   if(report.validation.issues.length){
     const issues=root.document.createElement('div');issues.style.marginTop='8px';
-    report.validation.issues.slice(0,20).forEach(i=>issues.appendChild(text('div',(i.blocking?'✗ ':'⚠ ')+i.message,i.blocking?'co co-rd':'co')));
+    report.validation.issues.slice(0,20).forEach(i=>issues.appendChild(text('div',(i.blocking?'✗ ':'⚠ ')+(i.messageKey?tr(i.messageKey,i.messageParams||{},i.message||i.messageKey):i.message),i.blocking?'co co-rd':'co')));
     container.appendChild(issues);
   }
 
