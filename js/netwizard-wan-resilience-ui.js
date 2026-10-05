@@ -56,7 +56,7 @@ function ensurePanel(){
   if(!panel){
     panel=root.document.createElement('div');panel.id='nwWanResiliencePanel';panel.className='card';panel.style.marginTop='12px';
     const head=root.document.createElement('div');head.className='card-h';
-    head.append(text('div','🛡 Resiliencia WAN','card-t'),text('span',tr('validation.wan.onDemand',{},'On demand'),'b bac'));
+    head.append(text('div',tr('validation.wan.title',{},'🛡 Resiliencia WAN'),'card-t'),text('span',tr('validation.wan.onDemand',{},'On demand'),'b bac'));
     const hint=text('div',tr('validation.wan.onDemandHint',{},'El análisis de fallos WAN puede ser costoso en proyectos grandes. Se ejecuta únicamente bajo demanda y el resultado queda marcado como obsoleto cuando cambia el proyecto.'),'hint');
     const actions=root.document.createElement('div');actions.className='brow';actions.style.marginTop='8px';
     const run=root.document.createElement('button');run.id='nwWanResilienceRun';run.type='button';run.className='btn bp';run.textContent=tr('validation.wan.run',{},'▶ Analizar resiliencia WAN');
