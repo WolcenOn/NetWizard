@@ -916,5 +916,7 @@
   "iot.tech.ble": "Bluetooth LE",
   "iot.tech.mqtt": "MQTT",
   "iot.tech.camera": "Camera/NVR",
-  "iot.tech.cloud": "Cloud/API"
+  "iot.tech.cloud": "Cloud/API",
+  "iot.common.vlanSuffix": " · VLAN {num}",
+  "iot.map.vlan": "VLAN: {vlan}"
 }
