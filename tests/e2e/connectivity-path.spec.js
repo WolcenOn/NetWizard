@@ -85,6 +85,11 @@ test('V5 diagnostica una ruta física y diferencia servicios firewall', async ({
   await expect(page.locator('#v5TraceStatus')).toContainText('BLOQUEO DETECTADO');
   await expect(page.locator('#v5TraceStatus')).toContainText('Bloquear HTTPS');
 
+  await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
+  await expect(page.locator('#v5TraceStatus')).toContainText('BLOCK DETECTED');
+  await expect(page.locator('#v5TraceStatus')).toContainText('Rule Bloquear HTTPS: deny.');
+  await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
+
   await page.getByRole('button',{name:'✕ Cerrar'}).click();
   await expect(page.locator('#nwV5ConnectivityDrawer')).toBeHidden();
   await expect(page.locator('#v5TraceOverlay')).toHaveAttribute('data-status','blocked');
