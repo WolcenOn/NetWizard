@@ -46,7 +46,7 @@
       for(const p of ports){
         const card=makeEl('div','v5-port');card.appendChild(makeEl('h4','',p.name||p.id));
         card.appendChild(row('v5-row3',field(tr('form.name',{},'Nombre'),input(p.name||'',v=>action('updatePort',p.id,'name',v))),field(tr('graphs.fields.media',{},'Medio'),select([{value:'FE',label:'FE'},{value:'GE',label:'GE'},{value:'SFP',label:'SFP'}],p.media||'GE',v=>action('updatePort',p.id,'media',v))),field(tr('graphs.fields.mode',{},'Modo'),select([{value:'access',label:'access'},{value:'trunk',label:'trunk'},{value:'layer3',label:'layer3'}],p.mode||'access',v=>action('updatePort',p.id,'mode',v)))));
-        card.appendChild(row('v5-row3',field('VLAN access',select(vlanOptions(),p.accessVlanRef||'',v=>action('updatePort',p.id,'accessVlanRef',v||null))),field(tr('graphs.fields.role',{},'Rol'),input(p.role||'',v=>action('updatePort',p.id,'role',v||null))),field(tr('graphs.fields.description',{},'Descripción'),input(p.desc||'',v=>action('updatePort',p.id,'desc',v||null)))));
+        card.appendChild(row('v5-row3',field(tr('graphs.fields.accessVlan',{},'VLAN access'),select(vlanOptions(),p.accessVlanRef||'',v=>action('updatePort',p.id,'accessVlanRef',v||null))),field(tr('graphs.fields.role',{},'Rol'),input(p.role||'',v=>action('updatePort',p.id,'role',v||null))),field(tr('graphs.fields.description',{},'Descripción'),input(p.desc||'',v=>action('updatePort',p.id,'desc',v||null)))));
         wrap.appendChild(card);
       }
       return wrap;
