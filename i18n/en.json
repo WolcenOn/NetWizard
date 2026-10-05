@@ -1375,5 +1375,16 @@
   "validation.issue.drift.NW-DRIFT-003": "{kind} {id}: exists in observed state but not in design.",
   "validation.issue.drift.NW-DRIFT-010": "Invalid observed snapshot.",
   "validation.issue.drift.NW-DRIFT-011": "Observed snapshot has no observedAt date.",
-  "validation.wan.scenarioSummaryNoGroups": "Reachability baseline {baseline} · survives {surviving} · lost {lost}"
+  "validation.wan.scenarioSummaryNoGroups": "Reachability baseline {baseline} · survives {surviving} · lost {lost}",
+  "validation.audit.productionPrefix": "Production: {message}",
+  "validation.reach.ospfHop": "OSPF area {area} · {port} → {peer}",
+  "validation.reach.reason.selectTwo": "Select two valid subnets.",
+  "validation.reach.reason.distinctSubnets": "Source and destination must be different subnets.",
+  "validation.wan.reason.degradedUnevaluable": "The pair can no longer be evaluated on the degraded topology.",
+  "validation.wan.scenario.circuit": "Circuit failure {name}",
+  "validation.wan.scenario.provider": "Provider failure {name}",
+  "validation.wan.scenario.device": "Device failure {name}",
+  "validation.wan.scenario.vpn": "VPN failure {name}",
+  "validation.wan.spof.lostPairs": "Loses {count} reachability pairs.",
+  "validation.wan.spof.wanGroupsLost": "Leaves WAN groups without connectivity: {groups}."
 }
