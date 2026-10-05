@@ -1028,5 +1028,6 @@
   "graphs.trace.review": "Revisar validaciones del diagnóstico.",
   "graphs.trace.missingData": "Faltan datos para validar todos los saltos.",
   "graphs.trace.coherent": "Todos los controles modelados son coherentes.",
-  "iot.tech.generic": "Genérico"
+  "iot.tech.generic": "Genérico",
+  "iot.tech.controller": "Controlador"
 }
