@@ -72,7 +72,7 @@
       devicesInLocation=()=>[],hostsInLocation=()=>[],layoutLocation=()=>{},
       showDevice=()=>true,showHost=()=>true,deviceById=id=>byId(project.devices,id),
       hostConnectedDeviceId=()=>'',vlanByRef=()=>null,hostPort=()=>null,
-      proMode=false,drag=null
+      proMode=false,drag=null,labels={}
     }=options||{};
     if(!rect.width||!rect.height)return{renderState:null,linkDots:[]};
 
