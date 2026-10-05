@@ -25,13 +25,13 @@ function renderInto(container,project,existingReport){
   const scenarios=root.document.createElement('div');scenarios.style.marginTop='10px';
   for(const s of report.scenarios.slice(0,30)){
     const row=root.document.createElement('div');row.style.cssText='padding:8px 0;border-top:1px solid rgba(127,127,127,.22)';
-    row.appendChild(text('strong',(s.status==='failed'?'✗ ':'✓ ')+s.name));
+    row.appendChild(text('strong',(s.status==='failed'?'✗ ':'✓ ')+(s.nameKey?tr(s.nameKey,s.nameParams||{},s.name||s.nameKey):s.name)));
     row.appendChild(text('div',tr(s.wanGroupsLost.length?'validation.wan.scenarioSummary':'validation.wan.scenarioSummaryNoGroups',{baseline:s.baselineReachablePairs,surviving:s.survivingReachablePairs,lost:s.lostReachability.length,groups:s.wanGroupsLost.join(', ')},s.wanGroupsLost.length?'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost} · WAN sin salida: {groups}':'Reachability baseline {baseline} · sobrevive {surviving} · perdida {lost}'),'hint'));
     if(s.lostReachability.length){
       s.lostReachability.slice(0,5).forEach(item=>{
         const src=item.source&&item.source.label||item.source&&item.source.cidr||item.source&&item.source.id||tr('validation.reach.sourceLower',{},'origen');
         const dst=item.target&&item.target.label||item.target&&item.target.cidr||item.target&&item.target.id||tr('validation.reach.destinationLower',{},'destino');
-        row.appendChild(text('div','↳ '+src+' → '+dst+' · '+item.reason,'hint'));
+        row.appendChild(text('div','↳ '+src+' → '+dst+' · '+(item.reasonKey?tr(item.reasonKey,item.reasonParams||{},item.reason||item.reasonKey):item.reason),'hint'));
       });
     }
     scenarios.appendChild(row);
