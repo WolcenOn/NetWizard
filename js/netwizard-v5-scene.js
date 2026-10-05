@@ -42,7 +42,7 @@
     for(let y=0;y<rect.height;y+=26){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rect.width,y);ctx.stroke();}
     ctx.globalAlpha=1;
   }
-  function drawLocation(ctx,{visual,loc,bounds,depth,proMode,drag,deviceCount,hostCount}){
+  function drawLocation(ctx,{visual,loc,bounds,depth,proMode,drag,deviceCount,hostCount,labels={}}){
     const z=Number(visual&&visual.view&&visual.view.zoom||1),p=CORE.worldToScreen(visual,bounds.x,bounds.y),w=bounds.w*z,h=bounds.h*z;
     ctx.fillStyle=loc.color||'#10233c';ctx.globalAlpha=Math.max(.16,.33-depth*.05);
     RENDERER.roundPath(ctx,p.x,p.y,w,h,Math.max(4,(18-depth*2)*z));ctx.fill();ctx.globalAlpha=1;
@@ -56,7 +56,7 @@
     ctx.fillStyle='#e2eaf7';ctx.font='600 '+Math.max(11,13-depth)+'px Space Grotesk,sans-serif';
     ctx.fillText((depth?('↳ '.repeat(Math.min(depth,2))):'')+(loc.name||''),p.x+12*z,p.y+22*z);
     ctx.fillStyle='#8fa3c0';ctx.font='11px Space Grotesk,sans-serif';
-    ctx.fillText(deviceCount+' equipos · '+hostCount+' hosts',p.x+12*z,p.y+37*z);
+    ctx.fillText((labels.locationSummary?labels.locationSummary(deviceCount,hostCount):(deviceCount+' devices · '+hostCount+' hosts')),p.x+12*z,p.y+37*z);
     const hs=12*z,hx=p.x+w-hs-8*z,hy=p.y+h-hs-8*z;
     if(!(proMode&&loc.parentId)){
       ctx.fillStyle='rgba(148,163,184,.95)';ctx.fillRect(hx,hy,hs,hs);
@@ -89,7 +89,7 @@
     const ordered=[...arr(locations)].sort((a,b)=>locationDepth(a.id)-locationDepth(b.id));
     for(const loc of ordered){
       const devs=arr(devicesInLocation(loc.id)),hosts=arr(hostsInLocation(loc.id));
-      drawLocation(ctx,{visual,loc,bounds:locationBounds(loc),depth:locationDepth(loc.id),proMode,drag,deviceCount:devs.length,hostCount:hosts.length});
+      drawLocation(ctx,{visual,loc,bounds:locationBounds(loc),depth:locationDepth(loc.id),proMode,drag,deviceCount:devs.length,hostCount:hosts.length,labels});
     }
 
     for(const link of arr(project.links)){
@@ -108,12 +108,12 @@
     for(const loc of arr(locations)){
       for(const device of arr(devicesInLocation(loc.id))){
         const bounds=CORE.nodeBounds(visual,'dev',device.id,metrics),accent=RENDERER.deviceAccentColor(project,device.id);
-        RENDERER.drawDeviceNode(ctx,{visual,device,bounds,selected:!!(visual.sel&&visual.sel.t==='device'&&visual.sel.id===device.id),accent});
+        RENDERER.drawDeviceNode(ctx,{visual,device,bounds,selected:!!(visual.sel&&visual.sel.t==='device'&&visual.sel.id===device.id),accent,labels});
       }
       for(const host of arr(hostsInLocation(loc.id))){
         const bounds=CORE.nodeBounds(visual,'host',host.id,metrics),linked=hostConnectedDeviceId(host);
         const accent=linked?RENDERER.deviceAccentColor(project,linked):'hsl(262 83% 74%)',vlan=vlanByRef(host.vlanRef);
-        RENDERER.drawHostNode(ctx,{visual,host,bounds,selected:!!(visual.sel&&visual.sel.t==='host'&&visual.sel.id===host.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):'sin VLAN'});
+        RENDERER.drawHostNode(ctx,{visual,host,bounds,selected:!!(visual.sel&&visual.sel.t==='host'&&visual.sel.id===host.id),accent,vlanLabel:vlan?('V'+vlan.vlanId):(labels.noVlan||'no VLAN'),labels});
       }
     }
 
