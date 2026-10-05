@@ -1,7 +1,7 @@
 /* =========================================================
    NetWizard v2.8.1 - V5 Tree Block Layout Hotfix
    - Base estable v2.7: no toca netwizard.js ni drawV5().
-   - Añade layout "Árbol · bloques por puerto" sin reescribir el motor V5.
+   - Adds the tree-block layout without rewriting the V5 engine.
    - Cada ubicación se calcula como bloques verticales:
      [router/switch/AP] a la izquierda + hosts asociados en UNA columna a la derecha.
    - Las ubicaciones raíz se colocan por árbol de conectividad con separación garantizada.
