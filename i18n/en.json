@@ -1374,5 +1374,6 @@
   "validation.issue.drift.NW-DRIFT-002": "{kind} {id}: observed {field} ({observed}) differs from design ({desired}).",
   "validation.issue.drift.NW-DRIFT-003": "{kind} {id}: exists in observed state but not in design.",
   "validation.issue.drift.NW-DRIFT-010": "Invalid observed snapshot.",
-  "validation.issue.drift.NW-DRIFT-011": "Observed snapshot has no observedAt date."
+  "validation.issue.drift.NW-DRIFT-011": "Observed snapshot has no observedAt date.",
+  "validation.wan.scenarioSummaryNoGroups": "Reachability baseline {baseline} · survives {surviving} · lost {lost}"
 }
