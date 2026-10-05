@@ -270,7 +270,7 @@
 
     const service=result.service?.label||tr('graphs.trace.diagnostic',{},'Diagnóstico');
     const status=result.ok?(result.partial?tr('graphs.trace.partial',{},'VALIDACIÓN PARCIAL'):tr('graphs.trace.allowed',{},'RUTA PERMITIDA')):tr('graphs.trace.blocked',{},'BLOQUEO DETECTADO');
-    const reason=block?.reason||(!result.ok?tr('graphs.trace.review',{},'Revisar validaciones del diagnóstico.'):result.partial?tr('graphs.trace.missingData',{},'Faltan datos para validar todos los saltos.'):tr('graphs.trace.coherent',{},'Todos los controles modelados son coherentes.'));
+    const reason=block?.messageKey?tr(block.messageKey,block.messageParams||{},block.reason||''):(block?.reason||(!result.ok?tr('graphs.trace.review',{},'Revisar validaciones del diagnóstico.'):result.partial?tr('graphs.trace.missingData',{},'Faltan datos para validar todos los saltos.'):tr('graphs.trace.coherent',{},'Todos los controles modelados son coherentes.')));
     badge.hidden=false;
     badge.style.borderColor=result.ok?(result.partial?'#f59e0b':'#22c55e'):'#ef4444';
     badge.textContent=`${status} · ${service} · ${reason}`;
