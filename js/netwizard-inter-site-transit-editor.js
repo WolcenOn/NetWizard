@@ -7,6 +7,8 @@
 
 const arr=v=>Array.isArray(v)?v:[];
 const clean=v=>String(v==null?'':v).trim();
+const I18N=root.NetWizardI18n||null;
+const i18nText=(key,params={},fallback='')=>I18N&&typeof I18N.t==='function'?I18N.t(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
 function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
 function uid(prefix){
   if(root.crypto&&typeof root.crypto.randomUUID==='function')return prefix+'_'+root.crypto.randomUUID().replace(/-/g,'').slice(0,12);
@@ -66,7 +68,7 @@ function fillDevices(){
   const p=state(),devices=arr(p.devices).filter(isRoutingDevice);
   for(const id of ['nwTransitDeviceA','nwTransitDeviceB']){
     const s=root.document.getElementById(id);if(!s)continue;
-    const current=s.value;s.textContent='';s.appendChild(option('','— dispositivo L3 —'));
+    const current=s.value;s.textContent='';s.appendChild(option('',i18nText('links.transit.selectDevice',{},'— dispositivo L3 —')));
     devices.forEach(d=>s.appendChild(option(d.id,d.name||d.id)));
     if(current&&devices.some(d=>d.id===current))s.value=current;
   }
@@ -76,19 +78,19 @@ function createTransit(){
   const aName=clean(root.document.getElementById('nwTransitPortA').value),bName=clean(root.document.getElementById('nwTransitPortB').value);
   const cidr=clean(root.document.getElementById('nwTransitCidr').value),aIp=clean(root.document.getElementById('nwTransitIpA').value),bIp=clean(root.document.getElementById('nwTransitIpB').value);
   const name=clean(root.document.getElementById('nwTransitName').value)||[deviceLabel(p,aId),deviceLabel(p,bId)].filter(Boolean).join(' ↔ ');
-  const notes=clean(root.document.getElementById('nwTransitNotes').value)||'Tránsito L3 inter-sede';
-  if(!aId||!bId||aId===bId)return root.alert&&root.alert('Selecciona dos dispositivos L3 distintos.');
-  if(!aName||!bName)return root.alert&&root.alert('Indica el nombre de interfaz en ambos extremos.');
-  if(!parseCidr(cidr))return root.alert&&root.alert('Indica una red de tránsito CIDR válida, por ejemplo 10.255.0.0/30.');
-  if(!contains(cidr,aIp)||!contains(cidr,bIp)||aIp===bIp)return root.alert&&root.alert('Las dos IP deben ser distintas y pertenecer a la red de tránsito.');
-  if(arr(p.ports).some(x=>x.deviceId===aId&&clean(x.name)===aName))return root.alert&&root.alert('La interfaz A ya existe en ese dispositivo.');
-  if(arr(p.ports).some(x=>x.deviceId===bId&&clean(x.name)===bName))return root.alert&&root.alert('La interfaz B ya existe en ese dispositivo.');
+  const notes=clean(root.document.getElementById('nwTransitNotes').value)||null;
+  if(!aId||!bId||aId===bId)return root.alert&&root.alert(i18nText('links.transit.alert.distinctDevices',{},'Selecciona dos dispositivos L3 distintos.'));
+  if(!aName||!bName)return root.alert&&root.alert(i18nText('links.transit.alert.interfaceNames',{},'Indica el nombre de interfaz en ambos extremos.'));
+  if(!parseCidr(cidr))return root.alert&&root.alert(i18nText('links.transit.alert.validCidr',{},'Indica una red de tránsito CIDR válida, por ejemplo 10.255.0.0/30.'));
+  if(!contains(cidr,aIp)||!contains(cidr,bIp)||aIp===bIp)return root.alert&&root.alert(i18nText('links.transit.alert.validIps',{},'Las dos IP deben ser distintas y pertenecer a la red de tránsito.'));
+  if(arr(p.ports).some(x=>x.deviceId===aId&&clean(x.name)===aName))return root.alert&&root.alert(i18nText('links.transit.alert.interfaceAExists',{},'La interfaz A ya existe en ese dispositivo.'));
+  if(arr(p.ports).some(x=>x.deviceId===bId&&clean(x.name)===bName))return root.alert&&root.alert(i18nText('links.transit.alert.interfaceBExists',{},'La interfaz B ya existe en ese dispositivo.'));
 
   const portA=uid('port'),portB=uid('port'),linkId=uid('lnk');
   update(project=>({
     ports:arr(project.ports).concat(
-      {id:portA,deviceId:aId,name:aName,mode:'routed',role:'transit',media:'GE',l3Ip:aIp,l3Cidr:cidr,desc:'Tránsito inter-sede a '+deviceLabel(project,bId)},
-      {id:portB,deviceId:bId,name:bName,mode:'routed',role:'transit',media:'GE',l3Ip:bIp,l3Cidr:cidr,desc:'Tránsito inter-sede a '+deviceLabel(project,aId)}
+      {id:portA,deviceId:aId,name:aName,mode:'routed',role:'transit',media:'GE',l3Ip:aIp,l3Cidr:cidr,desc:'Inter-site transit to '+deviceLabel(project,bId)},
+      {id:portB,deviceId:bId,name:bName,mode:'routed',role:'transit',media:'GE',l3Ip:bIp,l3Cidr:cidr,desc:'Inter-site transit to '+deviceLabel(project,aId)}
     ),
     links:arr(project.links).concat({id:linkId,name,aPortId:portA,bPortId:portB,notes,medium:'logical',cableType:'provider',lengthM:null,speed:'auto'})
   }),'inter-site-transit-create');
@@ -101,7 +103,7 @@ function renderList(){
     const a=portById.get(l.aPortId),b=portById.get(l.bPortId);
     return a&&b&&a.mode==='routed'&&b.mode==='routed'&&(a.role==='transit'||b.role==='transit');
   });
-  if(!items.length){host.appendChild(el('div',{className:'hint'},'Todavía no hay enlaces routed de tránsito inter-sede.'));return;}
+  if(!items.length){host.appendChild(el('div',{className:'hint'},i18nText('links.transit.empty',{},'Todavía no hay enlaces routed de tránsito inter-sede.')));return;}
   items.forEach(l=>{
     const a=portById.get(l.aPortId),b=portById.get(l.bPortId);
     const row=el('div',{className:'hrow'});
@@ -115,14 +117,14 @@ function install(){
   if(!root.document||root.document.getElementById('nwInterSiteTransitCard'))return;
   const host=root.document.getElementById('pg-links');if(!host)return;
   const card=el('div',{className:'card',id:'nwInterSiteTransitCard',style:'margin-top:12px;'});
-  const head=el('div',{className:'card-h'});head.append(el('div',{className:'card-t'},'🌐 Tránsito L3 inter-sede'),el('span',{className:'b bac'},'ports + links'));
-  card.append(head,el('div',{className:'hint',style:'margin-bottom:10px;'},'Crea un enlace routed punto a punto entre dos routers/firewalls usando las autoridades existentes de puertos y enlaces. Las VLAN permanecen locales a cada sede.'));
-  const g1=el('div',{className:'g2'});g1.append(selectField('nwTransitDeviceA','Dispositivo A'),field('nwTransitPortA','Interfaz A','GigabitEthernet0/1'));
-  const g2=el('div',{className:'g2'});g2.append(selectField('nwTransitDeviceB','Dispositivo B'),field('nwTransitPortB','Interfaz B','GigabitEthernet0/1'));
-  const g3=el('div',{className:'g2'});g3.append(field('nwTransitCidr','Red de tránsito','10.255.0.0/30'),field('nwTransitName','Nombre del enlace','CENTRAL ↔ NORTE'));
+  const head=el('div',{className:'card-h'});head.append(el('div',{className:'card-t'},i18nText('links.transit.title',{},'🌐 Tránsito L3 inter-sede')),el('span',{className:'b bac'},'ports + links'));
+  card.append(head,el('div',{className:'hint',style:'margin-bottom:10px;'},i18nText('links.transit.hint',{},'Crea un enlace routed punto a punto entre dos routers/firewalls usando las autoridades existentes de puertos y enlaces. Las VLAN permanecen locales a cada sede.')));
+  const g1=el('div',{className:'g2'});g1.append(selectField('nwTransitDeviceA',i18nText('links.transit.deviceA',{},'Dispositivo A')),field('nwTransitPortA',i18nText('links.transit.interfaceA',{},'Interfaz A'),'GigabitEthernet0/1'));
+  const g2=el('div',{className:'g2'});g2.append(selectField('nwTransitDeviceB',i18nText('links.transit.deviceB',{},'Dispositivo B')),field('nwTransitPortB',i18nText('links.transit.interfaceB',{},'Interfaz B'),'GigabitEthernet0/1'));
+  const g3=el('div',{className:'g2'});g3.append(field('nwTransitCidr',i18nText('links.transit.network',{},'Red de tránsito'),'10.255.0.0/30'),field('nwTransitName',i18nText('links.transit.linkName',{},'Nombre del enlace'),'CENTRAL ↔ NORTE'));
   const g4=el('div',{className:'g2'});g4.append(field('nwTransitIpA','IP A','10.255.0.1'),field('nwTransitIpB','IP B','10.255.0.2'));
-  card.append(g1,g2,g3,g4,field('nwTransitNotes','Servicio / notas','MPLS, Ethernet privado, VPN overlay...'));
-  const actions=el('div',{className:'brow'});actions.appendChild(el('button',{className:'btn bp',type:'button',id:'nwTransitCreate'},'➕ Crear tránsito L3'));card.appendChild(actions);
+  card.append(g1,g2,g3,g4,field('nwTransitNotes',i18nText('links.transit.serviceNotes',{},'Servicio / notas'),i18nText('links.transit.notesPlaceholder',{},'MPLS, Ethernet privado, VPN overlay...')));
+  const actions=el('div',{className:'brow'});actions.appendChild(el('button',{className:'btn bp',type:'button',id:'nwTransitCreate'},i18nText('links.transit.create',{},'➕ Crear tránsito L3')));card.appendChild(actions);
   card.appendChild(el('div',{id:'nwTransitList',style:'margin-top:10px;'}));
   host.appendChild(card);
   root.document.getElementById('nwTransitCreate').onclick=createTransit;
@@ -138,5 +140,13 @@ if(root.document){
   else refresh();
   root.document.addEventListener('nw:project:changed',refresh);
   root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='links')refresh();});
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{
+    if(!active())return;
+    const ids=['nwTransitDeviceA','nwTransitPortA','nwTransitDeviceB','nwTransitPortB','nwTransitCidr','nwTransitName','nwTransitIpA','nwTransitIpB','nwTransitNotes'];
+    const values=Object.fromEntries(ids.map(id=>[id,root.document.getElementById(id)?.value||'']));
+    root.document.getElementById('nwInterSiteTransitCard')?.remove();
+    install();
+    ids.forEach(id=>{const node=root.document.getElementById(id);if(node&&values[id]!==undefined)node.value=values[id];});
+  });
 }
 })(typeof window!=='undefined'?window:globalThis);

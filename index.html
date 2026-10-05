@@ -53,8 +53,8 @@
     <div class="sb-sec" data-i18n="sidebar.sec.visual">Visualización</div>
     <div class="sb-it" data-step="graphs"><div class="sb-num">🧭</div><span class="sb-label" data-i18n="nav.graphs">🧭 Vistas gráficas</span></div>
     <div class="sb-div"></div>
-    <div class="sb-sec">Conectividad</div>
-    <div class="sb-it" data-step="links"><div class="sb-num">6</div>🔗 Enlaces</div>
+    <div class="sb-sec" data-i18n="sidebar.sec.connectivity">Conectividad</div>
+    <div class="sb-it" data-step="links"><div class="sb-num">6</div><span class="sb-label" data-i18n="nav.links">🔗 Enlaces</span></div>
     <div class="sb-div"></div>
     <div class="sb-sec">Seguridad</div>
     <div class="sb-it" data-step="fw"><div class="sb-num">7</div>🔒 Firewall</div>
@@ -587,50 +587,50 @@
 
 <!-- ═══════════ ENLACES ═══════════ -->
 <div class="pg" id="pg-links">
-  <div class="ph"><h1>🔗 Enlaces</h1><p>Conecta puertos existentes y documenta el medio físico entre equipos. La creación y edición de puertos se realiza en Puertos & Interfaces.</p></div>
+  <div class="ph"><h1 data-i18n="links.page.title">🔗 Enlaces</h1><p data-i18n="links.page.subtitle">Conecta puertos existentes y documenta el medio físico entre equipos. La creación y edición de puertos se realiza en Puertos & Interfaces.</p></div>
   <div class="g2 nw-workspace-stack">
     <div>
 
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">🔗 Crear enlace</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="links.form.title">🔗 Crear enlace</div>
         <div class="row">
-          <div><label class="fl">Puerto A</label><select id="lnkA"></select></div>
-          <div><label class="fl">Puerto B</label><select id="lnkB"></select></div>
+          <div><label class="fl" data-i18n="links.form.portA">Puerto A</label><select id="lnkA"></select></div>
+          <div><label class="fl" data-i18n="links.form.portB">Puerto B</label><select id="lnkB"></select></div>
         </div>
-        <label class="fl">Notas</label><input id="lnkNotes" placeholder="Uplink / WAN…"/>
+        <label class="fl" data-i18n="form.notes">Notas</label><input id="lnkNotes" placeholder="Uplink / WAN…" data-i18n-placeholder="links.form.notesPlaceholder"/>
         <div class="row">
-          <div><label class="fl">Medio físico</label><select id="lnkMedium"><option value="auto">Auto</option><option value="copper">Cobre/RJ45</option><option value="fiber">Fibra/SFP</option><option value="dac">DAC/Twinax</option><option value="wireless">Inalámbrico</option></select></div>
-          <div><label class="fl">Tipo/categoría</label><select id="lnkCableType"><option value="auto">Auto</option><option value="cat5e">Cat5e</option><option value="cat6">Cat6</option><option value="cat6a">Cat6A</option><option value="cat8">Cat8</option><option value="om3">OM3</option><option value="om4">OM4</option><option value="os2">OS2/SMF</option><option value="dac">DAC</option></select></div>
+          <div><label class="fl" data-i18n="links.form.medium">Medio físico</label><select id="lnkMedium"><option value="auto">Auto</option><option value="copper" data-i18n="links.medium.copper">Cobre/RJ45</option><option value="fiber" data-i18n="links.medium.fiber">Fibra/SFP</option><option value="dac">DAC/Twinax</option><option value="wireless" data-i18n="links.medium.wireless">Inalámbrico</option></select></div>
+          <div><label class="fl" data-i18n="links.form.cableType">Tipo/categoría</label><select id="lnkCableType"><option value="auto">Auto</option><option value="cat5e">Cat5e</option><option value="cat6">Cat6</option><option value="cat6a">Cat6A</option><option value="cat8">Cat8</option><option value="om3">OM3</option><option value="om4">OM4</option><option value="os2">OS2/SMF</option><option value="dac">DAC</option></select></div>
         </div>
         <div class="row">
-          <div><label class="fl">Longitud cable (m)</label><input id="lnkLengthM" type="number" min="0" step="0.1" placeholder="Ej. 24.5"/></div>
-          <div><label class="fl">Velocidad prevista</label><select id="lnkSpeed"><option value="auto">Auto</option><option value="100M">100M</option><option value="1G">1G</option><option value="2.5G">2.5G</option><option value="10G">10G</option><option value="25G">25G</option><option value="40G">40G</option><option value="100G">100G</option></select></div>
+          <div><label class="fl" data-i18n="links.form.length">Longitud cable (m)</label><input id="lnkLengthM" type="number" min="0" step="0.1" placeholder="Ej. 24.5" data-i18n-placeholder="links.form.lengthPlaceholder"/></div>
+          <div><label class="fl" data-i18n="links.form.speed">Velocidad prevista</label><select id="lnkSpeed"><option value="auto">Auto</option><option value="100M">100M</option><option value="1G">1G</option><option value="2.5G">2.5G</option><option value="10G">10G</option><option value="25G">25G</option><option value="40G">40G</option><option value="100G">100G</option></select></div>
         </div>
-        <label class="fl">Red/VLAN de tránsito L3 (opcional)</label><select id="lnkTransit"><option value="">— sin tránsito L3 —</option></select>
-        <div class="brow"><button class="btn bp" id="btnAddLink">🔗 Crear enlace</button></div>
+        <label class="fl" data-i18n="links.form.transit">Red/VLAN de tránsito L3 (opcional)</label><select id="lnkTransit"><option value="" data-i18n="links.select.noTransit">— sin tránsito L3 —</option></select>
+        <div class="brow"><button class="btn bp" id="btnAddLink" data-i18n="links.actions.create">🔗 Crear enlace</button></div>
         <div class="hint" id="upHint"></div>
       </div>
     </div>
     <div>
       <div class="card">
         <div class="card-h">
-          <div class="card-t">🔌 Vista de puertos</div>
+          <div class="card-t" data-i18n="links.portView.title">🔌 Vista de puertos</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
             <select id="visDev" style="font-size:11.5px;padding:4px;"></select>
           </div>
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;">
-          <span class="b bgn">access</span><span class="b byw">trunk</span><span class="b bpu">routed</span><span style="font-size:10.5px;color:var(--ac);margin-left:3px;">■ enlazado</span>
+          <span class="b bgn">access</span><span class="b byw">trunk</span><span class="b bpu">routed</span><span style="font-size:10.5px;color:var(--ac);margin-left:3px;" data-i18n="links.portView.linked">■ enlazado</span>
         </div>
         <div id="portGrid" class="pgrid"></div>
       </div>
       <details class="card" id="linksListPanel" open>
-        <summary><span class="card-t">🔗 Enlaces</span></summary>
+        <summary><span class="card-t" data-i18n="links.list.title">🔗 Enlaces</span></summary>
         <div class="card-h"><span class="hint" id="linksPageInfo"></span></div>
         <div id="linksList"></div>
         <div class="brow" id="linksPager" style="justify-content:space-between;">
-          <button class="btn bs bsm" id="linksPrev" type="button">← Anterior</button>
-          <button class="btn bs bsm" id="linksNext" type="button">Siguiente →</button>
+          <button class="btn bs bsm" id="linksPrev" type="button" data-i18n="actions.previous">← Anterior</button>
+          <button class="btn bs bsm" id="linksNext" type="button" data-i18n="actions.next">Siguiente →</button>
         </div>
       </details>
     </div>
