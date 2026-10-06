@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Private Engine', async ({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('nw_locale_v1','es'));
   let putBody=null,deploymentBody=null;
 
   await page.route('**/api/capabilities',async route=>route.fulfill({

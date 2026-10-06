@@ -438,14 +438,14 @@ function buildCommentedConfig(cfg){
   const explain=line=>{
     const t=(line||'').trim();
     if(!t) return '';
-    if(t==='!') return 'Separador visual en la configuración.';
-    if(/^! /.test(t)) return 'Comentario o cabecera informativa.';
-    if(t==='configure terminal') return 'Entra al modo de configuración global.';
-    if(t==='end') return 'Sale del modo de configuración.';
-    if(t==='write memory') return 'Guarda la configuración en memoria.';
-    if(/^hostname\s+/.test(t)) return 'Asigna el nombre del dispositivo.';
-    if(/^vlan\s+\d+/.test(t)) return 'Crea o selecciona la VLAN indicada.';
-    if(/^name\s+/.test(t)) return 'Asigna un nombre descriptivo a la VLAN.';
+    if(t==='!') return i18nText('deploy.explain.separator',{},'Separador visual en la configuración.');
+    if(/^! /.test(t)) return i18nText('deploy.explain.comment',{},'Comentario o cabecera informativa.');
+    if(t==='configure terminal') return i18nText('deploy.explain.configureTerminal',{},'Entra al modo de configuración global.');
+    if(t==='end') return i18nText('deploy.explain.end',{},'Sale del modo de configuración.');
+    if(t==='write memory') return i18nText('deploy.explain.writeMemory',{},'Guarda la configuración en memoria.');
+    if(/^hostname\s+/.test(t)) return i18nText('deploy.explain.hostname',{},'Asigna el nombre del dispositivo.');
+    if(/^vlan\s+\d+/.test(t)) return i18nText('deploy.explain.vlan',{},'Crea o selecciona la VLAN indicada.');
+    if(/^name\s+/.test(t)) return i18nText('deploy.explain.vlanName',{},'Asigna un nombre descriptivo a la VLAN.');
     if(/^vtp domain\s+/.test(t)) return i18nText('vtp.explain.domain',{},'Define el dominio VTP; todos los switches VTP deben compartirlo.');
     if(/^vtp password\s+/.test(t)) return i18nText('vtp.explain.password',{},'Establece la contraseña VTP común entre switches.');
     if(/^vtp mode\s+server/.test(t)) return i18nText('vtp.explain.server',{},'Este switch actuará como servidor VTP y publicará las VLAN.');
@@ -453,34 +453,34 @@ function buildCommentedConfig(cfg){
     if(/^vtp mode\s+transparent/.test(t)) return i18nText('vtp.explain.transparent',{},'Modo transparente: no aprende VLAN por VTP, pero reenvía anuncios.');
     if(/^vtp version\s+/.test(t)) return i18nText('vtp.explain.version',{},'Fija la versión de VTP usada en el dominio.');
     if(/^vtp pruning/.test(t)) return i18nText('vtp.explain.pruning',{},'Activa VTP pruning para reducir tráfico innecesario en trunks.');
-    if(/^interface\s+/.test(t)) return 'Entra en la configuración de la interfaz indicada.';
-    if(/^description\s+/.test(t)) return 'Añade una descripción a la interfaz.';
-    if(t==='switchport') return 'Habilita parámetros de capa 2 de switchport.';
-    if(t==='switchport nonegotiate') return 'Desactiva DTP para que el trunk no se negocie automáticamente.';
-    if(t==='switchport mode access') return 'Configura el puerto como acceso para una única VLAN.';
-    if(/^switchport access vlan\s+/.test(t)) return 'Asocia el puerto de acceso a la VLAN indicada.';
-    if(t==='switchport mode trunk') return 'Configura el puerto como trunk para transportar varias VLAN.';
-    if(/^switchport trunk native vlan\s+/.test(t)) return 'Define la VLAN nativa del trunk.';
-    if(/^switchport trunk allowed vlan\s+/.test(t)) return 'Limita las VLAN permitidas por el trunk.';
-    if(/^spanning-tree portfast/.test(t)) return 'Acelera la transición del puerto de acceso a forwarding.';
-    if(/^spanning-tree bpduguard enable/.test(t)) return 'Protege el puerto apagándolo si recibe BPDUs.';
-    if(/^switchport port-security/.test(t)) return 'Activa seguridad de puerto y control de MACs.';
-    if(/^ip dhcp snooping/.test(t)) return 'Activa o ajusta DHCP Snooping para proteger frente a servidores DHCP falsos.';
-    if(/^ip arp inspection/.test(t)) return 'Activa o ajusta Dynamic ARP Inspection.';
-    if(/^ip verify source/.test(t)) return 'Activa IP Source Guard en el puerto.';
-    if(/^no shutdown/.test(t)) return 'Habilita administrativamente la interfaz.';
-    if(t==='exit') return 'Vuelve al modo de configuración anterior.';
-    if(/^encapsulation dot1Q\s+/.test(t)) return 'Etiqueta la subinterfaz con la VLAN indicada para RoaS.';
-    if(/^ip address\s+/.test(t)) return 'Asigna dirección IP y máscara a la interfaz.';
-    if(/^ip route\s+0\.0\.0\.0/.test(t)) return 'Crea la ruta por defecto hacia el siguiente salto.';
-    if(/^ip nat inside source list/.test(t)) return 'Configura NAT overload para salida a Internet.';
-    if(/^access-list\s+/.test(t)) return 'Define una ACL o regla usada por NAT/filtrado.';
-    if(/^ip dhcp pool\s+/.test(t)) return 'Crea un pool DHCP para la red indicada.';
-    if(/^network\s+/.test(t)) return 'Define la red atendida por el pool DHCP.';
-    if(/^default-router\s+/.test(t)) return 'Indica la puerta de enlace entregada por DHCP.';
-    if(/^dns-server\s+/.test(t)) return 'Define los DNS que dará el servicio DHCP.';
-    if(/^lease\s+/.test(t)) return 'Establece la duración de la concesión DHCP.';
-    return 'Línea de configuración generada automáticamente.';
+    if(/^interface\s+/.test(t)) return i18nText('deploy.explain.interface',{},'Entra en la configuración de la interfaz indicada.');
+    if(/^description\s+/.test(t)) return i18nText('deploy.explain.description',{},'Añade una descripción a la interfaz.');
+    if(t==='switchport') return i18nText('deploy.explain.switchport',{},'Habilita parámetros de capa 2 de switchport.');
+    if(t==='switchport nonegotiate') return i18nText('deploy.explain.nonegotiate',{},'Desactiva DTP para que el trunk no se negocie automáticamente.');
+    if(t==='switchport mode access') return i18nText('deploy.explain.accessMode',{},'Configura el puerto como acceso para una única VLAN.');
+    if(/^switchport access vlan\s+/.test(t)) return i18nText('deploy.explain.accessVlan',{},'Asocia el puerto de acceso a la VLAN indicada.');
+    if(t==='switchport mode trunk') return i18nText('deploy.explain.trunkMode',{},'Configura el puerto como trunk para transportar varias VLAN.');
+    if(/^switchport trunk native vlan\s+/.test(t)) return i18nText('deploy.explain.nativeVlan',{},'Define la VLAN nativa del trunk.');
+    if(/^switchport trunk allowed vlan\s+/.test(t)) return i18nText('deploy.explain.allowedVlans',{},'Limita las VLAN permitidas por el trunk.');
+    if(/^spanning-tree portfast/.test(t)) return i18nText('deploy.explain.portfast',{},'Acelera la transición del puerto de acceso a forwarding.');
+    if(/^spanning-tree bpduguard enable/.test(t)) return i18nText('deploy.explain.bpduguard',{},'Protege el puerto apagándolo si recibe BPDUs.');
+    if(/^switchport port-security/.test(t)) return i18nText('deploy.explain.portSecurity',{},'Activa seguridad de puerto y control de MACs.');
+    if(/^ip dhcp snooping/.test(t)) return i18nText('deploy.explain.dhcpSnooping',{},'Activa o ajusta DHCP Snooping para proteger frente a servidores DHCP falsos.');
+    if(/^ip arp inspection/.test(t)) return i18nText('deploy.explain.dai',{},'Activa o ajusta Dynamic ARP Inspection.');
+    if(/^ip verify source/.test(t)) return i18nText('deploy.explain.ipSourceGuard',{},'Activa IP Source Guard en el puerto.');
+    if(/^no shutdown/.test(t)) return i18nText('deploy.explain.noShutdown',{},'Habilita administrativamente la interfaz.');
+    if(t==='exit') return i18nText('deploy.explain.exit',{},'Vuelve al modo de configuración anterior.');
+    if(/^encapsulation dot1Q\s+/.test(t)) return i18nText('deploy.explain.dot1q',{},'Etiqueta la subinterfaz con la VLAN indicada para RoaS.');
+    if(/^ip address\s+/.test(t)) return i18nText('deploy.explain.ipAddress',{},'Asigna dirección IP y máscara a la interfaz.');
+    if(/^ip route\s+0\.0\.0\.0/.test(t)) return i18nText('deploy.explain.defaultRoute',{},'Crea la ruta por defecto hacia el siguiente salto.');
+    if(/^ip nat inside source list/.test(t)) return i18nText('deploy.explain.nat',{},'Configura NAT overload para salida a Internet.');
+    if(/^access-list\s+/.test(t)) return i18nText('deploy.explain.acl',{},'Define una ACL o regla usada por NAT/filtrado.');
+    if(/^ip dhcp pool\s+/.test(t)) return i18nText('deploy.explain.dhcpPool',{},'Crea un pool DHCP para la red indicada.');
+    if(/^network\s+/.test(t)) return i18nText('deploy.explain.network',{},'Define la red atendida por el pool DHCP.');
+    if(/^default-router\s+/.test(t)) return i18nText('deploy.explain.defaultRouter',{},'Indica la puerta de enlace entregada por DHCP.');
+    if(/^dns-server\s+/.test(t)) return i18nText('deploy.explain.dnsServer',{},'Define los DNS que dará el servicio DHCP.');
+    if(/^lease\s+/.test(t)) return i18nText('deploy.explain.lease',{},'Establece la duración de la concesión DHCP.');
+    return i18nText('deploy.explain.generatedLine',{},'Línea de configuración generada automáticamente.');
   };
   for(const line of lines){
     if(line.trim()) out.push(line+'    ! '+explain(line));
@@ -546,23 +546,14 @@ function genConfig(devId,format){
   const assigned=cliText(d.vendorOs||'sin-vendor',80),requested=cliText(format||d.vendorOs||'sin-vendor',80);
   const privateArtifact=privateConfigArtifact(devId);
   if(privateArtifact&&requested!==assigned){
-    return `! El Private Engine generó este dispositivo para ${assigned}.
-! La previsualización cruzada como ${requested} no está disponible en producción.
-! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.
-`;
+    return i18nText('deploy.private.crossPreview',{assigned,requested},'! El Private Engine generó este dispositivo para {assigned}.\n! La previsualización cruzada como {requested} no está disponible en producción.\n! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.\n');
   }
   const status=privateConfigStatus(devId);
   if(status&&['unsupported','generation-error','missing-artifact','not-generated','stale'].includes(status.status)){
     const reasons=(status.reasons||[]).filter(Boolean);
-    return `! Private Engine: ${status.status.toUpperCase()} para ${assigned}.
-${reasons.map(reason=>'! '+reason).join('\n')}
-! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.
-`;
+    return i18nText('deploy.private.status',{status:status.status.toUpperCase(),assigned,reasons:reasons.map(reason=>'! '+reason).join('\n')},'! Private Engine: {status} para {assigned}.\n{reasons}\n! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.\n');
   }
-  return `! Configuración privada pendiente para ${assigned}.
-! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.
-! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.
-`;
+  return i18nText('deploy.private.pendingConfig',{assigned},'! Configuración privada pendiente para {assigned}.\n! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.\n! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.\n');
 }
 function configForView(devId,format){
   const d=devById(devId);if(!d)return'';
@@ -602,37 +593,37 @@ function configReadinessForView(devId,format){
       certification:cliText(capability.certification||'',40)
     };
   }
-  return{status:'pending',reasons:['Private Engine está disponible, pero todavía no existe un artefacto generado para este dispositivo.'],source:'private'};
+  return{status:'pending',reasons:[i18nText('deploy.readiness.privatePendingReason',{},'Private Engine está disponible, pero todavía no existe un artefacto generado para este dispositivo.')],source:'private'};
 }
 function paintConfigReadiness(nodeId,devId,format){
   const node=$(nodeId);if(!node)return;
   const r=configReadinessForView(devId,format),reasons=(r.reasons||[]).filter(Boolean);
   const modeLabel=r.mode==='cli'?'CLI PRIVADA':r.mode==='script'?'SCRIPT PRIVADO':r.mode==='procedure'?'PROCEDIMIENTO':'';
-  let label='Estado de aplicación pendiente.',cls='co co-ac';
+  let label=i18nText('deploy.config.pending',{},'Estado de aplicación pendiente.'),cls='co co-ac';
   if(r.status==='apply-ready'){
-    label='✅ '+(modeLabel?modeLabel+' · ':'')+'APPLY-READY · Artefacto privado estructuralmente aplicable. La Production Gate global debe seguir en READY.';
+    label='✅ '+(modeLabel?modeLabel+' · ':'')+i18nText('deploy.readiness.applyReady',{},'APPLY-READY · Artefacto privado estructuralmente aplicable. La Production Gate global debe seguir en READY.');
     cls='co co-gn';
   }else if(r.status==='review-required'){
-    label='⚠ '+(modeLabel?modeLabel+' · ':'')+'REVISIÓN OBLIGATORIA · '+(reasons.join(' ')||'Revisa el artefacto antes de aplicarlo.');
+    label='⚠ '+(modeLabel?modeLabel+' · ':'')+i18nText('deploy.readiness.reviewRequired',{reasons:reasons.join(' ')||i18nText('deploy.readiness.reviewFallback',{},'Revisa el artefacto antes de aplicarlo.')},'REVISIÓN OBLIGATORIA · {reasons}');
   }else if(r.status==='procedure-only'){
-    label='ℹ PROCEDIMIENTO · No es una CLI universal para pegar directamente. '+(reasons.join(' ')||'');
+    label='ℹ '+i18nText('deploy.readiness.procedure',{reasons:reasons.join(' ')||''},'PROCEDIMIENTO · No es una CLI universal para pegar directamente. {reasons}');
   }else if(r.status==='source-preview'){
-    label='🧪 PREVIEW LOCAL/SOURCE · '+reasons.join(' ');
+    label='🧪 '+i18nText('deploy.readiness.localPreview',{reasons:reasons.join(' ')},'PREVIEW LOCAL/SOURCE · {reasons}');
   }else if(r.status==='unsupported'){
-    label='⛔ NO SOPORTADO · '+reasons.join(' ');
+    label='⛔ '+i18nText('deploy.readiness.unsupported',{reasons:reasons.join(' ')},'NO SOPORTADO · {reasons}');
     cls='co co-rd';
   }else if(r.status==='generation-error'||r.status==='missing-artifact'){
-    label='❌ ERROR DE GENERACIÓN · '+reasons.join(' ');
+    label='❌ '+i18nText('deploy.readiness.generationError',{reasons:reasons.join(' ')},'ERROR DE GENERACIÓN · {reasons}');
     cls='co co-rd';
   }else if(r.status==='stale'){
-    label='♻ CONFIG OBSOLETA · '+reasons.join(' ');
+    label='♻ '+i18nText('deploy.readiness.stale',{reasons:reasons.join(' ')},'CONFIG OBSOLETA · {reasons}');
     cls='co co-rd';
   }else if(r.status==='not-generated'){
-    label='⚠ SIN ARTEFACTO · '+reasons.join(' ');
+    label='⚠ '+i18nText('deploy.readiness.noArtifact',{reasons:reasons.join(' ')},'SIN ARTEFACTO · {reasons}');
   }else if(r.status==='pending'){
-    label='☁ PRIVATE ENGINE PENDIENTE · '+reasons.join(' ');
+    label='☁ '+i18nText('deploy.readiness.privatePending',{reasons:reasons.join(' ')},'PRIVATE ENGINE PENDIENTE · {reasons}');
   }else{
-    label='⚠ Estado de aplicación no disponible. '+reasons.join(' ');
+    label='⚠ '+i18nText('deploy.readiness.unavailable',{reasons:reasons.join(' ')},'Estado de aplicación no disponible. {reasons}');
   }
   node.className=cls;
   node.textContent=label.trim();
@@ -1359,6 +1350,10 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     renderFwRules();
     if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
     if($('fwTplModal')?.classList.contains('on'))renderFwTplModal();
+  }
+  if(S.step==='cfg'){
+    renderDevPickCfg();
+    if(selDevCfg&&devById(selDevCfg))selectDevCfg(selDevCfg);
   }
 });
 
@@ -2320,12 +2315,12 @@ function privateExportState(){
 }
 function privateExportEntries(){
   const state=privateExportState();
-  if(!state)return{ok:false,message:'Private Engine no disponible en esta sesión.',entries:[]};
-  if(state.stale)return{ok:false,message:'La generación server-side está obsoleta. Regenera antes de exportar.',entries:[]};
-  if(!state.available||!state.result)return{ok:false,message:'Primero genera las configuraciones en servidor.',entries:[]};
+  if(!state)return{ok:false,message:i18nText('deploy.export.privateUnavailable',{},'Private Engine no disponible en esta sesión.'),entries:[]};
+  if(state.stale)return{ok:false,message:i18nText('deploy.export.stale',{},'La generación server-side está obsoleta. Regenera antes de exportar.'),entries:[]};
+  if(!state.available||!state.result)return{ok:false,message:i18nText('deploy.export.generateFirst',{},'Primero genera las configuraciones en servidor.'),entries:[]};
   const gate=state.result.productionGate||{};
   if(gate.canExport!==true||state.result.productionStatus==='blocked'){
-    return{ok:false,message:'La Production Gate privada bloquea la exportación. Revisa Validación y el diagnóstico de generación.',entries:[]};
+    return{ok:false,message:i18nText('deploy.export.privateGateBlocked',{},'La Production Gate privada bloquea la exportación. Revisa Validación y el diagnóstico de generación.'),entries:[]};
   }
   const api=window.NetWizardPrivateDeploymentUi;
   const entries=[],missing=[];
@@ -2336,7 +2331,7 @@ function privateExportEntries(){
     const fileName=(path.split('/').filter(Boolean).pop()||((device.name||device.id||'device')+'.txt')).replace(/[\\/:*?"<>|]+/g,'-');
     entries.push({device,artifact,fileName});
   }
-  if(missing.length)return{ok:false,message:'Faltan artefactos privados vigentes para: '+missing.join(', ')+'. Regenera y revisa el diagnóstico.',entries:[]};
+  if(missing.length)return{ok:false,message:i18nText('deploy.export.missingArtifacts',{devices:missing.join(', ')},'Faltan artefactos privados vigentes para: {devices}. Regenera y revisa el diagnóstico.'),entries:[]};
   return{ok:true,message:'',entries,state};
 }
 function requireConfigExportReady(){
@@ -2355,11 +2350,11 @@ function requireConfigExportReady(){
   if(window.NetWizardProductionGate&&window.NetWizardProductionGate.runProductionGate){
     const gate=window.NetWizardProductionGate.runProductionGate(S,{productionMode:true,strict:true});
     if(!gate.canExport){
-      const msg=window.NetWizardProductionGate.summarizeGate?window.NetWizardProductionGate.summarizeGate(gate,{limit:80}):'Exportación bloqueada en modo producción.';
+      const msg=window.NetWizardProductionGate.summarizeGate?window.NetWizardProductionGate.summarizeGate(gate,{limit:80,locale:window.NetWizardI18n?.getReportLocale?.()}):i18nText('deploy.export.blockedProduction',{},'Exportación bloqueada en modo producción.');
       if($('cfgOut'))$('cfgOut').value=msg;
       const r=document.getElementById('readinessAuditOut');if(r)r.textContent=msg;
       const g=document.getElementById('productionGateOut');if(g)g.textContent=msg;
-      alert('Modo producción: la puerta de producción bloquea la exportación. Corrige los errores o cambia a modo demo para pruebas.');
+      alert(i18nText('deploy.export.productionGateAlert',{},'Modo producción: la puerta de producción bloquea la exportación. Corrige los errores o cambia a modo demo para pruebas.'));
       return false;
     }
     return true;
@@ -2367,10 +2362,10 @@ function requireConfigExportReady(){
   if(!(window.NetWizardPlanner&&window.NetWizardPlanner.readinessAudit))return true;
   const audit=window.NetWizardPlanner.readinessAudit(S,{productionMode:true});
   if(audit&&audit.ok===false){
-    const msg=window.NetWizardAudit.summarizeIssues?window.NetWizardAudit.summarizeIssues(audit.issues||audit,{title:'Exportación bloqueada en modo producción'}):'Exportación bloqueada en modo producción por errores de auditoría.';
+    const msg=window.NetWizardAudit.summarizeIssues?window.NetWizardAudit.summarizeIssues(audit.issues||audit,{title:i18nText('deploy.export.blockedTitle',{},'Exportación bloqueada en modo producción'),locale:window.NetWizardI18n?.getReportLocale?.()}):i18nText('deploy.export.blockedAudit',{},'Exportación bloqueada en modo producción por errores de auditoría.');
     if($('cfgOut'))$('cfgOut').value=msg;
     const r=document.getElementById('readinessAuditOut');if(r)r.textContent=msg;
-    alert('Modo producción: corrige los errores de auditoría antes de exportar configuraciones. Puedes cambiar a modo demo si solo estás haciendo una prueba.');
+    alert(i18nText('deploy.export.auditAlert',{},'Modo producción: corrige los errores de auditoría antes de exportar configuraciones. Puedes cambiar a modo demo si solo estás haciendo una prueba.'));
     return false;
   }
   return true;
@@ -2415,7 +2410,7 @@ function ensureJsonFileImportControls(){
     fileBtn.type='button';
     fileBtn.className='btn bs';
     fileBtn.id='impJsonFile';
-    fileBtn.textContent='📂 Cargar archivo JSON';
+    fileBtn.dataset.i18n='deploy.import.fileButton';fileBtn.textContent=i18nText('deploy.import.fileButton',{},'📂 Cargar archivo JSON');
     importText.insertAdjacentElement('afterend',fileBtn);
   }
   let fileInput=$('jsonFileInput');
@@ -2432,7 +2427,7 @@ function ensureJsonFileImportControls(){
     status.className='hint';
     status.id='jsonImportStatus';
     status.style.marginTop='6px';
-    status.textContent='Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema.';
+    status.dataset.i18n='deploy.import.hint';status.textContent=i18nText('deploy.import.hint',{},'Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema.');
     const bridge=$('nwBridgeStatus');
     if(bridge)bridge.insertAdjacentElement('beforebegin',status);
     else jsonBox.insertAdjacentElement('beforebegin',status);
@@ -2441,17 +2436,17 @@ function ensureJsonFileImportControls(){
 ensureJsonFileImportControls();
 function prepareJsonImportText(text){
   const txt=String(text||'').trim();
-  if(!txt)throw new Error('No hay contenido JSON para importar.');
+  if(!txt)throw new Error(i18nText('deploy.import.empty',{},'No hay contenido JSON para importar.'));
   const raw=JSON.parse(txt);
   let p=raw?.project&&typeof raw.project==='object'?raw.project:raw;
   let warnings=[];
   if(NWSchema&&typeof NWSchema.prepareImport==='function'){
     const prepared=NWSchema.prepareImport(raw,{defaults:defS});
-    if(!prepared.ok)throw new Error('JSON inválido:\n- '+prepared.errors.join('\n- '));
+    if(!prepared.ok)throw new Error(i18nText('deploy.import.invalidDetailed',{errors:prepared.errors.join('\n- ')},'JSON inválido:\n- {errors}'));
     p=prepared.project;
     warnings=prepared.warnings||[];
   }else if(!Array.isArray(p?.devices)||!Array.isArray(p?.vlans)){
-    throw new Error('JSON inválido.');
+    throw new Error(i18nText('deploy.import.invalid',{},'JSON inválido.'));
   }
   return{project:p,warnings};
 }
@@ -2468,8 +2463,8 @@ $('impJson').onclick=()=>{
   try{
     const prepared=applyJsonImportText($('jsonBox').value,'json-import-text');
     const status=$('jsonImportStatus');
-    if(status)status.textContent=`Importado desde texto: ${prepared.project.projName||'proyecto sin nombre'}.`;
-  }catch(e){alert(e.message||('JSON inválido: '+e));}
+    if(status)status.textContent=i18nText('deploy.import.fromText',{project:prepared.project.projName||i18nText('deploy.import.unnamedProject',{},'proyecto sin nombre')},'Importado desde texto: {project}.');
+  }catch(e){alert(e.message||i18nText('deploy.import.invalidWithError',{error:e},'JSON inválido: {error}'));}
 };
 if($('impJsonFile')&&$('jsonFileInput')){
   $('impJsonFile').onclick=()=>{$('jsonFileInput').value='';$('jsonFileInput').click();};
@@ -2477,22 +2472,22 @@ if($('impJsonFile')&&$('jsonFileInput')){
     const file=$('jsonFileInput').files&&$('jsonFileInput').files[0];
     if(!file)return;
     const status=$('jsonImportStatus');
-    if(file.size>10*1024*1024){if(status)status.textContent='Archivo rechazado: supera 10 MB.';alert('El archivo JSON supera el límite de 10 MB.');return;}
-    if(status)status.textContent=`Leyendo ${file.name}…`;
+    if(file.size>10*1024*1024){if(status)status.textContent=i18nText('deploy.import.fileTooLargeStatus',{},'Archivo rechazado: supera 10 MB.');alert(i18nText('deploy.import.fileTooLarge',{},'El archivo JSON supera el límite de 10 MB.'));return;}
+    if(status)status.textContent=i18nText('deploy.import.reading',{file:file.name},'Leyendo {file}…');
     const reader=new FileReader();
     reader.onload=()=>{
       try{
         const text=String(reader.result||'');
         $('jsonBox').value=text;
         const prepared=applyJsonImportText(text,'json-import-file');
-        if(status)status.textContent=`✓ ${file.name} cargado · ${prepared.project.projName||'proyecto sin nombre'} · ${Math.max(1,Math.round(file.size/1024))} KB.`;
-      }catch(e){if(status)status.textContent=`Error al importar ${file.name}.`;alert(e.message||('JSON inválido: '+e));}
+        if(status)status.textContent=i18nText('deploy.import.loaded',{file:file.name,project:prepared.project.projName||i18nText('deploy.import.unnamedProject',{},'proyecto sin nombre'),kb:Math.max(1,Math.round(file.size/1024))},'✓ {file} cargado · {project} · {kb} KB.');
+      }catch(e){if(status)status.textContent=i18nText('deploy.import.fileError',{file:file.name},'Error al importar {file}.');alert(e.message||i18nText('deploy.import.invalidWithError',{error:e},'JSON inválido: {error}'));}
     };
-    reader.onerror=()=>{if(status)status.textContent=`No se pudo leer ${file.name}.`;alert('No se pudo leer el archivo seleccionado.');};
+    reader.onerror=()=>{if(status)status.textContent=i18nText('deploy.import.readError',{file:file.name},'No se pudo leer {file}.');alert(i18nText('deploy.import.readErrorAlert',{},'No se pudo leer el archivo seleccionado.'));};
     reader.readAsText(file,'utf-8');
   });
 }
-$('btnReset').onclick=()=>{if(!confirm('¿Borrar todo el proyecto?'))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
+$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
 $('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>{const target=$('expDeploymentPackage')||$('expBundle');if(target)target.click();},200);};
 
 // ─────────────────── TOPOLOGY ───────────────────

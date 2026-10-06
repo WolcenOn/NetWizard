@@ -25,6 +25,7 @@
   function clone(value){ return JSON.parse(JSON.stringify(value == null ? null : value)); }
   function clean(value,max){ return String(value == null ? '' : value).replace(/[\u0000-\u001F\u007F]/g,' ').trim().slice(0,max||200); }
   function normalizeText(value){ return String(value == null ? '' : value).replace(/\r\n?/g,'\n'); }
+  function tr(key,params,locale,fallback){const i18n=root.NetWizardI18n;if(i18n&&typeof i18n.t==='function')return i18n.t(key,params||{},locale);return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
   function isoDate(value){ const date=value instanceof Date?value:new Date(value||Date.now()); return Number.isNaN(date.getTime())?new Date().toISOString():date.toISOString(); }
   function safeName(value,fallback){
     const source=clean(value,120);
@@ -57,42 +58,43 @@
   function gateIssue(code,message,extra){ return Object.assign({code,severity:'error',blocking:true,category:'deployment-bundle',source:'deployment-bundle',message},extra||{}); }
   function compareText(a,b){ const left=clean(a,120),right=clean(b,120); return left<right?-1:(left>right?1:0); }
 
-  function buildReadme(project,report,generatedAt,configFiles,changeSet,incrementalPlan){
+  function buildReadme(project,report,generatedAt,configFiles,changeSet,incrementalPlan,locale){
+    const warnings=(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan&&incrementalPlan.issues).filter(item=>item.severity==='warning').length;
     const lines=[
-      `# Paquete de despliegue — ${clean(project.projName,160)||'NetWizard'}`,'',
-      `- Formato: ${FORMAT} ${VERSION}`,
-      `- Generado: ${generatedAt}`,
-      `- Estado de producción: ${String(report.status||'unknown').toUpperCase()}`,
-      `- Dispositivos configurados: ${configFiles.length}`,
-      `- Avisos: ${(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan&&incrementalPlan.issues).filter(item=>item.severity==='warning').length}`,'',
-      '## Contenido','',
-      '- `project/netwizard-project.json`: snapshot saneado y versionado.',
-      '- `configs/`: configuración generada para cada dispositivo.',
-      '- `reports/production-gate.json`: resultado estructurado de la validación.',
-      '- `reports/production-checklist.md`: checklist y correcciones.',
-      '- `reports/inventory.csv`: inventario operativo.',
-      '- `reports/connectivity-matrix.csv`: intención de conectividad entre VLANs.',
-      '- `reports/documentation.md`: documentación completa del diseño.',
-      '- `deployment/plan.json`: orden estructurado y dependencias del cambio.',
-      '- `deployment/runbook.md`: procedimiento ejecutable con prechecks y validaciones.',
-      '- `deployment/rollback-checklist.md`: reversión en orden inverso.',
-      '- `changes/change-set.json`: comparación estructurada entre configuración observada y objetivo.',
-      '- `changes/summary.md`: resumen humano de cobertura y diferencias.',
-      '- `changes/patches/`: diffs de revisión; no son comandos ejecutables.',
-      '- `changes/rollback/`: diffs inversos para apoyar la reversión.',
-      '- `incremental/plan.json`: decisión del registro de adaptadores por equipo.',
-      '- `incremental/summary.md`: candidatos ejecutables y revisiones manuales.',
-      '- `incremental/commands/`: comandos cargables solo cuando el adaptador los certifica.',
-      '- `incremental/rollback/`: comandos inversos candidatos; el backup real sigue siendo autoritativo.',
-      '- `evidence/pre-change.json`: fingerprints y metadatos del snapshot previo.',
-      '- `evidence/post-change-checklist.md`: evidencias que deben capturarse tras el cambio.',
-      '- `manifest.json`: índice y CRC32 de cada archivo de payload.','',
-      '## Uso seguro','',
-      '1. Revisa los avisos y el checklist.',
-      '2. Compara cada configuración con el estado real del equipo.',
-      '3. Prueba en laboratorio y conserva un backup del dispositivo.',
-      '4. Aplica los cambios de forma controlada y valida conectividad.','',
-      '> El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.'
+      tr('deploy.bundle.readme.title',{project:clean(project.projName,160)||'NetWizard'},locale,'# Paquete de despliegue — {project}'),'',
+      tr('deploy.bundle.readme.format',{format:FORMAT,version:VERSION},locale,'- Formato: {format} {version}'),
+      tr('deploy.bundle.readme.generated',{date:generatedAt},locale,'- Generado: {date}'),
+      tr('deploy.bundle.readme.status',{status:String(report.status||'unknown').toUpperCase()},locale,'- Estado de producción: {status}'),
+      tr('deploy.bundle.readme.configured',{count:configFiles.length},locale,'- Dispositivos configurados: {count}'),
+      tr('deploy.bundle.readme.warnings',{count:warnings},locale,'- Avisos: {count}'),'',
+      tr('deploy.bundle.readme.contents',{},locale,'## Contenido'),'',
+      tr('deploy.bundle.readme.item.project',{},locale,'- `project/netwizard-project.json`: snapshot saneado y versionado.'),
+      tr('deploy.bundle.readme.item.configs',{},locale,'- `configs/`: configuración generada para cada dispositivo.'),
+      tr('deploy.bundle.readme.item.gate',{},locale,'- `reports/production-gate.json`: resultado estructurado de la validación.'),
+      tr('deploy.bundle.readme.item.checklist',{},locale,'- `reports/production-checklist.md`: checklist y correcciones.'),
+      tr('deploy.bundle.readme.item.inventory',{},locale,'- `reports/inventory.csv`: inventario operativo.'),
+      tr('deploy.bundle.readme.item.connectivity',{},locale,'- `reports/connectivity-matrix.csv`: intención de conectividad entre VLANs.'),
+      tr('deploy.bundle.readme.item.documentation',{},locale,'- `reports/documentation.md`: documentación completa del diseño.'),
+      tr('deploy.bundle.readme.item.plan',{},locale,'- `deployment/plan.json`: orden estructurado y dependencias del cambio.'),
+      tr('deploy.bundle.readme.item.runbook',{},locale,'- `deployment/runbook.md`: procedimiento ejecutable con prechecks y validaciones.'),
+      tr('deploy.bundle.readme.item.rollback',{},locale,'- `deployment/rollback-checklist.md`: reversión en orden inverso.'),
+      tr('deploy.bundle.readme.item.changeSet',{},locale,'- `changes/change-set.json`: comparación estructurada entre configuración observada y objetivo.'),
+      tr('deploy.bundle.readme.item.changeSummary',{},locale,'- `changes/summary.md`: resumen humano de cobertura y diferencias.'),
+      tr('deploy.bundle.readme.item.patches',{},locale,'- `changes/patches/`: diffs de revisión; no son comandos ejecutables.'),
+      tr('deploy.bundle.readme.item.reverseDiffs',{},locale,'- `changes/rollback/`: diffs inversos para apoyar la reversión.'),
+      tr('deploy.bundle.readme.item.incrementalPlan',{},locale,'- `incremental/plan.json`: decisión del registro de adaptadores por equipo.'),
+      tr('deploy.bundle.readme.item.incrementalSummary',{},locale,'- `incremental/summary.md`: candidatos ejecutables y revisiones manuales.'),
+      tr('deploy.bundle.readme.item.commands',{},locale,'- `incremental/commands/`: comandos cargables solo cuando el adaptador los certifica.'),
+      tr('deploy.bundle.readme.item.incrementalRollback',{},locale,'- `incremental/rollback/`: comandos inversos candidatos; el backup real sigue siendo autoritativo.'),
+      tr('deploy.bundle.readme.item.preEvidence',{},locale,'- `evidence/pre-change.json`: fingerprints y metadatos del snapshot previo.'),
+      tr('deploy.bundle.readme.item.postEvidence',{},locale,'- `evidence/post-change-checklist.md`: evidencias que deben capturarse tras el cambio.'),
+      tr('deploy.bundle.readme.item.manifest',{},locale,'- `manifest.json`: índice y CRC32 de cada archivo de payload.'),'',
+      tr('deploy.bundle.readme.safeUse',{},locale,'## Uso seguro'),'',
+      tr('deploy.bundle.readme.safe1',{},locale,'1. Revisa los avisos y el checklist.'),
+      tr('deploy.bundle.readme.safe2',{},locale,'2. Compara cada configuración con el estado real del equipo.'),
+      tr('deploy.bundle.readme.safe3',{},locale,'3. Prueba en laboratorio y conserva un backup del dispositivo.'),
+      tr('deploy.bundle.readme.safe4',{},locale,'4. Aplica los cambios de forma controlada y valida conectividad.'),'',
+      '> '+tr('deploy.bundle.readme.sensitive',{},locale,'El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.')
     ];
     return lines.join('\n')+'\n';
   }
@@ -110,21 +112,21 @@
       Array.isArray(r.issues);
   }
 
-  function buildPrivateReadme(project,result,configCount){
+  function buildPrivateReadme(project,result,configCount,locale){
     const status=clean(result&&result.productionStatus,20)||'unknown';
     return [
-      `# Paquete privado de despliegue — ${clean(project&&project.projName,160)||'NetWizard'}`,'',
-      `- Fuente: Private Engine server-side`,
-      `- Contrato: ${clean(result&&result.contractVersion,80)||'—'}`,
-      `- Generado por servidor: ${clean(result&&result.generatedAt,80)||'—'}`,
-      `- Estado de producción: ${status.toUpperCase()}`,
-      `- Production ready: ${result&&result.productionReady?'sí':'no'}`,
-      `- Configuraciones: ${configCount}`,'',
-      '## Autoridad','',
-      'Las configuraciones y artefactos de este ZIP proceden del último resultado vigente del Private Engine.',
-      'El navegador no ha vuelto a ejecutar generadores vendor ni ha reconstruido las configuraciones localmente.','',
-      'Un estado REVIEW permite revisión/exportación cuando la Production Gate no contiene bloqueantes; no equivale a READY.',
-      'Un cambio posterior del proyecto invalida este resultado y obliga a regenerar antes de exportar.',''
+      tr('deploy.bundle.private.title',{project:clean(project&&project.projName,160)||'NetWizard'},locale,'# Paquete privado de despliegue — {project}'),'',
+      tr('deploy.bundle.private.source',{},locale,'- Fuente: Private Engine server-side'),
+      tr('deploy.bundle.private.contract',{contract:clean(result&&result.contractVersion,80)||'—'},locale,'- Contrato: {contract}'),
+      tr('deploy.bundle.private.generated',{date:clean(result&&result.generatedAt,80)||'—'},locale,'- Generado por servidor: {date}'),
+      tr('deploy.bundle.private.status',{status:status.toUpperCase()},locale,'- Estado de producción: {status}'),
+      tr('deploy.bundle.private.ready',{value:result&&result.productionReady?tr('common.yes',{},locale,'Sí'):tr('common.no',{},locale,'No')},locale,'- Production ready: {value}'),
+      tr('deploy.bundle.private.configs',{count:configCount},locale,'- Configuraciones: {count}'),'',
+      tr('deploy.bundle.private.authority',{},locale,'## Autoridad'),'',
+      tr('deploy.bundle.private.authority1',{},locale,'Las configuraciones y artefactos de este ZIP proceden del último resultado vigente del Private Engine.'),
+      tr('deploy.bundle.private.authority2',{},locale,'El navegador no ha vuelto a ejecutar generadores vendor ni ha reconstruido las configuraciones localmente.'),'',
+      tr('deploy.bundle.private.reviewNote',{},locale,'Un estado REVIEW permite revisión/exportación cuando la Production Gate no contiene bloqueantes; no equivale a READY.'),
+      tr('deploy.bundle.private.staleNote',{},locale,'Un cambio posterior del proyecto invalida este resultado y obliga a regenerar antes de exportar.'),''
     ].join('\n');
   }
 
@@ -224,7 +226,7 @@
       files:files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}))
     };
     try{
-      addFile(files,'README.md',buildPrivateReadme(canonical,r,configCount),'text/markdown;charset=utf-8');
+      addFile(files,'README.md',buildPrivateReadme(canonical,r,configCount,opts.locale),'text/markdown;charset=utf-8');
       manifest.files=files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}));
       manifest.counts.files=files.length+1;
       addFile(files,'manifest.json',JSON.stringify(manifest,null,2)+'\n','application/json');
@@ -288,19 +290,19 @@
     const configPaths=Object.fromEntries(configEntries.map(entry=>[entry.device.id,entry.path]));
     const desiredConfigs=Object.fromEntries(configEntries.map(entry=>[entry.device.id,entry.output]));
     let changeSet;
-    try{changeSet=changeSetBuilder.buildChangeSet(canonical,{generatedAt,configPaths,desiredConfigs});}
+    try{changeSet=changeSetBuilder.buildChangeSet(canonical,{generatedAt,configPaths,desiredConfigs,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-032',`No se pudo construir el change set: ${error&&error.message||error}`)],files:[]};}
     if(!changeSet||changeSet.ok===false){
       const changeIssues=arr(changeSet&&changeSet.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:changeIssues.length?changeIssues:[gateIssue('NW-BUNDLE-033','El change set incremental no es ejecutable.')],files:[]};
     }
     let incrementalPlan;
-    try{incrementalPlan=incrementalBuilder.buildPlan(canonical,{generatedAt,changeSet,desiredConfigs,configPaths});}
+    try{incrementalPlan=incrementalBuilder.buildPlan(canonical,{generatedAt,changeSet,desiredConfigs,configPaths,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:[gateIssue('NW-BUNDLE-034',`No se pudo construir el plan incremental: ${error&&error.message||error}`)],files:[]};}
     if(!incrementalPlan||incrementalPlan.ok===false){
       const incrementalIssues=arr(incrementalPlan&&incrementalPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,incrementalPlan,issues:incrementalIssues.length?incrementalIssues:[gateIssue('NW-BUNDLE-035','El plan incremental requerido no es ejecutable.')],files:[]};
     }
     let deploymentPlan;
-    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet,incrementalPlan});}
+    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet,incrementalPlan,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-030',`No se pudo construir el plan de despliegue: ${error&&error.message||error}`)],files:[]};}
     if(!deploymentPlan||deploymentPlan.ok===false){
       const planIssues=arr(deploymentPlan&&deploymentPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,deploymentPlan,issues:planIssues.length?planIssues:[gateIssue('NW-BUNDLE-031','El plan de despliegue no es ejecutable.')],files:[]};
@@ -317,17 +319,17 @@
       addFile(files,'reports/connectivity-matrix.csv',docs.toCsv(matrix,['source','destination','action','services','reason','sourceType'])+'\n','text/csv;charset=utf-8');
       addFile(files,'reports/documentation.md',docs.buildMarkdownDocument(canonical,{locale:opts.locale,generatedAt})+'\n','text/markdown;charset=utf-8');
       addFile(files,'deployment/plan.json',JSON.stringify(deploymentPlan,null,2)+'\n','application/json');
-      addFile(files,'deployment/runbook.md',runbook.buildMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
-      addFile(files,'deployment/rollback-checklist.md',runbook.buildRollbackMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
+      addFile(files,'deployment/runbook.md',runbook.buildMarkdown(deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
+      addFile(files,'deployment/rollback-checklist.md',runbook.buildRollbackMarkdown(deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
       addFile(files,'changes/change-set.json',JSON.stringify(changeSetBuilder.publicChangeSet(changeSet),null,2)+'\n','application/json');
-      addFile(files,'changes/summary.md',changeSetBuilder.buildSummaryMarkdown(changeSet),'text/markdown;charset=utf-8');
+      addFile(files,'changes/summary.md',changeSetBuilder.buildSummaryMarkdown(changeSet,{locale:opts.locale}),'text/markdown;charset=utf-8');
       for(const artifact of arr(changeSet.artifacts)) addFile(files,artifact.path,artifact.content,'text/x-diff;charset=utf-8');
       addFile(files,'incremental/plan.json',JSON.stringify(incrementalBuilder.publicPlan(incrementalPlan),null,2)+'\n','application/json');
-      addFile(files,'incremental/summary.md',incrementalBuilder.buildSummaryMarkdown(incrementalPlan),'text/markdown;charset=utf-8');
+      addFile(files,'incremental/summary.md',incrementalBuilder.buildSummaryMarkdown(incrementalPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
       for(const artifact of arr(incrementalPlan.artifacts)) addFile(files,artifact.path,artifact.content,artifact.mime||'text/plain;charset=utf-8');
       addFile(files,'evidence/pre-change.json',JSON.stringify({format:'netwizard-pre-change-evidence',version:VERSION,generatedAt,observedAt:changeSet.observedAt,coverage:changeSet.coverage,devices:changeSet.devices.map(device=>({deviceId:device.deviceId,vendor:device.vendor,capturedAt:device.capturedAt,observedFingerprint:device.observedFingerprint,desiredFingerprint:device.desiredFingerprint,status:device.status}))},null,2)+'\n','application/json');
-      addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan),'text/markdown;charset=utf-8');
-      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan),'text/markdown;charset=utf-8');
+      addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
+      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan,opts.locale),'text/markdown;charset=utf-8');
     }catch(error){
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-020',`No se pudieron construir los artefactos: ${error&&error.message||error}`)],files:[]};
     }
@@ -376,18 +378,18 @@
     const blob=new Blob([encodeZip(pkg)],{type:'application/zip'}); const url=URL.createObjectURL(blob);
     const link=root.document.createElement('a'); link.href=url; link.download=pkg.filename; root.document.body.appendChild(link); link.click(); link.remove(); root.setTimeout(()=>URL.revokeObjectURL(url),1000); return true;
   }
-  function summarize(pkg){
+  function summarize(pkg,locale){
     if(!pkg||!pkg.ok){
-      const issues=arr(pkg&&pkg.issues); const lines=['⛔ Paquete de despliegue BLOQUEADO'];
-      if(pkg&&pkg.report) lines.push(`Puerta: ${String(pkg.report.status||'blocked').toUpperCase()} · Errores: ${pkg.report.counts&&pkg.report.counts.errors||0} · Avisos: ${pkg.report.counts&&pkg.report.counts.warnings||0}`);
+      const issues=arr(pkg&&pkg.issues); const lines=[tr('deploy.bundle.summary.blocked',{},locale,'⛔ Paquete de despliegue BLOQUEADO')];
+      if(pkg&&pkg.report) lines.push(tr('deploy.bundle.summary.gate',{status:String(pkg.report.status||'blocked').toUpperCase(),errors:pkg.report.counts&&pkg.report.counts.errors||0,warnings:pkg.report.counts&&pkg.report.counts.warnings||0},locale,'Puerta: {status} · Errores: {errors} · Avisos: {warnings}'));
       issues.slice(0,12).filter(issue=>issue.severity!=='info').forEach(issue=>lines.push(`• [${issue.code||'NW-BUNDLE'}] ${issue.message||''}`));
       return lines.join('\n');
     }
     if(pkg.source==='private-server'){
       const manifest=obj(pkg.manifest),counts=obj(manifest.counts),status=clean(manifest.productionStatus||pkg.report&&pkg.report.status,20)||'unknown';
-      return `✅ Paquete privado preparado: ${pkg.filename}\nFuente: Private Engine server-side · Estado: ${status.toUpperCase()} · ${counts.configurations||0} configuraciones · ${counts.files||0} archivos · ${counts.issues||0} incidencia(s) registrada(s).`;
+      return tr('deploy.bundle.summary.privateReady',{filename:pkg.filename,status:status.toUpperCase(),configs:counts.configurations||0,files:counts.files||0,issues:counts.issues||0},locale,'✅ Paquete privado preparado: {filename}\nFuente: Private Engine server-side · Estado: {status} · {configs} configuraciones · {files} archivos · {issues} incidencia(s) registrada(s).');
     }
-    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · cambio ${pkg.manifest.changeSet.executionMode} · candidatos seguros ${pkg.manifest.incremental.candidateReady} · revisión manual ${pkg.manifest.incremental.manualReview} · ${pkg.manifest.counts.warnings} avisos.`;
+    return tr('deploy.bundle.summary.ready',{filename:pkg.filename,status:String(pkg.report.status).toUpperCase(),configs:pkg.manifest.counts.devices,steps:pkg.manifest.deployment.steps,files:pkg.manifest.counts.files,mode:pkg.manifest.changeSet.executionMode,candidates:pkg.manifest.incremental.candidateReady,manual:pkg.manifest.incremental.manualReview,warnings:pkg.manifest.counts.warnings},locale,'✅ Paquete preparado: {filename}\nEstado: {status} · {configs} configuraciones · {steps} pasos · {files} archivos · cambio {mode} · candidatos seguros {candidates} · revisión manual {manual} · {warnings} avisos.');
   }
 
   function bindBrowserUi(attempt){
@@ -396,31 +398,31 @@
     if(button.dataset.nwDeploymentBundleBound==='1')return;
     button.dataset.nwDeploymentBundleBound='1';
     button.onclick=()=>{
+      const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
       if(!root.NetWizardState||typeof root.NetWizardState.getSnapshot!=='function'){
-        output.textContent='⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.';
+        output.textContent=tr('deploy.bundle.loading',{},locale,'⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.');
         return;
       }
-      const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
       const privateUi=root.NetWizardPrivateDeploymentUi;
       const privateState=privateUi&&typeof privateUi.exportState==='function'?privateUi.exportState():null;
       let pkg=null;
       if(privateState&&privateState.available&&privateState.result){
         pkg=buildPrivateDeploymentPackage(root.NetWizardState.getSnapshot(),privateState.result,{locale});
       }else if(privateState&&privateState.stale){
-        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-107','La generación privada está obsoleta. Regenera en servidor antes de exportar.')],files:[]};
+        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-107',tr('deploy.bundle.issue.stale',{},locale,'La generación privada está obsoleta. Regenera en servidor antes de exportar.'))],files:[]};
       }else if(root.document&&!root.NetWizardLegacyConfigGenerator){
-        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-108','Todavía no existe una generación server-side vigente. Pulsa “Generar en servidor” antes de exportar.')],files:[]};
+        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-108',tr('deploy.bundle.issue.generateFirst',{},locale,'Todavía no existe una generación server-side vigente. Pulsa “Generar en servidor” antes de exportar.'))],files:[]};
       }else{
         pkg=buildDeploymentPackage(root.NetWizardState.getSnapshot(),{locale});
       }
-      root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg);
+      root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg,locale);
       const gateOut=root.document.getElementById('productionGateOut'); if(gateOut&&pkg.report&&root.NetWizardProductionGate&&root.NetWizardProductionGate.summarizeGate) gateOut.textContent=root.NetWizardProductionGate.summarizeGate(pkg.report,{limit:80});
       if(!pkg.ok){
         const needsServer=pkg.issues&&pkg.issues.some(issue=>['NW-BUNDLE-001','NW-BUNDLE-107','NW-BUNDLE-108'].includes(issue.code));
-        root.alert&&root.alert(needsServer?'Genera o regenera las configuraciones en servidor antes de exportar.':'Paquete bloqueado: corrige los errores de producción indicados.');
+        root.alert&&root.alert(needsServer?tr('deploy.bundle.alert.generateFirst',{},locale,'Genera o regenera las configuraciones en servidor antes de exportar.'):tr('deploy.bundle.alert.blocked',{},locale,'Paquete bloqueado: corrige los errores de producción indicados.'));
         return;
       }
-      try{download(pkg);}catch(error){output.textContent=`⛔ No se pudo descargar el ZIP: ${error&&error.message||error}`;root.alert&&root.alert('No se pudo descargar el paquete ZIP.');return;}
+      try{download(pkg);}catch(error){output.textContent=tr('deploy.bundle.downloadFailed',{error:error&&error.message||error},locale,'⛔ No se pudo descargar el ZIP: {error}');root.alert&&root.alert(tr('deploy.bundle.downloadFailedAlert',{},locale,'No se pudo descargar el paquete ZIP.'));return;}
       try{root.document.dispatchEvent(new CustomEvent('nw:deployment:bundle',{detail:{filename:pkg.filename,status:pkg.report&&pkg.report.status,source:pkg.source||'local'}}));}catch(_error){}
     };
   }

@@ -7,11 +7,12 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const outFile = path.join(root, 'docs', 'I18N_HARDCODED_AUDIT.txt');
 const checkMode = process.argv.includes('--check');
-const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js','js/netwizard-dhcp-utils.js','js/netwizard-network-utils.js','js/netwizard-v5-panel.js','js/netwizard-v5-controls.js','js/netwizard-v5-layout-manager.js','js/netwizard-v5-iot-extension.js','js/netwizard-v5-connectivity-trace.js','js/netwizard-v5-scene.js','js/netwizard-v5-renderer.js','js/netwizard-inter-site-transit-editor.js','js/netwizard-observed-config-ui.js','js/netwizard-inter-site-reachability-ui.js','js/netwizard-resilience-ui.js','js/netwizard-wan-resilience-ui.js','js/netwizard-traffic-capacity-ui.js','js/netwizard-observed-drift-ui.js','js/netwizard-audit.js','js/netwizard-inter-site-reachability.js','js/netwizard-resilience-topology.js','js/netwizard-wan-resilience.js','js/netwizard-vtp-production-verification.js']);
+const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js','js/netwizard-dhcp-utils.js','js/netwizard-network-utils.js','js/netwizard-v5-panel.js','js/netwizard-v5-controls.js','js/netwizard-v5-layout-manager.js','js/netwizard-v5-iot-extension.js','js/netwizard-v5-connectivity-trace.js','js/netwizard-v5-scene.js','js/netwizard-v5-renderer.js','js/netwizard-inter-site-transit-editor.js','js/netwizard-observed-config-ui.js','js/netwizard-inter-site-reachability-ui.js','js/netwizard-resilience-ui.js','js/netwizard-wan-resilience-ui.js','js/netwizard-traffic-capacity-ui.js','js/netwizard-observed-drift-ui.js','js/netwizard-audit.js','js/netwizard-inter-site-reachability.js','js/netwizard-resilience-topology.js','js/netwizard-wan-resilience.js','js/netwizard-vtp-production-verification.js','js/netwizard-private-deployment-ui.js','js/netwizard-asbuilt-exports-ui.js']);
 const strictRegionMarkers = {
   'index.html': [
     ['<!-- ═══════════ VALIDATION / ANALYSIS ═══════════ -->','<!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->'],
-    ['data-i18n="vtp.title"','data-i18n="vtp.order.text"']
+    ['data-i18n="vtp.title"','data-i18n="vtp.order.text"'],
+    ['<!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->','<!-- NAV FOOTER -->']
   ],
   'js/netwizard.js': [
     ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
@@ -26,7 +27,9 @@ const strictRegionMarkers = {
     ['function fillLinkPickers(){','// PORT MODAL'],
     ['// ─────────────────── FIREWALL ───────────────────','// ─────────────────── CFG / EXPORT ───────────────────'],
     ["if(/^vtp domain\\s+/.test(t))","if(/^vtp pruning/.test(t))"],
-    ['function renderVtp(){','// EXPORT']
+    ['function renderVtp(){','// EXPORT'],
+    ['const explain=line=>','// ─────────────────── CONFIG GENERATOR ADAPTER'],
+    ['// ─────────────────── CFG / EXPORT ───────────────────','// ─────────────────── TOPOLOGY ───────────────────']
   ],
   'js/netwizard-iot-embedded.js': [
     ['function fillAccessTypes','window.NetWizardIoTEmbedded=']
@@ -34,6 +37,20 @@ const strictRegionMarkers = {
   'js/netwizard-policy-utils.js': [
     ['function summarizePolicyApplyDiff','function slug('],
     ['function summarizePolicyContext','const api=']
+  ],
+  'js/netwizard-deployment-bundle.js': [
+    ['function buildReadme','function validPrivateDeploymentResult'],
+    ['function buildPrivateReadme','function buildPrivateDeploymentPackage'],
+    ['function summarize(pkg','const api=']
+  ],
+  'js/netwizard-deployment-runbook.js': [
+    ['function buildDeploymentPlan','const api=']
+  ],
+  'js/netwizard-change-set.js': [
+    ['function buildChangeSet','const api=']
+  ],
+  'js/netwizard-incremental-generators.js': [
+    ['function buildPlan','const api=']
   ]
 };
 const skipFiles = new Set(['js/netwizard-i18n.js']);
@@ -55,7 +72,7 @@ function maskTranslationCalls(text,rel){
   const chars=text.split('');
   let cursor=0;
   while(cursor<text.length){
-    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');if(rel==='js/netwizard-network-utils.js')tokens.push('result(');if(rel==='js/netwizard-dhcp-utils.js')tokens.push('issue(');if(rel==='js/netwizard.js')tokens.push('i18nText(');if(rel==='js/netwizard-inter-site-transit-editor.js')tokens.push('i18nText(');if(rel==='js/netwizard-policy-utils.js')tokens.push('tr(');if(rel==='js/netwizard-inter-site-reachability.js')tokens.push('setReason(','reasoned(','labeled(','legacySummary(');if(rel==='js/netwizard-observed-config-ui.js')tokens.push('statusFallback(');if(rel==='js/netwizard-resilience-topology.js'||rel==='js/netwizard-wan-resilience.js')tokens.push('issue(');if(rel==='js/netwizard-wan-resilience.js')tokens.push('scenario(','legacyReason(');if(rel==='js/netwizard-vtp-production-verification.js')tokens.push('addReason(');if(rel==='js/netwizard-custom-device-model-ui.js')tokens.push('i18nNode(');if(rel==='js/netwizard-bulk-port-editor.js')tokens.push('trText(','i18nEl(','field(');
+    const tokens=['tr(','localized('];if(rel==='js/netwizard-physical-inventory-ui.js')tokens.push('field(');if(rel==='js/netwizard-rack-model.js')tokens.push('localizedIssue(');if(rel==='js/netwizard-rack-ui.js')tokens.push('notice(');if(rel==='js/netwizard-network-utils.js')tokens.push('result(');if(rel==='js/netwizard-dhcp-utils.js')tokens.push('issue(');if(rel==='js/netwizard.js')tokens.push('i18nText(');if(rel==='js/netwizard-inter-site-transit-editor.js')tokens.push('i18nText(');if(rel==='js/netwizard-policy-utils.js')tokens.push('tr(');if(rel==='js/netwizard-inter-site-reachability.js')tokens.push('setReason(','reasoned(','labeled(','legacySummary(');if(rel==='js/netwizard-observed-config-ui.js')tokens.push('statusFallback(');if(rel==='js/netwizard-resilience-topology.js'||rel==='js/netwizard-wan-resilience.js')tokens.push('issue(');if(rel==='js/netwizard-wan-resilience.js')tokens.push('scenario(','legacyReason(');if(rel==='js/netwizard-vtp-production-verification.js')tokens.push('addReason(');if(rel==='js/netwizard-asbuilt-exports-ui.js')tokens.push('tr(');if(rel==='js/netwizard-custom-device-model-ui.js')tokens.push('i18nNode(');if(rel==='js/netwizard-bulk-port-editor.js')tokens.push('trText(','i18nEl(','field(');
     const starts=tokens.map(token=>text.indexOf(token,cursor)).filter(x=>x>=0);
     if(!starts.length)break;
     const start=Math.min(...starts);

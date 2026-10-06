@@ -153,6 +153,7 @@ async function loadVendorProject(page, vendor){
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
+    localStorage.setItem('nw_locale_v1','es');
   });
   await page.reload();
 
