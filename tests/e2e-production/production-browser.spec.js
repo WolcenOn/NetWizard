@@ -12,6 +12,8 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   const errors=[];
   page.on('pageerror',err=>errors.push(err.message));
   await page.goto('/index.html');
+  await page.evaluate(()=>localStorage.setItem('nw_locale_v1','es'));
+  await page.reload();
 
   await expect.poll(()=>page.evaluate(()=>({
     state:typeof window.NetWizardState?.getSnapshot==='function',
