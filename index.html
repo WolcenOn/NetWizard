@@ -819,26 +819,26 @@
 
 <!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->
 <div class="pg" id="pg-cfg">
-  <div class="ph"><h1>🚀 Despliegue & Exportación</h1><p>Genera artefactos desde el Private Engine, revisa su readiness y exporta únicamente resultados vigentes.</p></div>
+  <div class="ph"><h1 data-i18n="deploy.page.title">🚀 Despliegue & Exportación</h1><p data-i18n="deploy.page.subtitle">Genera artefactos desde el Private Engine, revisa su readiness y exporta únicamente resultados vigentes.</p></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
         <div class="card-h">
-          <div class="card-t">👁 Config por dispositivo</div>
-          <button class="btn bp bsm" id="cfgGenerateServer" type="button">☁ Generar en servidor</button>
+          <div class="card-t" data-i18n="deploy.config.title">👁 Config por dispositivo</div>
+          <button class="btn bp bsm" id="cfgGenerateServer" type="button" data-i18n="deploy.actions.generateServer">☁ Generar en servidor</button>
         </div>
-        <div class="hint" style="margin-bottom:8px;">Selecciona un dispositivo. La configuración productiva se genera en servidor; si cambias el proyecto, el artefacto anterior queda obsoleto.</div>
+        <div class="hint" style="margin-bottom:8px;" data-i18n="deploy.config.hint">Selecciona un dispositivo. La configuración productiva se genera en servidor; si cambias el proyecto, el artefacto anterior queda obsoleto.</div>
         <div id="devPickCfg"></div>
-        <div class="card-t" style="margin:10px 0 6px;">Formato de salida</div>
+        <div class="card-t" style="margin:10px 0 6px;" data-i18n="deploy.config.outputFormat">Formato de salida</div>
         <div id="cfgVendorPills" class="cfg-vendor-pills"></div>
-        <div class="co co-ac" id="cfgReadiness" style="margin-top:8px;">Estado de aplicación pendiente.</div>
+        <div class="co co-ac" id="cfgReadiness" style="margin-top:8px;" data-i18n="deploy.config.pending">Estado de aplicación pendiente.</div>
         <div class="g2">
           <div>
-            <div class="card-t" style="margin:8px 0 6px;">Código a usar</div>
+            <div class="card-t" style="margin:8px 0 6px;" data-i18n="deploy.config.code">Código a usar</div>
             <textarea class="cfg" id="cfgOut" readonly style="min-height:240px;"></textarea>
           </div>
           <div>
-            <div class="card-t" style="margin:8px 0 6px;">Código comentado</div>
+            <div class="card-t" style="margin:8px 0 6px;" data-i18n="deploy.config.commentedCode">Código comentado</div>
             <textarea class="cfg" id="cfgOutComment" readonly style="min-height:240px;"></textarea>
           </div>
         </div>
@@ -846,17 +846,17 @@
     </div>
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">📤 Exportar</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="deploy.export.title">📤 Exportar</div>
         <div class="brow">
           <button class="btn bp" id="expDeploymentPackage" data-i18n="bundle.download">🚀 Paquete de despliegue ZIP</button>
-          <button class="btn bp" id="expAll">📁 Por dispositivo</button>
-          <button class="btn bs" id="expBundle">📦 Bundle TXT</button>
-          <button class="btn bs" id="expCsv">📋 Hosts CSV</button>
-          <button class="btn bs" id="expJson">💾 JSON</button>
-          <button class="btn bs" id="impJson">📂 Importar</button>
+          <button class="btn bp" id="expAll" data-i18n="deploy.export.perDevice">📁 Por dispositivo</button>
+          <button class="btn bs" id="expBundle" data-i18n="deploy.export.bundleTxt">📦 Bundle TXT</button>
+          <button class="btn bs" id="expCsv" data-i18n="deploy.export.hostsCsv">📋 Hosts CSV</button>
+          <button class="btn bs" id="expJson" data-i18n="deploy.export.json">💾 JSON</button>
+          <button class="btn bs" id="impJson" data-i18n="deploy.import.action">📂 Importar</button>
         </div>
         <pre class="cfg" id="deploymentPackageStatus" style="min-height:72px;white-space:pre-wrap;margin-top:8px;" data-i18n="bundle.help">El ZIP ejecuta la puerta estricta e incluye configuraciones, change set, candidatos incrementales seguros, evidencias y rollback.</pre>
-        <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" style="min-height:80px;margin-top:8px;"></textarea>
+        <textarea class="cfg" id="jsonBox" placeholder="Pega JSON aquí para importar…" data-i18n-placeholder="deploy.import.placeholder" style="min-height:80px;margin-top:8px;"></textarea>
       </div>
     </div>
   </div>
