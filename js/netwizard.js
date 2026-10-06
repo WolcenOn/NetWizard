@@ -446,13 +446,13 @@ function buildCommentedConfig(cfg){
     if(/^hostname\s+/.test(t)) return 'Asigna el nombre del dispositivo.';
     if(/^vlan\s+\d+/.test(t)) return 'Crea o selecciona la VLAN indicada.';
     if(/^name\s+/.test(t)) return 'Asigna un nombre descriptivo a la VLAN.';
-    if(/^vtp domain\s+/.test(t)) return 'Define el dominio VTP; todos los switches VTP deben compartirlo.';
-    if(/^vtp password\s+/.test(t)) return 'Establece la contraseña VTP común entre switches.';
-    if(/^vtp mode\s+server/.test(t)) return 'Este switch actuará como servidor VTP y publicará las VLAN.';
-    if(/^vtp mode\s+client/.test(t)) return 'Este switch actuará como cliente VTP y recibirá las VLAN del servidor.';
-    if(/^vtp mode\s+transparent/.test(t)) return 'Modo transparente: no aprende VLAN por VTP, pero reenvía anuncios.';
-    if(/^vtp version\s+/.test(t)) return 'Fija la versión de VTP usada en el dominio.';
-    if(/^vtp pruning/.test(t)) return 'Activa VTP pruning para reducir tráfico innecesario en trunks.';
+    if(/^vtp domain\s+/.test(t)) return i18nText('vtp.explain.domain',{},'Define el dominio VTP; todos los switches VTP deben compartirlo.');
+    if(/^vtp password\s+/.test(t)) return i18nText('vtp.explain.password',{},'Establece la contraseña VTP común entre switches.');
+    if(/^vtp mode\s+server/.test(t)) return i18nText('vtp.explain.server',{},'Este switch actuará como servidor VTP y publicará las VLAN.');
+    if(/^vtp mode\s+client/.test(t)) return i18nText('vtp.explain.client',{},'Este switch actuará como cliente VTP y recibirá las VLAN del servidor.');
+    if(/^vtp mode\s+transparent/.test(t)) return i18nText('vtp.explain.transparent',{},'Modo transparente: no aprende VLAN por VTP, pero reenvía anuncios.');
+    if(/^vtp version\s+/.test(t)) return i18nText('vtp.explain.version',{},'Fija la versión de VTP usada en el dominio.');
+    if(/^vtp pruning/.test(t)) return i18nText('vtp.explain.pruning',{},'Activa VTP pruning para reducir tráfico innecesario en trunks.');
     if(/^interface\s+/.test(t)) return 'Entra en la configuración de la interfaz indicada.';
     if(/^description\s+/.test(t)) return 'Añade una descripción a la interfaz.';
     if(t==='switchport') return 'Habilita parámetros de capa 2 de switchport.';
@@ -1321,8 +1321,20 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     else if($('btnAddPort')){$('btnAddPort').dataset.i18n='ports.actions.add';$('btnAddPort').textContent=i18nText('ports.actions.add',{},'➕ Añadir');}
   }
   if(S.step==='vlan'){
+    const vtpDraft={
+      domain:$('vtpDomain')?.value??'',
+      password:$('vtpPassword')?.value??'',
+      version:$('vtpVersion')?.value??'2',
+      pruning:$('vtpPruning')?.value??'no',
+      roles:Object.fromEntries(qsa('[data-vtprole]').map(el=>[el.dataset.vtprole,el.value]))
+    };
     vlanSelectSignature='';
-    fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();
+    fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();renderVtp();
+    if($('vtpDomain'))$('vtpDomain').value=vtpDraft.domain;
+    if($('vtpPassword'))$('vtpPassword').value=vtpDraft.password;
+    if($('vtpVersion'))$('vtpVersion').value=vtpDraft.version;
+    if($('vtpPruning'))$('vtpPruning').value=vtpDraft.pruning;
+    qsa('[data-vtprole]').forEach(el=>{const value=vtpDraft.roles[el.dataset.vtprole];if(value&&Array.from(el.options).some(o=>o.value===value))el.value=value;});
     if($('dhcpPanel')?.open)renderDhcp();
   }
   if(S.step==='graphs'){
@@ -2282,10 +2294,10 @@ function renderVtp(){
   if($('vtpPruning'))$('vtpPruning').value=S.vtp?.pruning||'no';
   const sws=S.devices.filter(d=>isSwitchDevice(d) && (d.vendorOs||'cisco_ios')==='cisco_ios').sort((a,b)=>a.name.localeCompare(b.name));
   const el=$('vtpSwitchRoles'); el.textContent='';
-  if(!sws.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent='Añade switches Cisco IOS para poder usar VTP.'; el.appendChild(hint); return; }
+  if(!sws.length){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent=i18nText('vtp.empty.switches',{},'Añade switches Cisco IOS para poder usar VTP.'); el.appendChild(hint); return; }
   sws.forEach(d=>{ const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
     const left=document.createElement('div'); const lab=document.createElement('label'); lab.className='fl'; lab.textContent=d.name||''; const hint=document.createElement('div'); hint.className='hint'; hint.textContent=d.vendorOs||'cisco_ios'; left.append(lab,hint); row.appendChild(left);
-    const right=document.createElement('div'); const rlab=document.createElement('label'); rlab.className='fl'; rlab.textContent='Rol VTP'; const sel=document.createElement('select'); sel.dataset.vtprole=d.id; [['off','Desactivado'],['server','Server'],['client','Client'],['transparent','Transparent']].forEach(([v,t])=>addOption(sel,v,t)); right.append(rlab,sel); row.appendChild(right); el.appendChild(row);
+    const right=document.createElement('div'); const rlab=document.createElement('label'); rlab.className='fl'; rlab.textContent=i18nText('vtp.fields.role',{},'Rol VTP'); const sel=document.createElement('select'); sel.dataset.vtprole=d.id; [['off','vtp.role.off','Desactivado'],['server','vtp.role.server','Server'],['client','vtp.role.client','Client'],['transparent','vtp.role.transparent','Transparent']].forEach(([v,k,t])=>addOption(sel,v,i18nText(k,{},t))); right.append(rlab,sel); row.appendChild(right); el.appendChild(row);
   });
   el.querySelectorAll('[data-vtprole]').forEach(el=>el.value=getVtpRole(el.dataset.vtprole));
 }
@@ -2297,7 +2309,7 @@ $('btnSaveVtp').onclick=()=>{
   S.vtp.pruning=($('vtpPruning').value||'no');
   S.vtp.roles={};
   document.querySelectorAll('[data-vtprole]').forEach(el=>{if(el.value!=='off')S.vtp.roles[el.dataset.vtprole]=el.value;});
-  save();renderVtp();if(selDevCfg)selectDevCfg(selDevCfg);alert('✓ VTP guardado.');
+  save();renderVtp();if(selDevCfg)selectDevCfg(selDevCfg);alert(i18nText('vtp.feedback.saved',{},'✓ VTP guardado.'));
 };
 
 // EXPORT

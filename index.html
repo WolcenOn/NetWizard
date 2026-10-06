@@ -441,21 +441,21 @@
     </div>
     <div>
       <div class="card">
-        <div class="card-t" style="margin-bottom:11px;">🧩 VTP (Cisco IOS)</div>
-        <div class="hint" style="margin-bottom:8px;">Opcional y específico de Cisco IOS. Define dominio, versión y rol únicamente para switches Cisco; los enlaces entre switches deben ser trunk. En Private Engine, una contraseña configurada se sustituye por <code>${SECRET:VTP_PASSWORD}</code> y exige resolución/revisión antes de aplicar.</div>
+        <div class="card-t" style="margin-bottom:11px;" data-i18n="vtp.title">🧩 VTP (Cisco IOS)</div>
+        <div class="hint" style="margin-bottom:8px;" data-i18n="vtp.hint">Opcional y específico de Cisco IOS. Define dominio, versión y rol únicamente para switches Cisco; los enlaces entre switches deben ser trunk. En Private Engine, una contraseña configurada se sustituye por ${SECRET:VTP_PASSWORD} y exige resolución/revisión antes de aplicar.</div>
         <div class="row">
-          <div><label class="fl">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
-          <div><label class="fl">Contraseña VTP</label><input id="vtpPassword" type="password" autocomplete="new-password" spellcheck="false" placeholder="secreto / contraseña"/></div>
+          <div><label class="fl" data-i18n="vtp.fields.domain">Dominio VTP</label><input id="vtpDomain" placeholder="EMPRESA"/></div>
+          <div><label class="fl" data-i18n="vtp.fields.password">Contraseña VTP</label><input id="vtpPassword" type="password" autocomplete="new-password" spellcheck="false" placeholder="secreto / contraseña" data-i18n-placeholder="vtp.placeholders.password"/></div>
         </div>
         <div class="row">
-          <div><label class="fl">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-          <div><label class="fl">Pruning</label><select id="vtpPruning"><option value="no">No</option><option value="yes">Sí</option></select></div>
+          <div><label class="fl" data-i18n="vtp.fields.version">Versión</label><select id="vtpVersion"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+          <div><label class="fl" data-i18n="vtp.fields.pruning">Pruning</label><select id="vtpPruning"><option value="no" data-i18n="common.no">No</option><option value="yes" data-i18n="common.yes">Sí</option></select></div>
         </div>
         <div id="vtpSwitchRoles"></div>
-        <div class="brow"><button class="btn bg" id="btnSaveVtp">✔ Guardar VTP</button></div>
+        <div class="brow"><button class="btn bg" id="btnSaveVtp" data-i18n="vtp.actions.save">✔ Guardar VTP</button></div>
       </div>
       <div class="co co-ac">
-        <b>Orden recomendado:</b> VLAN/subnet → DHCP/RoaS/VTP → Validación → Generar en servidor. Cualquier cambio aquí invalida una configuración privada anterior.
+        <b data-i18n="vtp.order.label">Orden recomendado:</b> <span data-i18n="vtp.order.text">VLAN/subnet → DHCP/RoaS/VTP → Validación → Generar en servidor. Cualquier cambio aquí invalida una configuración privada anterior.</span>
       </div>
     </div>
   </div>
