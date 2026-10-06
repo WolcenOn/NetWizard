@@ -1321,8 +1321,20 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     else if($('btnAddPort')){$('btnAddPort').dataset.i18n='ports.actions.add';$('btnAddPort').textContent=i18nText('ports.actions.add',{},'➕ Añadir');}
   }
   if(S.step==='vlan'){
+    const vtpDraft={
+      domain:$('vtpDomain')?.value??'',
+      password:$('vtpPassword')?.value??'',
+      version:$('vtpVersion')?.value??'2',
+      pruning:$('vtpPruning')?.value??'no',
+      roles:Object.fromEntries(qsa('[data-vtprole]').map(el=>[el.dataset.vtprole,el.value]))
+    };
     vlanSelectSignature='';
     fillVlanSels();renderVlans();renderSubnets();syncSubnetAuthorityLabel();updManualSnHint();fillRoasSels();renderVtp();
+    if($('vtpDomain'))$('vtpDomain').value=vtpDraft.domain;
+    if($('vtpPassword'))$('vtpPassword').value=vtpDraft.password;
+    if($('vtpVersion'))$('vtpVersion').value=vtpDraft.version;
+    if($('vtpPruning'))$('vtpPruning').value=vtpDraft.pruning;
+    qsa('[data-vtprole]').forEach(el=>{const value=vtpDraft.roles[el.dataset.vtprole];if(value&&Array.from(el.options).some(o=>o.value===value))el.value=value;});
     if($('dhcpPanel')?.open)renderDhcp();
   }
   if(S.step==='graphs'){
