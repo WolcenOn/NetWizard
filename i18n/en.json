@@ -1893,5 +1893,6 @@
   "deploy.runbook.vendor.linux.rollback.0": "Restore backed-up files and reload affected services in a controlled manner.",
   "deploy.runbook.vendor.generic.backup.0": "Export the active configuration using the vendor-supported method.",
   "deploy.runbook.vendor.generic.validate.0": "Check management, interfaces, routes, VLANs and affected services.",
-  "deploy.runbook.vendor.generic.rollback.0": "Restore the previous backup using the vendor-approved procedure."
+  "deploy.runbook.vendor.generic.rollback.0": "Restore the previous backup using the vendor-approved procedure.",
+  "deploy.project.resetConfirm": "Delete the entire project?"
 }
