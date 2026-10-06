@@ -5,6 +5,7 @@ const doc=()=>root.document||null;
 const state=()=>root.NetWizardState||null;
 const exp=()=>root.NetWizardAsBuiltExports||null;
 const docs=()=>root.NetWizardDocumentationUtils||null;
+const tr=(key,params={},fallback='')=>root.NetWizardI18n&&typeof root.NetWizardI18n.t==='function'?root.NetWizardI18n.t(key,params):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');
 function el(tag,cls,text){const n=doc().createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
 function snapshot(){return state()?.getSnapshot?.()||{};}
 function safeBase(p){const raw=String(p&&p.projName||'netwizard').normalize('NFD').replace(/[\u0300-\u036f]/g,'');return raw.replace(/[^A-Za-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'netwizard';}
@@ -16,18 +17,18 @@ function downloadBytes(name,bytes,mime){
 }
 function render(){
   const E=exp(),p=snapshot(),box=el('div','card nw-card-wide'),h=el('div','card-h');
-  h.append(el('div','card-t','📦 Export Pack · Inventario / As-Built'));box.append(h);
+  h.append(el('div','card-t',tr('deploy.asbuilt.title',{},'📦 Export Pack · Inventario / As-Built')));box.append(h);
   box.append(el('p','hint',tr('deploy.asbuilt.hint',{},'Exportaciones operativas por dominio físico. Reutiliza el inventario canónico y no crea copias persistentes.')));
   if(!E)return box;
   const pack=E.buildCsvPack(p),stats=el('div','stats');
   for(const [name,count] of Object.entries(pack.manifest.sheets)){const s=el('div');s.append(el('b','',count),el('span','',name));stats.append(s);}box.append(stats);
   const row=el('div','brow'),base=safeBase(p);
   const defs=[['devices','deploy.asbuilt.devices','Equipos'],['ports','deploy.asbuilt.ports','Puertos'],['cables','deploy.asbuilt.cables','Cableado'],['power','deploy.asbuilt.power','Alimentación'],['racks','deploy.asbuilt.racks','Racks'],['bom','deploy.asbuilt.bom','BOM'],['budget','deploy.asbuilt.budget','Presupuesto']];
-  for(const [key,label] of defs){const b=el('button','btn bs',`⬇ ${tr(key,{},label)} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
-  const xlsx=el('button','btn bp','⬇ Excel XLSX');xlsx.type='button';xlsx.onclick=()=>downloadBytes(`${base}_asbuilt.xlsx`,E.buildXlsx(p),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');row.append(xlsx);
+  for(const [key,i18nKey,label] of defs){const b=el('button','btn bs',`⬇ ${tr(i18nKey,{},label)} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
+  const xlsx=el('button','btn bp',tr('deploy.asbuilt.xlsx',{},'⬇ Excel XLSX'));xlsx.type='button';xlsx.onclick=()=>downloadBytes(`${base}_asbuilt.xlsx`,E.buildXlsx(p),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');row.append(xlsx);
   const all=el('button','btn bs',tr('deploy.asbuilt.markdownIndex',{},'⬇ Índice Markdown'));all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
   box.append(row);
-  if(pack.tables.differentialBom.length)box.append(el('div','co co-ac',`BOM diferencial disponible: ${pack.tables.differentialBom.length} filas.`));
+  if(pack.tables.differentialBom.length)box.append(el('div','co co-ac',tr('deploy.asbuilt.differentialBom',{count:pack.tables.differentialBom.length},'BOM diferencial disponible: {count} filas.')));
   return box;
 }
 function inject(){
@@ -37,5 +38,5 @@ function inject(){
   mount.textContent='';mount.append(render());
 }
 root.NetWizardAsBuiltExportsUi={version:'netwizard-asbuilt-export-pack-ui-v1',render,inject};
-if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);else refresh();root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});}
+if(root.document){const active=()=>root.document.getElementById('pg-physical')?.classList.contains('on');const refresh=()=>{if(active())setTimeout(inject,0);};if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',refresh);else refresh();root.document.addEventListener('nw:project:changed',refresh);root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='physical')setTimeout(inject,0);});root.addEventListener&&root.addEventListener('netwizard:i18n',refresh);}
 })(typeof window!=='undefined'?window:globalThis);
