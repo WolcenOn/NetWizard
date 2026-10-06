@@ -15,6 +15,7 @@
   function arr(value){return Array.isArray(value)?value:[];}
   function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
   function clean(value,max){return String(value==null?'':value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,'').trim().slice(0,max||200);}
+  function tr(key,params,locale,fallback){const i18n=root.NetWizardI18n;if(i18n&&typeof i18n.t==='function')return i18n.t(key,params||{},locale);return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
   function text(value){return String(value==null?'':value).replace(/\r\n?/g,'\n');}
   function safeName(value,fallback){const source=clean(value,120);const ascii=source.normalize?source.normalize('NFD').replace(/[\u0300-\u036f]/g,''):source;return ascii.replace(/[^A-Za-z0-9_.-]+/g,'-').replace(/^[.-]+|[.-]+$/g,'').slice(0,100)||fallback||'device';}
   function issue(code,message,blocking,extra){return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'incremental-generator',source:'incremental-generator',message},extra||{});}
@@ -338,30 +339,54 @@
   const registry=createRegistry();registry.register({id:'cisco-ios.managed-delta',version:'1',vendors:['cisco_ios'],priority:320,generate:ciscoIosAdapter});registry.register({id:'routeros-v7.managed-delta',version:'1',vendors:['mikrotik_routeros'],priority:315,generate:routerOsAdapter});registry.register({id:'fortios.managed-delta',version:'1',vendors:['fortinet'],priority:310,generate:fortiOsAdapter});registry.register({id:'junos.set-delta',version:'1',vendors:['juniper_junos'],priority:300,generate:junosAdapter});
 
   function buildPlan(project,options){
-    const p=obj(project),opts=obj(options),changeSet=obj(opts.changeSet),desiredMap=desiredConfigMap(opts.desiredConfigs),observedMap=observedConfigMap(p.observedState),deployment=obj(p.deployment),incremental=changeSet.requestedMode==='incremental',requireExecutable=deployment.requireExecutableIncremental===true;
+    const p=obj(project),opts=obj(options),locale=opts.locale,changeSet=obj(opts.changeSet),desiredMap=desiredConfigMap(opts.desiredConfigs),observedMap=observedConfigMap(p.observedState),deployment=obj(p.deployment),incremental=changeSet.requestedMode==='incremental',requireExecutable=deployment.requireExecutableIncremental===true;
     const issues=[],devices=[],artifacts=[],generatedAt=clean(opts.generatedAt,80)||new Date().toISOString(),changeById=new Map(arr(changeSet.devices).map(change=>[change.deviceId,change]));
-    if(!changeSet.format)issues.push(issue('NW-INCREMENTAL-001','No existe un change set válido para generar el plan incremental.',true));
+    if(!changeSet.format)issues.push(issue('NW-INCREMENTAL-001',tr('deploy.incremental.issue.noChangeSet',{},locale,'No existe un change set válido para generar el plan incremental.'),true));
     for(const [index,device] of arr(p.devices).entries()){
       const deviceId=clean(device&&device.id,120),deviceName=clean(device&&device.name,120)||deviceId,vendor=clean(device&&device.vendorOs,80)||'generic_network',change=obj(changeById.get(deviceId));
       const base={deviceId,deviceName,vendor,changeStatus:change.status||'baseline-required',adapterId:null,status:incremental?'manual-review':'full-target',applyPath:null,rollbackPath:null,instructions:[],rollbackInstructions:[],commandCounts:{additions:0,deletions:0}};
       if(!incremental){devices.push(base);continue;}
       if(change.status==='no-change'){devices.push(Object.assign(base,{status:'no-change'}));continue;}
       const observed=obj(observedMap.get(deviceId)).content,desired=desiredMap.get(deviceId);
-      if(!clean(observed,1)||!clean(desired,1)){issues.push(issue('NW-INCREMENTAL-005',`${deviceName}: faltan la configuración observada o el objetivo requerido por el adaptador.`,true,{deviceId,vendor}));devices.push(base);continue;}
-      const adapter=registry.resolve(vendor);if(!adapter){const blocking=requireExecutable;issues.push(issue('NW-INCREMENTAL-002',`${deviceName}: no existe adaptador incremental seguro para ${vendor}.`,blocking,{deviceId,vendor}));devices.push(base);continue;}
+      if(!clean(observed,1)||!clean(desired,1)){issues.push(issue('NW-INCREMENTAL-005',tr('deploy.incremental.issue.missingConfig',{device:deviceName},locale,'{device}: faltan la configuración observada o el objetivo requerido por el adaptador.'),true,{deviceId,vendor}));devices.push(base);continue;}
+      const adapter=registry.resolve(vendor);if(!adapter){const blocking=requireExecutable;issues.push(issue('NW-INCREMENTAL-002',tr('deploy.incremental.issue.noAdapter',{device:deviceName,vendor},locale,'{device}: no existe adaptador incremental seguro para {vendor}.'),blocking,{deviceId,vendor}));devices.push(base);continue;}
       let result;
-      try{result=adapter.generate({project:p,device,deviceId,deviceName,vendor,change,observedConfig:observed,desiredConfig:desired});}catch(error){issues.push(issue('NW-INCREMENTAL-006',`${deviceName}: el adaptador ${adapter.id} falló: ${error&&error.message||error}`,true,{deviceId,vendor}));devices.push(base);continue;}
-      if(!result||!result.ready){const blocking=requireExecutable;issues.push(issue('NW-INCREMENTAL-003',`${deviceName}: ${result&&result.reason||'el adaptador no pudo demostrar un delta seguro.'}`,blocking,{deviceId,vendor,details:result&&result.details||null}));devices.push(Object.assign(base,{adapterId:adapter.id}));continue;}
+      try{result=adapter.generate({project:p,device,deviceId,deviceName,vendor,change,observedConfig:observed,desiredConfig:desired});}catch(error){issues.push(issue('NW-INCREMENTAL-006',tr('deploy.incremental.issue.adapterFailed',{device:deviceName,adapter:adapter.id,error:error&&error.message||error},locale,'{device}: el adaptador {adapter} falló: {error}'),true,{deviceId,vendor}));devices.push(base);continue;}
+      if(!result||!result.ready){const blocking=requireExecutable;issues.push(issue('NW-INCREMENTAL-003',tr('deploy.incremental.issue.unsafeDelta',{device:deviceName,reason:result&&result.reason||tr('deploy.incremental.issue.unsafeFallback',{},locale,'el adaptador no pudo demostrar un delta seguro.')},locale,'{device}: {reason}'),blocking,{deviceId,vendor,details:result&&result.details||null}));devices.push(Object.assign(base,{adapterId:adapter.id}));continue;}
       if(result.noChange){devices.push(Object.assign(base,{adapterId:adapter.id,status:'no-change'}));continue;}
       const stem=`${String(index+1).padStart(2,'0')}-${safeName(deviceName,'device')}-${safeName(deviceId,'id')}`,extension=safeName(result.fileExtension||'set','set').replace(/^\.+/,'')||'set',applyPath=`incremental/commands/${stem}.${extension}`,rollbackPath=`incremental/rollback/${stem}.${extension}`;
       artifacts.push({path:applyPath,content:result.applyContent,mime:'text/plain;charset=utf-8'},{path:rollbackPath,content:result.rollbackContent,mime:'text/plain;charset=utf-8'});
       devices.push(Object.assign(base,{adapterId:adapter.id,status:'candidate-ready',applyPath,rollbackPath,instructions:arr(result.instructions),rollbackInstructions:arr(result.rollbackInstructions),commandCounts:{additions:arr(result.additions).length,deletions:arr(result.deletions).length}}));
     }
     const counts={devices:devices.length,candidateReady:devices.filter(item=>item.status==='candidate-ready').length,manualReview:devices.filter(item=>item.status==='manual-review').length,noChange:devices.filter(item=>item.status==='no-change').length,fullTarget:devices.filter(item=>item.status==='full-target').length};
-    return{ok:!issues.some(item=>item.blocking),format:FORMAT,version:VERSION,generatedAt,projectName:clean(p.projName,160),mode:incremental?'incremental':'full',requireExecutableIncremental:requireExecutable,registry:registry.inspect(),counts,issues,devices,artifacts,warning:'Solo candidate-ready contiene comandos cargables. manual-review conserva el diff y la configuración objetivo, pero no inventa CLI.'};
+    return{ok:!issues.some(item=>item.blocking),format:FORMAT,version:VERSION,generatedAt,projectName:clean(p.projName,160),mode:incremental?'incremental':'full',requireExecutableIncremental:requireExecutable,registry:registry.inspect(),counts,issues,devices,artifacts,warning:tr('deploy.incremental.warning',{},locale,'Solo candidate-ready contiene comandos cargables. manual-review conserva el diff y la configuración objetivo, pero no inventa CLI.')};
   }
   function publicPlan(plan){const copy=JSON.parse(JSON.stringify(plan||{}));delete copy.artifacts;return copy;}
-  function buildSummaryMarkdown(plan){const p=obj(plan),out=[`# Plan incremental — ${p.projectName||'NetWizard'}`,'',`- Modo: **${p.mode||'full'}**`,`- Candidatos seguros: ${obj(p.counts).candidateReady||0}`,`- Revisión manual: ${obj(p.counts).manualReview||0}`,`- Sin cambios: ${obj(p.counts).noChange||0}`,'',`> ${p.warning||''}`,'','## Dispositivos',''];for(const device of arr(p.devices)){out.push(`### ${device.deviceName} (${device.vendor})`,'',`- Estado: **${device.status}**`,`- Adaptador: ${device.adapterId||'ninguno'}`,`- Comandos: +${obj(device.commandCounts).additions||0} / -${obj(device.commandCounts).deletions||0}`,`- Candidato: ${device.applyPath?`\`${device.applyPath}\``:'no generado'}`,`- Rollback candidato: ${device.rollbackPath?`\`${device.rollbackPath}\``:'no generado'}`,'');}if(arr(p.issues).length)out.push('## Incidencias','',...p.issues.map(item=>`- [${item.code}] ${item.message}`),'');return out.join('\n')+'\n';}
+  function buildSummaryMarkdown(plan,options){
+    const p=obj(plan),locale=obj(options).locale,counts=obj(p.counts);
+    const out=[
+      tr('deploy.incremental.title',{project:p.projectName||'NetWizard'},locale,'# Plan incremental — {project}'),'',
+      tr('deploy.incremental.mode',{mode:p.mode||'full'},locale,'- Modo: **{mode}**'),
+      tr('deploy.incremental.safeCandidates',{count:counts.candidateReady||0},locale,'- Candidatos seguros: {count}'),
+      tr('deploy.incremental.manualReview',{count:counts.manualReview||0},locale,'- Revisión manual: {count}'),
+      tr('deploy.incremental.noChange',{count:counts.noChange||0},locale,'- Sin cambios: {count}'),'',
+      `> ${p.warning||''}`,'',
+      tr('deploy.incremental.devices',{},locale,'## Dispositivos'),''
+    ];
+    for(const device of arr(p.devices)){
+      const none=tr('deploy.common.none',{},locale,'ninguno'),notGenerated=tr('deploy.runbook.notGenerated',{},locale,'no generado');
+      out.push(
+        `### ${device.deviceName} (${device.vendor})`,'',
+        tr('deploy.incremental.device.status',{status:device.status},locale,'- Estado: **{status}**'),
+        tr('deploy.incremental.device.adapter',{adapter:device.adapterId||none},locale,'- Adaptador: {adapter}'),
+        tr('deploy.incremental.device.commands',{additions:obj(device.commandCounts).additions||0,deletions:obj(device.commandCounts).deletions||0},locale,'- Comandos: +{additions} / -{deletions}'),
+        tr('deploy.incremental.device.candidate',{path:device.applyPath?`\`${device.applyPath}\``:notGenerated},locale,'- Candidato: {path}'),
+        tr('deploy.incremental.device.rollback',{path:device.rollbackPath?`\`${device.rollbackPath}\``:notGenerated},locale,'- Rollback candidato: {path}'),''
+      );
+    }
+    if(arr(p.issues).length)out.push(tr('deploy.incremental.issues',{},locale,'## Incidencias'),'',...p.issues.map(item=>`- [${item.code}] ${item.message}`),'');
+    return out.join('\n')+'\n';
+  }
 
   const api={version:'netwizard-incremental-generators-v3.50',format:FORMAT,registry,createRegistry,buildPlan,publicPlan,buildSummaryMarkdown,parseJunosSet,junosAdapter,parseCiscoIos,ciscoIosAdapter,parseFortiOs,fortiOsAdapter,parseRouterOs,routerOsAdapter};
   root.NetWizardIncrementalGenerators=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
