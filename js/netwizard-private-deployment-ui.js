@@ -297,33 +297,33 @@ function render(){
   card.textContent='';
   const head=el('div',{className:'card-h'});
   head.append(
-    el('div',{className:'card-t'},mode==='remote'?'☁ Private Deployment Plan':'🔒 Private Engine self-hosted'),
-    el('span',{className:'b bac'},mode==='remote'?(ctx?('v'+ctx.currentVersion):'sin contexto'):(localState.authenticated?'sesión activa':'bloqueado'))
+    el('div',{className:'card-t'},mode==='remote'?tr('deploy.private.remoteTitle',{},'☁ Private Deployment Plan'):tr('deploy.private.selfHostedTitle',{},'🔒 Private Engine self-hosted')),
+    el('span',{className:'b bac'},mode==='remote'?(ctx?('v'+ctx.currentVersion):tr('deploy.private.noContext',{},'sin contexto')):(localState.authenticated?tr('deploy.private.sessionActive',{},'sesión activa'):tr('deploy.private.locked',{},'bloqueado')))
   );
   card.appendChild(head);
   card.appendChild(el('div',{className:'hint'},mode==='remote'
-    ? 'Sincroniza la revisión cloud y genera configuraciones, change set, plan incremental, runbook y rollback en el Private Engine. Las salidas son derivadas y no se guardan dentro del snapshot.'
-    : 'Genera configuraciones y artefactos en el Private Engine del servidor. El navegador envía solo el snapshot 3.50 actual; los generadores vendor y las claves privadas no se publican al cliente.'));
+    ? tr('deploy.private.remoteHint',{},'Sincroniza la revisión cloud y genera configuraciones, change set, plan incremental, runbook y rollback en el Private Engine. Las salidas son derivadas y no se guardan dentro del snapshot.')
+    : tr('deploy.private.selfHostedHint',{},'Genera configuraciones y artefactos en el Private Engine del servidor. El navegador envía solo el snapshot 3.50 actual; los generadores vendor y las claves privadas no se publican al cliente.')));
 
   if(mode==='self-hosted'&&!localState.authenticated){
     const authRow=el('div',{className:'row'});
     const tokenCol=el('div');
-    tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},'Autorizar este navegador'));
-    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'off',spellcheck:'false',placeholder:'Token de operador (solo alta inicial)'});
+    tokenCol.append(el('label',{className:'fl',for:'nwSelfHostedPrivateToken'},tr('deploy.private.authorizeBrowser',{},'Autorizar este navegador')));
+    const tokenInput=el('input',{id:'nwSelfHostedPrivateToken',type:'password',autocomplete:'off',spellcheck:'false',placeholder:tr('deploy.private.operatorTokenPlaceholder',{},'Token de operador (solo alta inicial)')});
     tokenCol.appendChild(tokenInput);
     const actionCol=el('div');
-    actionCol.append(el('label',{className:'fl'},'Navegador de confianza'));
-    const unlock=el('button',{type:'button',className:'btn bp',id:'nwSelfHostedPrivateLogin'},'🔓 Autorizar y continuar');
+    actionCol.append(el('label',{className:'fl'},tr('deploy.private.trustedBrowser',{},'Navegador de confianza')));
+    const unlock=el('button',{type:'button',className:'btn bp',id:'nwSelfHostedPrivateLogin'},tr('deploy.private.authorizeContinue',{},'🔓 Autorizar y continuar'));
     actionCol.appendChild(unlock);
     authRow.append(tokenCol,actionCol);
     card.appendChild(authRow);
     const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'},
-      'El token se usa una sola vez para autorizar este navegador. La confianza queda en una cookie HttpOnly firmada, sobrevive a redeploys y no guarda el token en el proyecto ni en JavaScript.');
+      tr('deploy.private.authHint',{},'El token se usa una sola vez para autorizar este navegador. La confianza queda en una cookie HttpOnly firmada, sobrevive a redeploys y no guarda el token en el proyecto ni en JavaScript.'));
     card.appendChild(status);
     unlock.onclick=async()=>{
-      if(!selfHosted||typeof selfHosted.login!=='function')return setStatus('Cliente self-hosted no disponible.','error');
+      if(!selfHosted||typeof selfHosted.login!=='function')return setStatus(tr('deploy.private.selfHostedUnavailable',{},'Cliente self-hosted no disponible.'),'error');
       unlock.disabled=true;
-      setStatus('Autorizando este navegador para Private Engine…','info');
+      setStatus(tr('deploy.private.authorizing',{},'Autorizando este navegador para Private Engine…'),'info');
       try{
         await selfHosted.login(tokenInput.value);
         tokenInput.value='';
@@ -337,7 +337,7 @@ function render(){
       }catch(err){
         pendingGenerateAfterLogin=false;
         tokenInput.value='';
-        setStatus('No se pudo autorizar el navegador: '+(err&&err.message||'error desconocido')+'.','error');
+        setStatus(tr('deploy.private.authorizationFailed',{error:err&&err.message||tr('deploy.private.unknownError',{},'error desconocido')},'No se pudo autorizar el navegador: {error}.'),'error');
         unlock.disabled=false;
       }
     };
@@ -347,20 +347,20 @@ function render(){
 
   const actionRow=el('div',{className:'row'});
   const infoCol=el('div');
-  infoCol.append(el('label',{className:'fl'},mode==='remote'?'Proyecto remoto':'Proyecto local'));
+  infoCol.append(el('label',{className:'fl'},mode==='remote'?tr('deploy.private.remoteProject',{},'Proyecto remoto'):tr('deploy.private.localProject',{},'Proyecto local')));
   infoCol.append(el('div',{className:'co co-ac',id:'nwPrivateDeploymentContext'},mode==='remote'
-    ? (ctx?((ctx.name||ctx.projectId)+' · versión '+ctx.currentVersion):'Abre primero un proyecto cloud.')
-    : 'Snapshot actual · schema 3.50.0 · generación efímera server-side'));
+    ? (ctx?tr('deploy.private.remoteContext',{name:ctx.name||ctx.projectId,version:ctx.currentVersion},'{name} · versión {version}'):tr('deploy.private.openCloudFirst',{},'Abre primero un proyecto cloud.'))
+    : tr('deploy.private.localContext',{},'Snapshot actual · schema 3.50.0 · generación efímera server-side')));
   const actionCol=el('div');
   actionCol.append(el('label',{className:'fl'},'Private Engine'));
   const generate=el('button',{type:'button',className:'btn bp',id:'nwPrivateDeploymentGenerate'},
-    mode==='remote'?'☁ Sincronizar y generar deployment plan':'🔒 Generar en servidor');
+    mode==='remote'?tr('deploy.private.syncGenerate',{},'☁ Sincronizar y generar deployment plan'):tr('deploy.private.generateServerLocked',{},'🔒 Generar en servidor'));
   generate.disabled=mode==='remote'
     ? !(remote&&remote.canUsePrivateDeploymentPlan&&remote.canUsePrivateDeploymentPlan())
     : !(selfHosted&&typeof selfHosted.generateDeploymentPlan==='function'&&localState.authenticated);
   actionCol.appendChild(generate);
   if(mode==='self-hosted'){
-    const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},'Revocar este navegador');
+    const lock=el('button',{type:'button',className:'btn bs bsm',id:'nwSelfHostedPrivateLogout',style:'margin-left:6px;'},tr('deploy.private.revokeBrowser',{},'Revocar este navegador'));
     actionCol.appendChild(lock);
     lock.onclick=async()=>{
       pendingGenerateAfterLogin=false;
@@ -376,19 +376,19 @@ function render(){
 
   const status=el('div',{className:'co co-ac',id:'nwPrivateDeploymentStatus'});
   status.textContent=mode==='remote'
-    ? (ctx?('Listo para generar desde la revisión remota '+ctx.currentVersion+'.'):'Abre un proyecto SaaS para activar el deployment privado.')
-    : ('Navegador autorizado para Private Engine'+(localState.expiresAt?' hasta '+localState.expiresAt:'')+'.');
+    ? (ctx?tr('deploy.private.readyRemote',{version:ctx.currentVersion},'Listo para generar desde la revisión remota {version}.'):tr('deploy.private.openSaas',{},'Abre un proyecto SaaS para activar el deployment privado.'))
+    : tr('deploy.private.browserAuthorized',{expiry:localState.expiresAt?' '+tr('deploy.private.until',{date:localState.expiresAt},'hasta {date}') : ''},'Navegador autorizado para Private Engine{expiry}.');
   card.appendChild(status);
 
   const selectorRow=el('div',{className:'row'});
   const selectorCol=el('div');
-  selectorCol.append(el('label',{className:'fl',for:'nwPrivateDeploymentView'},'Salida derivada'));
+  selectorCol.append(el('label',{className:'fl',for:'nwPrivateDeploymentView'},tr('deploy.private.derivedOutput',{},'Salida derivada')));
   const select=el('select',{id:'nwPrivateDeploymentView'});
-  select.appendChild(el('option',{value:''},'Genera un plan para ver las salidas'));
+  select.appendChild(el('option',{value:''},tr('deploy.private.generateToSeeOutputs',{},'Genera un plan para ver las salidas')));
   select.disabled=true;
   selectorCol.appendChild(select);
   const metaCol=el('div');
-  metaCol.append(el('label',{className:'fl'},'Contrato'));
+  metaCol.append(el('label',{className:'fl'},tr('deploy.private.contract',{},'Contrato')));
   metaCol.append(el('div',{className:'hint',id:'nwPrivateDeploymentContract'},'netwizard-private-deployment-plan-v2'));
   selectorRow.append(selectorCol,metaCol);
   card.appendChild(selectorRow);
@@ -398,13 +398,13 @@ function render(){
     id:'nwPrivateDeploymentOutput',
     readonly:'readonly',
     style:'min-height:260px;margin-top:8px;',
-    placeholder:'Runbook, rollback, resúmenes y artefactos privados aparecerán aquí.'
+    placeholder:tr('deploy.private.outputPlaceholder',{},'Runbook, rollback, resúmenes y artefactos privados aparecerán aquí.')
   });
   card.appendChild(output);
 
   const actions=el('div',{className:'brow'});
-  const copy=el('button',{type:'button',className:'btn bs bsm',id:'nwPrivateDeploymentCopy'},'Copiar salida');
-  const download=el('button',{type:'button',className:'btn bs bsm',id:'nwPrivateDeploymentDownload'},'Descargar salida');
+  const copy=el('button',{type:'button',className:'btn bs bsm',id:'nwPrivateDeploymentCopy'},tr('deploy.private.copyOutput',{},'Copiar salida'));
+  const download=el('button',{type:'button',className:'btn bs bsm',id:'nwPrivateDeploymentDownload'},tr('deploy.private.downloadOutput',{},'Descargar salida'));
   copy.disabled=true;download.disabled=true;
   actions.append(copy,download);
   card.appendChild(actions);
@@ -413,14 +413,14 @@ function render(){
     renderResult(lastResult);
     const issueCount=Array.isArray(lastResult.issues)?lastResult.issues.length:0;
     const gateIssues=lastResult.productionGate&&Array.isArray(lastResult.productionGate.issues)?lastResult.productionGate.issues.length:0;
-    const gateLabel=lastResult.productionStatus==='ready'?'LISTO':lastResult.productionStatus==='review'?'REVISIÓN':'BLOQUEADO';
+    const gateLabel=lastResult.productionStatus==='ready'?tr('deploy.private.gate.ready',{},'LISTO'):lastResult.productionStatus==='review'?tr('deploy.private.gate.review',{},'REVISIÓN'):tr('deploy.private.gate.blocked',{},'BLOQUEADO');
     if(lastResultStale){
-      setStatus('Resultado privado OBSOLETO: el proyecto cambió después de generar. Regenera antes de usar cualquier configuración.','error');
+      setStatus(tr('deploy.private.resultStale',{},'Resultado privado OBSOLETO: el proyecto cambió después de generar. Regenera antes de usar cualquier configuración.'),'error');
     }else{
       setStatus(
         lastResult.ok
-          ? ('Deployment plan privado generado · Production Gate: '+gateLabel+' · '+(lastResult.artifacts||[]).length+' artefacto(s) · '+gateIssues+' incidencia(s) de gate.')
-          : ('Deployment plan incompleto · Production Gate: '+gateLabel+' · '+issueCount+' incidencia(s) de generación. Revisa “Diagnóstico de generación”.'),
+          ? tr('deploy.private.resultOk',{gate:gateLabel,artifacts:(lastResult.artifacts||[]).length,issues:gateIssues},'Deployment plan privado generado · Production Gate: {gate} · {artifacts} artefacto(s) · {issues} incidencia(s) de gate.')
+          : tr('deploy.private.resultIncomplete',{gate:gateLabel,issues:issueCount},'Deployment plan incompleto · Production Gate: {gate} · {issues} incidencia(s) de generación. Revisa “Diagnóstico de generación”.'),
         lastResult.productionReady?'ok':(lastResult.productionStatus==='blocked'?'error':'info')
       );
     }
@@ -431,16 +431,16 @@ function render(){
     clearResult();
     output.value='';select.disabled=true;copy.disabled=true;download.disabled=true;
     setStatus(mode==='remote'
-      ? 'Sincronizando revisión y ejecutando Private Deployment Plan…'
-      : 'Validando snapshot y ejecutando Private Engine en el servidor…','info');
+      ? tr('deploy.private.generatingRemote',{},'Sincronizando revisión y ejecutando Private Deployment Plan…')
+      : tr('deploy.private.generatingLocal',{},'Validando snapshot y ejecutando Private Engine en el servidor…'),'info');
     try{
       let result=null,latest=null;
       if(mode==='remote'){
-        if(!remote||typeof remote.syncAndGenerateDeploymentPlan!=='function')throw new Error('Cliente SaaS remoto no disponible');
+        if(!remote||typeof remote.syncAndGenerateDeploymentPlan!=='function')throw new Error(tr('deploy.private.remoteClientUnavailable',{},'Cliente SaaS remoto no disponible'));
         result=await remote.syncAndGenerateDeploymentPlan();
         latest=remote.context();
       }else{
-        if(!selfHosted||typeof selfHosted.generateDeploymentPlan!=='function')throw new Error('Cliente self-hosted no disponible');
+        if(!selfHosted||typeof selfHosted.generateDeploymentPlan!=='function')throw new Error(tr('deploy.private.selfHostedUnavailable',{},'Cliente self-hosted no disponible'));
         result=await selfHosted.generateDeploymentPlan();
       }
       lastResult=result;
@@ -454,8 +454,8 @@ function render(){
       }
     }catch(err){
       const conflict=mode==='remote'&&err&&[409,412].includes(err.status);
-      const suffix=conflict?' Recarga el proyecto cloud antes de reintentar.':'';
-      setStatus('No se pudo generar el deployment plan privado: '+(err&&err.message||'error desconocido')+'.'+suffix,'error');
+      const suffix=conflict?' '+tr('deploy.private.reloadCloud',{},'Recarga el proyecto cloud antes de reintentar.'):'';
+      setStatus(tr('deploy.private.generationFailed',{error:err&&err.message||tr('deploy.private.unknownError',{},'error desconocido'),suffix},'No se pudo generar el deployment plan privado: {error}.{suffix}'),'error');
     }finally{
       const live=root.document.getElementById('nwPrivateDeploymentGenerate');
       if(live)live.disabled=mode==='remote'
