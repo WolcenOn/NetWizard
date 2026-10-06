@@ -112,21 +112,21 @@
       Array.isArray(r.issues);
   }
 
-  function buildPrivateReadme(project,result,configCount){
+  function buildPrivateReadme(project,result,configCount,locale){
     const status=clean(result&&result.productionStatus,20)||'unknown';
     return [
-      `# Paquete privado de despliegue — ${clean(project&&project.projName,160)||'NetWizard'}`,'',
-      `- Fuente: Private Engine server-side`,
-      `- Contrato: ${clean(result&&result.contractVersion,80)||'—'}`,
-      `- Generado por servidor: ${clean(result&&result.generatedAt,80)||'—'}`,
-      `- Estado de producción: ${status.toUpperCase()}`,
-      `- Production ready: ${result&&result.productionReady?'sí':'no'}`,
-      `- Configuraciones: ${configCount}`,'',
-      '## Autoridad','',
-      'Las configuraciones y artefactos de este ZIP proceden del último resultado vigente del Private Engine.',
-      'El navegador no ha vuelto a ejecutar generadores vendor ni ha reconstruido las configuraciones localmente.','',
-      'Un estado REVIEW permite revisión/exportación cuando la Production Gate no contiene bloqueantes; no equivale a READY.',
-      'Un cambio posterior del proyecto invalida este resultado y obliga a regenerar antes de exportar.',''
+      tr('deploy.bundle.private.title',{project:clean(project&&project.projName,160)||'NetWizard'},locale,'# Paquete privado de despliegue — {project}'),'',
+      tr('deploy.bundle.private.source',{},locale,'- Fuente: Private Engine server-side'),
+      tr('deploy.bundle.private.contract',{contract:clean(result&&result.contractVersion,80)||'—'},locale,'- Contrato: {contract}'),
+      tr('deploy.bundle.private.generated',{date:clean(result&&result.generatedAt,80)||'—'},locale,'- Generado por servidor: {date}'),
+      tr('deploy.bundle.private.status',{status:status.toUpperCase()},locale,'- Estado de producción: {status}'),
+      tr('deploy.bundle.private.ready',{value:result&&result.productionReady?tr('common.yes',{},locale,'Sí'):tr('common.no',{},locale,'No')},locale,'- Production ready: {value}'),
+      tr('deploy.bundle.private.configs',{count:configCount},locale,'- Configuraciones: {count}'),'',
+      tr('deploy.bundle.private.authority',{},locale,'## Autoridad'),'',
+      tr('deploy.bundle.private.authority1',{},locale,'Las configuraciones y artefactos de este ZIP proceden del último resultado vigente del Private Engine.'),
+      tr('deploy.bundle.private.authority2',{},locale,'El navegador no ha vuelto a ejecutar generadores vendor ni ha reconstruido las configuraciones localmente.'),'',
+      tr('deploy.bundle.private.reviewNote',{},locale,'Un estado REVIEW permite revisión/exportación cuando la Production Gate no contiene bloqueantes; no equivale a READY.'),
+      tr('deploy.bundle.private.staleNote',{},locale,'Un cambio posterior del proyecto invalida este resultado y obliga a regenerar antes de exportar.'),''
     ].join('\n');
   }
 
@@ -226,7 +226,7 @@
       files:files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}))
     };
     try{
-      addFile(files,'README.md',buildPrivateReadme(canonical,r,configCount),'text/markdown;charset=utf-8');
+      addFile(files,'README.md',buildPrivateReadme(canonical,r,configCount,opts.locale),'text/markdown;charset=utf-8');
       manifest.files=files.map(file=>({path:file.path,bytes:file.bytes,crc32:file.crc32,mime:file.mime}));
       manifest.counts.files=files.length+1;
       addFile(files,'manifest.json',JSON.stringify(manifest,null,2)+'\n','application/json');
@@ -329,7 +329,7 @@
       for(const artifact of arr(incrementalPlan.artifacts)) addFile(files,artifact.path,artifact.content,artifact.mime||'text/plain;charset=utf-8');
       addFile(files,'evidence/pre-change.json',JSON.stringify({format:'netwizard-pre-change-evidence',version:VERSION,generatedAt,observedAt:changeSet.observedAt,coverage:changeSet.coverage,devices:changeSet.devices.map(device=>({deviceId:device.deviceId,vendor:device.vendor,capturedAt:device.capturedAt,observedFingerprint:device.observedFingerprint,desiredFingerprint:device.desiredFingerprint,status:device.status}))},null,2)+'\n','application/json');
       addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan),'text/markdown;charset=utf-8');
-      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan),'text/markdown;charset=utf-8');
+      addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan,opts.locale),'text/markdown;charset=utf-8');
     }catch(error){
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-020',`No se pudieron construir los artefactos: ${error&&error.message||error}`)],files:[]};
     }
