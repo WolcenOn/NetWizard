@@ -546,23 +546,14 @@ function genConfig(devId,format){
   const assigned=cliText(d.vendorOs||'sin-vendor',80),requested=cliText(format||d.vendorOs||'sin-vendor',80);
   const privateArtifact=privateConfigArtifact(devId);
   if(privateArtifact&&requested!==assigned){
-    return `! El Private Engine generó este dispositivo para ${assigned}.
-! La previsualización cruzada como ${requested} no está disponible en producción.
-! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.
-`;
+    return i18nText('deploy.private.crossPreview',{assigned,requested},'! El Private Engine generó este dispositivo para {assigned}.\n! La previsualización cruzada como {requested} no está disponible en producción.\n! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.\n');
   }
   const status=privateConfigStatus(devId);
   if(status&&['unsupported','generation-error','missing-artifact','not-generated','stale'].includes(status.status)){
     const reasons=(status.reasons||[]).filter(Boolean);
-    return `! Private Engine: ${status.status.toUpperCase()} para ${assigned}.
-${reasons.map(reason=>'! '+reason).join('\n')}
-! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.
-`;
+    return i18nText('deploy.private.status',{status:status.status.toUpperCase(),assigned,reasons:reasons.map(reason=>'! '+reason).join('\n')},'! Private Engine: {status} para {assigned}.\n{reasons}\n! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.\n');
   }
-  return `! Configuración privada pendiente para ${assigned}.
-! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.
-! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.
-`;
+  return i18nText('deploy.private.pendingConfig',{assigned},'! Configuración privada pendiente para {assigned}.\n! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.\n! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.\n');
 }
 function configForView(devId,format){
   const d=devById(devId);if(!d)return'';
@@ -2320,12 +2311,12 @@ function privateExportState(){
 }
 function privateExportEntries(){
   const state=privateExportState();
-  if(!state)return{ok:false,message:'Private Engine no disponible en esta sesión.',entries:[]};
-  if(state.stale)return{ok:false,message:'La generación server-side está obsoleta. Regenera antes de exportar.',entries:[]};
-  if(!state.available||!state.result)return{ok:false,message:'Primero genera las configuraciones en servidor.',entries:[]};
+  if(!state)return{ok:false,message:i18nText('deploy.export.privateUnavailable',{},'Private Engine no disponible en esta sesión.'),entries:[]};
+  if(state.stale)return{ok:false,message:i18nText('deploy.export.stale',{},'La generación server-side está obsoleta. Regenera antes de exportar.'),entries:[]};
+  if(!state.available||!state.result)return{ok:false,message:i18nText('deploy.export.generateFirst',{},'Primero genera las configuraciones en servidor.'),entries:[]};
   const gate=state.result.productionGate||{};
   if(gate.canExport!==true||state.result.productionStatus==='blocked'){
-    return{ok:false,message:'La Production Gate privada bloquea la exportación. Revisa Validación y el diagnóstico de generación.',entries:[]};
+    return{ok:false,message:i18nText('deploy.export.privateGateBlocked',{},'La Production Gate privada bloquea la exportación. Revisa Validación y el diagnóstico de generación.'),entries:[]};
   }
   const api=window.NetWizardPrivateDeploymentUi;
   const entries=[],missing=[];
@@ -2336,7 +2327,7 @@ function privateExportEntries(){
     const fileName=(path.split('/').filter(Boolean).pop()||((device.name||device.id||'device')+'.txt')).replace(/[\\/:*?"<>|]+/g,'-');
     entries.push({device,artifact,fileName});
   }
-  if(missing.length)return{ok:false,message:'Faltan artefactos privados vigentes para: '+missing.join(', ')+'. Regenera y revisa el diagnóstico.',entries:[]};
+  if(missing.length)return{ok:false,message:i18nText('deploy.export.missingArtifacts',{devices:missing.join(', ')},'Faltan artefactos privados vigentes para: {devices}. Regenera y revisa el diagnóstico.'),entries:[]};
   return{ok:true,message:'',entries,state};
 }
 function requireConfigExportReady(){
@@ -2355,11 +2346,11 @@ function requireConfigExportReady(){
   if(window.NetWizardProductionGate&&window.NetWizardProductionGate.runProductionGate){
     const gate=window.NetWizardProductionGate.runProductionGate(S,{productionMode:true,strict:true});
     if(!gate.canExport){
-      const msg=window.NetWizardProductionGate.summarizeGate?window.NetWizardProductionGate.summarizeGate(gate,{limit:80}):'Exportación bloqueada en modo producción.';
+      const msg=window.NetWizardProductionGate.summarizeGate?window.NetWizardProductionGate.summarizeGate(gate,{limit:80,locale:window.NetWizardI18n?.getReportLocale?.()}):i18nText('deploy.export.blockedProduction',{},'Exportación bloqueada en modo producción.');
       if($('cfgOut'))$('cfgOut').value=msg;
       const r=document.getElementById('readinessAuditOut');if(r)r.textContent=msg;
       const g=document.getElementById('productionGateOut');if(g)g.textContent=msg;
-      alert('Modo producción: la puerta de producción bloquea la exportación. Corrige los errores o cambia a modo demo para pruebas.');
+      alert(i18nText('deploy.export.productionGateAlert',{},'Modo producción: la puerta de producción bloquea la exportación. Corrige los errores o cambia a modo demo para pruebas.'));
       return false;
     }
     return true;
@@ -2367,10 +2358,10 @@ function requireConfigExportReady(){
   if(!(window.NetWizardPlanner&&window.NetWizardPlanner.readinessAudit))return true;
   const audit=window.NetWizardPlanner.readinessAudit(S,{productionMode:true});
   if(audit&&audit.ok===false){
-    const msg=window.NetWizardAudit.summarizeIssues?window.NetWizardAudit.summarizeIssues(audit.issues||audit,{title:'Exportación bloqueada en modo producción'}):'Exportación bloqueada en modo producción por errores de auditoría.';
+    const msg=window.NetWizardAudit.summarizeIssues?window.NetWizardAudit.summarizeIssues(audit.issues||audit,{title:i18nText('deploy.export.blockedTitle',{},'Exportación bloqueada en modo producción'),locale:window.NetWizardI18n?.getReportLocale?.()}):i18nText('deploy.export.blockedAudit',{},'Exportación bloqueada en modo producción por errores de auditoría.');
     if($('cfgOut'))$('cfgOut').value=msg;
     const r=document.getElementById('readinessAuditOut');if(r)r.textContent=msg;
-    alert('Modo producción: corrige los errores de auditoría antes de exportar configuraciones. Puedes cambiar a modo demo si solo estás haciendo una prueba.');
+    alert(i18nText('deploy.export.auditAlert',{},'Modo producción: corrige los errores de auditoría antes de exportar configuraciones. Puedes cambiar a modo demo si solo estás haciendo una prueba.'));
     return false;
   }
   return true;
@@ -2415,7 +2406,7 @@ function ensureJsonFileImportControls(){
     fileBtn.type='button';
     fileBtn.className='btn bs';
     fileBtn.id='impJsonFile';
-    fileBtn.textContent='📂 Cargar archivo JSON';
+    fileBtn.dataset.i18n='deploy.import.fileButton';fileBtn.textContent=i18nText('deploy.import.fileButton',{},'📂 Cargar archivo JSON');
     importText.insertAdjacentElement('afterend',fileBtn);
   }
   let fileInput=$('jsonFileInput');
@@ -2432,7 +2423,7 @@ function ensureJsonFileImportControls(){
     status.className='hint';
     status.id='jsonImportStatus';
     status.style.marginTop='6px';
-    status.textContent='Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema.';
+    status.dataset.i18n='deploy.import.hint';status.textContent=i18nText('deploy.import.hint',{},'Puedes pegar un JSON o cargar directamente un archivo .json. Ambos usan la misma validación de schema.');
     const bridge=$('nwBridgeStatus');
     if(bridge)bridge.insertAdjacentElement('beforebegin',status);
     else jsonBox.insertAdjacentElement('beforebegin',status);
@@ -2441,17 +2432,17 @@ function ensureJsonFileImportControls(){
 ensureJsonFileImportControls();
 function prepareJsonImportText(text){
   const txt=String(text||'').trim();
-  if(!txt)throw new Error('No hay contenido JSON para importar.');
+  if(!txt)throw new Error(i18nText('deploy.import.empty',{},'No hay contenido JSON para importar.'));
   const raw=JSON.parse(txt);
   let p=raw?.project&&typeof raw.project==='object'?raw.project:raw;
   let warnings=[];
   if(NWSchema&&typeof NWSchema.prepareImport==='function'){
     const prepared=NWSchema.prepareImport(raw,{defaults:defS});
-    if(!prepared.ok)throw new Error('JSON inválido:\n- '+prepared.errors.join('\n- '));
+    if(!prepared.ok)throw new Error(i18nText('deploy.import.invalidDetailed',{errors:prepared.errors.join('\n- ')},'JSON inválido:\n- {errors}'));
     p=prepared.project;
     warnings=prepared.warnings||[];
   }else if(!Array.isArray(p?.devices)||!Array.isArray(p?.vlans)){
-    throw new Error('JSON inválido.');
+    throw new Error(i18nText('deploy.import.invalid',{},'JSON inválido.'));
   }
   return{project:p,warnings};
 }
@@ -2468,7 +2459,7 @@ $('impJson').onclick=()=>{
   try{
     const prepared=applyJsonImportText($('jsonBox').value,'json-import-text');
     const status=$('jsonImportStatus');
-    if(status)status.textContent=`Importado desde texto: ${prepared.project.projName||'proyecto sin nombre'}.`;
+    if(status)status.textContent=i18nText('deploy.import.fromText',{project:prepared.project.projName||i18nText('deploy.import.unnamedProject',{},'proyecto sin nombre')},'Importado desde texto: {project}.');
   }catch(e){alert(e.message||('JSON inválido: '+e));}
 };
 if($('impJsonFile')&&$('jsonFileInput')){
@@ -2477,18 +2468,18 @@ if($('impJsonFile')&&$('jsonFileInput')){
     const file=$('jsonFileInput').files&&$('jsonFileInput').files[0];
     if(!file)return;
     const status=$('jsonImportStatus');
-    if(file.size>10*1024*1024){if(status)status.textContent='Archivo rechazado: supera 10 MB.';alert('El archivo JSON supera el límite de 10 MB.');return;}
-    if(status)status.textContent=`Leyendo ${file.name}…`;
+    if(file.size>10*1024*1024){if(status)status.textContent=i18nText('deploy.import.fileTooLargeStatus',{},'Archivo rechazado: supera 10 MB.');alert(i18nText('deploy.import.fileTooLarge',{},'El archivo JSON supera el límite de 10 MB.'));return;}
+    if(status)status.textContent=i18nText('deploy.import.reading',{file:file.name},'Leyendo {file}…');
     const reader=new FileReader();
     reader.onload=()=>{
       try{
         const text=String(reader.result||'');
         $('jsonBox').value=text;
         const prepared=applyJsonImportText(text,'json-import-file');
-        if(status)status.textContent=`✓ ${file.name} cargado · ${prepared.project.projName||'proyecto sin nombre'} · ${Math.max(1,Math.round(file.size/1024))} KB.`;
-      }catch(e){if(status)status.textContent=`Error al importar ${file.name}.`;alert(e.message||('JSON inválido: '+e));}
+        if(status)status.textContent=i18nText('deploy.import.loaded',{file:file.name,project:prepared.project.projName||i18nText('deploy.import.unnamedProject',{},'proyecto sin nombre'),kb:Math.max(1,Math.round(file.size/1024))},'✓ {file} cargado · {project} · {kb} KB.');
+      }catch(e){if(status)status.textContent=i18nText('deploy.import.fileError',{file:file.name},'Error al importar {file}.');alert(e.message||i18nText('deploy.import.invalidWithError',{error:e},'JSON inválido: {error}'));}
     };
-    reader.onerror=()=>{if(status)status.textContent=`No se pudo leer ${file.name}.`;alert('No se pudo leer el archivo seleccionado.');};
+    reader.onerror=()=>{if(status)status.textContent=i18nText('deploy.import.readError',{file:file.name},'No se pudo leer {file}.');alert(i18nText('deploy.import.readErrorAlert',{},'No se pudo leer el archivo seleccionado.'));};
     reader.readAsText(file,'utf-8');
   });
 }
