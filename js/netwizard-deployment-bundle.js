@@ -94,7 +94,7 @@
       tr('deploy.bundle.readme.safe2',{},locale,'2. Compara cada configuración con el estado real del equipo.'),
       tr('deploy.bundle.readme.safe3',{},locale,'3. Prueba en laboratorio y conserva un backup del dispositivo.'),
       tr('deploy.bundle.readme.safe4',{},locale,'4. Aplica los cambios de forma controlada y valida conectividad.'),'',
-      tr('deploy.bundle.readme.sensitive',{},locale,'> El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.')
+      '> '+tr('deploy.bundle.readme.sensitive',{},locale,'El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.')
     ];
     return lines.join('\n')+'\n';
   }
@@ -398,11 +398,11 @@
     if(button.dataset.nwDeploymentBundleBound==='1')return;
     button.dataset.nwDeploymentBundleBound='1';
     button.onclick=()=>{
+      const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
       if(!root.NetWizardState||typeof root.NetWizardState.getSnapshot!=='function'){
         output.textContent=tr('deploy.bundle.loading',{},locale,'⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.');
         return;
       }
-      const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
       const privateUi=root.NetWizardPrivateDeploymentUi;
       const privateState=privateUi&&typeof privateUi.exportState==='function'?privateUi.exportState():null;
       let pkg=null;
