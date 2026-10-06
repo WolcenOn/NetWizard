@@ -20,7 +20,9 @@ function circuit(project,id){return arr(project&&project.wanCircuits).find(x=>x&
 function deviceHa(project,deviceId){return obj(obj(obj(project&&project.highAvailability).devices)[deviceId]);}
 function circuitGroup(c){const WAN=wanModel();return WAN&&WAN.failoverGroupKey?WAN.failoverGroupKey(c):clean(c&&(c.siteRef||c.wanGroupRef||c.failoverGroupRef||c.locationRef||'global'));}
 function circuitLabel(c){return clean(c&&(c.name||c.id))||'circuito';}
-function issue(code,message,blocking,extra){return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'wan-resilience',message},extra||{});}
+function issue(code,message,blocking,extra){const meta=extra||{};return Object.assign({code,severity:blocking?'error':'warning',blocking:!!blocking,category:'wan-resilience',message,messageKey:'validation.issue.wan.'+code,messageParams:Object.assign({},meta)},meta);}
+function scenario(id,key,params,name,events){return{id,name,nameKey:key,nameParams:params||{},events,source:'derived'};}
+function legacyReason(key,params,message){void key;void params;return message;}
 
 function circuitBySourceInterface(project,deviceId,name){
   const target=clean(name);if(!target)return null;
@@ -197,7 +199,7 @@ function simulateEvents(project,events,name){
   for(const [key,before] of baselineReachable){
     const now=after.get(key);
     if(now&&now.reachable)surviving.push({key,source:before.source,target:before.target,after:now});
-    else lost.push({key,source:before.source,target:before.target,after:now||null,reason:now?now.reason:'El par ya no puede evaluarse con la topología degradada.'});
+    else lost.push({key,source:before.source,target:before.target,after:now||null,reason:now?now.reason:legacyReason('validation.wan.reason.degradedUnevaluable',{},'El par ya no puede evaluarse con la topología degradada.'),reasonKey:now&&now.reasonKey||'validation.wan.reason.degradedUnevaluable',reasonParams:now&&now.reasonParams||{}});
   }
   const active=activeCircuitSummary(degradedProject);
   const groupsBefore=activeCircuitSummary(project),wanLost=[];
@@ -212,23 +214,23 @@ function simulateEvents(project,events,name){
 }
 function automaticScenarios(project){
   const p=project||{},out=[];
-  for(const c of arr(p.wanCircuits).filter(c=>c.enabled!==false))out.push({id:'auto-circuit-'+c.id,name:'Caída circuito '+circuitLabel(c),events:[{type:'circuit',targetRef:c.id}],source:'derived'});
+  for(const c of arr(p.wanCircuits).filter(c=>c.enabled!==false))out.push(scenario('auto-circuit-'+c.id,'validation.wan.scenario.circuit',{name:circuitLabel(c)},'Caída circuito '+circuitLabel(c),[{type:'circuit',targetRef:c.id}]));
   const providers=Array.from(new Set(arr(p.wanCircuits).filter(c=>c.enabled!==false).map(c=>clean(c.provider)).filter(Boolean)));
-  providers.forEach(provider=>out.push({id:'auto-provider-'+provider,name:'Caída proveedor '+provider,events:[{type:'provider',targetRef:provider}],source:'derived'}));
+  providers.forEach(provider=>out.push(scenario('auto-provider-'+provider,'validation.wan.scenario.provider',{name:provider},'Caída proveedor '+provider,[{type:'provider',targetRef:provider}])));
   const routingDevices=new Set(arr(p.wanCircuits).map(c=>clean(c.deviceId)).filter(Boolean));
   arr(p.links).forEach(l=>{
     const a=port(p,l.aPortId),b=port(p,l.bPortId);
     if(a&&a.deviceId)routingDevices.add(a.deviceId);if(b&&b.deviceId)routingDevices.add(b.deviceId);
   });
-  for(const id of routingDevices){const d=device(p,id);if(d)out.push({id:'auto-device-'+id,name:'Caída equipo '+clean(d.name||id),events:[{type:'device',targetRef:id}],source:'derived'});}
-  const VPN=vpnModel();if(VPN&&typeof VPN.tunnels==='function')for(const t of VPN.tunnels(p).filter(x=>x&&x.enabled!==false))out.push({id:'auto-vpn-'+t.id,name:'Caída VPN '+clean(t.name||t.id),events:[{type:'vpn',targetRef:t.id}],source:'derived'});
+  for(const id of routingDevices){const d=device(p,id);if(d)out.push(scenario('auto-device-'+id,'validation.wan.scenario.device',{name:clean(d.name||id)},'Caída equipo '+clean(d.name||id),[{type:'device',targetRef:id}]));}
+  const VPN=vpnModel();if(VPN&&typeof VPN.tunnels==='function')for(const t of VPN.tunnels(p).filter(x=>x&&x.enabled!==false))out.push(scenario('auto-vpn-'+t.id,'validation.wan.scenario.vpn',{name:clean(t.name||t.id)},'Caída VPN '+clean(t.name||t.id),[{type:'vpn',targetRef:t.id}]));
   return out;
 }
 function analyzeProject(project){
   const validation=validateProject(project||{}),scenarios=automaticScenarios(project||{}).map(s=>Object.assign({},s,simulateEvents(project,s.events,s.name)));
   const singlePoints=scenarios.filter(s=>s.status==='failed').map(s=>({
     scenarioId:s.id,name:s.name,lostPairs:s.lostReachability.length,wanGroupsLost:s.wanGroupsLost.slice(),
-    reason:s.lostReachability.length?('Pierde '+s.lostReachability.length+' pares de reachability.'):('Deja sin WAN los grupos '+s.wanGroupsLost.join(', ')+'.')
+    reason:s.lostReachability.length?('Pierde '+s.lostReachability.length+' pares de reachability.'):('Deja sin WAN los grupos '+s.wanGroupsLost.join(', ')+'.'),reasonKey:s.lostReachability.length?'validation.wan.spof.lostPairs':'validation.wan.spof.wanGroupsLost',reasonParams:s.lostReachability.length?{count:s.lostReachability.length}:{groups:s.wanGroupsLost.join(', ')}
   }));
   return{
     version:'netwizard-wan-resilience-analysis-v1',validation,scenarios,singlePoints,
