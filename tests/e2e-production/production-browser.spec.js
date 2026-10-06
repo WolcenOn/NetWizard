@@ -45,7 +45,7 @@ test('imagen productiva genera config en servidor sin publicar generadores vendo
   await expect(page.locator('[data-dcfg="r1"]')).toHaveClass(/on/);
   await expect(page.locator('#cfgOut')).toHaveValue(/Configuración privada pendiente para cisco_ios/);
   await expect(page.locator('#cfgOut')).not.toHaveValue(/configure terminal|hostname RTR-PROD/);
-  await expect(page.locator('#cfgReadiness')).toContainText('Estado de aplicación pendiente.');
+  await expect(page.locator('#cfgReadiness')).toContainText('PRIVATE ENGINE PENDIENTE');
 
   const token=process.env.NETWIZARD_TEST_SELF_HOSTED_TOKEN||'';
   expect(token.length).toBeGreaterThanOrEqual(32);
