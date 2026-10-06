@@ -30,7 +30,36 @@ test('VTP y su verificación observada cambian ES/EN en caliente', async ({page}
   await expect(page.locator('#vtpObsStatus')).toContainText('Review pending');
   await expect(page.locator('#vtpObsStatus')).toContainText('observed VTP state verification is missing');
 
+  await page.fill('#vtpDomain','DRAFT-DOMAIN');
+  await page.fill('#vtpPassword','draft-secret');
+  await page.selectOption('#vtpVersion','2');
+  await page.selectOption('#vtpPruning','no');
+  await page.locator('[data-vtprole="sw1"]').selectOption('client');
+  await page.fill('#vtpObsDomain','DRAFT-OBS');
+  await page.selectOption('#vtpObsVersion','2');
+  await page.selectOption('#vtpObsMode','client');
+  await page.fill('#vtpObsRevision','7');
+  await page.selectOption('#vtpObsPrimary','no');
+  await page.fill('#vtpObsPrimaryId','draft-primary');
+  await page.selectOption('#vtpObsConflict','yes');
+  await page.fill('#vtpObsDigestErrors','2');
+  await page.fill('#vtpObsRevisionErrors','3');
+
   await page.evaluate(()=>window.NetWizardI18n.setLocale('es'));
+
+  await expect(page.locator('#vtpDomain')).toHaveValue('DRAFT-DOMAIN');
+  await expect(page.locator('#vtpPassword')).toHaveValue('draft-secret');
+  await expect(page.locator('#vtpVersion')).toHaveValue('2');
+  await expect(page.locator('#vtpPruning')).toHaveValue('no');
+  await expect(page.locator('[data-vtprole="sw1"]')).toHaveValue('client');
+  await expect(page.locator('#vtpObsDomain')).toHaveValue('DRAFT-OBS');
+  await expect(page.locator('#vtpObsVersion')).toHaveValue('2');
+  await expect(page.locator('#vtpObsMode')).toHaveValue('client');
+  await expect(page.locator('#vtpObsRevision')).toHaveValue('7');
+  await expect(page.locator('#vtpObsPrimaryId')).toHaveValue('draft-primary');
+  await expect(page.locator('#vtpObsConflict')).toHaveValue('yes');
+  await expect(page.locator('#vtpObsDigestErrors')).toHaveValue('2');
+  await expect(page.locator('#vtpObsRevisionErrors')).toHaveValue('3');
 
   await expect(page.locator('#btnSaveVtp')).toHaveText('✔ Guardar VTP');
   await expect(page.locator('#vtpSwitchRoles')).toContainText('Rol VTP');
