@@ -1351,6 +1351,10 @@ window.addEventListener&&window.addEventListener('netwizard:i18n',()=>{
     if($('fw-matrix')?.classList.contains('on'))renderVlanMatrix();
     if($('fwTplModal')?.classList.contains('on'))renderFwTplModal();
   }
+  if(S.step==='cfg'){
+    renderDevPickCfg();
+    if(selDevCfg&&devById(selDevCfg))selectDevCfg(selDevCfg);
+  }
 });
 
 // ─────────────────── VLANs ───────────────────
