@@ -148,15 +148,125 @@
     };
   }
   function markdownList(lines){return arr(lines).map(line=>`- [ ] ${line}`).join('\n');}
-  function buildMarkdown(plan){
-    const p=obj(plan),lines=[`# Runbook de despliegue — ${p.projectName||'NetWizard'}`,'',`- Generado: ${p.generatedAt||''}`,`- Estrategia: ${p.strategy||'staged'}`,`- Ticket: ${p.changeTicket||'PENDIENTE'}`,`- Ventana: ${p.maintenanceWindow||'PENDIENTE'}`,`- Responsable de aprobación: ${p.approvalOwner||'PENDIENTE'}`,`- Observación final: ${p.observationMinutes||15} minutos`,`- Paralelismo máximo: **1 dispositivo**`,'',`> **Importante:** ${p.snapshotWarning||''}`,'','## Prechecks','',markdownList(p.prechecks),''];
-    if(arr(p.issues).length){lines.push('## Bloqueos del plan','');for(const issue of p.issues)lines.push(`- [${issue.code}] ${issue.message}`);lines.push('');}
-    if(arr(p.warnings).length){lines.push('## Precauciones HA/MLAG','');for(const warning of p.warnings)lines.push(`- ${warning}`);lines.push('');}
-    lines.push('## Secuencia de ejecución','');
-    let currentPhase='';for(const step of arr(p.steps)){if(step.phase!==currentPhase){currentPhase=step.phase;lines.push(`### ${step.phaseLabel}`,'');}const change=obj(step.change),stats=obj(change.stats),incremental=obj(step.incremental),noChange=change.status==='no-change'||incremental.status==='no-change';let application;if(noChange)application=['No aplicar configuración: el objetivo normalizado coincide con el snapshot observado.','Ejecutar únicamente las validaciones y conservar evidencia.'];else if(incremental.status==='candidate-ready')application=[`Revisar el candidato \`${incremental.applyPath}\` y el diff de evidencia.`,...arr(incremental.instructions),'No continuar con el siguiente equipo hasta completar las validaciones.'];else application=['Comparar el fichero objetivo y, si existe, el diff de revisión con la configuración activa.','No existe candidato incremental certificado para este equipo; no inferir comandos desde el diff.','Aplicar mediante el mecanismo transaccional/seguro del fabricante.','No continuar con el siguiente equipo hasta completar las validaciones.'];const localRollback=noChange?['No requiere rollback: no se aplica configuración.']:incremental.status==='candidate-ready'?[`Usar \`${incremental.rollbackPath}\` solo tras compararlo con el backup real.`,...arr(incremental.rollbackInstructions),...arr(step.rollback)]:step.rollback;lines.push(`#### ${step.order}. ${step.deviceName} (${step.vendor})`,'',`- Riesgo: **${step.risk}**`,`- Configuración: \`${step.configPath}\``,`- Estado del cambio: **${change.status||'baseline-required'}** (${change.applyMode||'full-target'})`,`- Ejecución incremental: **${incremental.status||'full-target'}**${incremental.adapterId?` · ${incremental.adapterId}`:''}`,`- Candidato: ${incremental.applyPath?`\`${incremental.applyPath}\``:'no generado'}`,`- Delta: +${stats.addedLines||0} / -${stats.removedLines||0} líneas`,`- Diff de revisión: ${change.patchPath?`\`${change.patchPath}\``:'no disponible'}`,`- Dependencias: ${step.dependsOn.length?step.dependsOn.join(', '):'ninguna'}`,`- Tiempo estimado: ${step.estimatedMinutes} minutos`,'','Backup previo:',markdownList(step.backup),'','Aplicación:',markdownList(application),'','Validación:',markdownList(step.validation),'','Rollback local:',markdownList(localRollback),'');}
-    lines.push('## Criterios de parada','',markdownList(p.stopCriteria),'','## Validación final','',markdownList(p.postchecks),'',`- [ ] Mantener observación al menos ${p.observationMinutes||15} minutos.`,'');if(arr(p.resilienceChecks).length){lines.push('## Escenarios de resiliencia declarados','');for(const scenario of p.resilienceChecks)lines.push(`- [ ] ${scenario.name}: ${scenario.mustSurvive.length?scenario.mustSurvive.join(', '):'confirmar continuidad esperada'}${scenario.requireWan?' · WAN requerida':''}.`);lines.push('');}lines.push('## Rollback global','',markdownList(p.rollbackPlan),'');return lines.join('\n')+'\n';
+  function buildMarkdown(plan,options){
+    const p=obj(plan),locale=obj(options).locale,pending=tr('deploy.runbook.pending',{},locale,'PENDIENTE');
+    const lines=[
+      tr('deploy.runbook.md.title',{project:p.projectName||'NetWizard'},locale,'# Runbook de despliegue — {project}'),'',
+      tr('deploy.runbook.md.generated',{date:p.generatedAt||''},locale,'- Generado: {date}'),
+      tr('deploy.runbook.md.strategy',{strategy:p.strategy||'staged'},locale,'- Estrategia: {strategy}'),
+      tr('deploy.runbook.md.ticket',{ticket:p.changeTicket||pending},locale,'- Ticket: {ticket}'),
+      tr('deploy.runbook.md.window',{window:p.maintenanceWindow||pending},locale,'- Ventana: {window}'),
+      tr('deploy.runbook.md.approvalOwner',{owner:p.approvalOwner||pending},locale,'- Responsable de aprobación: {owner}'),
+      tr('deploy.runbook.md.observation',{minutes:p.observationMinutes||15},locale,'- Observación final: {minutes} minutos'),
+      tr('deploy.runbook.md.parallelism',{},locale,'- Paralelismo máximo: **1 dispositivo**'),'',
+      tr('deploy.runbook.md.important',{warning:p.snapshotWarning||''},locale,'> **Importante:** {warning}'),'',
+      tr('deploy.runbook.md.prechecks',{},locale,'## Prechecks'),'',
+      markdownList(p.prechecks),''
+    ];
+    if(arr(p.issues).length){
+      lines.push(tr('deploy.runbook.md.blockers',{},locale,'## Bloqueos del plan'),'');
+      for(const issue of p.issues)lines.push(`- [${issue.code}] ${issue.message}`);
+      lines.push('');
+    }
+    if(arr(p.warnings).length){
+      lines.push(tr('deploy.runbook.md.haWarnings',{},locale,'## Precauciones HA/MLAG'),'');
+      for(const warning of p.warnings)lines.push(`- ${warning}`);
+      lines.push('');
+    }
+    lines.push(tr('deploy.runbook.md.sequence',{},locale,'## Secuencia de ejecución'),'');
+    let currentPhase='';
+    for(const step of arr(p.steps)){
+      if(step.phase!==currentPhase){currentPhase=step.phase;lines.push(`### ${step.phaseLabel}`,'');}
+      const change=obj(step.change),stats=obj(change.stats),incremental=obj(step.incremental),noChange=change.status==='no-change'||incremental.status==='no-change';
+      let application;
+      if(noChange)application=[
+        tr('deploy.runbook.apply.noChange',{},locale,'No aplicar configuración: el objetivo normalizado coincide con el snapshot observado.'),
+        tr('deploy.runbook.apply.validateOnly',{},locale,'Ejecutar únicamente las validaciones y conservar evidencia.')
+      ];
+      else if(incremental.status==='candidate-ready')application=[
+        tr('deploy.runbook.apply.reviewCandidate',{path:incremental.applyPath},locale,'Revisar el candidato `{path}` y el diff de evidencia.'),
+        ...arr(incremental.instructions),
+        tr('deploy.runbook.apply.waitValidation',{},locale,'No continuar con el siguiente equipo hasta completar las validaciones.')
+      ];
+      else application=[
+        tr('deploy.runbook.apply.compareTarget',{},locale,'Comparar el fichero objetivo y, si existe, el diff de revisión con la configuración activa.'),
+        tr('deploy.runbook.apply.noCertifiedIncremental',{},locale,'No existe candidato incremental certificado para este equipo; no inferir comandos desde el diff.'),
+        tr('deploy.runbook.apply.vendorSafe',{},locale,'Aplicar mediante el mecanismo transaccional/seguro del fabricante.'),
+        tr('deploy.runbook.apply.waitValidation',{},locale,'No continuar con el siguiente equipo hasta completar las validaciones.')
+      ];
+      const localRollback=noChange?
+        [tr('deploy.runbook.localRollback.none',{},locale,'No requiere rollback: no se aplica configuración.')]:
+        incremental.status==='candidate-ready'?
+          [tr('deploy.runbook.localRollback.candidate',{path:incremental.rollbackPath},locale,'Usar `{path}` solo tras compararlo con el backup real.'),...arr(incremental.rollbackInstructions),...arr(step.rollback)]:
+          step.rollback;
+      lines.push(
+        `#### ${step.order}. ${step.deviceName} (${step.vendor})`,'',
+        tr('deploy.runbook.md.risk',{risk:step.risk},locale,'- Riesgo: **{risk}**'),
+        tr('deploy.runbook.md.config',{path:step.configPath},locale,'- Configuración: `{path}`'),
+        tr('deploy.runbook.md.changeStatus',{status:change.status||'baseline-required',mode:change.applyMode||'full-target'},locale,'- Estado del cambio: **{status}** ({mode})'),
+        tr('deploy.runbook.md.incremental',{status:incremental.status||'full-target',adapter:incremental.adapterId?` · ${incremental.adapterId}`:''},locale,'- Ejecución incremental: **{status}**{adapter}'),
+        tr('deploy.runbook.md.candidate',{candidate:incremental.applyPath?`\`${incremental.applyPath}\``:tr('deploy.runbook.notGenerated',{},locale,'no generado')},locale,'- Candidato: {candidate}'),
+        tr('deploy.runbook.md.delta',{added:stats.addedLines||0,removed:stats.removedLines||0},locale,'- Delta: +{added} / -{removed} líneas'),
+        tr('deploy.runbook.md.reviewDiff',{diff:change.patchPath?`\`${change.patchPath}\``:tr('deploy.runbook.notAvailable',{},locale,'no disponible')},locale,'- Diff de revisión: {diff}'),
+        tr('deploy.runbook.md.dependencies',{deps:step.dependsOn.length?step.dependsOn.join(', '):tr('deploy.runbook.none',{},locale,'ninguna')},locale,'- Dependencias: {deps}'),
+        tr('deploy.runbook.md.estimated',{minutes:step.estimatedMinutes},locale,'- Tiempo estimado: {minutes} minutos'),'',
+        tr('deploy.runbook.md.backup',{},locale,'Backup previo:'),markdownList(step.backup),'',
+        tr('deploy.runbook.md.application',{},locale,'Aplicación:'),markdownList(application),'',
+        tr('deploy.runbook.md.validation',{},locale,'Validación:'),markdownList(step.validation),'',
+        tr('deploy.runbook.md.localRollback',{},locale,'Rollback local:'),markdownList(localRollback),''
+      );
+    }
+    lines.push(
+      tr('deploy.runbook.md.stopCriteria',{},locale,'## Criterios de parada'),'',
+      markdownList(p.stopCriteria),'',
+      tr('deploy.runbook.md.finalValidation',{},locale,'## Validación final'),'',
+      markdownList(p.postchecks),'',
+      tr('deploy.runbook.md.observeAtLeast',{minutes:p.observationMinutes||15},locale,'- [ ] Mantener observación al menos {minutes} minutos.'),''
+    );
+    if(arr(p.resilienceChecks).length){
+      lines.push(tr('deploy.runbook.md.resilience',{},locale,'## Escenarios de resiliencia declarados'),'');
+      for(const scenario of p.resilienceChecks){
+        lines.push(tr('deploy.runbook.md.resilienceItem',{
+          name:scenario.name,
+          targets:scenario.mustSurvive.length?scenario.mustSurvive.join(', '):tr('deploy.runbook.confirmContinuity',{},locale,'confirmar continuidad esperada'),
+          wan:scenario.requireWan?tr('deploy.runbook.wanRequired',{},locale,' · WAN requerida'):''
+        },locale,'- [ ] {name}: {targets}{wan}.'));
+      }
+      lines.push('');
+    }
+    lines.push(tr('deploy.runbook.md.globalRollback',{},locale,'## Rollback global'),'',markdownList(p.rollbackPlan),'');
+    return lines.join('\n')+'\n';
   }
-  function buildRollbackMarkdown(plan){const p=obj(plan),lines=[`# Checklist de rollback — ${p.projectName||'NetWizard'}`,'',`> ${p.snapshotWarning||''}`,'','## Preparación','- [ ] Identificar exactamente los dispositivos ya modificados.','- [ ] Confirmar el último backup real válido de cada uno.','- [ ] Notificar el rollback y congelar cambios adicionales.','','## Ejecución','',markdownList(p.rollbackPlan),'','## Orden inverso',''];for(const step of arr(p.steps).slice().reverse()){const change=obj(step.change),incremental=obj(step.incremental),reverse=change.rollbackPatchPath;if(change.status==='no-change'||incremental.status==='no-change')lines.push(`- [ ] ${step.deviceName} — ${step.vendor} — sin rollback; paso de validación únicamente.`);else lines.push(`- [ ] ${step.deviceName} — ${step.vendor} — restaurar backup y ejecutar validaciones${incremental.rollbackPath?` (candidato: \`${incremental.rollbackPath}\`)`:reverse?` (diff inverso de apoyo: \`${reverse}\`)`:'.'}`);}lines.push('','## Cierre','- [ ] Confirmar recuperación de servicios y monitorización.','- [ ] Guardar logs, tiempos y causa del rollback.','- [ ] No reintentar hasta aprobar un plan corregido.','');return lines.join('\n');}
+  function buildRollbackMarkdown(plan,options){
+    const p=obj(plan),locale=obj(options).locale;
+    const lines=[
+      tr('deploy.runbook.rollbackMd.title',{project:p.projectName||'NetWizard'},locale,'# Checklist de rollback — {project}'),'',
+      `> ${p.snapshotWarning||''}`,'',
+      tr('deploy.runbook.rollbackMd.preparation',{},locale,'## Preparación'),
+      tr('deploy.runbook.rollbackMd.identifyChanged',{},locale,'- [ ] Identificar exactamente los dispositivos ya modificados.'),
+      tr('deploy.runbook.rollbackMd.confirmBackup',{},locale,'- [ ] Confirmar el último backup real válido de cada uno.'),
+      tr('deploy.runbook.rollbackMd.notify',{},locale,'- [ ] Notificar el rollback y congelar cambios adicionales.'),'',
+      tr('deploy.runbook.rollbackMd.execution',{},locale,'## Ejecución'),'',
+      markdownList(p.rollbackPlan),'',
+      tr('deploy.runbook.rollbackMd.reverseOrder',{},locale,'## Orden inverso'),''
+    ];
+    for(const step of arr(p.steps).slice().reverse()){
+      const change=obj(step.change),incremental=obj(step.incremental),reverse=change.rollbackPatchPath;
+      if(change.status==='no-change'||incremental.status==='no-change')lines.push(tr('deploy.runbook.rollbackMd.noChange',{device:step.deviceName,vendor:step.vendor},locale,'- [ ] {device} — {vendor} — sin rollback; paso de validación únicamente.'));
+      else lines.push(tr('deploy.runbook.rollbackMd.restore',{
+        device:step.deviceName,
+        vendor:step.vendor,
+        suffix:incremental.rollbackPath?tr('deploy.runbook.rollbackMd.candidate',{path:incremental.rollbackPath},locale,' (candidato: `{path}`)'):reverse?tr('deploy.runbook.rollbackMd.reverseDiff',{path:reverse},locale,' (diff inverso de apoyo: `{path}`)'):'.'
+      },locale,'- [ ] {device} — {vendor} — restaurar backup y ejecutar validaciones{suffix}'));
+    }
+    lines.push('',
+      tr('deploy.runbook.rollbackMd.close',{},locale,'## Cierre'),
+      tr('deploy.runbook.rollbackMd.recovery',{},locale,'- [ ] Confirmar recuperación de servicios y monitorización.'),
+      tr('deploy.runbook.rollbackMd.logs',{},locale,'- [ ] Guardar logs, tiempos y causa del rollback.'),
+      tr('deploy.runbook.rollbackMd.noRetry',{},locale,'- [ ] No reintentar hasta aprobar un plan corregido.'),''
+    );
+    return lines.join('\n');
+  }
 
   const api={version:'netwizard-deployment-runbook-v3.50',phases:PHASES,buildDeploymentPlan,buildMarkdown,buildRollbackMarkdown,phaseFor,guidanceFor};
   root.NetWizardDeploymentRunbook=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
