@@ -92,6 +92,19 @@ function selectField(id,label,items){
   w.append(el('label',{className:'fl',htmlFor:id},label),s);return w;
 }
 function selectedId(){return clean(root.document.getElementById('vtpObsDevice')?.value);}
+function captureDraft(){
+  const ids=['vtpObsDevice','vtpObsDomain','vtpObsVersion','vtpObsMode','vtpObsRevision','vtpObsPrimary','vtpObsPrimaryId','vtpObsConflict','vtpObsDigestErrors','vtpObsRevisionErrors'];
+  return Object.fromEntries(ids.map(id=>[id,root.document.getElementById(id)?.value??'']));
+}
+function restoreDraft(draft){
+  const data=draft||{};
+  for(const [id,value] of Object.entries(data)){
+    const node=root.document.getElementById(id);if(!node)continue;
+    if(node.tagName==='SELECT'&&!Array.from(node.options||[]).some(o=>o.value===value))continue;
+    node.value=value;
+  }
+  paintStatus();
+}
 function paintForm(){
   const p=state(),id=selectedId(),ev=obj(observedMap(p)[id]);
   if(!id)return;
@@ -203,6 +216,6 @@ if(root.document){
   else refresh();
   root.document.addEventListener('nw:project:changed',refresh);
   root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='vlan')refresh();});
-  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(!active())return;const keep=selectedId();root.document.getElementById('nwVtpVerificationCard')?.remove();install();if(keep&&root.document.getElementById('vtpObsDevice')){root.document.getElementById('vtpObsDevice').value=keep;paintForm();}});
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(!active())return;const draft=captureDraft();root.document.getElementById('nwVtpVerificationCard')?.remove();install();restoreDraft(draft);});
 }
 })(typeof window!=='undefined'?window:globalThis);
