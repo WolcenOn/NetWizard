@@ -10,6 +10,8 @@ const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const clean=v=>String(v==null?'':v).trim();
 const integer=v=>{const n=Number(v);return Number.isInteger(n)&&n>=0?n:null;};
 const activeRole=role=>['server','client','transparent'].includes(clean(role).toLowerCase());
+function tr(key,params,locale,fallback){const i18n=root.NetWizardI18n;if(i18n&&typeof i18n.t==='function')return i18n.t(key,params||{},locale);return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
+function localizedReasons(result){return arr(result&&result.reasonDetails).length?arr(result.reasonDetails).map(x=>tr(x.messageKey,x.messageParams||{},null,x.message||x.messageKey)):arr(result&&result.reasons);}
 
 function observedMap(project){
   return obj(obj(project&&project.observedState).vtpDevices);
@@ -24,39 +26,37 @@ function serverIds(project){
     .map(d=>clean(d.id)).filter(Boolean);
 }
 function evaluateDevice(project,deviceId){
-  const p=obj(project),id=clean(deviceId),vtp=obj(p.vtp),role=desiredRole(p,id),observed=observedMap(p),evidence=obj(observed[id]),reasons=[];
-  if(!activeRole(role))return{ok:true,status:'not-required',deviceId:id,role,reasons:[],evidence:null};
+  const p=obj(project),id=clean(deviceId),vtp=obj(p.vtp),role=desiredRole(p,id),observed=observedMap(p),evidence=obj(observed[id]),reasons=[],reasonDetails=[];const addReason=(messageKey,messageParams,message)=>{reasons.push(message);reasonDetails.push({messageKey,messageParams:messageParams||{},message});};
+  if(!activeRole(role))return{ok:true,status:'not-required',deviceId:id,role,reasons:[],reasonDetails:[],evidence:null};
   if(!Object.keys(evidence).length){
-    return{ok:false,status:'missing-observation',deviceId:id,role,evidence:null,reasons:[`VTP ${role} está activo, pero falta verificación observada del estado VTP para este switch.`]};
+    const message=`VTP ${role} está activo, pero falta verificación observada del estado VTP para este switch.`;return{ok:false,status:'missing-observation',deviceId:id,role,evidence:null,reasons:[message],reasonDetails:[{messageKey:'vtp.verify.reason.missingObservation',messageParams:{role},message}]};
   }
 
   const desiredDomain=clean(vtp.domain),desiredVersion=clean(vtp.version);
   const actualDomain=clean(evidence.domain),actualVersion=clean(evidence.version),actualMode=clean(evidence.mode).toLowerCase();
-  if(!desiredDomain)reasons.push('VTP está activo sin dominio explícito en el diseño.');
-  if(actualDomain!==desiredDomain)reasons.push(`Dominio VTP observado "${actualDomain||'—'}" no coincide con el deseado "${desiredDomain||'—'}".`);
-  if(actualVersion!==desiredVersion)reasons.push(`Versión VTP observada "${actualVersion||'—'}" no coincide con la deseada "${desiredVersion||'—'}".`);
-  if(actualMode!==role)reasons.push(`Modo VTP observado "${actualMode||'—'}" no coincide con el rol deseado "${role}".`);
-  if(integer(evidence.revision)===null)reasons.push('Configuration revision VTP observada ausente o inválida.');
-  if(evidence.primaryConflict===true)reasons.push('Se ha observado conflicto de primary server VTPv3.');
+  if(!desiredDomain)addReason('vtp.verify.reason.missingDomain',{},'VTP está activo sin dominio explícito en el diseño.');
+  if(actualDomain!==desiredDomain)addReason('vtp.verify.reason.domainMismatch',{actual:actualDomain||'—',desired:desiredDomain||'—'},`Dominio VTP observado "${actualDomain||'—'}" no coincide con el deseado "${desiredDomain||'—'}".`);
+  if(actualVersion!==desiredVersion)addReason('vtp.verify.reason.versionMismatch',{actual:actualVersion||'—',desired:desiredVersion||'—'},`Versión VTP observada "${actualVersion||'—'}" no coincide con la deseada "${desiredVersion||'—'}".`);
+  if(actualMode!==role)addReason('vtp.verify.reason.modeMismatch',{actual:actualMode||'—',desired:role},`Modo VTP observado "${actualMode||'—'}" no coincide con el rol deseado "${role}".`);
+  if(integer(evidence.revision)===null)addReason('vtp.verify.reason.invalidRevision',{},'Configuration revision VTP observada ausente o inválida.');
+  if(evidence.primaryConflict===true)addReason('vtp.verify.reason.primaryConflict',{},'Se ha observado conflicto de primary server VTPv3.');
   const digestErrors=integer(evidence.digestErrors),revisionErrors=integer(evidence.revisionErrors);
-  if(digestErrors===null)reasons.push('Contador de errores digest VTP no verificado.');
-  else if(digestErrors>0)reasons.push(`VTP presenta ${digestErrors} error(es) digest observados.`);
-  if(revisionErrors===null)reasons.push('Contador de errores de revision VTP no verificado.');
-  else if(revisionErrors>0)reasons.push(`VTP presenta ${revisionErrors} error(es) de revision observados.`);
+  if(digestErrors===null)addReason('vtp.verify.reason.digestUnverified',{},'Contador de errores digest VTP no verificado.');
+  else if(digestErrors>0)addReason('vtp.verify.reason.digestErrors',{count:digestErrors},`VTP presenta ${digestErrors} error(es) digest observados.`);
+  if(revisionErrors===null)addReason('vtp.verify.reason.revisionUnverified',{},'Contador de errores de revision VTP no verificado.');
+  else if(revisionErrors>0)addReason('vtp.verify.reason.revisionErrors',{count:revisionErrors},`VTP presenta ${revisionErrors} error(es) de revision observados.`);
 
   if(desiredVersion==='3'){
     const servers=serverIds(p),primaries=servers.filter(serverId=>obj(observed[serverId]).primary===true);
     if(servers.length&&primaries.length!==1){
-      reasons.push(primaries.length===0
-        ? 'VTPv3 requiere confirmar exactamente un primary server para el dominio antes del cambio.'
-        : 'VTPv3 tiene más de un primary server marcado en la evidencia observada.');
+      addReason(primaries.length===0?'vtp.verify.reason.primaryMissing':'vtp.verify.reason.multiplePrimary',{},primaries.length===0?'VTPv3 requiere confirmar exactamente un primary server para el dominio antes del cambio.':'VTPv3 tiene más de un primary server marcado en la evidencia observada.');
     }
     if(role==='server'&&evidence.primary===true&&!clean(evidence.primaryId)){
-      reasons.push('El primary server VTPv3 confirmado no tiene Primary ID observado.');
+      addReason('vtp.verify.reason.primaryIdMissing',{},'El primary server VTPv3 confirmado no tiene Primary ID observado.');
     }
   }
 
-  return{ok:reasons.length===0,status:reasons.length?'review-required':'verified',deviceId:id,role,evidence,reasons};
+  return{ok:reasons.length===0,status:reasons.length?'review-required':'verified',deviceId:id,role,evidence,reasons,reasonDetails};
 }
 function evaluateProject(project){
   const p=obj(project),roles=obj(obj(p.vtp).roles),results={};
@@ -109,17 +109,17 @@ function paintForm(){
 function paintStatus(){
   const node=root.document.getElementById('vtpObsStatus'),id=selectedId();
   if(!node)return;
-  if(!id){node.textContent='Selecciona un switch con VTP activo.';node.className='co co-ac';return;}
+  if(!id){node.textContent=tr('vtp.verify.status.selectSwitch',{},null,'Selecciona un switch con VTP activo.');node.className='co co-ac';return;}
   const r=evaluateDevice(state(),id);
   node.className=r.ok?'co co-gn':'co co-ac';
-  node.textContent=r.ok?'✓ Evidencia VTP coherente: este control ya no fuerza review-required.':('Revisión pendiente: '+r.reasons.join(' '));
+  node.textContent=r.ok?tr('vtp.verify.status.coherent',{},null,'✓ Evidencia VTP coherente: este control ya no fuerza review-required.'):tr('vtp.verify.status.review',{reasons:localizedReasons(r).join(' ')},null,'Revisión pendiente: {reasons}');
 }
 function saveEvidence(){
-  const id=selectedId();if(!id)return root.alert&&root.alert('Selecciona un switch VTP.');
+  const id=selectedId();if(!id)return root.alert&&root.alert(tr('vtp.verify.alert.selectSwitch',{},null,'Selecciona un switch VTP.'));
   const revision=integer(root.document.getElementById('vtpObsRevision').value);
   const digestErrors=integer(root.document.getElementById('vtpObsDigestErrors').value);
   const revisionErrors=integer(root.document.getElementById('vtpObsRevisionErrors').value);
-  if(revision===null||digestErrors===null||revisionErrors===null)return root.alert&&root.alert('Revision y contadores deben ser enteros mayores o iguales a cero.');
+  if(revision===null||digestErrors===null||revisionErrors===null)return root.alert&&root.alert(tr('vtp.verify.alert.invalidCounters',{},null,'Revision y contadores deben ser enteros mayores o iguales a cero.'));
   const now=new Date().toISOString();
   const evidence={
     domain:clean(root.document.getElementById('vtpObsDomain').value),
@@ -156,7 +156,7 @@ function render(){
   const select=root.document.getElementById('vtpObsDevice');if(!select)return;
   const p=state(),current=select.value,roles=obj(obj(p.vtp).roles);
   const devices=arr(p.devices).filter(d=>d&&clean(d.vendorOs)==='cisco_ios'&&activeRole(roles[d.id]));
-  select.textContent='';select.appendChild(option('','— switch VTP —'));
+  select.textContent='';select.appendChild(option('',tr('vtp.verify.select.switch',{},null,'— switch VTP —')));
   devices.forEach(d=>select.appendChild(option(d.id,(d.name||d.id)+' · '+clean(roles[d.id]))));
   if(current&&devices.some(d=>d.id===current))select.value=current;
   else if(devices.length)select.value=devices[0].id;
@@ -168,25 +168,25 @@ function install(){
   if(!anchor)return;
   const card=el('div',{className:'card',id:'nwVtpVerificationCard',style:'margin-top:12px;'});
   const head=el('div',{className:'card-h'});
-  head.append(el('div',{className:'card-t'},'🔎 Verificación VTP para producción'),el('span',{className:'b bac'},'Observed'));
-  card.append(head,el('div',{className:'hint',style:'margin-bottom:10px;'},'Registra evidencia obtenida del estado real del switch. No almacena contraseñas. El Private Engine compara estos datos con el VTP deseado antes de certificar apply-ready.'));
-  card.appendChild(selectField('vtpObsDevice','Switch VTP',[]));
+  head.append(el('div',{className:'card-t'},tr('vtp.verify.title',{},null,'🔎 Verificación VTP para producción')),el('span',{className:'b bac'},tr('vtp.verify.observed',{},null,'Observed')));
+  card.append(head,el('div',{className:'hint',style:'margin-bottom:10px;'},tr('vtp.verify.hint',{},null,'Registra evidencia obtenida del estado real del switch. No almacena contraseñas. El Private Engine compara estos datos con el VTP deseado antes de certificar apply-ready.')));
+  card.appendChild(selectField('vtpObsDevice',tr('vtp.verify.fields.switch',{},null,'Switch VTP'),[]));
   const g1=el('div',{className:'g2'});
-  g1.append(input('vtpObsDomain','Dominio observado'),selectField('vtpObsVersion','Versión observada',[['1','1'],['2','2'],['3','3']]));
+  g1.append(input('vtpObsDomain',tr('vtp.verify.fields.domain',{},null,'Dominio observado')),selectField('vtpObsVersion',tr('vtp.verify.fields.version',{},null,'Versión observada'),[['1','1'],['2','2'],['3','3']]));
   card.appendChild(g1);
   const g2=el('div',{className:'g2'});
-  g2.append(selectField('vtpObsMode','Modo observado',[['server','Server'],['client','Client'],['transparent','Transparent']]),input('vtpObsRevision','Configuration revision','number'));
+  g2.append(selectField('vtpObsMode',tr('vtp.verify.fields.mode',{},null,'Modo observado'),[['server',tr('vtp.role.server',{},null,'Server')],['client',tr('vtp.role.client',{},null,'Client')],['transparent',tr('vtp.role.transparent',{},null,'Transparent')]]),input('vtpObsRevision',tr('vtp.verify.fields.revision',{},null,'Configuration revision'),'number'));
   card.appendChild(g2);
   const g3=el('div',{className:'g2'});
-  g3.append(selectField('vtpObsPrimary','Primary VTPv3',[['no','No'],['yes','Sí']]),input('vtpObsPrimaryId','Primary ID observado'));
+  g3.append(selectField('vtpObsPrimary',tr('vtp.verify.fields.primary',{},null,'Primary VTPv3'),[['no',tr('common.no',{},null,'No')],['yes',tr('common.yes',{},null,'Sí')]]),input('vtpObsPrimaryId',tr('vtp.verify.fields.primaryId',{},null,'Primary ID observado')));
   card.appendChild(g3);
   const g4=el('div',{className:'g2'});
-  g4.append(selectField('vtpObsConflict','Conflicto primary',[['no','No'],['yes','Sí']]),input('vtpObsDigestErrors','Digest errors','number'));
+  g4.append(selectField('vtpObsConflict',tr('vtp.verify.fields.primaryConflict',{},null,'Conflicto primary'),[['no',tr('common.no',{},null,'No')],['yes',tr('common.yes',{},null,'Sí')]]),input('vtpObsDigestErrors',tr('vtp.verify.fields.digestErrors',{},null,'Digest errors'),'number'));
   card.appendChild(g4);
-  card.appendChild(input('vtpObsRevisionErrors','Revision errors','number'));
+  card.appendChild(input('vtpObsRevisionErrors',tr('vtp.verify.fields.revisionErrors',{},null,'Revision errors'),'number'));
   const buttons=el('div',{className:'brow'});
-  buttons.append(el('button',{className:'btn bp',type:'button',id:'vtpObsSave'},'✔ Guardar evidencia'),el('button',{className:'btn bs',type:'button',id:'vtpObsClear'},'Limpiar evidencia'));
-  card.append(buttons,el('div',{className:'co co-ac',id:'vtpObsStatus'},'Selecciona un switch con VTP activo.'));
+  buttons.append(el('button',{className:'btn bp',type:'button',id:'vtpObsSave'},tr('vtp.verify.actions.save',{},null,'✔ Guardar evidencia')),el('button',{className:'btn bs',type:'button',id:'vtpObsClear'},tr('vtp.verify.actions.clear',{},null,'Limpiar evidencia')));
+  card.append(buttons,el('div',{className:'co co-ac',id:'vtpObsStatus'},tr('vtp.verify.status.selectSwitch',{},null,'Selecciona un switch con VTP activo.')));
   anchor.insertAdjacentElement('afterend',card);
   root.document.getElementById('vtpObsDevice').onchange=paintForm;
   root.document.getElementById('vtpObsSave').onclick=saveEvidence;
@@ -203,5 +203,6 @@ if(root.document){
   else refresh();
   root.document.addEventListener('nw:project:changed',refresh);
   root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='vlan')refresh();});
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(!active())return;const keep=selectedId();root.document.getElementById('nwVtpVerificationCard')?.remove();install();if(keep&&root.document.getElementById('vtpObsDevice')){root.document.getElementById('vtpObsDevice').value=keep;paintForm();}});
 }
 })(typeof window!=='undefined'?window:globalThis);
