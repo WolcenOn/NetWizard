@@ -378,18 +378,18 @@
     const blob=new Blob([encodeZip(pkg)],{type:'application/zip'}); const url=URL.createObjectURL(blob);
     const link=root.document.createElement('a'); link.href=url; link.download=pkg.filename; root.document.body.appendChild(link); link.click(); link.remove(); root.setTimeout(()=>URL.revokeObjectURL(url),1000); return true;
   }
-  function summarize(pkg){
+  function summarize(pkg,locale){
     if(!pkg||!pkg.ok){
-      const issues=arr(pkg&&pkg.issues); const lines=['⛔ Paquete de despliegue BLOQUEADO'];
-      if(pkg&&pkg.report) lines.push(`Puerta: ${String(pkg.report.status||'blocked').toUpperCase()} · Errores: ${pkg.report.counts&&pkg.report.counts.errors||0} · Avisos: ${pkg.report.counts&&pkg.report.counts.warnings||0}`);
+      const issues=arr(pkg&&pkg.issues); const lines=[tr('deploy.bundle.summary.blocked',{},locale,'⛔ Paquete de despliegue BLOQUEADO')];
+      if(pkg&&pkg.report) lines.push(tr('deploy.bundle.summary.gate',{status:String(pkg.report.status||'blocked').toUpperCase(),errors:pkg.report.counts&&pkg.report.counts.errors||0,warnings:pkg.report.counts&&pkg.report.counts.warnings||0},locale,'Puerta: {status} · Errores: {errors} · Avisos: {warnings}'));
       issues.slice(0,12).filter(issue=>issue.severity!=='info').forEach(issue=>lines.push(`• [${issue.code||'NW-BUNDLE'}] ${issue.message||''}`));
       return lines.join('\n');
     }
     if(pkg.source==='private-server'){
       const manifest=obj(pkg.manifest),counts=obj(manifest.counts),status=clean(manifest.productionStatus||pkg.report&&pkg.report.status,20)||'unknown';
-      return `✅ Paquete privado preparado: ${pkg.filename}\nFuente: Private Engine server-side · Estado: ${status.toUpperCase()} · ${counts.configurations||0} configuraciones · ${counts.files||0} archivos · ${counts.issues||0} incidencia(s) registrada(s).`;
+      return tr('deploy.bundle.summary.privateReady',{filename:pkg.filename,status:status.toUpperCase(),configs:counts.configurations||0,files:counts.files||0,issues:counts.issues||0},locale,'✅ Paquete privado preparado: {filename}\nFuente: Private Engine server-side · Estado: {status} · {configs} configuraciones · {files} archivos · {issues} incidencia(s) registrada(s).');
     }
-    return `✅ Paquete preparado: ${pkg.filename}\nEstado: ${String(pkg.report.status).toUpperCase()} · ${pkg.manifest.counts.devices} configuraciones · ${pkg.manifest.deployment.steps} pasos · ${pkg.manifest.counts.files} archivos · cambio ${pkg.manifest.changeSet.executionMode} · candidatos seguros ${pkg.manifest.incremental.candidateReady} · revisión manual ${pkg.manifest.incremental.manualReview} · ${pkg.manifest.counts.warnings} avisos.`;
+    return tr('deploy.bundle.summary.ready',{filename:pkg.filename,status:String(pkg.report.status).toUpperCase(),configs:pkg.manifest.counts.devices,steps:pkg.manifest.deployment.steps,files:pkg.manifest.counts.files,mode:pkg.manifest.changeSet.executionMode,candidates:pkg.manifest.incremental.candidateReady,manual:pkg.manifest.incremental.manualReview,warnings:pkg.manifest.counts.warnings},locale,'✅ Paquete preparado: {filename}\nEstado: {status} · {configs} configuraciones · {steps} pasos · {files} archivos · cambio {mode} · candidatos seguros {candidates} · revisión manual {manual} · {warnings} avisos.');
   }
 
   function bindBrowserUi(attempt){
@@ -399,7 +399,7 @@
     button.dataset.nwDeploymentBundleBound='1';
     button.onclick=()=>{
       if(!root.NetWizardState||typeof root.NetWizardState.getSnapshot!=='function'){
-        output.textContent='⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.';
+        output.textContent=tr('deploy.bundle.loading',{},locale,'⏳ NetWizard todavía está terminando de cargar. Reintenta en unos segundos.');
         return;
       }
       const locale=root.NetWizardI18n&&root.NetWizardI18n.getReportLocale?root.NetWizardI18n.getReportLocale():'es';
@@ -409,20 +409,20 @@
       if(privateState&&privateState.available&&privateState.result){
         pkg=buildPrivateDeploymentPackage(root.NetWizardState.getSnapshot(),privateState.result,{locale});
       }else if(privateState&&privateState.stale){
-        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-107','La generación privada está obsoleta. Regenera en servidor antes de exportar.')],files:[]};
+        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-107',tr('deploy.bundle.issue.stale',{},locale,'La generación privada está obsoleta. Regenera en servidor antes de exportar.'))],files:[]};
       }else if(root.document&&!root.NetWizardLegacyConfigGenerator){
-        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-108','Todavía no existe una generación server-side vigente. Pulsa “Generar en servidor” antes de exportar.')],files:[]};
+        pkg={ok:false,blocked:true,format:FORMAT,version:VERSION,source:'private-server',issues:[gateIssue('NW-BUNDLE-108',tr('deploy.bundle.issue.generateFirst',{},locale,'Todavía no existe una generación server-side vigente. Pulsa “Generar en servidor” antes de exportar.'))],files:[]};
       }else{
         pkg=buildDeploymentPackage(root.NetWizardState.getSnapshot(),{locale});
       }
-      root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg);
+      root.NetWizardLastDeploymentBundle=pkg; output.textContent=summarize(pkg,locale);
       const gateOut=root.document.getElementById('productionGateOut'); if(gateOut&&pkg.report&&root.NetWizardProductionGate&&root.NetWizardProductionGate.summarizeGate) gateOut.textContent=root.NetWizardProductionGate.summarizeGate(pkg.report,{limit:80});
       if(!pkg.ok){
         const needsServer=pkg.issues&&pkg.issues.some(issue=>['NW-BUNDLE-001','NW-BUNDLE-107','NW-BUNDLE-108'].includes(issue.code));
-        root.alert&&root.alert(needsServer?'Genera o regenera las configuraciones en servidor antes de exportar.':'Paquete bloqueado: corrige los errores de producción indicados.');
+        root.alert&&root.alert(needsServer?tr('deploy.bundle.alert.generateFirst',{},locale,'Genera o regenera las configuraciones en servidor antes de exportar.'):tr('deploy.bundle.alert.blocked',{},locale,'Paquete bloqueado: corrige los errores de producción indicados.'));
         return;
       }
-      try{download(pkg);}catch(error){output.textContent=`⛔ No se pudo descargar el ZIP: ${error&&error.message||error}`;root.alert&&root.alert('No se pudo descargar el paquete ZIP.');return;}
+      try{download(pkg);}catch(error){output.textContent=tr('deploy.bundle.downloadFailed',{error:error&&error.message||error},locale,'⛔ No se pudo descargar el ZIP: {error}');root.alert&&root.alert(tr('deploy.bundle.downloadFailedAlert',{},locale,'No se pudo descargar el paquete ZIP.'));return;}
       try{root.document.dispatchEvent(new CustomEvent('nw:deployment:bundle',{detail:{filename:pkg.filename,status:pkg.report&&pkg.report.status,source:pkg.source||'local'}}));}catch(_error){}
     };
   }
