@@ -29,7 +29,7 @@ function evaluateDevice(project,deviceId){
   const p=obj(project),id=clean(deviceId),vtp=obj(p.vtp),role=desiredRole(p,id),observed=observedMap(p),evidence=obj(observed[id]),reasons=[],reasonDetails=[];const addReason=(messageKey,messageParams,message)=>{reasons.push(message);reasonDetails.push({messageKey,messageParams:messageParams||{},message});};
   if(!activeRole(role))return{ok:true,status:'not-required',deviceId:id,role,reasons:[],reasonDetails:[],evidence:null};
   if(!Object.keys(evidence).length){
-    const message=`VTP ${role} está activo, pero falta verificación observada del estado VTP para este switch.`;return{ok:false,status:'missing-observation',deviceId:id,role,evidence:null,reasons:[message],reasonDetails:[{messageKey:'vtp.verify.reason.missingObservation',messageParams:{role},message}]};
+    const message=tr('vtp.verify.reason.missingObservation',{role},'es','VTP {role} está activo, pero falta verificación observada del estado VTP para este switch.');return{ok:false,status:'missing-observation',deviceId:id,role,evidence:null,reasons:[message],reasonDetails:[{messageKey:'vtp.verify.reason.missingObservation',messageParams:{role},message}]};
   }
 
   const desiredDomain=clean(vtp.domain),desiredVersion=clean(vtp.version);
