@@ -23,8 +23,8 @@ function render(){
   const pack=E.buildCsvPack(p),stats=el('div','stats');
   for(const [name,count] of Object.entries(pack.manifest.sheets)){const s=el('div');s.append(el('b','',count),el('span','',name));stats.append(s);}box.append(stats);
   const row=el('div','brow'),base=safeBase(p);
-  const defs=[['devices','deploy.asbuilt.devices','Equipos'],['ports','deploy.asbuilt.ports','Puertos'],['cables','deploy.asbuilt.cables','Cableado'],['power','deploy.asbuilt.power','Alimentación'],['racks','deploy.asbuilt.racks','Racks'],['bom','deploy.asbuilt.bom','BOM'],['budget','deploy.asbuilt.budget','Presupuesto']];
-  for(const [key,i18nKey,label] of defs){const b=el('button','btn bs',`⬇ ${tr(i18nKey,{},label)} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
+  const defs=[['devices',tr('deploy.asbuilt.devices',{},'Equipos')],['ports',tr('deploy.asbuilt.ports',{},'Puertos')],['cables',tr('deploy.asbuilt.cables',{},'Cableado')],['power',tr('deploy.asbuilt.power',{},'Alimentación')],['racks',tr('deploy.asbuilt.racks',{},'Racks')],['bom',tr('deploy.asbuilt.bom',{},'BOM')],['budget',tr('deploy.asbuilt.budget',{},'Presupuesto')]];
+  for(const [key,label] of defs){const b=el('button','btn bs',`⬇ ${label} CSV`);b.type='button';b.onclick=()=>download(`${base}_${key}.csv`,pack.files[`${key}.csv`],'text/csv;charset=utf-8');row.append(b);}
   const xlsx=el('button','btn bp',tr('deploy.asbuilt.xlsx',{},'⬇ Excel XLSX'));xlsx.type='button';xlsx.onclick=()=>downloadBytes(`${base}_asbuilt.xlsx`,E.buildXlsx(p),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');row.append(xlsx);
   const all=el('button','btn bs',tr('deploy.asbuilt.markdownIndex',{},'⬇ Índice Markdown'));all.type='button';all.onclick=()=>download(`${base}_asbuilt-pack.md`,E.markdown(p),'text/markdown;charset=utf-8');row.append(all);
   box.append(row);
