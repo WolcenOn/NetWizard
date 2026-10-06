@@ -2464,7 +2464,7 @@ $('impJson').onclick=()=>{
     const prepared=applyJsonImportText($('jsonBox').value,'json-import-text');
     const status=$('jsonImportStatus');
     if(status)status.textContent=i18nText('deploy.import.fromText',{project:prepared.project.projName||i18nText('deploy.import.unnamedProject',{},'proyecto sin nombre')},'Importado desde texto: {project}.');
-  }catch(e){alert(e.message||('JSON inválido: '+e));}
+  }catch(e){alert(e.message||i18nText('deploy.import.invalidWithError',{error:e},'JSON inválido: {error}'));}
 };
 if($('impJsonFile')&&$('jsonFileInput')){
   $('impJsonFile').onclick=()=>{$('jsonFileInput').value='';$('jsonFileInput').click();};
@@ -2487,7 +2487,7 @@ if($('impJsonFile')&&$('jsonFileInput')){
     reader.readAsText(file,'utf-8');
   });
 }
-$('btnReset').onclick=()=>{if(!confirm('¿Borrar todo el proyecto?'))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
+$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
 $('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>{const target=$('expDeploymentPackage')||$('expBundle');if(target)target.click();},200);};
 
 // ─────────────────── TOPOLOGY ───────────────────
