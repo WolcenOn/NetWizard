@@ -22,7 +22,7 @@
     huawei_vrp:{backup:['Capturar `display current-configuration` y guardar la configuración actual externamente.'],validate:['`display ip interface brief`','`display interface brief`','`display ip routing-table`'],rollback:['Restaurar el fichero de configuración validado mediante el procedimiento VRP del modelo.']},
     mikrotik_routeros:{backup:['Crear export textual y backup binario compatibles con la versión RouterOS.'],validate:['`/system resource print`','`/interface print`','`/ip route print`'],rollback:['Restaurar el export/backup aprobado; verificar compatibilidad de versión y hardware.']},
     aruba_aoss:{backup:['Capturar running-config y startup-config; guardar copia externa.'],validate:['`show interfaces brief`','`show vlans`','`show spanning-tree`'],rollback:['Restaurar la configuración previa con el método soportado por AOS-Switch.']},
-    pfsense:{backup:['Descargar `config.xml` desde Diagnostics > Backup & Restore.'],validate:['Comprobar interfaces, gateways, reglas y estados desde GUI/console.'],rollback:['Restaurar el `config.xml` previo y validar el reinicio de servicios afectados.']},
+    pfsense:{backup:['Descargar `config.xml` desde Diagnostics → Backup & Restore.'],validate:['Comprobar interfaces, gateways, reglas y estados desde GUI/console.'],rollback:['Restaurar el `config.xml` previo y validar el reinicio de servicios afectados.']},
     ubiquiti_unifi:{backup:['Crear backup del controlador y exportar sus ajustes antes del cambio.'],validate:['Confirmar adopción, uplink, VLAN de gestión, SSIDs y clientes.'],rollback:['Restaurar el backup del controlador o revertir el perfil aplicado.']},
     tplink_omada:{backup:['Crear backup del controlador Omada y registrar versiones de firmware.'],validate:['Confirmar adopción, uplinks, perfiles VLAN, SSIDs y clientes.'],rollback:['Restaurar el backup del controlador o el perfil anterior.']},
     galgus_cloud:{backup:['Exportar la política/configuración desde la plataforma y registrar la versión activa.'],validate:['Confirmar APs online, SSIDs, VLANs, túneles y clientes.'],rollback:['Reasignar la política anterior validada desde el controlador cloud.']},
@@ -159,7 +159,7 @@
       tr('deploy.runbook.md.approvalOwner',{owner:p.approvalOwner||pending},locale,'- Responsable de aprobación: {owner}'),
       tr('deploy.runbook.md.observation',{minutes:p.observationMinutes||15},locale,'- Observación final: {minutes} minutos'),
       tr('deploy.runbook.md.parallelism',{},locale,'- Paralelismo máximo: **1 dispositivo**'),'',
-      tr('deploy.runbook.md.important',{warning:p.snapshotWarning||''},locale,'> **Importante:** {warning}'),'',
+      '> '+tr('deploy.runbook.md.important',{warning:p.snapshotWarning||''},locale,'**Importante:** {warning}'),'',
       tr('deploy.runbook.md.prechecks',{},locale,'## Prechecks'),'',
       markdownList(p.prechecks),''
     ];
