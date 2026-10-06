@@ -4,6 +4,7 @@
 
 const clean=v=>String(v==null?'':v).trim();
 const clone=v=>v==null?v:JSON.parse(JSON.stringify(v));
+const tr=(key,params={},fallback='',locale)=>{const i18n=root.NetWizardI18n;return i18n&&typeof i18n.t==='function'?i18n.t(key,params,locale):String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params,k)?String(params[k]):'');};
 let lastResult=null;
 let lastResultContext=null;
 let lastResultMode='';
@@ -52,13 +53,13 @@ function bindPrimaryGenerateAction(options){
   if(!button)return;
   if(!opts.available){
     button.disabled=true;
-    button.textContent='☁ Generación server-side no disponible';
+    button.textContent=tr('deploy.private.generateUnavailable',{},'☁ Generación server-side no disponible');
     button.onclick=null;
     return;
   }
   button.disabled=false;
   const locked=opts.mode==='self-hosted'&&!opts.authenticated;
-  button.textContent=locked?'🔒 Autorizar y generar':'☁ Generar en servidor';
+  button.textContent=locked?tr('deploy.private.authorizeGenerate',{},'🔒 Autorizar y generar'):tr('deploy.actions.generateServer',{},'☁ Generar en servidor');
   button.onclick=()=>{
     const live=root.document&&root.document.getElementById('nwPrivateDeploymentGenerate');
     if(live&&!live.disabled){live.click();return;}
@@ -80,7 +81,7 @@ function generationDiagnosticsMarkdown(result){
   const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
   const issues=Array.isArray(r.issues)?r.issues:[];
   const ids=new Set([...Object.keys(caps),...Object.keys(readiness),...Object.keys(paths),...issues.map(x=>clean(x&&x.deviceId)).filter(Boolean)]);
-  const lines=['# Diagnóstico de generación privada','',`Generado: ${clean(r.generatedAt)||'—'}`,'', '| Dispositivo | Vendor | Tipo | Modo | Estado | Detalle |','| --- | --- | --- | --- | --- | --- |'];
+  const lines=[tr('deploy.private.diagnostics.title',{},'# Diagnóstico de generación privada'),' ',tr('deploy.private.diagnostics.generated',{date:clean(r.generatedAt)||'—'},'Generado: {date}'),' ',tr('deploy.private.diagnostics.header',{},'| Dispositivo | Vendor | Tipo | Modo | Estado | Detalle |'),'| --- | --- | --- | --- | --- | --- |'];
   for(const id of Array.from(ids).sort()){
     const cap=caps[id]&&typeof caps[id]==='object'?caps[id]:{};
     const ready=readiness[id]&&typeof readiness[id]==='object'?readiness[id]:{};
@@ -100,7 +101,7 @@ function generationDiagnosticsMarkdown(result){
     ].filter(Boolean).join(' · ').replace(/\|/g,'\\|');
     lines.push(`| ${id} | ${clean(cap.vendor)||'—'} | ${clean(cap.kind)||'—'} | ${clean(cap.mode)||'—'} | ${status} | ${details||'—'} |`);
   }
-  if(!ids.size)lines.push('| — | — | — | — | sin dispositivos | — |');
+  if(!ids.size)lines.push(tr('deploy.private.diagnostics.noDevices',{},'| — | — | — | — | sin dispositivos | — |'));
   return lines.join('\n')+'\n';
 }
 function viewsFor(result){
@@ -112,12 +113,12 @@ function viewsFor(result){
     views.push({key,label,content:text,fileName:safeFileName(fileName,key+'.txt'),mime:mime||'text/plain;charset=utf-8'});
   };
   add('production-gate','Production Gate',r.productionGateSummaryMarkdown,'private-production-gate.md','text/markdown;charset=utf-8');
-  add('runbook','Runbook',r.runbookMarkdown,'deployment-runbook.md','text/markdown;charset=utf-8');
-  add('rollback','Rollback',r.rollbackMarkdown,'deployment-rollback.md','text/markdown;charset=utf-8');
-  add('post-change','Checklist post-change',r.postChangeChecklistMarkdown,'post-change-checklist.md','text/markdown;charset=utf-8');
-  add('change-summary','Resumen change set',r.changeSummaryMarkdown,'change-summary.md','text/markdown;charset=utf-8');
-  add('incremental-summary','Resumen incremental',r.incrementalSummaryMarkdown,'incremental-summary.md','text/markdown;charset=utf-8');
-  add('generation-diagnostics','Diagnóstico de generación',generationDiagnosticsMarkdown(r),'private-generation-diagnostics.md','text/markdown;charset=utf-8');
+  add('runbook',tr('deploy.private.views.runbook',{},'Runbook'),r.runbookMarkdown,'deployment-runbook.md','text/markdown;charset=utf-8');
+  add('rollback',tr('deploy.private.views.rollback',{},'Rollback'),r.rollbackMarkdown,'deployment-rollback.md','text/markdown;charset=utf-8');
+  add('post-change',tr('deploy.private.views.postChange',{},'Checklist post-change'),r.postChangeChecklistMarkdown,'post-change-checklist.md','text/markdown;charset=utf-8');
+  add('change-summary',tr('deploy.private.views.changeSummary',{},'Resumen change set'),r.changeSummaryMarkdown,'change-summary.md','text/markdown;charset=utf-8');
+  add('incremental-summary',tr('deploy.private.views.incrementalSummary',{},'Resumen incremental'),r.incrementalSummaryMarkdown,'incremental-summary.md','text/markdown;charset=utf-8');
+  add('generation-diagnostics',tr('deploy.private.views.diagnostics',{},'Diagnóstico de generación'),generationDiagnosticsMarkdown(r),'private-generation-diagnostics.md','text/markdown;charset=utf-8');
   for(const [index,artifact] of (Array.isArray(r.artifacts)?r.artifacts:[]).entries()){
     if(!artifact||typeof artifact.content!=='string')continue;
     const path=clean(artifact.path)||('artifact-'+(index+1)+'.txt');
@@ -184,8 +185,8 @@ function configArtifactForDevice(result,deviceId){
 }
 function deviceStatusFromResult(result,deviceId,options){
   const r=result||{},id=clean(deviceId),opts=options||{};
-  if(!id)return{status:'missing-device',reasons:['Dispositivo no disponible.'],issues:[],capability:null,artifact:null};
-  if(!result)return{status:'pending',reasons:['Todavía no se ha ejecutado Private Engine para este proyecto.'],issues:[],capability:null,artifact:null};
+  if(!id)return{status:'missing-device',reasons:[tr('deploy.private.status.missingDevice',{},'Dispositivo no disponible.')],issues:[],capability:null,artifact:null};
+  if(!result)return{status:'pending',reasons:[tr('deploy.private.status.notRun',{},'Todavía no se ha ejecutado Private Engine para este proyecto.')],issues:[],capability:null,artifact:null};
   const capabilityMap=r.configCapabilities&&typeof r.configCapabilities==='object'?r.configCapabilities:{};
   const rawCapability=capabilityMap[id]&&typeof capabilityMap[id]==='object'?capabilityMap[id]:null;
   const capability=rawCapability?{
@@ -197,7 +198,7 @@ function deviceStatusFromResult(result,deviceId,options){
     code:clean(item&&item.code),severity:clean(item&&item.severity),blocking:item&&item.blocking===true,message:clean(item&&item.message)
   }));
   if(opts.stale){
-    return{status:'stale',reasons:['El proyecto cambió después de la última generación. Regenera antes de usar la configuración.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+    return{status:'stale',reasons:[tr('deploy.private.status.stale',{},'El proyecto cambió después de la última generación. Regenera antes de usar la configuración.')],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
   }
   const artifact=configArtifactForDevice(r,id);
   if(artifact){
@@ -205,16 +206,16 @@ function deviceStatusFromResult(result,deviceId,options){
     return{status:clean(ready.status)||'generated',reasons,issues:ownIssues,capability:artifact.capability||capability,artifact,generatedAt:clean(r.generatedAt)};
   }
   if(capability&&capability.supported===false){
-    return{status:'unsupported',reasons:[capability.reason||'La combinación vendor/tipo no está soportada.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+    return{status:'unsupported',reasons:[capability.reason||tr('deploy.private.status.unsupported',{},'La combinación vendor/tipo no está soportada.')],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
   }
   if(ownIssues.length){
-    return{status:'generation-error',reasons:ownIssues.map(x=>(x.code?x.code+': ':'')+(x.message||'Error de generación')).filter(Boolean),issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+    return{status:'generation-error',reasons:ownIssues.map(x=>(x.code?x.code+': ':'')+(x.message||tr('deploy.private.status.generationError',{},'Error de generación'))).filter(Boolean),issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
   }
   const paths=r.configPaths&&typeof r.configPaths==='object'?r.configPaths:{};
   if(clean(paths[id])){
-    return{status:'missing-artifact',reasons:['Private Engine calculó una ruta de configuración pero no devolvió el artefacto.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+    return{status:'missing-artifact',reasons:[tr('deploy.private.status.missingArtifact',{},'Private Engine calculó una ruta de configuración pero no devolvió el artefacto.')],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
   }
-  return{status:'not-generated',reasons:['El resultado privado no contiene datos de generación para este dispositivo.'],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
+  return{status:'not-generated',reasons:[tr('deploy.private.status.notGenerated',{},'El resultado privado no contiene datos de generación para este dispositivo.')],issues:ownIssues,capability,artifact:null,generatedAt:clean(r.generatedAt)};
 }
 function deviceStatus(deviceId){
   return deviceStatusFromResult(lastResult,deviceId,{stale:lastResultStale});
@@ -249,7 +250,7 @@ function renderResult(result){
   const views=viewsFor(result);
   select.textContent='';
   if(!views.length){
-    select.appendChild(el('option',{value:''},'Sin salidas textuales'));
+    select.appendChild(el('option',{value:''},tr('deploy.private.noTextOutputs',{},'Sin salidas textuales')));
     select.disabled=true;
     output.value='';
     if(copy)copy.disabled=true;
