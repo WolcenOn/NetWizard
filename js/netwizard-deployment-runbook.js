@@ -99,52 +99,52 @@
     const changeSet=obj(opts.changeSet),changeByDevice=new Map(arr(changeSet.devices).map(change=>[change.deviceId,change]));
     const incrementalPlan=obj(opts.incrementalPlan),incrementalByDevice=new Map(arr(incrementalPlan.devices).map(item=>[item.deviceId,item]));
     const deviceIds=new Set(arr(p.devices).map(device=>device.id));const issues=[];
-    for(const device of arr(p.devices)){const override=obj(overrides[device.id]);for(const dependency of [...arr(device.dependsOnDeviceRefs),...arr(override.dependsOnDeviceRefs)].map(clean).filter(Boolean)){if(dependency===device.id)issues.push({code:'NW-RUNBOOK-003',severity:'error',blocking:true,category:'deployment',deviceId:device.id,message:`${device.name||device.id}: no puede depender de sí mismo para el despliegue.`});else if(!deviceIds.has(dependency))issues.push({code:'NW-RUNBOOK-002',severity:'error',blocking:true,category:'deployment',deviceId:device.id,message:`${device.name||device.id}: dependencia de despliegue inexistente (${dependency}).`});}}
+    for(const device of arr(p.devices)){const override=obj(overrides[device.id]);for(const dependency of [...arr(device.dependsOnDeviceRefs),...arr(override.dependsOnDeviceRefs)].map(clean).filter(Boolean)){if(dependency===device.id)issues.push({code:'NW-RUNBOOK-003',severity:'error',blocking:true,category:'deployment',deviceId:device.id,message:tr('deploy.runbook.issue.selfDependency',{device:device.name||device.id},locale,'{device}: no puede depender de sí mismo para el despliegue.')});else if(!deviceIds.has(dependency))issues.push({code:'NW-RUNBOOK-002',severity:'error',blocking:true,category:'deployment',deviceId:device.id,message:tr('deploy.runbook.issue.missingDependency',{device:device.name||device.id,dependency},locale,'{device}: dependencia de despliegue inexistente ({dependency}).')});}}
     const draft=arr(p.devices).map((device,index)=>{const override=obj(overrides[device.id]),phase=phaseFor(device,override),guide=guidanceFor(device,locale),change=obj(changeByDevice.get(device.id)),incremental=obj(incrementalByDevice.get(device.id));return{deviceId:device.id,deviceName:clean(device.name,100)||device.id,kind:deviceKind(device),vendor:clean(device.vendorOs,80)||'generic_network',phase:phase.id,phaseLabel:phaseLabel(phase.id,locale,phase.label),phaseOrder:phase.order,requestedOrder:number(override.order,number(device.deploymentOrder,9999)),distance:number(distances.get(device.id),9999),dependsOn:deviceDependencies(p,device,phase,graph,distances,overrides),risk:riskFor(device,phase,p),serialGroups:serialGroups(p,device.id),estimatedMinutes:Math.max(5,number(override.estimatedMinutes,number(device.deploymentMinutes,15))),configPath:configPathFor(device,index,opts),change:{status:change.status||'baseline-required',applyMode:change.applyMode||'full-target',patchPath:change.patchPath||null,rollbackPatchPath:change.rollbackPatchPath||null,capturedAt:change.capturedAt||null,stats:obj(change.stats)},incremental:{status:incremental.status||'full-target',adapterId:incremental.adapterId||null,applyPath:incremental.applyPath||null,rollbackPath:incremental.rollbackPath||null,instructions:arr(incremental.instructions),rollbackInstructions:arr(incremental.rollbackInstructions),commandCounts:obj(incremental.commandCounts)},backup:guide.backup,validation:guide.validate,rollback:guide.rollback};});
-    const sorted=topoSort(draft);if(sorted.cycles.length)issues.push({code:'NW-RUNBOOK-001',severity:'error',blocking:true,category:'deployment',message:`Dependencias de despliegue no resolubles (ciclo o cadena bloqueada): ${sorted.cycles.join(', ')}.`,deviceIds:sorted.cycles});
+    const sorted=topoSort(draft);if(sorted.cycles.length)issues.push({code:'NW-RUNBOOK-001',severity:'error',blocking:true,category:'deployment',message:tr('deploy.runbook.issue.cycle',{devices:sorted.cycles.join(', ')},locale,'Dependencias de despliegue no resolubles (ciclo o cadena bloqueada): {devices}.'),deviceIds:sorted.cycles});
     const steps=sorted.ordered.map((node,index)=>Object.assign({},node,{order:index+1,id:`deploy-${String(index+1).padStart(2,'0')}`}));
     const phases=Object.values(PHASES).sort((a,b)=>a.order-b.order).map(phase=>({id:phase.id,label:phaseLabel(phase.id,locale,phase.label),order:phase.order,steps:steps.filter(step=>step.phase===phase.id).map(step=>step.id)})).filter(phase=>phase.steps.length);
-    const serialWarnings=steps.filter(step=>step.serialGroups.length).map(step=>`${step.deviceName}: miembro de ${step.serialGroups.map(group=>`${group.type.toUpperCase()} ${group.label}`).join(', ')}; validar el peer antes de continuar.`);
-    if(!clean(deployment.changeTicket))serialWarnings.push('Falta asociar un ticket o identificador de cambio.');
-    if(!clean(deployment.maintenanceWindow))serialWarnings.push('Falta documentar la ventana de mantenimiento.');
-    if(!clean(deployment.approvalOwner))serialWarnings.push('Falta identificar al responsable de aprobación.');
-    const resilienceChecks=arr(p.failureScenarios).map(scenario=>({id:scenario.id,name:clean(scenario.name,120)||scenario.id,requireWan:scenario.requireWan!==false,mustSurvive:arr(scenario.mustSurvive).map(item=>`${clean(item.type,40)}:${clean(item.ref,120)||'conectividad'}`)}));
+    const serialWarnings=steps.filter(step=>step.serialGroups.length).map(step=>tr('deploy.runbook.warning.serialGroup',{device:step.deviceName,groups:step.serialGroups.map(group=>`${group.type.toUpperCase()} ${group.label}`).join(', ')},locale,'{device}: miembro de {groups}; validar el peer antes de continuar.'));
+    if(!clean(deployment.changeTicket))serialWarnings.push(tr('deploy.runbook.warning.changeTicket',{},locale,'Falta asociar un ticket o identificador de cambio.'));
+    if(!clean(deployment.maintenanceWindow))serialWarnings.push(tr('deploy.runbook.warning.maintenanceWindow',{},locale,'Falta documentar la ventana de mantenimiento.'));
+    if(!clean(deployment.approvalOwner))serialWarnings.push(tr('deploy.runbook.warning.approvalOwner',{},locale,'Falta identificar al responsable de aprobación.'));
+    const resilienceChecks=arr(p.failureScenarios).map(scenario=>({id:scenario.id,name:clean(scenario.name,120)||scenario.id,requireWan:scenario.requireWan!==false,mustSurvive:arr(scenario.mustSurvive).map(item=>`${clean(item.type,40)}:${clean(item.ref,120)||tr('deploy.runbook.connectivity',{},locale,'conectividad')}`)}));
     const criticalServices=arr(p.internalServices).filter(service=>service.critical===true||clean(service.criticality,40).toLowerCase()==='critical').map(service=>({id:service.id,name:clean(service.name,120)||service.id}));
     const validationTargets=arr(deployment.validationTargets).map(target=>clean(target,200)).filter(Boolean);
     const postchecks=[
-      'Interfaces, trunks, VLANs, rutas y vecinos presentan el estado esperado.',
-      'Gestión, NTP, DNS, AAA, syslog y SNMP funcionan desde sus orígenes autorizados.',
-      'DHCP, navegación, políticas y servicios críticos pasan sus pruebas.',
-      'No aparecen nuevas alarmas, errores de interfaz ni drift inesperado.',
-      'Mantener observación durante el periodo definido antes de cerrar el cambio.',
-      ...validationTargets.map(target=>`Validar objetivo declarado: ${target}.`),
-      ...criticalServices.map(service=>`Validar servicio crítico ${service.name} (${service.id}).`),
-      ...resilienceChecks.map(scenario=>`Ejecutar escenario de resiliencia ${scenario.name} y confirmar sus objetivos mustSurvive.`)
+      tr('deploy.runbook.postcheck.interfaces',{},locale,'Interfaces, trunks, VLANs, rutas y vecinos presentan el estado esperado.'),
+      tr('deploy.runbook.postcheck.management',{},locale,'Gestión, NTP, DNS, AAA, syslog y SNMP funcionan desde sus orígenes autorizados.'),
+      tr('deploy.runbook.postcheck.services',{},locale,'DHCP, navegación, políticas y servicios críticos pasan sus pruebas.'),
+      tr('deploy.runbook.postcheck.alarms',{},locale,'No aparecen nuevas alarmas, errores de interfaz ni drift inesperado.'),
+      tr('deploy.runbook.postcheck.observe',{},locale,'Mantener observación durante el periodo definido antes de cerrar el cambio.'),
+      ...validationTargets.map(target=>tr('deploy.runbook.postcheck.target',{target},locale,'Validar objetivo declarado: {target}.')),
+      ...criticalServices.map(service=>tr('deploy.runbook.postcheck.criticalService',{name:service.name,id:service.id},locale,'Validar servicio crítico {name} ({id}).')),
+      ...resilienceChecks.map(scenario=>tr('deploy.runbook.postcheck.resilience',{name:scenario.name},locale,'Ejecutar escenario de resiliencia {name} y confirmar sus objetivos mustSurvive.'))
     ];
     return{
       ok:!issues.some(issue=>issue.blocking),version:VERSION,format:'netwizard-deployment-plan',generatedAt,projectName:clean(p.projName,160)||'NetWizard',strategy:clean(deployment.strategy,40)||'staged',changeTicket:clean(deployment.changeTicket,120),maintenanceWindow:clean(deployment.maintenanceWindow,160),approvalOwner:clean(deployment.approvalOwner,120),observationMinutes:Math.max(5,number(deployment.observationMinutes,15)),maxParallel:1,
       estimatedTotalMinutes:steps.reduce((total,step)=>total+step.estimatedMinutes,0)+Math.max(5,number(deployment.observationMinutes,15)),validationTargets,criticalServices,resilienceChecks,changeSet:{requestedMode:changeSet.requestedMode||'full',executionMode:changeSet.executionMode||'full-target',coverage:obj(changeSet.coverage)},incremental:{mode:incrementalPlan.mode||'full',requireExecutableIncremental:incrementalPlan.requireExecutableIncremental===true,counts:obj(incrementalPlan.counts)},
       issues,warnings:serialWarnings,prechecks:[
-        'Aprobación, ventana de cambio, responsables y canal de coordinación confirmados.',
-        'Puerta estricta de producción superada y avisos revisados.',
-        'Acceso fuera de banda o consola probado para los equipos críticos.',
-        'Backup real de cada dispositivo exportado, legible y almacenado fuera del equipo.',
-        'Configuraciones comparadas con el estado actual y probadas en laboratorio.',
-        'Monitorización, sondas y contactos de escalado preparados.'
+        tr('deploy.runbook.precheck.approval',{},locale,'Aprobación, ventana de cambio, responsables y canal de coordinación confirmados.'),
+        tr('deploy.runbook.precheck.gate',{},locale,'Puerta estricta de producción superada y avisos revisados.'),
+        tr('deploy.runbook.precheck.oob',{},locale,'Acceso fuera de banda o consola probado para los equipos críticos.'),
+        tr('deploy.runbook.precheck.backup',{},locale,'Backup real de cada dispositivo exportado, legible y almacenado fuera del equipo.'),
+        tr('deploy.runbook.precheck.lab',{},locale,'Configuraciones comparadas con el estado actual y probadas en laboratorio.'),
+        tr('deploy.runbook.precheck.monitoring',{},locale,'Monitorización, sondas y contactos de escalado preparados.')
       ],stopCriteria:[
-        'Pérdida de acceso de gestión o consola durante más de 60 segundos.',
-        'Error de sintaxis, commit fallido o reinicio no previsto.',
-        'Pérdida de ruta por defecto, adyacencia de routing o estado HA saludable.',
-        'Pérdida superior al 5% o latencia anómala en las sondas críticas.',
-        'Fallo de DHCP, DNS, autenticación, conectividad inter-VLAN o servicios críticos.'
+        tr('deploy.runbook.stop.management',{},locale,'Pérdida de acceso de gestión o consola durante más de 60 segundos.'),
+        tr('deploy.runbook.stop.syntax',{},locale,'Error de sintaxis, commit fallido o reinicio no previsto.'),
+        tr('deploy.runbook.stop.routing',{},locale,'Pérdida de ruta por defecto, adyacencia de routing o estado HA saludable.'),
+        tr('deploy.runbook.stop.loss',{},locale,'Pérdida superior al 5% o latencia anómala en las sondas críticas.'),
+        tr('deploy.runbook.stop.services',{},locale,'Fallo de DHCP, DNS, autenticación, conectividad inter-VLAN o servicios críticos.')
       ],postchecks,rollbackPlan:[
-        'Detener inmediatamente los pasos pendientes y registrar el criterio de parada.',
-        'Aislar el dispositivo afectado si evita propagar el impacto.',
-        'Restaurar el backup REAL capturado antes del cambio mediante el método del fabricante.',
-        'Validar gestión, routing, HA, VLANs y servicios antes de revertir otro equipo.',
-        'Revertir en orden inverso únicamente los dispositivos ya modificados.',
-        'Conservar evidencias y abrir revisión post-incidente antes de reintentar.'
-      ],snapshotWarning:'El snapshot JSON de NetWizard conserva el diseño deseado, pero NO es un backup de la running-config de los dispositivos.',phases,steps
+        tr('deploy.runbook.rollback.stop',{},locale,'Detener inmediatamente los pasos pendientes y registrar el criterio de parada.'),
+        tr('deploy.runbook.rollback.isolate',{},locale,'Aislar el dispositivo afectado si evita propagar el impacto.'),
+        tr('deploy.runbook.rollback.restore',{},locale,'Restaurar el backup REAL capturado antes del cambio mediante el método del fabricante.'),
+        tr('deploy.runbook.rollback.validate',{},locale,'Validar gestión, routing, HA, VLANs y servicios antes de revertir otro equipo.'),
+        tr('deploy.runbook.rollback.reverse',{},locale,'Revertir en orden inverso únicamente los dispositivos ya modificados.'),
+        tr('deploy.runbook.rollback.evidence',{},locale,'Conservar evidencias y abrir revisión post-incidente antes de reintentar.')
+      ],snapshotWarning:tr('deploy.runbook.snapshotWarning',{},locale,'El snapshot JSON de NetWizard conserva el diseño deseado, pero NO es un backup de la running-config de los dispositivos.'),phases,steps
     };
   }
   function markdownList(lines){return arr(lines).map(line=>`- [ ] ${line}`).join('\n');}
