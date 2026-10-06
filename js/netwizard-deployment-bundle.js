@@ -25,6 +25,7 @@
   function clone(value){ return JSON.parse(JSON.stringify(value == null ? null : value)); }
   function clean(value,max){ return String(value == null ? '' : value).replace(/[\u0000-\u001F\u007F]/g,' ').trim().slice(0,max||200); }
   function normalizeText(value){ return String(value == null ? '' : value).replace(/\r\n?/g,'\n'); }
+  function tr(key,params,locale,fallback){const i18n=root.NetWizardI18n;if(i18n&&typeof i18n.t==='function')return i18n.t(key,params||{},locale);return String(fallback||key).replace(/\{([A-Za-z0-9_.-]+)\}/g,(_m,k)=>Object.prototype.hasOwnProperty.call(params||{},k)?String(params[k]):'');}
   function isoDate(value){ const date=value instanceof Date?value:new Date(value||Date.now()); return Number.isNaN(date.getTime())?new Date().toISOString():date.toISOString(); }
   function safeName(value,fallback){
     const source=clean(value,120);
@@ -57,42 +58,43 @@
   function gateIssue(code,message,extra){ return Object.assign({code,severity:'error',blocking:true,category:'deployment-bundle',source:'deployment-bundle',message},extra||{}); }
   function compareText(a,b){ const left=clean(a,120),right=clean(b,120); return left<right?-1:(left>right?1:0); }
 
-  function buildReadme(project,report,generatedAt,configFiles,changeSet,incrementalPlan){
+  function buildReadme(project,report,generatedAt,configFiles,changeSet,incrementalPlan,locale){
+    const warnings=(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan&&incrementalPlan.issues).filter(item=>item.severity==='warning').length;
     const lines=[
-      `# Paquete de despliegue — ${clean(project.projName,160)||'NetWizard'}`,'',
-      `- Formato: ${FORMAT} ${VERSION}`,
-      `- Generado: ${generatedAt}`,
-      `- Estado de producción: ${String(report.status||'unknown').toUpperCase()}`,
-      `- Dispositivos configurados: ${configFiles.length}`,
-      `- Avisos: ${(report.counts&&report.counts.warnings||0)+arr(changeSet&&changeSet.issues).filter(item=>item.severity==='warning').length+arr(incrementalPlan&&incrementalPlan.issues).filter(item=>item.severity==='warning').length}`,'',
-      '## Contenido','',
-      '- `project/netwizard-project.json`: snapshot saneado y versionado.',
-      '- `configs/`: configuración generada para cada dispositivo.',
-      '- `reports/production-gate.json`: resultado estructurado de la validación.',
-      '- `reports/production-checklist.md`: checklist y correcciones.',
-      '- `reports/inventory.csv`: inventario operativo.',
-      '- `reports/connectivity-matrix.csv`: intención de conectividad entre VLANs.',
-      '- `reports/documentation.md`: documentación completa del diseño.',
-      '- `deployment/plan.json`: orden estructurado y dependencias del cambio.',
-      '- `deployment/runbook.md`: procedimiento ejecutable con prechecks y validaciones.',
-      '- `deployment/rollback-checklist.md`: reversión en orden inverso.',
-      '- `changes/change-set.json`: comparación estructurada entre configuración observada y objetivo.',
-      '- `changes/summary.md`: resumen humano de cobertura y diferencias.',
-      '- `changes/patches/`: diffs de revisión; no son comandos ejecutables.',
-      '- `changes/rollback/`: diffs inversos para apoyar la reversión.',
-      '- `incremental/plan.json`: decisión del registro de adaptadores por equipo.',
-      '- `incremental/summary.md`: candidatos ejecutables y revisiones manuales.',
-      '- `incremental/commands/`: comandos cargables solo cuando el adaptador los certifica.',
-      '- `incremental/rollback/`: comandos inversos candidatos; el backup real sigue siendo autoritativo.',
-      '- `evidence/pre-change.json`: fingerprints y metadatos del snapshot previo.',
-      '- `evidence/post-change-checklist.md`: evidencias que deben capturarse tras el cambio.',
-      '- `manifest.json`: índice y CRC32 de cada archivo de payload.','',
-      '## Uso seguro','',
-      '1. Revisa los avisos y el checklist.',
-      '2. Compara cada configuración con el estado real del equipo.',
-      '3. Prueba en laboratorio y conserva un backup del dispositivo.',
-      '4. Aplica los cambios de forma controlada y valida conectividad.','',
-      '> El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.'
+      tr('deploy.bundle.readme.title',{project:clean(project.projName,160)||'NetWizard'},locale,'# Paquete de despliegue — {project}'),'',
+      tr('deploy.bundle.readme.format',{format:FORMAT,version:VERSION},locale,'- Formato: {format} {version}'),
+      tr('deploy.bundle.readme.generated',{date:generatedAt},locale,'- Generado: {date}'),
+      tr('deploy.bundle.readme.status',{status:String(report.status||'unknown').toUpperCase()},locale,'- Estado de producción: {status}'),
+      tr('deploy.bundle.readme.configured',{count:configFiles.length},locale,'- Dispositivos configurados: {count}'),
+      tr('deploy.bundle.readme.warnings',{count:warnings},locale,'- Avisos: {count}'),'',
+      tr('deploy.bundle.readme.contents',{},locale,'## Contenido'),'',
+      tr('deploy.bundle.readme.item.project',{},locale,'- `project/netwizard-project.json`: snapshot saneado y versionado.'),
+      tr('deploy.bundle.readme.item.configs',{},locale,'- `configs/`: configuración generada para cada dispositivo.'),
+      tr('deploy.bundle.readme.item.gate',{},locale,'- `reports/production-gate.json`: resultado estructurado de la validación.'),
+      tr('deploy.bundle.readme.item.checklist',{},locale,'- `reports/production-checklist.md`: checklist y correcciones.'),
+      tr('deploy.bundle.readme.item.inventory',{},locale,'- `reports/inventory.csv`: inventario operativo.'),
+      tr('deploy.bundle.readme.item.connectivity',{},locale,'- `reports/connectivity-matrix.csv`: intención de conectividad entre VLANs.'),
+      tr('deploy.bundle.readme.item.documentation',{},locale,'- `reports/documentation.md`: documentación completa del diseño.'),
+      tr('deploy.bundle.readme.item.plan',{},locale,'- `deployment/plan.json`: orden estructurado y dependencias del cambio.'),
+      tr('deploy.bundle.readme.item.runbook',{},locale,'- `deployment/runbook.md`: procedimiento ejecutable con prechecks y validaciones.'),
+      tr('deploy.bundle.readme.item.rollback',{},locale,'- `deployment/rollback-checklist.md`: reversión en orden inverso.'),
+      tr('deploy.bundle.readme.item.changeSet',{},locale,'- `changes/change-set.json`: comparación estructurada entre configuración observada y objetivo.'),
+      tr('deploy.bundle.readme.item.changeSummary',{},locale,'- `changes/summary.md`: resumen humano de cobertura y diferencias.'),
+      tr('deploy.bundle.readme.item.patches',{},locale,'- `changes/patches/`: diffs de revisión; no son comandos ejecutables.'),
+      tr('deploy.bundle.readme.item.reverseDiffs',{},locale,'- `changes/rollback/`: diffs inversos para apoyar la reversión.'),
+      tr('deploy.bundle.readme.item.incrementalPlan',{},locale,'- `incremental/plan.json`: decisión del registro de adaptadores por equipo.'),
+      tr('deploy.bundle.readme.item.incrementalSummary',{},locale,'- `incremental/summary.md`: candidatos ejecutables y revisiones manuales.'),
+      tr('deploy.bundle.readme.item.commands',{},locale,'- `incremental/commands/`: comandos cargables solo cuando el adaptador los certifica.'),
+      tr('deploy.bundle.readme.item.incrementalRollback',{},locale,'- `incremental/rollback/`: comandos inversos candidatos; el backup real sigue siendo autoritativo.'),
+      tr('deploy.bundle.readme.item.preEvidence',{},locale,'- `evidence/pre-change.json`: fingerprints y metadatos del snapshot previo.'),
+      tr('deploy.bundle.readme.item.postEvidence',{},locale,'- `evidence/post-change-checklist.md`: evidencias que deben capturarse tras el cambio.'),
+      tr('deploy.bundle.readme.item.manifest',{},locale,'- `manifest.json`: índice y CRC32 de cada archivo de payload.'),'',
+      tr('deploy.bundle.readme.safeUse',{},locale,'## Uso seguro'),'',
+      tr('deploy.bundle.readme.safe1',{},locale,'1. Revisa los avisos y el checklist.'),
+      tr('deploy.bundle.readme.safe2',{},locale,'2. Compara cada configuración con el estado real del equipo.'),
+      tr('deploy.bundle.readme.safe3',{},locale,'3. Prueba en laboratorio y conserva un backup del dispositivo.'),
+      tr('deploy.bundle.readme.safe4',{},locale,'4. Aplica los cambios de forma controlada y valida conectividad.'),'',
+      tr('deploy.bundle.readme.sensitive',{},locale,'> El paquete puede contener direccionamiento y configuración sensible. Almacénalo y compártelo de forma segura.')
     ];
     return lines.join('\n')+'\n';
   }
