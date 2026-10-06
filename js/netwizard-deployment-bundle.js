@@ -290,19 +290,19 @@
     const configPaths=Object.fromEntries(configEntries.map(entry=>[entry.device.id,entry.path]));
     const desiredConfigs=Object.fromEntries(configEntries.map(entry=>[entry.device.id,entry.output]));
     let changeSet;
-    try{changeSet=changeSetBuilder.buildChangeSet(canonical,{generatedAt,configPaths,desiredConfigs});}
+    try{changeSet=changeSetBuilder.buildChangeSet(canonical,{generatedAt,configPaths,desiredConfigs,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-032',`No se pudo construir el change set: ${error&&error.message||error}`)],files:[]};}
     if(!changeSet||changeSet.ok===false){
       const changeIssues=arr(changeSet&&changeSet.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:changeIssues.length?changeIssues:[gateIssue('NW-BUNDLE-033','El change set incremental no es ejecutable.')],files:[]};
     }
     let incrementalPlan;
-    try{incrementalPlan=incrementalBuilder.buildPlan(canonical,{generatedAt,changeSet,desiredConfigs,configPaths});}
+    try{incrementalPlan=incrementalBuilder.buildPlan(canonical,{generatedAt,changeSet,desiredConfigs,configPaths,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,issues:[gateIssue('NW-BUNDLE-034',`No se pudo construir el plan incremental: ${error&&error.message||error}`)],files:[]};}
     if(!incrementalPlan||incrementalPlan.ok===false){
       const incrementalIssues=arr(incrementalPlan&&incrementalPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,changeSet,incrementalPlan,issues:incrementalIssues.length?incrementalIssues:[gateIssue('NW-BUNDLE-035','El plan incremental requerido no es ejecutable.')],files:[]};
     }
     let deploymentPlan;
-    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet,incrementalPlan});}
+    try{deploymentPlan=runbook.buildDeploymentPlan(canonical,{generatedAt,configPaths,changeSet,incrementalPlan,locale:opts.locale});}
     catch(error){return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-030',`No se pudo construir el plan de despliegue: ${error&&error.message||error}`)],files:[]};}
     if(!deploymentPlan||deploymentPlan.ok===false){
       const planIssues=arr(deploymentPlan&&deploymentPlan.issues);return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,deploymentPlan,issues:planIssues.length?planIssues:[gateIssue('NW-BUNDLE-031','El plan de despliegue no es ejecutable.')],files:[]};
@@ -319,16 +319,16 @@
       addFile(files,'reports/connectivity-matrix.csv',docs.toCsv(matrix,['source','destination','action','services','reason','sourceType'])+'\n','text/csv;charset=utf-8');
       addFile(files,'reports/documentation.md',docs.buildMarkdownDocument(canonical,{locale:opts.locale,generatedAt})+'\n','text/markdown;charset=utf-8');
       addFile(files,'deployment/plan.json',JSON.stringify(deploymentPlan,null,2)+'\n','application/json');
-      addFile(files,'deployment/runbook.md',runbook.buildMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
-      addFile(files,'deployment/rollback-checklist.md',runbook.buildRollbackMarkdown(deploymentPlan),'text/markdown;charset=utf-8');
+      addFile(files,'deployment/runbook.md',runbook.buildMarkdown(deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
+      addFile(files,'deployment/rollback-checklist.md',runbook.buildRollbackMarkdown(deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
       addFile(files,'changes/change-set.json',JSON.stringify(changeSetBuilder.publicChangeSet(changeSet),null,2)+'\n','application/json');
-      addFile(files,'changes/summary.md',changeSetBuilder.buildSummaryMarkdown(changeSet),'text/markdown;charset=utf-8');
+      addFile(files,'changes/summary.md',changeSetBuilder.buildSummaryMarkdown(changeSet,{locale:opts.locale}),'text/markdown;charset=utf-8');
       for(const artifact of arr(changeSet.artifacts)) addFile(files,artifact.path,artifact.content,'text/x-diff;charset=utf-8');
       addFile(files,'incremental/plan.json',JSON.stringify(incrementalBuilder.publicPlan(incrementalPlan),null,2)+'\n','application/json');
-      addFile(files,'incremental/summary.md',incrementalBuilder.buildSummaryMarkdown(incrementalPlan),'text/markdown;charset=utf-8');
+      addFile(files,'incremental/summary.md',incrementalBuilder.buildSummaryMarkdown(incrementalPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
       for(const artifact of arr(incrementalPlan.artifacts)) addFile(files,artifact.path,artifact.content,artifact.mime||'text/plain;charset=utf-8');
       addFile(files,'evidence/pre-change.json',JSON.stringify({format:'netwizard-pre-change-evidence',version:VERSION,generatedAt,observedAt:changeSet.observedAt,coverage:changeSet.coverage,devices:changeSet.devices.map(device=>({deviceId:device.deviceId,vendor:device.vendor,capturedAt:device.capturedAt,observedFingerprint:device.observedFingerprint,desiredFingerprint:device.desiredFingerprint,status:device.status}))},null,2)+'\n','application/json');
-      addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan),'text/markdown;charset=utf-8');
+      addFile(files,'evidence/post-change-checklist.md',changeSetBuilder.buildPostChangeChecklist(changeSet,deploymentPlan,{locale:opts.locale}),'text/markdown;charset=utf-8');
       addFile(files,'README.md',buildReadme(canonical,report,generatedAt,configEntries,changeSet,incrementalPlan,opts.locale),'text/markdown;charset=utf-8');
     }catch(error){
       return {ok:false,blocked:true,format:FORMAT,version:VERSION,generatedAt,projectName:clean(canonical.projName,160),report,issues:[gateIssue('NW-BUNDLE-020',`No se pudieron construir los artefactos: ${error&&error.message||error}`)],files:[]};
