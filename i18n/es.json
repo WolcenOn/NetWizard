@@ -1893,5 +1893,6 @@
   "deploy.runbook.vendor.linux.rollback.0": "Restaurar los ficheros respaldados y recargar de forma controlada los servicios afectados.",
   "deploy.runbook.vendor.generic.backup.0": "Exportar la configuración activa con el método soportado por el fabricante.",
   "deploy.runbook.vendor.generic.validate.0": "Comprobar gestión, interfaces, rutas, VLANs y servicios afectados.",
-  "deploy.runbook.vendor.generic.rollback.0": "Restaurar el backup previo mediante el procedimiento aprobado por el fabricante."
+  "deploy.runbook.vendor.generic.rollback.0": "Restaurar el backup previo mediante el procedimiento aprobado por el fabricante.",
+  "deploy.project.resetConfirm": "¿Borrar todo el proyecto?"
 }
