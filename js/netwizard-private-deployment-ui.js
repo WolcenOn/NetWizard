@@ -500,6 +500,7 @@ function install(){
     }
   });
   root.document.addEventListener('nw:view:changed',event=>{if(event.detail?.step==='cfg')rerender();});
+  root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{if(!active())return;const token=root.document.getElementById('nwSelfHostedPrivateToken')?.value||'';rerender();const next=root.document.getElementById('nwSelfHostedPrivateToken');if(next)next.value=token;});
   if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',rerender,{once:true});else rerender();
   return true;
 }
