@@ -7,10 +7,11 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const outFile = path.join(root, 'docs', 'I18N_HARDCODED_AUDIT.txt');
 const checkMode = process.argv.includes('--check');
-const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js','js/netwizard-dhcp-utils.js','js/netwizard-network-utils.js','js/netwizard-v5-panel.js','js/netwizard-v5-controls.js','js/netwizard-v5-layout-manager.js','js/netwizard-v5-iot-extension.js','js/netwizard-v5-connectivity-trace.js','js/netwizard-v5-scene.js','js/netwizard-v5-renderer.js','js/netwizard-inter-site-transit-editor.js','js/netwizard-observed-config-ui.js','js/netwizard-inter-site-reachability-ui.js','js/netwizard-resilience-ui.js','js/netwizard-wan-resilience-ui.js','js/netwizard-traffic-capacity-ui.js','js/netwizard-observed-drift-ui.js','js/netwizard-audit.js','js/netwizard-inter-site-reachability.js','js/netwizard-resilience-topology.js','js/netwizard-wan-resilience.js']);
+const strictFiles = new Set(['js/netwizard-rack-model.js','js/netwizard-rack-ui.js','js/netwizard-physical-inventory-ui.js','js/netwizard-custom-device-model-ui.js','js/netwizard-bulk-port-editor.js','js/netwizard-dhcp-utils.js','js/netwizard-network-utils.js','js/netwizard-v5-panel.js','js/netwizard-v5-controls.js','js/netwizard-v5-layout-manager.js','js/netwizard-v5-iot-extension.js','js/netwizard-v5-connectivity-trace.js','js/netwizard-v5-scene.js','js/netwizard-v5-renderer.js','js/netwizard-inter-site-transit-editor.js','js/netwizard-observed-config-ui.js','js/netwizard-inter-site-reachability-ui.js','js/netwizard-resilience-ui.js','js/netwizard-wan-resilience-ui.js','js/netwizard-traffic-capacity-ui.js','js/netwizard-observed-drift-ui.js','js/netwizard-audit.js','js/netwizard-inter-site-reachability.js','js/netwizard-resilience-topology.js','js/netwizard-wan-resilience.js','js/netwizard-vtp-production-verification.js']);
 const strictRegionMarkers = {
   'index.html': [
-    ['<!-- ═══════════ VALIDATION / ANALYSIS ═══════════ -->','<!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->']
+    ['<!-- ═══════════ VALIDATION / ANALYSIS ═══════════ -->','<!-- ═══════════ DEPLOYMENT / EXPORT ═══════════ -->'],
+    ['data-i18n="vtp.title"','data-i18n="vtp.order.text"']
   ],
   'js/netwizard.js': [
     ['function initDeviceVendorSelect(){','// ─────────────────── VLANs ───────────────────'],
@@ -23,7 +24,9 @@ const strictRegionMarkers = {
     ['function v5LinkTooltipEl(){','function v5DrawLinkDot('],
     ['function removeV5Location(id){','function addV5Location(){'],
     ['function fillLinkPickers(){','// PORT MODAL'],
-    ['// ─────────────────── FIREWALL ───────────────────','// ─────────────────── CFG / EXPORT ───────────────────']
+    ['// ─────────────────── FIREWALL ───────────────────','// ─────────────────── CFG / EXPORT ───────────────────'],
+    ["if(/^vtp domain\\s+/.test(t))","if(/^vtp pruning/.test(t))"],
+    ['function renderVtp(){','// EXPORT']
   ],
   'js/netwizard-iot-embedded.js': [
     ['function fillAccessTypes','window.NetWizardIoTEmbedded=']
