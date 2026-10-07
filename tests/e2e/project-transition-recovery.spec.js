@@ -61,6 +61,7 @@ test('import y nuevo proyecto crean recuperación automática restaurable', asyn
 
 test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada sí', async ({page})=>{
   await resetStorage(page);
+  await expect.poll(()=>page.evaluate(()=>window.NetWizardProjectTransitions.isRuntimeBaselineReady())).toBe(true);
   const empty=await page.evaluate(()=>{
     const api=window.NetWizardProjectTransitions;
     const current=window.NetWizardState.getSnapshot();
