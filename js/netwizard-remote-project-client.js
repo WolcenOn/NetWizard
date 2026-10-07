@@ -58,6 +58,7 @@ function createClient(options){
     const previous=contextSnapshot();
     context=null;
     lastSnapshotJSON='';
+    autoOpened='';
     emit('nw:remote-project:changed',{context:null,previous});
   }
   function setContext(project,revision,response,snapshot){
@@ -191,6 +192,10 @@ function createClient(options){
     await saveCurrent();
     return generatePrivateDeploymentPlan();
   }
+  function handleAuthChanged(detail){
+    const current=detail||{};
+    if(current.authenticated===false)clear();
+  }
   async function autoOpenFromLocation(){
     if(!locationObj)return false;
     let id='';
@@ -213,6 +218,7 @@ function createClient(options){
     version:'netwizard-remote-project-v2',
     context:contextSnapshot,
     clear,
+    handleAuthChanged,
     open,
     saveCurrent,
     canUsePrivateRouting,
@@ -230,7 +236,11 @@ function mount(){
   const tryOpen=()=>singleton.autoOpenFromLocation().catch(err=>{
     if(root.console&&typeof root.console.warn==='function')root.console.warn('NetWizard remote project open failed',err);
   });
-  if(typeof root.addEventListener==='function')root.addEventListener('nw:auth:changed',tryOpen);
+  const onAuthChanged=(event)=>{
+    singleton.handleAuthChanged(event&&event.detail||{});
+    return tryOpen();
+  };
+  if(typeof root.addEventListener==='function')root.addEventListener('nw:auth:changed',onAuthChanged);
   if(root.document){
     if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout?root.setTimeout(tryOpen,0):tryOpen(),{once:true});
     else if(root.setTimeout)root.setTimeout(tryOpen,0);else tryOpen();
