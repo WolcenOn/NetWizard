@@ -16,6 +16,7 @@ function createClient(options){
   const fetchFn=opts.fetchFn||(root.fetch?root.fetch.bind(root):null);
   const stateApi=opts.stateApi||null;
   const authApi=opts.authApi||null;
+  const transitionApi=opts.transitionApi||null;
   const locationObj=opts.location||root.location||null;
   let context=null;
   let lastSnapshotJSON='';
@@ -26,6 +27,9 @@ function createClient(options){
   }
   function auth(){
     return authApi||root.NetWizardAuth||null;
+  }
+  function transitions(){
+    return transitionApi||root.NetWizardProjectTransitions||null;
   }
   function authState(){
     const a=auth();
@@ -103,6 +107,10 @@ function createClient(options){
     if(optsOpen.replaceState!==false){
       const s=state();
       if(!s||typeof s.replaceProject!=='function')throw createError('NetWizardState unavailable',0,null);
+      const t=transitions();
+      if(t&&typeof t.createRecoverySnapshot==='function'){
+        t.createRecoverySnapshot('project-remote-open-backup','pre-remote-open');
+      }
       s.replaceProject(clone(snapshot),{source:'remote-project-open'});
     }
     return {context:ctx,project:clone(project),revision:clone(revision),snapshot:clone(snapshot)};
