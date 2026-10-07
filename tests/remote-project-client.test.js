@@ -184,5 +184,34 @@ const fetchFn=async(url,init)=>{
     assert.strictEqual(reopenClient.handleProjectChanged({source}),true,source+' debe ser frontera local');
   }
 
-  console.log('✓ Contexto SaaS se invalida en pérdida de auth y reemplazos locales sin romper ediciones remotas');
+  const failingOpen=createClient({
+    location:{search:''},
+    authApi,
+    transitionApi:{createRecoverySnapshot(){}},
+    stateApi:{
+      getSnapshot(){return {projName:'Local before failed open'};},
+      replaceProject(){throw new Error('replace failed');}
+    },
+    fetchFn:async()=>response(200,{
+      project:{id:'prj_fail',workspaceId:'ws1',name:'Failing',schemaVersion:'3.50.0',currentVersion:2},
+      revision:{projectId:'prj_fail',version:2,schemaVersion:'3.50.0',snapshot:remoteSnapshot}
+    },'"prj_fail:2"')
+  });
+  await assert.rejects(()=>failingOpen.open('prj_fail'),/replace failed/);
+  assert.strictEqual(failingOpen.context(),null);
+
+  const contextOnly=createClient({
+    location:{search:''},
+    authApi,
+    stateApi:null,
+    fetchFn:async()=>response(200,{
+      project:{id:'prj_context',workspaceId:'ws1',name:'Context only',schemaVersion:'3.50.0',currentVersion:3},
+      revision:{projectId:'prj_context',version:3,schemaVersion:'3.50.0',snapshot:remoteSnapshot}
+    },'"prj_context:3"')
+  });
+  const contextOnlyOpened=await contextOnly.open('prj_context',{replaceState:false});
+  assert.strictEqual(contextOnlyOpened.context.projectId,'prj_context');
+  assert.strictEqual(contextOnly.context().currentVersion,3);
+
+  console.log('✓ Contexto SaaS es atómico al abrir y se invalida en fronteras locales/auth');
 })().catch(err=>{console.error(err);process.exitCode=1;});

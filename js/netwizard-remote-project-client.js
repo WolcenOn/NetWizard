@@ -61,24 +61,33 @@ function createClient(options){
     autoOpened='';
     emit('nw:remote-project:changed',{context:null,previous});
   }
-  function setContext(project,revision,response,snapshot){
+  function prepareContext(project,revision,response,snapshot){
     if(!project||!revision)throw createError('invalid remote project response',0,null);
     const projectId=clean(project.id||revision.projectId);
     const currentVersion=Number(project.currentVersion||revision.version||0);
     if(!projectId||currentVersion<1)throw createError('invalid remote project metadata',0,null);
     let etag='';
     try{etag=clean(response&&response.headers&&response.headers.get&&response.headers.get('etag'));}catch{}
-    context={
-      projectId,
-      workspaceId:clean(project.workspaceId),
-      name:clean(project.name),
-      schemaVersion:clean(project.schemaVersion||revision.schemaVersion),
-      currentVersion,
-      etag
+    return {
+      context:{
+        projectId,
+        workspaceId:clean(project.workspaceId),
+        name:clean(project.name),
+        schemaVersion:clean(project.schemaVersion||revision.schemaVersion),
+        currentVersion,
+        etag
+      },
+      snapshotJSON:JSON.stringify(snapshot||revision.snapshot||{})
     };
-    lastSnapshotJSON=JSON.stringify(snapshot||revision.snapshot||{});
+  }
+  function setPreparedContext(prepared){
+    context=clone(prepared&&prepared.context);
+    lastSnapshotJSON=clean(prepared&&prepared.snapshotJSON);
     emit('nw:remote-project:changed',{context:contextSnapshot()});
     return contextSnapshot();
+  }
+  function setContext(project,revision,response,snapshot){
+    return setPreparedContext(prepareContext(project,revision,response,snapshot));
   }
   function requireAuthenticated(){
     const current=authState();
@@ -103,7 +112,7 @@ function createClient(options){
       throw createError('invalid remote project response',0,result.body);
     }
     if(clean(project.id)!==id)throw createError('remote project id mismatch',0,result.body);
-    const ctx=setContext(project,revision,result.response,snapshot);
+    const preparedContext=prepareContext(project,revision,result.response,snapshot);
     const optsOpen=options||{};
     if(optsOpen.replaceState!==false){
       const s=state();
@@ -114,6 +123,7 @@ function createClient(options){
       }
       s.replaceProject(clone(snapshot),{source:'remote-project-open'});
     }
+    const ctx=setPreparedContext(preparedContext);
     return {context:ctx,project:clone(project),revision:clone(revision),snapshot:clone(snapshot)};
   }
   function canUsePrivateRouting(){
