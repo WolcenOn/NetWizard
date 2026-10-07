@@ -141,5 +141,38 @@ const fetchFn=async(url,init)=>{
   assert.strictEqual(portable.currentVersion,undefined);
   assert.strictEqual(portable.devices[0].name,'RTR-EDITED');
 
-  console.log('✓ Contexto SaaS sincroniza routing y deployment privado sin contaminar el snapshot portable');
+  client.handleAuthChanged({authenticated:false});
+  assert.strictEqual(client.context(),null);
+  assert.strictEqual(stateApi.getSnapshot().devices[0].name,'RTR-EDITED');
+  await assert.rejects(()=>client.saveCurrent(),/remote project context required/);
+
+  let authenticated=true;
+  let reopenFetches=0;
+  const reopenState={snapshot:JSON.parse(JSON.stringify(remoteSnapshot))};
+  const reopenClient=createClient({
+    location:{search:'?projectId=prj_reopen'},
+    authApi:{state(){return{authenticated,user:authenticated?{csrfToken:'csrf-reopen'}:null,capabilities:{remoteProjectWrites:true}};}},
+    stateApi:{
+      getSnapshot(){return JSON.parse(JSON.stringify(reopenState.snapshot));},
+      replaceProject(project){reopenState.snapshot=JSON.parse(JSON.stringify(project));}
+    },
+    transitionApi:{createRecoverySnapshot(){}},
+    fetchFn:async()=>{
+      reopenFetches++;
+      return response(200,{
+        project:{id:'prj_reopen',workspaceId:'ws1',name:'Reopen',schemaVersion:'3.50.0',currentVersion:1},
+        revision:{projectId:'prj_reopen',version:1,schemaVersion:'3.50.0',snapshot:remoteSnapshot}
+      },'"prj_reopen:1"');
+    }
+  });
+  assert.strictEqual(await reopenClient.autoOpenFromLocation(),true);
+  assert.strictEqual(reopenFetches,1);
+  authenticated=false;
+  reopenClient.handleAuthChanged({authenticated:false});
+  assert.strictEqual(reopenClient.context(),null);
+  authenticated=true;
+  assert.strictEqual(await reopenClient.autoOpenFromLocation(),true);
+  assert.strictEqual(reopenFetches,2);
+
+  console.log('✓ Contexto SaaS sincroniza routing/deployment y se invalida limpiamente al perder autenticación');
 })().catch(err=>{console.error(err);process.exitCode=1;});
