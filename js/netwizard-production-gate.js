@@ -50,7 +50,16 @@ Mantenimiento:
     'pg.checklist.noIssues':'Sin incidencias.','pg.checklist.recommendedFixes':'Correcciones recomendadas','pg.checklist.noFixes':'No hay correcciones pendientes con los datos actuales.',
     'pg.checklist.message':'Mensaje','pg.checklist.section':'Sección','pg.checklist.why':'Por qué importa','pg.checklist.steps':'Pasos','pg.checklist.exitCriteria':'Criterio de salida',
     'pg.checklist.exit.noBlocked':'La puerta de producción no está BLOQUEADA.','pg.checklist.exit.rulesReviewed':'Las reglas generadas han sido revisadas.',
-    'pg.checklist.exit.vendorReviewed':'Las exportaciones vendor han sido revisadas en laboratorio.','pg.checklist.exit.snapshot':'Se conserva snapshot/export JSON antes del despliegue.'
+    'pg.checklist.exit.vendorReviewed':'Las exportaciones vendor han sido revisadas en laboratorio.','pg.checklist.exit.snapshot':'Se conserva snapshot/export JSON antes del despliegue.',
+    'pg.summary.title':'Puerta de producción','pg.summary.mode':'Modo','pg.summary.counts':'Errores: {errors} · Avisos: {warnings} · Info: {info}',
+    'pg.summary.byCategory':'Resumen por categoría:','pg.summary.category':'• {category}: {errors} errores · {warnings} avisos · {info} info',
+    'pg.summary.mainIssues':'Incidencias principales:','pg.summary.issue':'• [{severity}] [{code}] {message}','pg.summary.moreIssues':'• ... {count} incidencias más',
+    'pg.summary.result.ready':'Resultado: no hay bloqueos detectados con los datos actuales. Aun así, revisa el despliegue real y prueba en laboratorio antes de producción.',
+    'pg.summary.result.review':'Resultado: se puede continuar en modo demo, pero conviene resolver los avisos antes de declarar producción.',
+    'pg.summary.result.blocked':'Resultado: no exportes ni apliques configuraciones en producción hasta corregir los errores bloqueantes.',
+    'pg.stale':'Proyecto modificado. Ejecuta la puerta de producción para recalcular.',
+    'pg.release.blocking':'{count} incidencia(s) bloqueante(s)','pg.release.unacceptedWarnings':'{count} aviso(s) no aceptado(s)',
+    'pg.release.warningLimit':'límite de avisos superado ({count}/{limit})','pg.release.readyRequired':'el criterio exige estado ready sin avisos'
   };
   function tr(key, params, locale){
     if(i18n() && i18n().t) return i18n().t(key, params || {}, locale || localeForReport());
@@ -414,10 +423,10 @@ Mantenimiento:
       warnings,
       unexpectedWarnings,
       reasons:[
-        ...(blocking.length ? [`${blocking.length} incidencia(s) bloqueante(s)`] : []),
-        ...(unexpectedWarnings.length ? [`${unexpectedWarnings.length} aviso(s) no aceptado(s)`] : []),
-        ...(warningLimitExceeded ? [`límite de avisos superado (${warnings.length}/${warningLimit})`] : []),
-        ...(!reviewAccepted ? ['el criterio exige estado ready sin avisos'] : [])
+        ...(blocking.length ? [tr('pg.release.blocking',{count:blocking.length},localeForReport(opts))] : []),
+        ...(unexpectedWarnings.length ? [tr('pg.release.unacceptedWarnings',{count:unexpectedWarnings.length},localeForReport(opts))] : []),
+        ...(warningLimitExceeded ? [tr('pg.release.warningLimit',{count:warnings.length,limit:warningLimit},localeForReport(opts))] : []),
+        ...(!reviewAccepted ? [tr('pg.release.readyRequired',{},localeForReport(opts))] : [])
       ]
     };
   }
@@ -425,33 +434,29 @@ Mantenimiento:
   function summarizeGate(report, options){
     const r = report || {};
     const opts = options || {};
+    const loc = localeForReport(opts);
     const counts = r.counts || summarizeCounts(r.issues || []);
     const icon = r.status === 'ready' ? '✅' : r.status === 'review' ? '⚠️' : '⛔';
     const lines = [];
-    lines.push(`${icon} Puerta de producción: ${r.status === 'ready' ? 'LISTO' : r.status === 'review' ? 'REQUIERE REVISIÓN' : 'BLOQUEADO'}`);
-    lines.push(`Modo: ${r.productionMode ? 'producción' : 'demo'}${r.strict ? ' · estricto' : ''}`);
-    lines.push(`Errores: ${counts.errors || 0} · Avisos: ${counts.warnings || 0} · Info: ${counts.info || 0}`);
+    lines.push(`${icon} ${tr('pg.summary.title',{},loc)}: ${statusLabel(r.status,loc)}`);
+    lines.push(`${tr('pg.summary.mode',{},loc)}: ${r.productionMode ? tr('pg.mode.production',{},loc) : tr('pg.mode.demo',{},loc)}${r.strict ? ' · ' + tr('pg.mode.strict',{},loc) : ''}`);
+    lines.push(tr('pg.summary.counts',{errors:counts.errors||0,warnings:counts.warnings||0,info:counts.info||0},loc));
     const cats = Object.keys(counts.byCategory || {}).sort();
     if(cats.length){
-      lines.push(''); lines.push('Resumen por categoría:');
+      lines.push(''); lines.push(tr('pg.summary.byCategory',{},loc));
       cats.forEach(cat => {
         const c = counts.byCategory[cat];
-        lines.push(`• ${cat}: ${c.errors || 0} errores · ${c.warnings || 0} avisos · ${c.info || 0} info`);
+        lines.push(tr('pg.summary.category',{category:cat,errors:c.errors||0,warnings:c.warnings||0,info:c.info||0},loc));
       });
     }
     const relevant = arr(r.issues).filter(i => opts.includeInfo || i.severity !== 'info');
     if(relevant.length){
-      lines.push(''); lines.push('Incidencias principales:');
-      relevant.slice(0, opts.limit || 80).forEach(i => lines.push(`• [${i.severity.toUpperCase()}] [${i.code}] ${i.message}`));
-      if(relevant.length > (opts.limit || 80)) lines.push(`• ... ${relevant.length - (opts.limit || 80)} incidencias más`);
+      lines.push(''); lines.push(tr('pg.summary.mainIssues',{},loc));
+      relevant.slice(0, opts.limit || 80).forEach(i => lines.push(tr('pg.summary.issue',{severity:severityLabel(i.severity,loc),code:i.code,message:localizedIssueMessage(i,loc)},loc)));
+      if(relevant.length > (opts.limit || 80)) lines.push(tr('pg.summary.moreIssues',{count:relevant.length-(opts.limit||80)},loc));
     }
-    if(r.status === 'ready'){
-      lines.push(''); lines.push('Resultado: no hay bloqueos detectados con los datos actuales. Aun así, revisa el despliegue real y prueba en laboratorio antes de producción.');
-    }else if(r.status === 'review'){
-      lines.push(''); lines.push('Resultado: se puede continuar en modo demo, pero conviene resolver los avisos antes de declarar producción.');
-    }else{
-      lines.push(''); lines.push('Resultado: no exportes ni apliques configuraciones en producción hasta corregir los errores bloqueantes.');
-    }
+    lines.push('');
+    lines.push(tr(r.status === 'ready' ? 'pg.summary.result.ready' : r.status === 'review' ? 'pg.summary.result.review' : 'pg.summary.result.blocked',{},loc));
     return lines.join('\n');
   }
 
@@ -476,10 +481,18 @@ Mantenimiento:
     if(root.NetWizardI18n && root.NetWizardI18n.applyI18n) root.NetWizardI18n.applyI18n(card);
     $('pg-dash').appendChild(card);
     let lastReport = null;
+    let lastView = 'summary';
+    function renderLast(){
+      const out=$('productionGateOut'); if(!out) return;
+      if(lastView==='stale'){ out.textContent=tr('pg.stale'); return; }
+      if(!lastReport) return;
+      out.textContent=lastView==='guide' ? summarizeRemediationGuide(lastReport,{limit:60}) : summarizeGate(lastReport,{limit:80,remediationPreview:$('pgateShowGuide')?.checked ? 6 : 0});
+    }
     function run(){
       const prod = root.NetWizardAudit && root.NetWizardAudit.isProduction ? root.NetWizardAudit.isProduction() : false;
       const report = runProductionGate(root.NetWizardState.getSnapshot(), {productionMode:prod, strict:!!$('pgateStrict')?.checked});
       lastReport = report;
+      lastView = 'summary';
       $('productionGateOut').textContent = summarizeGate(report, {limit:80, remediationPreview:$('pgateShowGuide')?.checked ? 6 : 0});
       return report;
     }
@@ -490,17 +503,19 @@ Mantenimiento:
       const a = doc.createElement('a'); a.href = url; a.download = filename; doc.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
     $('btnProductionGate').onclick = run;
-    $('btnProductionGateGuide').onclick = () => { $('productionGateOut').textContent = summarizeRemediationGuide(ensureReport(), {limit:60}); };
+    $('btnProductionGateGuide').onclick = () => { lastView='guide'; $('productionGateOut').textContent = summarizeRemediationGuide(ensureReport(), {limit:60}); };
     $('btnProductionGateChecklist').onclick = () => { downloadText('netwizard-production-checklist.md', exportChecklistMarkdown(ensureReport(), {locale:localeForReport()}), 'text/markdown;charset=utf-8'); };
     $('btnProductionGateToCfg').onclick = () => { if(root.navTo) root.navTo('cfg'); };
     try{ run(); }catch(_e){}
     const markStale=()=>{
       lastReport=null;
+      lastView='stale';
       const out=$('productionGateOut');
-      if(out)out.textContent='Proyecto modificado. Ejecuta la puerta de producción para recalcular.';
+      if(out)out.textContent=tr('pg.stale');
     };
     doc.addEventListener('nw:project:changed', markStale);
     root.addEventListener && root.addEventListener('nw:mode:changed', markStale);
+    root.addEventListener && root.addEventListener('netwizard:i18n', renderLast);
   }
 
   const api = {version:'netwizard-production-gate-v3.50', runProductionGate, evaluateReleaseCriteria, summarizeGate, summarizeCounts, collectModuleIssues, applyStrictProductionEscalation, remediationForIssue, buildRemediationGuide, summarizeRemediationGuide, exportChecklistMarkdown};
