@@ -18,8 +18,17 @@ const remoteSnapshot={
   devices:[{id:'r1',name:'RTR-01',type:'router',vendorOs:'cisco_ios'}],
   ports:[],vlans:[],subnets:[],hosts:[],links:[]
 };
-let stateSnapshot=JSON.parse(JSON.stringify(remoteSnapshot));
+let stateSnapshot={
+  _schemaVersion:'3.50.0',
+  projName:'Local draft',
+  devices:[{id:'sw-local',name:'SW-LOCAL',type:'switch',vendorOs:'cisco_ios'}],
+  ports:[],vlans:[],subnets:[],hosts:[],links:[]
+};
 const replaced=[];
+const recoveries=[];
+const transitionApi={
+  createRecoverySnapshot(label,source){recoveries.push({label,source,state:JSON.parse(JSON.stringify(stateSnapshot))});}
+};
 const stateApi={
   getSnapshot(){return JSON.parse(JSON.stringify(stateSnapshot));},
   replaceProject(project,options){stateSnapshot=JSON.parse(JSON.stringify(project));replaced.push({project,options});}
@@ -93,10 +102,21 @@ const fetchFn=async(url,init)=>{
 };
 
 (async()=>{
-  const client=createClient({fetchFn,stateApi,authApi,location:{search:''}});
+  const client=createClient({fetchFn,stateApi,authApi,transitionApi,location:{search:''}});
   const opened=await client.open('prj_test');
   assert.strictEqual(opened.context.currentVersion,4);
   assert.strictEqual(opened.context.etag,'"prj_test:4"');
+  assert.strictEqual(recoveries.length,1);
+  assert.deepStrictEqual(recoveries[0],{
+    label:'project-remote-open-backup',
+    source:'pre-remote-open',
+    state:{
+      _schemaVersion:'3.50.0',
+      projName:'Local draft',
+      devices:[{id:'sw-local',name:'SW-LOCAL',type:'switch',vendorOs:'cisco_ios'}],
+      ports:[],vlans:[],subnets:[],hosts:[],links:[]
+    }
+  });
   assert.strictEqual(replaced.length,1);
   assert.strictEqual(replaced[0].options.source,'remote-project-open');
 
