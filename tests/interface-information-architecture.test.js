@@ -22,6 +22,10 @@ assert.ok(!links.includes('id="btnBuildLy"'),'Enlaces must not expose a second p
 assert.ok(!links.includes('id="btnApplyLy"'),'Enlaces must not create ports');
 assert.ok(links.includes('id="btnAddLink"'),'Enlaces must keep link creation');
 assert.ok(links.includes('id="lnkA"')&&links.includes('id="lnkB"'),'Enlaces must consume existing ports');
-assert.match(html,/data-step="links"[^>]*><div class="sb-num">6<\/div><span class="sb-label" data-i18n="nav\.links">🔗 Enlaces<\/span><\/div>/);
+assert.match(html,/data-step="physical"[^>]*><div class="sb-num">2<\/div>🗄 Inventario físico<\/div>/);
+assert.match(html,/data-step="links"[^>]*><div class="sb-num">7<\/div><span class="sb-label" data-i18n="nav\.links">🔗 Enlaces<\/span><\/div>/);
+assert.match(html,/data-step="fw"[^>]*><div class="sb-num">8<\/div>🔒 Firewall<\/div>/);
+assert.match(html,/data-step="validate"[^>]*><div class="sb-num">9<\/div>🧪 Validación & análisis<\/div>/);
+assert.match(html,/data-step="cfg"[^>]*><div class="sb-num">10<\/div>🚀 Despliegue<\/div>/);
 
 console.log('✓ La navegación separa autoridad de puertos y creación de enlaces');
