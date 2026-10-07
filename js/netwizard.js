@@ -2450,10 +2450,27 @@ function prepareJsonImportText(text){
   }
   return{project:p,warnings};
 }
+function projectHasRecoverableContent(project){
+  const p=project||{};
+  if(cleanStr(p.projName))return true;
+  const collections=['devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','wanCircuits','wifiAccessPoints','wifiSsids','customDeviceModels'];
+  if(collections.some(key=>Array.isArray(p[key])&&p[key].length))return true;
+  return !!(p.iot&&((Array.isArray(p.iot.accessNodes)&&p.iot.accessNodes.length)||(Array.isArray(p.iot.devices)&&p.iot.devices.length)));
+}
+function createProjectTransitionRecovery(label,source){
+  const history=window.NetWizardHistory;
+  const state=window.NetWizardState;
+  if(!history||typeof history.createSnapshot!=='function'||!state||typeof state.getSnapshot!=='function')return null;
+  const current=state.getSnapshot();
+  if(!projectHasRecoverableContent(current))return null;
+  return history.createSnapshot(label,{source,project:current});
+}
+window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,createRecoverySnapshot:createProjectTransitionRecovery};
 function applyJsonImportText(text,source){
   const prepared=prepareJsonImportText(text);
   if(prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
   const importSource=source||'json-import';
+  createProjectTransitionRecovery('project-import-backup','pre-import');
   window.NetWizardState.replaceProject(prepared.project,{source:importSource});
   document.dispatchEvent(new CustomEvent('nw:iot:changed',{detail:{source:importSource}}));
   return prepared;
@@ -2487,7 +2504,7 @@ if($('impJsonFile')&&$('jsonFileInput')){
     reader.readAsText(file,'utf-8');
   });
 }
-$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
+$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;createProjectTransitionRecovery('project-reset-backup','pre-reset');localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
 $('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>{const target=$('expDeploymentPackage')||$('expBundle');if(target)target.click();},200);};
 
 // ─────────────────── TOPOLOGY ───────────────────
