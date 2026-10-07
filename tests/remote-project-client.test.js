@@ -174,5 +174,15 @@ const fetchFn=async(url,init)=>{
   assert.strictEqual(await reopenClient.autoOpenFromLocation(),true);
   assert.strictEqual(reopenFetches,2);
 
-  console.log('✓ Contexto SaaS sincroniza routing/deployment y se invalida limpiamente al perder autenticación');
+  assert.strictEqual(reopenClient.handleProjectChanged({source:'device-edit'}),false);
+  assert.strictEqual(reopenClient.context().projectId,'prj_reopen');
+  assert.strictEqual(reopenClient.handleProjectChanged({source:'remote-project-open'}),false);
+  assert.strictEqual(reopenClient.context().projectId,'prj_reopen');
+  assert.strictEqual(reopenClient.handleProjectChanged({source:'reset'}),true);
+  assert.strictEqual(reopenClient.context(),null);
+  for(const source of ['history-restore','wizard-scenario-example','json-import','json-import-text','json-import-file']){
+    assert.strictEqual(reopenClient.handleProjectChanged({source}),true,source+' debe ser frontera local');
+  }
+
+  console.log('✓ Contexto SaaS se invalida en pérdida de auth y reemplazos locales sin romper ediciones remotas');
 })().catch(err=>{console.error(err);process.exitCode=1;});
