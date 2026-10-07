@@ -2450,12 +2450,33 @@ function prepareJsonImportText(text){
   }
   return{project:p,warnings};
 }
+function isBootstrapIotSeed(iot){
+  const a=iot&&Array.isArray(iot.accessNodes)&&iot.accessNodes.length===1?iot.accessNodes[0]:null;
+  const d=iot&&Array.isArray(iot.devices)&&iot.devices.length===1?iot.devices[0]:null;
+  if(!a||!d)return false;
+  return a.name==='AP IoT principal'&&a.type==='wifi_ap'&&a.vendor==='generic'&&!a.model&&!a.mgmtIp&&!a.mgmtVlanRef&&!a.parentDeviceId&&!a.parentPortId&&!a.locationId&&!a.physicalLocation&&!a.locationRole&&a.serviceName==='IoT-Sensors'&&!a.serviceVlanRef&&a.notes==='SSID IoT con aislamiento de clientes.'&&
+    d.name==='Sensor temperatura'&&d.type==='sensor'&&d.tech==='wifi'&&d.accessNodeId===a.id&&!d.identifier&&!d.vlanRef&&!d.locationId&&!d.physicalLocation&&!d.locationRole&&d.credentialAlias==='wifi-iot-main'&&!d.notes;
+}
+function recoveryComparableProject(project){
+  const copy=JSON.parse(JSON.stringify(normalizeProject(project||defS())));
+  const baseline=JSON.parse(JSON.stringify(normalizeProject(defS())));
+  for(const p of [copy,baseline]){
+    p.step='dash';
+    p.uiSort={};
+    p.topo={pos:{}};
+    p.visual=JSON.parse(JSON.stringify(defS().visual));
+    if(p.iot){
+      p.iot.map=JSON.parse(JSON.stringify(defS().iot.map));
+      p.iot.selected=null;
+      if(isBootstrapIotSeed(p.iot)){p.iot.accessNodes=[];p.iot.devices=[];}
+    }
+  }
+  const canonical=v=>Array.isArray(v)?v.map(canonical):(v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>(o[k]=canonical(v[k]),o),{}):v);
+  return {current:JSON.stringify(canonical(copy)),baseline:JSON.stringify(canonical(baseline))};
+}
 function projectHasRecoverableContent(project){
-  const p=project||{};
-  if(cleanStr(p.projName))return true;
-  const collections=['devices','ports','vlans','subnets','hosts','links','fwRules','physicalLocations','wanCircuits','wifiAccessPoints','wifiSsids','customDeviceModels'];
-  if(collections.some(key=>Array.isArray(p[key])&&p[key].length))return true;
-  return !!(p.iot&&((Array.isArray(p.iot.accessNodes)&&p.iot.accessNodes.length)||(Array.isArray(p.iot.devices)&&p.iot.devices.length)));
+  const comparable=recoveryComparableProject(project);
+  return comparable.current!==comparable.baseline;
 }
 function createProjectTransitionRecovery(label,source){
   const history=window.NetWizardHistory;
@@ -2465,7 +2486,7 @@ function createProjectTransitionRecovery(label,source){
   if(!projectHasRecoverableContent(current))return null;
   return history.createSnapshot(label,{source,project:current});
 }
-window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,createRecoverySnapshot:createProjectTransitionRecovery};
+window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,recoveryComparableProject,createRecoverySnapshot:createProjectTransitionRecovery};
 function applyJsonImportText(text,source){
   const prepared=prepareJsonImportText(text);
   if(prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
