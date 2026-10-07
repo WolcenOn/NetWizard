@@ -109,6 +109,7 @@
     if(raw==='policy-intent-apply') return tr('firewall.policy.history.applySnapshot');
     if(raw==='project-import-backup') return tr('history.auto.beforeImport');
     if(raw==='project-reset-backup') return tr('history.auto.beforeReset');
+    if(raw==='project-remote-open-backup') return tr('history.auto.beforeRemoteOpen');
     return raw;
   }
   function snapshotSourceText(source){
@@ -116,6 +117,7 @@
     if(raw==='manual') return tr('history.source.manual');
     if(raw==='pre-import') return tr('history.source.preImport');
     if(raw==='pre-reset') return tr('history.source.preReset');
+    if(raw==='pre-remote-open') return tr('history.source.preRemoteOpen');
     return raw;
   }
   function ensureHistoryCard(){

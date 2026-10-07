@@ -1936,5 +1936,7 @@
   "history.auto.beforeImport": "Antes de importar otro proyecto",
   "history.auto.beforeReset": "Antes de crear un proyecto nuevo",
   "history.source.preImport": "copia automática antes de importar",
-  "history.source.preReset": "copia automática antes de nuevo proyecto"
+  "history.source.preReset": "copia automática antes de nuevo proyecto",
+  "history.auto.beforeRemoteOpen": "Antes de abrir un proyecto remoto",
+  "history.source.preRemoteOpen": "copia automática antes de abrir proyecto remoto"
 }
