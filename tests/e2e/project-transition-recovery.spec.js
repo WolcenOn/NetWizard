@@ -59,13 +59,35 @@ test('import y nuevo proyecto crean recuperación automática restaurable', asyn
   expect(errors).toEqual([]);
 });
 
-test('un proyecto vacío no genera backups automáticos inútiles', async ({page})=>{
+test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada sí', async ({page})=>{
   await resetStorage(page);
-  const result=await page.evaluate(()=>{
+  const empty=await page.evaluate(()=>{
     const api=window.NetWizardProjectTransitions;
+    const current=window.NetWizardState.getSnapshot();
     const before=window.NetWizardHistory.listSnapshots().length;
     const snap=api.createRecoverySnapshot('project-import-backup','pre-import');
-    return {recoverable:api.projectHasRecoverableContent(window.NetWizardState.getSnapshot()),before,after:window.NetWizardHistory.listSnapshots().length,snap};
+    return {
+      recoverable:api.projectHasRecoverableContent(current),
+      seededIot:{accessNodes:current.iot.accessNodes.length,devices:current.iot.devices.length},
+      before,
+      after:window.NetWizardHistory.listSnapshots().length,
+      snap
+    };
   });
-  expect(result).toEqual({recoverable:false,before:0,after:0,snap:null});
+  expect(empty.recoverable).toBe(false);
+  expect(empty.seededIot).toEqual({accessNodes:1,devices:1});
+  expect(empty).toMatchObject({before:0,after:0,snap:null});
+
+  const advanced=await page.evaluate(()=>{
+    const p=window.defS();
+    p.vrfs=[{id:'vrf1',name:'CLIENT-A'}];
+    window.NetWizardState.replaceProject(p,{source:'e2e-advanced-only'});
+    const api=window.NetWizardProjectTransitions;
+    const recoverable=api.projectHasRecoverableContent(window.NetWizardState.getSnapshot());
+    const snap=api.createRecoverySnapshot('project-reset-backup','pre-reset');
+    return {recoverable,snapshots:window.NetWizardHistory.listSnapshots(),snap};
+  });
+  expect(advanced.recoverable).toBe(true);
+  expect(advanced.snap).not.toBeNull();
+  expect(advanced.snapshots[0]).toMatchObject({label:'project-reset-backup',source:'pre-reset'});
 });
