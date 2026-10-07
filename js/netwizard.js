@@ -2450,12 +2450,25 @@ function prepareJsonImportText(text){
   }
   return{project:p,warnings};
 }
+function canonicalProjectValue(v){
+  return Array.isArray(v)?v.map(canonicalProjectValue):(v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>(o[k]=canonicalProjectValue(v[k]),o),{}):v);
+}
+function canonicalIotSeedEntries(iot){
+  if(!iot||!Array.isArray(iot.accessNodes)||iot.accessNodes.length!==1||!Array.isArray(iot.devices)||iot.devices.length!==1)return '';
+  const copy=JSON.parse(JSON.stringify({accessNodes:iot.accessNodes,devices:iot.devices}));
+  const accessId=copy.accessNodes[0].id;
+  if(!accessId||copy.devices[0].accessNodeId!==accessId)return '';
+  copy.accessNodes[0].id='seed-access';
+  copy.devices[0].id='seed-device';
+  copy.devices[0].accessNodeId='seed-access';
+  return JSON.stringify(canonicalProjectValue(copy));
+}
 function isBootstrapIotSeed(iot){
-  const a=iot&&Array.isArray(iot.accessNodes)&&iot.accessNodes.length===1?iot.accessNodes[0]:null;
-  const d=iot&&Array.isArray(iot.devices)&&iot.devices.length===1?iot.devices[0]:null;
-  if(!a||!d)return false;
-  return a.name==='AP IoT principal'&&a.type==='wifi_ap'&&a.vendor==='generic'&&!a.model&&!a.mgmtIp&&!a.mgmtVlanRef&&!a.parentDeviceId&&!a.parentPortId&&!a.locationId&&!a.physicalLocation&&!a.locationRole&&a.serviceName==='IoT-Sensors'&&!a.serviceVlanRef&&a.notes==='SSID IoT con aislamiento de clientes.'&&
-    d.name==='Sensor temperatura'&&d.type==='sensor'&&d.tech==='wifi'&&d.accessNodeId===a.id&&!d.identifier&&!d.vlanRef&&!d.locationId&&!d.physicalLocation&&!d.locationRole&&d.credentialAlias==='wifi-iot-main'&&!d.notes;
+  const seedProject=defS();
+  seedProject.iot.accessNodes=[{id:'seed-access',name:'AP IoT principal',type:'wifi_ap',vendor:'generic',model:'',mgmtIp:'',mgmtVlanRef:'',parentDeviceId:'',parentPortId:'',locationId:'',physicalLocation:'',locationRole:'',serviceName:'IoT-Sensors',serviceVlanRef:'',notes:'SSID IoT con aislamiento de clientes.'}];
+  seedProject.iot.devices=[{id:'seed-device',name:'Sensor temperatura',type:'sensor',tech:'wifi',accessNodeId:'seed-access',identifier:'',vlanRef:'',locationId:'',physicalLocation:'',locationRole:'',credentialAlias:'wifi-iot-main',notes:''}];
+  const expected=normalizeProject(seedProject).iot;
+  return canonicalIotSeedEntries(iot)!==''&&canonicalIotSeedEntries(iot)===canonicalIotSeedEntries(expected);
 }
 function recoveryComparableProject(project){
   const copy=JSON.parse(JSON.stringify(normalizeProject(project||defS())));
@@ -2471,8 +2484,7 @@ function recoveryComparableProject(project){
       if(isBootstrapIotSeed(p.iot)){p.iot.accessNodes=[];p.iot.devices=[];}
     }
   }
-  const canonical=v=>Array.isArray(v)?v.map(canonical):(v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>(o[k]=canonical(v[k]),o),{}):v);
-  return {current:JSON.stringify(canonical(copy)),baseline:JSON.stringify(canonical(baseline))};
+  return {current:JSON.stringify(canonicalProjectValue(copy)),baseline:JSON.stringify(canonicalProjectValue(baseline))};
 }
 function projectHasRecoverableContent(project){
   const comparable=recoveryComparableProject(project);
