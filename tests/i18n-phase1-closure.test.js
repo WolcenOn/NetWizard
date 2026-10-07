@@ -73,6 +73,7 @@ test('Production gate locale switching rerenders the existing result without rec
   const src = fs.readFileSync(path.join(root,'js','netwizard-production-gate.js'),'utf8');
   assert.ok(src.includes("root.addEventListener && root.addEventListener('netwizard:i18n', renderLast)"));
   assert.ok(src.includes("if(lastView==='stale')"));
+  assert.ok(src.includes("const report=ensureReport(); lastView='guide'"));
   assert.ok(!src.includes("if(out)out.textContent='Proyecto modificado."));
 });
 
