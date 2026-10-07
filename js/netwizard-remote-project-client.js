@@ -230,7 +230,12 @@ function mount(){
   const tryOpen=()=>singleton.autoOpenFromLocation().catch(err=>{
     if(root.console&&typeof root.console.warn==='function')root.console.warn('NetWizard remote project open failed',err);
   });
-  if(typeof root.addEventListener==='function')root.addEventListener('nw:auth:changed',tryOpen);
+  const onAuthChanged=(event)=>{
+    const detail=event&&event.detail||{};
+    if(detail.authenticated===false)singleton.clear();
+    return tryOpen();
+  };
+  if(typeof root.addEventListener==='function')root.addEventListener('nw:auth:changed',onAuthChanged);
   if(root.document){
     if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout?root.setTimeout(tryOpen,0):tryOpen(),{once:true});
     else if(root.setTimeout)root.setTimeout(tryOpen,0);else tryOpen();
