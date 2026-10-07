@@ -51,6 +51,12 @@ const strictRegionMarkers = {
   ],
   'js/netwizard-incremental-generators.js': [
     ['function buildPlan','const api=']
+  ],
+  'js/netwizard-history.js': [
+    ['function ensureHistoryCard(){','function boot(){']
+  ],
+  'js/netwizard-production-gate.js': [
+    ['function evaluateReleaseCriteria','const api =']
   ]
 };
 const skipFiles = new Set(['js/netwizard-i18n.js']);
