@@ -196,6 +196,17 @@ function createClient(options){
     const current=detail||{};
     if(current.authenticated===false)clear();
   }
+  function handleProjectChanged(detail){
+    const source=clean(detail&&detail.source);
+    const localBoundary=
+      source==='reset'||
+      source==='history-restore'||
+      source==='wizard-scenario-example'||
+      source==='json-import'||
+      source.startsWith('json-import-');
+    if(localBoundary&&context)clear();
+    return localBoundary;
+  }
   async function autoOpenFromLocation(){
     if(!locationObj)return false;
     let id='';
@@ -219,6 +230,7 @@ function createClient(options){
     context:contextSnapshot,
     clear,
     handleAuthChanged,
+    handleProjectChanged,
     open,
     saveCurrent,
     canUsePrivateRouting,
@@ -242,6 +254,7 @@ function mount(){
   };
   if(typeof root.addEventListener==='function')root.addEventListener('nw:auth:changed',onAuthChanged);
   if(root.document){
+    root.document.addEventListener('nw:project:changed',event=>singleton.handleProjectChanged(event&&event.detail||{}));
     if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>root.setTimeout?root.setTimeout(tryOpen,0):tryOpen(),{once:true});
     else if(root.setTimeout)root.setTimeout(tryOpen,0);else tryOpen();
   }
