@@ -1936,5 +1936,7 @@
   "history.auto.beforeImport": "Before importing another project",
   "history.auto.beforeReset": "Before creating a new project",
   "history.source.preImport": "automatic backup before import",
-  "history.source.preReset": "automatic backup before new project"
+  "history.source.preReset": "automatic backup before new project",
+  "history.auto.beforeRemoteOpen": "Before opening a remote project",
+  "history.source.preRemoteOpen": "automatic backup before remote project open"
 }
