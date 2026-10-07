@@ -503,7 +503,7 @@ Mantenimiento:
       const a = doc.createElement('a'); a.href = url; a.download = filename; doc.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
     $('btnProductionGate').onclick = run;
-    $('btnProductionGateGuide').onclick = () => { lastView='guide'; $('productionGateOut').textContent = summarizeRemediationGuide(ensureReport(), {limit:60}); };
+    $('btnProductionGateGuide').onclick = () => { const report=ensureReport(); lastView='guide'; $('productionGateOut').textContent = summarizeRemediationGuide(report, {limit:60}); };
     $('btnProductionGateChecklist').onclick = () => { downloadText('netwizard-production-checklist.md', exportChecklistMarkdown(ensureReport(), {locale:localeForReport()}), 'text/markdown;charset=utf-8'); };
     $('btnProductionGateToCfg').onclick = () => { if(root.navTo) root.navTo('cfg'); };
     try{ run(); }catch(_e){}
