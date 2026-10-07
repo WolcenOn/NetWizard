@@ -46,10 +46,13 @@
     "sidebar.sec.security": "Seguridad",
     "sidebar.sec.export": "Exportar",
     "sidebar.sec.summary": "Resumen",
+    "sidebar.sec.check": "Comprobar",
+    "sidebar.sec.deploy": "Desplegar",
     "nav.dash": "Panel",
     "nav.wiz": "Asistente",
     "nav.loc": "Ubicaciones",
     "nav.dev": "Dispositivos",
+    "nav.physical": "Inventario físico",
     "nav.ports": "Puertos & Interfaces",
     "nav.vlan": "VLANs & Subnets",
     "nav.hosts": "Hosts & IP Map",
@@ -57,6 +60,8 @@
     "nav.graphs": "Vistas gráficas",
     "nav.links": "Puertos & Enlaces",
     "nav.fw": "Firewall",
+    "nav.validate": "Validación & análisis",
+    "nav.validate": "Validation & analysis",
     "nav.cfg": "Configuración",
     "dash.title": "🏠 Panel del proyecto",
     "dash.projectName": "Nombre del proyecto",
@@ -448,6 +453,8 @@
     "rack.diagram.dragHint": "Clic para editar · arrastra la fila completa para cambiar de U o rack",
     "rack.diagram.dragHintShort": "Clic para editar · arrastra para cambiar de U o rack",
     "rack.diagram.meta": "{type} · {height}U",
+    "physical.page.title": "🗄 Inventario físico / As-Built",
+    "physical.page.subtitle": "Documenta racks, ocupación, alimentación, puertos y cableado tal como existen.",
     "physical.deviceInventory.title": "Inventario del equipo",
     "physical.deviceInventory.hint": "La colocación física (rack, U y altura) se gestiona en Inventario físico para mantener una única fuente de verdad.",
     "physical.deviceInventory.serial": "Número de serie",
@@ -1988,10 +1995,13 @@
     "sidebar.sec.security": "Security",
     "sidebar.sec.export": "Export",
     "sidebar.sec.summary": "Summary",
+    "sidebar.sec.check": "Check",
+    "sidebar.sec.deploy": "Deploy",
     "nav.dash": "Dashboard",
     "nav.wiz": "Wizard",
     "nav.loc": "Locations",
     "nav.dev": "Devices",
+    "nav.physical": "Physical inventory",
     "nav.ports": "Ports & Interfaces",
     "nav.vlan": "VLANs & Subnets",
     "nav.hosts": "Hosts & IP Map",
@@ -2390,6 +2400,8 @@
     "rack.diagram.dragHint": "Click to edit · drag the full row to change U or rack",
     "rack.diagram.dragHintShort": "Click to edit · drag to change U or rack",
     "rack.diagram.meta": "{type} · {height}U",
+    "physical.page.title": "🗄 Physical inventory / As-Built",
+    "physical.page.subtitle": "Document racks, occupancy, power, ports and cabling as they exist.",
     "physical.deviceInventory.title": "Device inventory",
     "physical.deviceInventory.hint": "Physical placement (rack, U and height) is managed in Physical inventory to keep a single source of truth.",
     "physical.deviceInventory.serial": "Serial number",
@@ -4008,9 +4020,9 @@
     });
   }
   function translateSidebar(doc){
-    const sections=['start','network','visual','connectivity','security','export','summary'];
+    const sections=['start','network','visual','connectivity','security','check','deploy','summary'];
     doc.querySelectorAll('.sb-sec').forEach((el,idx)=>{ const key=el.getAttribute('data-i18n')||('sidebar.sec.'+(sections[idx]||idx)); el.setAttribute('data-i18n',key); el.textContent=t(key); });
-    const stepMap={dash:'nav.dash',wiz:'nav.wiz',loc:'nav.loc',dev:'nav.dev',ports:'nav.ports',vlan:'nav.vlan',hosts:'nav.hosts',iot:'nav.iot',graphs:'nav.graphs',links:'nav.links',fw:'nav.fw',cfg:'nav.cfg'};
+    const stepMap={dash:'nav.dash',wiz:'nav.wiz',loc:'nav.loc',dev:'nav.dev',physical:'nav.physical',ports:'nav.ports',vlan:'nav.vlan',hosts:'nav.hosts',iot:'nav.iot',graphs:'nav.graphs',links:'nav.links',fw:'nav.fw',validate:'nav.validate',cfg:'nav.cfg'};
     doc.querySelectorAll('.sb-it[data-step]').forEach(el=>{
       const step=el.getAttribute('data-step'); const key=stepMap[step]; if(!key) return;
       let label=el.querySelector('.sb-label');
