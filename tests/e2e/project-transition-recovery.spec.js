@@ -66,8 +66,11 @@ test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada s
     const current=window.NetWizardState.getSnapshot();
     const before=window.NetWizardHistory.listSnapshots().length;
     const snap=api.createRecoverySnapshot('project-import-backup','pre-import');
+    const editedSeed=JSON.parse(JSON.stringify(current));
+    editedSeed.iot.devices[0].notes='sensor personalizado';
     return {
       recoverable:api.projectHasRecoverableContent(current),
+      editedSeedRecoverable:api.projectHasRecoverableContent(editedSeed),
       seededIot:{accessNodes:current.iot.accessNodes.length,devices:current.iot.devices.length},
       before,
       after:window.NetWizardHistory.listSnapshots().length,
@@ -75,6 +78,7 @@ test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada s
     };
   });
   expect(empty.recoverable).toBe(false);
+  expect(empty.editedSeedRecoverable).toBe(true);
   expect(empty.seededIot).toEqual({accessNodes:1,devices:1});
   expect(empty).toMatchObject({before:0,after:0,snap:null});
 
