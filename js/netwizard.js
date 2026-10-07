@@ -118,7 +118,9 @@ function normalizeProject(project){
   }
   return shaped;
 }
-let S=normalizeProject(loadS()||defS());
+const initialLoadedProject=loadS();
+const startedFromStoredProject=!!initialLoadedProject;
+let S=normalizeProject(initialLoadedProject||defS());
 
 function loadS(){
   try{
@@ -2486,9 +2488,19 @@ function recoveryComparableProject(project){
   }
   return {current:JSON.stringify(canonicalProjectValue(copy)),baseline:JSON.stringify(canonicalProjectValue(baseline))};
 }
+let recoveryRuntimeBaseline='';
 function projectHasRecoverableContent(project){
   const comparable=recoveryComparableProject(project);
-  return comparable.current!==comparable.baseline;
+  const baseline=recoveryRuntimeBaseline||comparable.baseline;
+  return comparable.current!==baseline;
+}
+function captureRecoveryRuntimeBaseline(){
+  if(startedFromStoredProject||recoveryRuntimeBaseline)return false;
+  recoveryRuntimeBaseline=recoveryComparableProject(projectSnapshot()).current;
+  return true;
+}
+if(!startedFromStoredProject&&window.addEventListener){
+  window.addEventListener('load',()=>setTimeout(captureRecoveryRuntimeBaseline,0),{once:true});
 }
 function createProjectTransitionRecovery(label,source){
   const history=window.NetWizardHistory;
@@ -2498,7 +2510,7 @@ function createProjectTransitionRecovery(label,source){
   if(!projectHasRecoverableContent(current))return null;
   return history.createSnapshot(label,{source,project:current});
 }
-window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,recoveryComparableProject,createRecoverySnapshot:createProjectTransitionRecovery};
+window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,recoveryComparableProject,createRecoverySnapshot:createProjectTransitionRecovery,isRuntimeBaselineReady:()=>!!recoveryRuntimeBaseline};
 function applyJsonImportText(text,source){
   const prepared=prepareJsonImportText(text);
   if(prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
