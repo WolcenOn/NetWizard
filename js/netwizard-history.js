@@ -150,14 +150,14 @@
     const thead=doc.createElement('thead'); const hr=doc.createElement('tr'); [tr('history.date'),tr('history.label'),tr('history.summary'),tr('history.actions')].forEach(t=>hr.appendChild(make(doc,'th','',t))); thead.appendChild(hr); table.appendChild(thead);
     const tbody=doc.createElement('tbody');
     items.forEach(s=>{
-      const tr=doc.createElement('tr');
-      const tdDate=make(doc,'td','mono',formatDate(s.ts)); tr.appendChild(tdDate);
-      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=snapshotLabelText(s.label); tdLabel.appendChild(b); const hint=make(doc,'div','hint',s.source==='manual'?tr('history.source.manual'):(s.source||tr('history.source.manual'))); tdLabel.appendChild(hint); tr.appendChild(tdLabel);
-      tr.appendChild(make(doc,'td','',summaryText(s.summary)));
+      const rowEl=doc.createElement('tr');
+      const tdDate=make(doc,'td','mono',formatDate(s.ts)); rowEl.appendChild(tdDate);
+      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=snapshotLabelText(s.label); tdLabel.appendChild(b); const hint=make(doc,'div','hint',s.source==='manual'?tr('history.source.manual'):(s.source||tr('history.source.manual'))); tdLabel.appendChild(hint); rowEl.appendChild(tdLabel);
+      rowEl.appendChild(make(doc,'td','',summaryText(s.summary)));
       const tdAct=doc.createElement('td'); const actions=doc.createElement('div'); actions.style.display='flex'; actions.style.gap='4px'; actions.style.flexWrap='wrap';
       const restore=make(doc,'button','btn bs bxs',tr('history.restore')); restore.type='button'; restore.dataset.hrestore=String(s.id||'');
       const del=make(doc,'button','btn bd bxs','✕'); del.type='button'; del.dataset.hdelete=String(s.id||'');
-      actions.append(restore,del); tdAct.appendChild(actions); tr.appendChild(tdAct); tbody.appendChild(tr);
+      actions.append(restore,del); tdAct.appendChild(actions); rowEl.appendChild(tdAct); tbody.appendChild(rowEl);
     });
     table.appendChild(tbody); wrap.appendChild(table); list.appendChild(wrap);
     list.querySelectorAll('[data-hrestore]').forEach(btn => btn.onclick = () => {
