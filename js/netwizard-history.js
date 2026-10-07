@@ -174,7 +174,7 @@
     if(root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', boot);
     else boot();
     root.document.addEventListener('nw:project:changed', () => { if(root.document.getElementById('historyCard')) renderHistoryCard(); });
-    root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{ const card=root.document.getElementById('historyCard'); if(card) card.remove(); ensureHistoryCard(); });
+    root.addEventListener&&root.addEventListener('netwizard:i18n',()=>{ const current=root.document.getElementById('historyLabel'); const pending=current?current.value:''; const card=root.document.getElementById('historyCard'); if(card) card.remove(); ensureHistoryCard(); const next=root.document.getElementById('historyLabel'); if(next) next.value=pending; });
   }
 })(typeof window !== 'undefined' ? window : globalThis);
 
