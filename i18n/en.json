@@ -1932,5 +1932,9 @@
   "pg.release.blocking": "{count} blocking issue(s)",
   "pg.release.unacceptedWarnings": "{count} unaccepted warning(s)",
   "pg.release.warningLimit": "warning limit exceeded ({count}/{limit})",
-  "pg.release.readyRequired": "the criterion requires ready status with no warnings"
+  "pg.release.readyRequired": "the criterion requires ready status with no warnings",
+  "history.auto.beforeImport": "Before importing another project",
+  "history.auto.beforeReset": "Before creating a new project",
+  "history.source.preImport": "automatic backup before import",
+  "history.source.preReset": "automatic backup before new project"
 }

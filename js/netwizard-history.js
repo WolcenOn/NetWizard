@@ -104,7 +104,20 @@
     return tr('history.summaryText',{devices:s.devices||0,vlans:s.vlans||0,hosts:s.hosts||0,links:s.links||0,iot:s.iotDevices||0});
   }
   function make(doc, tag, cls, text){ const el=doc.createElement(tag); if(cls)el.className=cls; if(text!==undefined)el.textContent=String(text); return el; }
-  function snapshotLabelText(label){ const raw=String(label||''); if(raw==='policy-intent-apply'){ const i18n=root.NetWizardI18n; return i18n&&typeof i18n.t==='function'?i18n.t('firewall.policy.history.applySnapshot',{}):'Antes de aplicar políticas por intención'; } return raw; }
+  function snapshotLabelText(label){
+    const raw=String(label||'');
+    if(raw==='policy-intent-apply') return tr('firewall.policy.history.applySnapshot');
+    if(raw==='project-import-backup') return tr('history.auto.beforeImport');
+    if(raw==='project-reset-backup') return tr('history.auto.beforeReset');
+    return raw;
+  }
+  function snapshotSourceText(source){
+    const raw=String(source||'manual');
+    if(raw==='manual') return tr('history.source.manual');
+    if(raw==='pre-import') return tr('history.source.preImport');
+    if(raw==='pre-reset') return tr('history.source.preReset');
+    return raw;
+  }
   function ensureHistoryCard(){
     const doc = root.document;
     if(!doc || doc.getElementById('historyCard')) return;
@@ -152,7 +165,7 @@
     items.forEach(s=>{
       const rowEl=doc.createElement('tr');
       const tdDate=make(doc,'td','mono',formatDate(s.ts)); rowEl.appendChild(tdDate);
-      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=snapshotLabelText(s.label); tdLabel.appendChild(b); const hint=make(doc,'div','hint',s.source==='manual'?tr('history.source.manual'):(s.source||tr('history.source.manual'))); tdLabel.appendChild(hint); rowEl.appendChild(tdLabel);
+      const tdLabel=doc.createElement('td'); const b=doc.createElement('b'); b.textContent=snapshotLabelText(s.label); tdLabel.appendChild(b); const hint=make(doc,'div','hint',snapshotSourceText(s.source)); tdLabel.appendChild(hint); rowEl.appendChild(tdLabel);
       rowEl.appendChild(make(doc,'td','',summaryText(s.summary)));
       const tdAct=doc.createElement('td'); const actions=doc.createElement('div'); actions.style.display='flex'; actions.style.gap='4px'; actions.style.flexWrap='wrap';
       const restore=make(doc,'button','btn bs bxs',tr('history.restore')); restore.type='button'; restore.dataset.hrestore=String(s.id||'');

@@ -1932,5 +1932,9 @@
   "pg.release.blocking": "{count} incidencia(s) bloqueante(s)",
   "pg.release.unacceptedWarnings": "{count} aviso(s) no aceptado(s)",
   "pg.release.warningLimit": "límite de avisos superado ({count}/{limit})",
-  "pg.release.readyRequired": "el criterio exige estado ready sin avisos"
+  "pg.release.readyRequired": "el criterio exige estado ready sin avisos",
+  "history.auto.beforeImport": "Antes de importar otro proyecto",
+  "history.auto.beforeReset": "Antes de crear un proyecto nuevo",
+  "history.source.preImport": "copia automática antes de importar",
+  "history.source.preReset": "copia automática antes de nuevo proyecto"
 }

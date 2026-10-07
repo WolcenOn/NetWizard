@@ -118,7 +118,9 @@ function normalizeProject(project){
   }
   return shaped;
 }
-let S=normalizeProject(loadS()||defS());
+const initialLoadedProject=loadS();
+const startedFromStoredProject=!!initialLoadedProject;
+let S=normalizeProject(initialLoadedProject||defS());
 
 function loadS(){
   try{
@@ -2450,10 +2452,70 @@ function prepareJsonImportText(text){
   }
   return{project:p,warnings};
 }
+function canonicalProjectValue(v){
+  return Array.isArray(v)?v.map(canonicalProjectValue):(v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>(o[k]=canonicalProjectValue(v[k]),o),{}):v);
+}
+function canonicalIotSeedEntries(iot){
+  if(!iot||!Array.isArray(iot.accessNodes)||iot.accessNodes.length!==1||!Array.isArray(iot.devices)||iot.devices.length!==1)return '';
+  const copy=JSON.parse(JSON.stringify({accessNodes:iot.accessNodes,devices:iot.devices}));
+  const accessId=copy.accessNodes[0].id;
+  if(!accessId||copy.devices[0].accessNodeId!==accessId)return '';
+  copy.accessNodes[0].id='seed-access';
+  copy.devices[0].id='seed-device';
+  copy.devices[0].accessNodeId='seed-access';
+  return JSON.stringify(canonicalProjectValue(copy));
+}
+function isBootstrapIotSeed(iot){
+  const seedProject=defS();
+  seedProject.iot.accessNodes=[{id:'seed-access',name:'AP IoT principal',type:'wifi_ap',vendor:'generic',model:'',mgmtIp:'',mgmtVlanRef:'',parentDeviceId:'',parentPortId:'',locationId:'',physicalLocation:'',locationRole:'',serviceName:'IoT-Sensors',serviceVlanRef:'',notes:'SSID IoT con aislamiento de clientes.'}];
+  seedProject.iot.devices=[{id:'seed-device',name:'Sensor temperatura',type:'sensor',tech:'wifi',accessNodeId:'seed-access',identifier:'',vlanRef:'',locationId:'',physicalLocation:'',locationRole:'',credentialAlias:'wifi-iot-main',notes:''}];
+  const expected=normalizeProject(seedProject).iot;
+  return canonicalIotSeedEntries(iot)!==''&&canonicalIotSeedEntries(iot)===canonicalIotSeedEntries(expected);
+}
+function recoveryComparableProject(project){
+  const copy=JSON.parse(JSON.stringify(normalizeProject(project||defS())));
+  const baseline=JSON.parse(JSON.stringify(normalizeProject(defS())));
+  for(const p of [copy,baseline]){
+    p.step='dash';
+    p.uiSort={};
+    p.topo={pos:{}};
+    p.visual=JSON.parse(JSON.stringify(defS().visual));
+    if(p.iot){
+      p.iot.map=JSON.parse(JSON.stringify(defS().iot.map));
+      p.iot.selected=null;
+      if(isBootstrapIotSeed(p.iot)){p.iot.accessNodes=[];p.iot.devices=[];}
+    }
+  }
+  return {current:JSON.stringify(canonicalProjectValue(copy)),baseline:JSON.stringify(canonicalProjectValue(baseline))};
+}
+let recoveryRuntimeBaseline='';
+function projectHasRecoverableContent(project){
+  const comparable=recoveryComparableProject(project);
+  const baseline=recoveryRuntimeBaseline||comparable.baseline;
+  return comparable.current!==baseline;
+}
+function captureRecoveryRuntimeBaseline(){
+  if(startedFromStoredProject||recoveryRuntimeBaseline)return false;
+  recoveryRuntimeBaseline=recoveryComparableProject(projectSnapshot()).current;
+  return true;
+}
+if(!startedFromStoredProject&&window.addEventListener){
+  window.addEventListener('load',()=>setTimeout(captureRecoveryRuntimeBaseline,0),{once:true});
+}
+function createProjectTransitionRecovery(label,source){
+  const history=window.NetWizardHistory;
+  const state=window.NetWizardState;
+  if(!history||typeof history.createSnapshot!=='function'||!state||typeof state.getSnapshot!=='function')return null;
+  const current=state.getSnapshot();
+  if(!projectHasRecoverableContent(current))return null;
+  return history.createSnapshot(label,{source,project:current});
+}
+window.NetWizardProjectTransitions={version:'netwizard-project-transitions-v1',projectHasRecoverableContent,recoveryComparableProject,createRecoverySnapshot:createProjectTransitionRecovery,isRuntimeBaselineReady:()=>!!recoveryRuntimeBaseline};
 function applyJsonImportText(text,source){
   const prepared=prepareJsonImportText(text);
   if(prepared.warnings.length)console.warn('NetWizard import warnings',prepared.warnings);
   const importSource=source||'json-import';
+  createProjectTransitionRecovery('project-import-backup','pre-import');
   window.NetWizardState.replaceProject(prepared.project,{source:importSource});
   document.dispatchEvent(new CustomEvent('nw:iot:changed',{detail:{source:importSource}}));
   return prepared;
@@ -2487,7 +2549,7 @@ if($('impJsonFile')&&$('jsonFileInput')){
     reader.readAsText(file,'utf-8');
   });
 }
-$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
+$('btnReset').onclick=()=>{if(!confirm(i18nText('deploy.project.resetConfirm',{},'¿Borrar todo el proyecto?')))return;createProjectTransitionRecovery('project-reset-backup','pre-reset');localStorage.removeItem(SK);localStorage.removeItem('nw_iot_embedded_v1');window.NetWizardState.replaceProject(defS(),{source:'reset'});};
 $('btnExport').onclick=()=>{navTo('cfg');setTimeout(()=>{const target=$('expDeploymentPackage')||$('expBundle');if(target)target.click();},200);};
 
 // ─────────────────── TOPOLOGY ───────────────────
