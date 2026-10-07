@@ -65,6 +65,10 @@ test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada s
     const api=window.NetWizardProjectTransitions;
     const current=window.NetWizardState.getSnapshot();
     const before=window.NetWizardHistory.listSnapshots().length;
+    const comparable=api.recoveryComparableProject(current);
+    const currentComparable=JSON.parse(comparable.current);
+    const baselineComparable=JSON.parse(comparable.baseline);
+    const diffKeys=Array.from(new Set([...Object.keys(currentComparable),...Object.keys(baselineComparable)])).filter(key=>JSON.stringify(currentComparable[key])!==JSON.stringify(baselineComparable[key]));
     const snap=api.createRecoverySnapshot('project-import-backup','pre-import');
     const editedSeed=JSON.parse(JSON.stringify(current));
     editedSeed.iot.devices[0].notes='sensor personalizado';
@@ -72,12 +76,13 @@ test('vacío e IoT bootstrap no crean backup, pero cualquier sección avanzada s
       recoverable:api.projectHasRecoverableContent(current),
       editedSeedRecoverable:api.projectHasRecoverableContent(editedSeed),
       seededIot:{accessNodes:current.iot.accessNodes.length,devices:current.iot.devices.length},
+      diffKeys,
       before,
       after:window.NetWizardHistory.listSnapshots().length,
       snap
     };
   });
-  expect(empty.recoverable).toBe(false);
+  expect(empty.recoverable, `fresh project differs at: ${empty.diffKeys.join(', ')}`).toBe(false);
   expect(empty.editedSeedRecoverable).toBe(true);
   expect(empty.seededIot).toEqual({accessNodes:1,devices:1});
   expect(empty).toMatchObject({before:0,after:0,snap:null});
