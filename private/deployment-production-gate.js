@@ -26,6 +26,7 @@ require('../js/netwizard-ipv6-vrf.js');
 require('../js/netwizard-failure-simulation.js');
 require('../js/netwizard-observed-drift.js');
 require('../js/netwizard-routing-plan.js');
+require('../js/netwizard-i18n.js');
 
 const BaseGate=require('../js/netwizard-production-gate.js');
 const ArchitectureGate=require('../js/netwizard-production-gate-architecture.js');
@@ -36,6 +37,8 @@ const UNSUPPORTED_OUTPUT=/(todavía no implementado|no implementado en navegador
 function arr(value){return Array.isArray(value)?value:[];}
 function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
 function clean(value,max){return String(value==null?'':value).trim().slice(0,max||500);}
+function localeOf(value){return clean(value,16).toLowerCase()==='en'?'en':'es';}
+function pick(locale,es,en){return localeOf(locale)==='en'?en:es;}
 function issue(code,message,extra){
   return Object.assign({
     code,
@@ -77,11 +80,12 @@ function counts(issues){
   }
   return out;
 }
-function compactProjectGate(project,generatedAt){
+function compactProjectGate(project,generatedAt,locale){
   const gate=ArchitectureGate.install()||BaseGate;
   const report=gate.runProductionGate(project||{},{
     productionMode:true,
-    strict:true
+    strict:true,
+    locale:localeOf(locale)
   });
   return {
     status:clean(report&&report.status,20)||'blocked',
@@ -98,18 +102,18 @@ function safeArtifactPath(value){
   const parts=path.split('/');
   return parts.every(part=>part&&part!=='.'&&part!=='..');
 }
-function validateArtifacts(project,result,generated){
+function validateArtifacts(project,result,generated,locale){
   const p=obj(project),r=obj(result),g=obj(generated),issues=[];
   const artifacts=arr(r.artifacts),byPath=new Map(),devices=arr(p.devices);
   for(const artifact of artifacts){
     const path=clean(artifact&&artifact.path,512);
     if(!safeArtifactPath(path)){
-      issues.push(issue('NW-PRIVATE-GATE-004','Artefacto con ruta no segura o inválida.',{path}));
+      issues.push(issue('NW-PRIVATE-GATE-004',pick(locale,'Artefacto con ruta no segura o inválida.','Artifact has an unsafe or invalid path.'),{path}));
       continue;
     }
     const count=(byPath.get(path)||0)+1;
     byPath.set(path,count);
-    if(count>1)issues.push(issue('NW-PRIVATE-GATE-005','Ruta de artefacto duplicada: '+path,{path}));
+    if(count>1)issues.push(issue('NW-PRIVATE-GATE-005',pick(locale,'Ruta de artefacto duplicada: ','Duplicate artifact path: ')+path,{path}));
   }
 
   const configSources=obj(r.configSources);
@@ -117,21 +121,21 @@ function validateArtifacts(project,result,generated){
     const id=clean(device&&device.id,256),name=clean(device&&device.name,160)||id||'dispositivo';
     if(!id)continue;
     if(configSources[id]!=='private'){
-      issues.push(issue('NW-PRIVATE-GATE-001',name+': la configuración objetivo no está acreditada como privada.',{deviceId:id}));
+      issues.push(issue('NW-PRIVATE-GATE-001',name+pick(locale,': la configuración objetivo no está acreditada como privada.',': the target configuration is not attested as privately generated.'),{deviceId:id}));
     }
     const expectedPath=clean(obj(g.configPaths)[id],512);
     const configArtifacts=expectedPath?artifacts.filter(file=>clean(file&&file.path,512)===expectedPath):[];
     if(!expectedPath||configArtifacts.length!==1){
       issues.push(issue(
         'NW-PRIVATE-GATE-002',
-        name+': se esperaba exactamente un artefacto de configuración privado en la ruta derivada y se encontraron '+configArtifacts.length+'.',
+        name+pick(locale,': se esperaba exactamente un artefacto de configuración privado en la ruta derivada y se encontraron ',': exactly one private configuration artifact was expected at the derived path; found ')+configArtifacts.length+'.',
         {deviceId:id,path:expectedPath}
       ));
       continue;
     }
     const output=String(configArtifacts[0].content==null?'':configArtifacts[0].content);
     if(output.trim().length<20||UNSUPPORTED_OUTPUT.test(output)){
-      issues.push(issue('NW-PRIVATE-GATE-003',name+': el artefacto de configuración está vacío, es demasiado corto o contiene un fallback no ejecutable.',{
+      issues.push(issue('NW-PRIVATE-GATE-003',name+pick(locale,': el artefacto de configuración está vacío, es demasiado corto o contiene un fallback no ejecutable.',': the configuration artifact is empty, too short, or contains a non-executable fallback.'),{
         deviceId:id,path:expectedPath
       }));
     }
@@ -139,50 +143,52 @@ function validateArtifacts(project,result,generated){
     const status=clean(readiness.status,40);
     if(clean(device&&device.vendorOs,80)==='cisco_ios'&&status!=='apply-ready'){
       const reasons=arr(readiness.reasons).map(x=>clean(x,300)).filter(Boolean);
-      issues.push(issue('NW-PRIVATE-GATE-010',name+': la configuración Cisco IOS no está certificada como apply-ready.'+(reasons.length?' '+reasons.join(' '):''),{
+      issues.push(issue('NW-PRIVATE-GATE-010',name+pick(locale,': la configuración Cisco IOS no está certificada como apply-ready.',': the Cisco IOS configuration is not certified as apply-ready.')+(reasons.length?' '+reasons.join(' '):''),{
         deviceId:id,path:expectedPath,configReadiness:status||'missing'
       }));
     }
   }
 
   if(!obj(r.changeSet)||!obj(r.incrementalPlan)||!obj(r.deploymentPlan)){
-    issues.push(issue('NW-PRIVATE-GATE-006','El resultado privado no contiene change set, plan incremental y deployment plan completos.'));
+    issues.push(issue('NW-PRIVATE-GATE-006',pick(locale,'El resultado privado no contiene change set, plan incremental y deployment plan completos.','The private result does not contain a complete change set, incremental plan, and deployment plan.')));
   }
   if(clean(r.runbookMarkdown,20000).length<20){
-    issues.push(issue('NW-PRIVATE-GATE-007','El deployment privado no produjo un runbook utilizable.'));
+    issues.push(issue('NW-PRIVATE-GATE-007',pick(locale,'El deployment privado no produjo un runbook utilizable.','The private deployment did not produce a usable runbook.')));
   }
   if(clean(r.rollbackMarkdown,20000).length<20){
-    issues.push(issue('NW-PRIVATE-GATE-008','El deployment privado no produjo un rollback utilizable.'));
+    issues.push(issue('NW-PRIVATE-GATE-008',pick(locale,'El deployment privado no produjo un rollback utilizable.','The private deployment did not produce a usable rollback document.')));
   }
   if(clean(r.postChangeChecklistMarkdown,20000).length<20){
-    issues.push(issue('NW-PRIVATE-GATE-009','El deployment privado no produjo un checklist post-change utilizable.'));
+    issues.push(issue('NW-PRIVATE-GATE-009',pick(locale,'El deployment privado no produjo un checklist post-change utilizable.','The private deployment did not produce a usable post-change checklist.')));
   }
   return issues;
 }
-function summarize(report){
+function summarize(report,options){
+  const locale=localeOf(options&&options.locale);
   const r=obj(report),c=obj(r.counts),lines=[];
   const icon=r.status==='ready'?'✅':r.status==='review'?'⚠️':'⛔';
-  const label=r.status==='ready'?'LISTO':r.status==='review'?'REQUIERE REVISIÓN':'BLOQUEADO';
+  const label=r.status==='ready'?pick(locale,'LISTO','READY'):r.status==='review'?pick(locale,'REQUIERE REVISIÓN','REQUIRES REVIEW'):pick(locale,'BLOQUEADO','BLOCKED');
   lines.push(icon+' Private Production Gate: '+label);
-  lines.push('Errores: '+(c.errors||0)+' · Avisos: '+(c.warnings||0)+' · Info: '+(c.info||0));
+  lines.push(pick(locale,'Errores: ','Errors: ')+(c.errors||0)+' · '+pick(locale,'Avisos: ','Warnings: ')+(c.warnings||0)+' · Info: '+(c.info||0));
   const relevant=arr(r.issues).filter(item=>item&&item.severity!=='info');
   if(relevant.length){
-    lines.push('','Incidencias:');
+    lines.push('',pick(locale,'Incidencias:','Issues:'));
     for(const item of relevant.slice(0,100)){
       lines.push('• ['+String(item.severity||'warning').toUpperCase()+'] ['+clean(item.code,80)+'] '+clean(item.message,500));
     }
-    if(relevant.length>100)lines.push('• ... '+(relevant.length-100)+' incidencia(s) más');
+    if(relevant.length>100)lines.push('• ... '+(relevant.length-100)+' '+pick(locale,'incidencia(s) más','more issue(s)'));
   }
   lines.push('');
-  if(r.status==='ready')lines.push('Resultado: proyecto y artefactos privados cumplen la puerta estricta actual.');
-  else if(r.status==='review')lines.push('Resultado: no hay bloqueos, pero existen avisos que requieren revisión antes de declarar producción.');
-  else lines.push('Resultado: no presentes ni apliques este deployment como listo para producción.');
+  if(r.status==='ready')lines.push(pick(locale,'Resultado: proyecto y artefactos privados cumplen la puerta estricta actual.','Result: the project and private artifacts pass the current strict gate.'));
+  else if(r.status==='review')lines.push(pick(locale,'Resultado: no hay bloqueos, pero existen avisos que requieren revisión antes de declarar producción.','Result: there are no blockers, but warnings require review before declaring production readiness.'));
+  else lines.push(pick(locale,'Resultado: no presentes ni apliques este deployment como listo para producción.','Result: do not present or apply this deployment as production-ready.'));
   return lines.join('\n')+'\n';
 }
-function evaluate(project,result,generatedAt,generated){
-  const projectGate=compactProjectGate(project,generatedAt);
-  const artifactIssues=result&&result.ok?validateArtifacts(project,result,generated):[
-    issue('NW-PRIVATE-GATE-000','El plan privado no se completó; no puede certificarse para producción.')
+function evaluate(project,result,generatedAt,generated,options){
+  const locale=localeOf(options&&options.locale);
+  const projectGate=compactProjectGate(project,generatedAt,locale);
+  const artifactIssues=result&&result.ok?validateArtifacts(project,result,generated,locale):[
+    issue('NW-PRIVATE-GATE-000',pick(locale,'El plan privado no se completó; no puede certificarse para producción.','The private plan did not complete and cannot be certified for production.'))
   ];
   const issues=mergeIssues(projectGate.issues,artifactIssues);
   const summaryCounts=counts(issues);
@@ -207,7 +213,7 @@ function evaluate(project,result,generatedAt,generated){
     },
     generatedAt
   };
-  report.summaryMarkdown=summarize(report);
+  report.summaryMarkdown=summarize(report,{locale});
   return report;
 }
 
