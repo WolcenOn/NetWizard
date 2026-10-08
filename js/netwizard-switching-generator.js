@@ -5,6 +5,8 @@
 (function initNetWizardSwitchingGenerator(root){
   'use strict';
   function arr(v){ return Array.isArray(v)?v:[]; }
+  function localeOf(options){ const explicit=options&&options.locale; if(String(explicit||'').trim())return String(explicit).trim().toLowerCase()==='en'?'en':'es'; const i18n=root.NetWizardI18n; return i18n&&typeof i18n.getReportLocale==='function'&&i18n.getReportLocale()==='en'?'en':'es'; }
+  function pick(options,es,en){ return localeOf(options)==='en'?en:es; }
   function clean(v){ return String(v==null?'':v).trim(); }
   function token(v,fallback){ return (clean(v||fallback).replace(/[^A-Za-z0-9_.-]/g,'_')||fallback); }
   function device(project,id){ return arr(project&&project.devices).find(d=>d.id===id)||null; }
@@ -74,7 +76,7 @@
     if(hasIpv6)L.push('ipv6 unicast-routing');
     const vtp=ciscoVtp(project,d);
     if(vtp.role!=='off'){
-      L.push('!','! VTP — revisión obligatoria antes de producción');
+      L.push('!','! '+pick(options,'VTP — valida dominio, modo, versión y pruning antes de producción; un error puede propagar cambios de VLAN a otros switches.','VTP — validate domain, mode, version, and pruning before production; an error can propagate VLAN changes to other switches.'));
       if(vtp.domain)L.push(`vtp domain ${token(vtp.domain,'VTP_DOMAIN')}`);
       if(vtp.passwordRequired)L.push('vtp password ${SECRET:VTP_PASSWORD}');
       L.push(`vtp mode ${vtp.role}`);
@@ -106,7 +108,7 @@
           L.push(`interface Vlan${mgmt.vlan.vlanId}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)} secondary`,' exit');
         }
       }else{
-        L.push('!','! Management SVI',`interface Vlan${mgmt.vlan.vlanId}`,` description Management_${token(mgmt.vlan.name,'MGMT')}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)}`,' no shutdown',' exit');
+        L.push('!','! '+pick(options,'SVI de gestión — asigna la IP administrativa del switch y su gateway de gestión.','Management SVI — assigns the switch management IP and its management gateway.'),`interface Vlan${mgmt.vlan.vlanId}`,` description Management_${token(mgmt.vlan.name,'MGMT')}`,` ip address ${mgmt.ip} ${ipv4Mask(mgmt.subnet.cidr)}`,' no shutdown',' exit');
       }
       if(!l3)L.push(`ip default-gateway ${clean(mgmt.subnet.gateway)}`);
     }
@@ -126,24 +128,24 @@
     L.push('end','write memory','!');
     return L.join('\n')+'\n';
   }
-  function junos(project,d){
-    const L=['# NetWizard switching profesional',`set system host-name ${token(d.name,'switch')}`,'set protocols rstp interface all'];
+  function junos(project,d,options){
+    const L=['# NW-SWITCHING — '+pick(options,'crea VLANs y aplica modo trunk/access, RSTP y límites MAC según el modelo.','creates VLANs and applies trunk/access mode, RSTP, and MAC limits from the model.'),`set system host-name ${token(d.name,'switch')}`,'set protocols rstp interface all'];
     arr(project.vlans).forEach(v=>L.push(`set vlans ${token(v.name,'VLAN'+v.vlanId)} vlan-id ${v.vlanId}`));
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); if(p.desc)L.push(`set interfaces ${n} description "${clean(p.desc).replace(/"/g,"'")}"`); if(p.mode==='trunk'){L.push(`set interfaces ${n} unit 0 family ethernet-switching interface-mode trunk`,`set interfaces ${n} unit 0 family ethernet-switching native-vlan-id ${nativeVid(project,p)}`); allowed(project,p).forEach(id=>L.push(`set interfaces ${n} unit 0 family ethernet-switching vlan members ${id}`));} else if(p.mode==='access'){L.push(`set interfaces ${n} unit 0 family ethernet-switching interface-mode access`,`set interfaces ${n} unit 0 family ethernet-switching vlan members ${accessVid(project,p)}`,`set protocols rstp interface ${n} edge`,`set ethernet-switching-options secure-access-port interface ${n} mac-limit 8`);} }); return L.join('\n')+'\n';
   }
-  function huawei(project,d){
-    const L=['# NetWizard switching profesional','system-view',`sysname ${token(d.name,'switch')}`,'stp enable','stp mode rstp']; const all=arr(project.vlans).map(v=>v.vlanId).filter(Boolean); if(all.length)L.push(`vlan batch ${all.join(' ')}`);
+  function huawei(project,d,options){
+    const L=['# NW-SWITCHING — '+pick(options,'crea VLANs y protege puertos de acceso/trunk con RSTP, BPDU y storm-control.','creates VLANs and protects access/trunk ports with RSTP, BPDU protection, and storm control.'),'system-view',`sysname ${token(d.name,'switch')}`,'stp enable','stp mode rstp']; const all=arr(project.vlans).map(v=>v.vlanId).filter(Boolean); if(all.length)L.push(`vlan batch ${all.join(' ')}`);
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); L.push(`interface ${n}`); if(p.desc)L.push(` description ${clean(p.desc)}`); if(p.mode==='trunk'){L.push(' port link-type trunk',` port trunk pvid vlan ${nativeVid(project,p)}`,` port trunk allow-pass vlan ${allowed(project,p).join(' ')}`,' stp root-protection');} else if(p.mode==='access'){L.push(' port link-type access',` port default vlan ${accessVid(project,p)}`,' stp edged-port enable',' stp bpdu-protection',' storm-control broadcast min-rate 64 max-rate 128');} L.push(' undo shutdown','quit'); }); L.push('return','save'); return L.join('\n')+'\n';
   }
-  function mikrotik(project,d){
-    const bridge='bridge-lan'; const L=['# NetWizard switching profesional',`/system identity set name="${token(d.name,'switch')}"`,`/interface bridge add name=${bridge} vlan-filtering=yes protocol-mode=rstp`];
+  function mikrotik(project,d,options){
+    const bridge='bridge-lan'; const L=['# NW-SWITCHING — '+pick(options,'habilita bridge VLAN-aware, RSTP y filtrado de ingress según puertos access/trunk.','enables a VLAN-aware bridge, RSTP, and ingress filtering based on access/trunk port roles.'),`/system identity set name="${token(d.name,'switch')}"`,`/interface bridge add name=${bridge} vlan-filtering=yes protocol-mode=rstp`];
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); if(p.mode==='access')L.push(`/interface bridge port add bridge=${bridge} interface=${n} pvid=${accessVid(project,p)} edge=yes bpdu-guard=yes broadcast-flood=no`); else if(p.mode==='trunk')L.push(`/interface bridge port add bridge=${bridge} interface=${n} frame-types=admit-only-vlan-tagged ingress-filtering=yes`); });
     arr(project.vlans).forEach(v=>{ const tagged=ports(project,d.id).filter(p=>p.mode==='trunk'&&allowed(project,p).includes(Number(v.vlanId))).map(p=>clean(p.name||p.id)); const untagged=ports(project,d.id).filter(p=>p.mode==='access'&&accessVid(project,p)===Number(v.vlanId)).map(p=>clean(p.name||p.id)); L.push(`/interface bridge vlan add bridge=${bridge} vlan-ids=${v.vlanId}${tagged.length?` tagged=${bridge},${tagged.join(',')}`:` tagged=${bridge}`}${untagged.length?` untagged=${untagged.join(',')}`:''}`); }); return L.join('\n')+'\n';
   }
-  function aruba(project,d){
-    const L=[`; NetWizard switching profesional`,`hostname "${clean(d.name||'switch')}"`,'spanning-tree','spanning-tree mode rapid-pvst']; arr(project.vlans).forEach(v=>L.push(`vlan ${v.vlanId}`,` name "${clean(v.name||'VLAN')}"`,' exit'));
+  function aruba(project,d,options){
+    const L=[`; NW-SWITCHING — ${pick(options,'crea VLANs y aplica rapid spanning-tree y protecciones de acceso.','creates VLANs and applies rapid spanning tree and access protections.')}`,`hostname "${clean(d.name||'switch')}"`,'spanning-tree','spanning-tree mode rapid-pvst']; arr(project.vlans).forEach(v=>L.push(`vlan ${v.vlanId}`,` name "${clean(v.name||'VLAN')}"`,' exit'));
     ports(project,d.id).forEach(p=>{ const n=clean(p.name||p.id); if(p.mode==='trunk')L.push(`interface ${n}`,` tagged vlan ${allowed(project,p).join(',')}`,` untagged vlan ${nativeVid(project,p)}`,' spanning-tree root-guard',' exit'); else if(p.mode==='access')L.push(`interface ${n}`,` untagged vlan ${accessVid(project,p)}`,' spanning-tree admin-edge-port',' spanning-tree bpdu-protection',' exit'); }); return L.join('\n')+'\n';
   }
-  function render(project,deviceId,vendor,options){ const d=device(project,deviceId); if(!isSwitch(d))return ''; const v=clean(vendor||d.vendorOs); if(v==='cisco_ios')return cisco(project,d,options); if(v==='juniper_junos')return junos(project,d); if(v==='huawei_vrp')return huawei(project,d); if(v==='mikrotik_routeros')return mikrotik(project,d); if(v==='aruba_aoss')return aruba(project,d); return ''; }
+  function render(project,deviceId,vendor,options){ const d=device(project,deviceId); if(!isSwitch(d))return ''; const v=clean(vendor||d.vendorOs); if(v==='cisco_ios')return cisco(project,d,options); if(v==='juniper_junos')return junos(project,d,options); if(v==='huawei_vrp')return huawei(project,d,options); if(v==='mikrotik_routeros')return mikrotik(project,d,options); if(v==='aruba_aoss')return aruba(project,d,options); return ''; }
   const api={version:'netwizard-switching-generator-v1',render,cisco,ciscoVtp,junos,huawei,mikrotik,aruba,isL3Switch,ownedGatewayVlans}; root.NetWizardSwitchingGenerator=api; if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
