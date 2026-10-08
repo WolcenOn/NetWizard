@@ -75,7 +75,7 @@ const fetchFn=async(url,init)=>{
   }
   if(step===4){
     const body=JSON.parse(init.body);
-    assert.deepStrictEqual(body,{expectedVersion:5});
+    assert.deepStrictEqual(body,{expectedVersion:5,reportLocale:'es'});
     assert.strictEqual(init.headers['X-NetWizard-CSRF'],'csrf-123');
     return response(200,{
       contractVersion:'netwizard-private-deployment-plan-v2',
