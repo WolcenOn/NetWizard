@@ -517,24 +517,25 @@ function create(project,options){
       return Switching.render(ctx.project,ctx.deviceId,ctx.vendor,{
         ipv4Acl:firewallAcl(ctx.project,ctx.deviceId),
         ipv6Acl:ipv6.text,
-        policyVlanRefs:policyVlanRefsForDevice(ctx.project,ctx.deviceId)
+        policyVlanRefs:policyVlanRefsForDevice(ctx.project,ctx.deviceId),
+        locale:clean(opts.locale,16)||'es'
       });
     }
   });
   pipeline.registerRenderer({
     id:'edge.firewall',priority:300,
     supports(ctx){return ctx.vendor==='fortinet'||ctx.vendor==='pfsense';},
-    render(ctx){return Firewall.render(ctx.project,ctx.deviceId,ctx.vendor);}
+    render(ctx){return Firewall.render(ctx.project,ctx.deviceId,ctx.vendor,null,{locale:clean(opts.locale,16)||'es'});}
   });
   pipeline.registerStage({
     id:'routing.cisco',order:100,
     supports(ctx){return ctx.vendor==='cisco_ios'&&isRoutingDevice(ctx.device);},
-    apply(config,ctx){return CiscoRouting.appendToConfig(config,ctx.project,ctx.deviceId);}
+    apply(config,ctx){return CiscoRouting.appendToConfig(config,ctx.project,ctx.deviceId,null,{locale:clean(opts.locale,16)||'es'});}
   });
   pipeline.registerStage({
     id:'routing.multivendor',order:110,
     supports(ctx){return ['juniper_junos','huawei_vrp','mikrotik_routeros'].includes(ctx.vendor)&&!isSwitch(ctx.device);},
-    apply(config,ctx){return MultiRouting.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}
+    apply(config,ctx){return MultiRouting.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor,null,{locale:clean(opts.locale,16)||'es'});}
   });
   pipeline.registerStage({
     id:'segmentation.cisco',order:130,
@@ -552,12 +553,12 @@ function create(project,options){
   pipeline.registerStage({
     id:'security.access',order:200,
     supports(ctx){return isSwitch(ctx.device);},
-    apply(config,ctx){return Access.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor);}
+    apply(config,ctx){return Access.appendToConfig(config,ctx.project,ctx.deviceId,ctx.vendor,null,{locale:clean(opts.locale,16)||'es'});}
   });
   pipeline.registerStage({
     id:'management.baseline',order:300,
     supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
-    apply(config,ctx){return Management.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
+    apply(config,ctx){return Management.append(config,ctx.project,ctx.deviceId,ctx.vendor,null,{locale:clean(opts.locale,16)||'es'});}
   });
   pipeline.registerStage({
     id:'ha.services',order:400,
