@@ -473,8 +473,8 @@ function configPath(device,index){
   const vendor=clean(device&&device.vendorOs,80)||'generic';
   return 'configs/'+String(index+1).padStart(2,'0')+'-'+safeName(device&&device.name,'device')+'-'+safeName(device&&device.id,'id')+'-'+safeName(vendor,'vendor')+'.'+extension(vendor);
 }
-function create(project){
-  const p=obj(project);
+function create(project,options){
+  const p=obj(project),opts=options||{};
   const fallback=(deviceId,format)=>{
     const device=arr(p.devices).find(x=>x&&x.id===deviceId);
     const vendor=clean(format||(device&&device.vendorOs),80);
@@ -496,7 +496,8 @@ function create(project){
         ])]
       };
     },
-    netUtils:Network
+    netUtils:Network,
+    locale:clean(opts.locale,16)||'es'
   });
   pipeline.registerRenderer({
     id:'vendor.base',priority:100,
@@ -565,8 +566,8 @@ function create(project){
   });
   return pipeline;
 }
-function generateAll(project){
-  const p=obj(project),pipeline=create(p);
+function generateAll(project,options){
+  const p=obj(project),pipeline=create(p,options);
   const configs={},paths={},artifacts=[],issues=[],sources={},readiness={},capabilities={};
   for(const [index,device] of arr(p.devices).entries()){
     const id=clean(device&&device.id,256),vendor=clean(device&&device.vendorOs,80);
