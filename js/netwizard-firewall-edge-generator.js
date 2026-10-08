@@ -121,10 +121,10 @@
     lines.push('end'); return lines;
   }
 
-  function renderFortiGate(project,deviceId,suppliedPlan){
+  function renderFortiGate(project,deviceId,suppliedPlan,options){
     const dev=device(project,deviceId); if(!dev) return '';
     const plan=planFor(project,deviceId,suppliedPlan);
-    const lines=['# NetWizard FortiGate edge configuration','# Revisar nombres físicos, FortiOS y orden de políticas antes de aplicar.',`config system global`,` set hostname "${token(dev.name,'FortiGate')}"`,'end','',...fortiInterfaces(project,dev),'',...fortiAddresses(project,dev),'',...fortiRouting(project,dev,plan),'',...fortiPolicies(project,dev)];
+    const lines=['# NetWizard FortiGate edge configuration','# '+pick(options,'Revisa nombres físicos, versión FortiOS y orden de políticas: estos valores determinan interfaces, sintaxis y precedencia efectiva antes de aplicar.','Review physical interface names, FortiOS version, and policy order: they determine interfaces, syntax, and effective precedence before applying.'),`config system global`,` set hostname "${token(dev.name,'FortiGate')}"`,'end','',...fortiInterfaces(project,dev),'',...fortiAddresses(project,dev),'',...fortiRouting(project,dev,plan),'',...fortiPolicies(project,dev)];
     return lines.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
   }
 
@@ -252,7 +252,7 @@
 
   function render(project,deviceId,vendor,suppliedPlan,options){
     const v=clean(vendor||device(project,deviceId)?.vendorOs).toLowerCase();
-    if(v==='fortinet') return renderFortiGate(project,deviceId,suppliedPlan);
+    if(v==='fortinet') return renderFortiGate(project,deviceId,suppliedPlan,options);
     if(v==='pfsense') return renderPfsensePlan(project,deviceId,suppliedPlan,options);
     return '';
   }
