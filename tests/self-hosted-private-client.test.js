@@ -54,7 +54,7 @@ const Client=require('../js/netwizard-self-hosted-private-client.js');
   assert.strictEqual(calls[2].url,'/api/private/self-hosted/deployment-plan');
   assert.strictEqual(calls[2].init.headers['X-NetWizard-CSRF'],'csrf-123');
   assert.strictEqual(calls[2].init.headers['X-NetWizard-Private-Request'],'1');
-  assert.deepStrictEqual(JSON.parse(calls[2].init.body),{snapshot});
+  assert.deepStrictEqual(JSON.parse(calls[2].init.body),{snapshot,reportLocale:'es'});
   assert.ok(!('desiredConfigs' in JSON.parse(calls[2].init.body)));
 
   assert.strictEqual(await client.logout(),true);
