@@ -110,6 +110,9 @@ function createClient(options){
     const stateApi=stateProvider();
     if(!stateApi||typeof stateApi.getSnapshot!=='function')throw createError('NetWizardState unavailable',0,null);
     const snapshot=clone(stateApi.getSnapshot());
+    const reportLocale=root.NetWizardI18n&&typeof root.NetWizardI18n.getReportLocale==='function'
+      ? clean(root.NetWizardI18n.getReportLocale())
+      : 'es';
     const result=await requestJSON('/api/private/self-hosted/deployment-plan',{
       method:'POST',
       headers:{
@@ -117,7 +120,7 @@ function createClient(options){
         'X-NetWizard-Private-Request':'1',
         'X-NetWizard-CSRF':session.csrfToken
       },
-      body:JSON.stringify({snapshot})
+      body:JSON.stringify({snapshot,reportLocale})
     });
     if(result.response.status===401){session=null;emit();}
     if(!result.response.ok)throw createError('self-hosted private deployment failed',result.response.status,result.body);
