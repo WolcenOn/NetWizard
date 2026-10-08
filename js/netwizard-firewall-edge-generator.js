@@ -128,7 +128,7 @@
     return lines.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
   }
 
-  function renderPfsenseScript(project,deviceId,suppliedPlan){
+  function renderPfsenseScript(project,deviceId,suppliedPlan,options){
     const dev=device(project,deviceId); if(!dev) return '';
     const plan=planFor(project,deviceId,suppliedPlan),local=localVlans(project,dev);
     const wan=ports(project,dev.id).find(p=>interfaceRole(p)==='wan');
@@ -231,29 +231,29 @@
       }
     }
     if(plan&&plan.strategy==='static'){
-      lines.push('','// Rutas estáticas candidatas; revisar gateway/interfaz antes de activarlas.');
+      lines.push('','// '+pick(options,'Rutas estáticas candidatas: cada entrada dirige una red concreta al next-hop calculado; revisa gateway e interfaz antes de activarla.','Candidate static routes: each entry sends a specific network to the calculated next hop; review gateway and interface before enabling it.'));
       for(const r of arr(plan.staticRoutes)) lines.push('// '+clean(r.destination||r.destinationCidr)+' via '+clean(r.nextHop));
     } else if(plan&&plan.strategy==='ospf'){
-      lines.push('','// OSPF requiere el paquete FRR en pfSense; aplicar el plan neutral después de instalarlo.');
+      lines.push('','// '+pick(options,'OSPF requiere FRR en pfSense; instala y valida el paquete antes de trasladar el plan de routing a FRR.','OSPF requires FRR on pfSense; install and validate the package before translating the routing plan into FRR.'));
     }
     lines.push(
       '',
       'write_config($nw_note);',
       'interfaces_configure();',
       'filter_configure();',
-      'echo "NetWizard: configuración candidata escrita. Revisar GUI, reglas, NAT y conectividad.\\n";',
+      'echo "'+pick(options,'NetWizard: configuración candidata escrita. Revisa GUI, reglas, NAT y conectividad antes de producción.','NetWizard: candidate configuration written. Review GUI, rules, NAT, and connectivity before production.')+'\\n";',
       '?>',
       ''
     );
     return lines.join('\\n');
   }
 
-  function renderPfsensePlan(project,deviceId,suppliedPlan){ return renderPfsenseScript(project,deviceId,suppliedPlan); }
+  function renderPfsensePlan(project,deviceId,suppliedPlan,options){ return renderPfsenseScript(project,deviceId,suppliedPlan,options); }
 
-  function render(project,deviceId,vendor,suppliedPlan){
+  function render(project,deviceId,vendor,suppliedPlan,options){
     const v=clean(vendor||device(project,deviceId)?.vendorOs).toLowerCase();
     if(v==='fortinet') return renderFortiGate(project,deviceId,suppliedPlan);
-    if(v==='pfsense') return renderPfsensePlan(project,deviceId,suppliedPlan);
+    if(v==='pfsense') return renderPfsensePlan(project,deviceId,suppliedPlan,options);
     return '';
   }
 
