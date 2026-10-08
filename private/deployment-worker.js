@@ -13,6 +13,8 @@ function obj(value){return value&&typeof value==='object'&&!Array.isArray(value)
 function arr(value){return Array.isArray(value)?value:[];}
 function clean(value,max){return String(value==null?'':value).trim().slice(0,max||240);}
 
+function normalizeLocale(value){return clean(value,16).toLowerCase()==='en'?'en':'es';}
+
 function validateInput(request){
   const req=obj(request),project=obj(req.project);
   const devices=arr(project.devices);
@@ -21,7 +23,7 @@ function validateInput(request){
   }
   if(!Object.keys(project).length)throw new Error('project required');
   if(devices.length>MAX_DEVICES)throw new Error('too many devices');
-  return {project};
+  return {project,locale:normalizeLocale(req.reportLocale)};
 }
 
 function resultBase(input,generatedAt){
@@ -53,8 +55,8 @@ function resultBase(input,generatedAt){
   };
 }
 
-function finalize(result,project,generatedAt,generated){
-  const report=ProductionGate.evaluate(project,result,generatedAt,generated);
+function finalize(result,project,generatedAt,generated,locale){
+  const report=ProductionGate.evaluate(project,result,generatedAt,generated,{locale});
   result.productionReady=report.ready;
   result.productionStatus=report.status;
   result.productionGate=report;
@@ -73,14 +75,14 @@ function handle(request){
   const generatedAt=clean(req.generatedAt,80)||new Date().toISOString();
   const result=resultBase(input,generatedAt);
 
-  const generated=VendorConfig.generateAll(input.project);
+  const generated=VendorConfig.generateAll(input.project,{locale:input.locale});
   result.configSources=generated.sources;
   result.configPaths=generated.configPaths;
   result.configReadiness=generated.configReadiness||{};
   result.configCapabilities=generated.configCapabilities||{};
   result.artifacts.push(...arr(generated.artifacts));
   result.issues.push(...arr(generated.issues));
-  if(!generated.ok)return finalize(result,input.project,generatedAt,generated);
+  if(!generated.ok)return finalize(result,input.project,generatedAt,generated,input.locale);
 
   const desiredConfigs=generated.configs;
   const configPaths=generated.configPaths;
@@ -90,12 +92,12 @@ function handle(request){
     configPaths
   });
   result.changeSet=ChangeSet.publicChangeSet(changeSet);
-  result.changeSummaryMarkdown=ChangeSet.buildSummaryMarkdown(changeSet);
+  result.changeSummaryMarkdown=ChangeSet.buildSummaryMarkdown(changeSet,{locale:input.locale});
   result.artifacts.push(...arr(changeSet.artifacts).map(file=>({
     path:file.path,content:file.content,mime:'text/x-diff;charset=utf-8'
   })));
   result.issues.push(...arr(changeSet.issues));
-  if(!changeSet.ok)return finalize(result,input.project,generatedAt,generated);
+  if(!changeSet.ok)return finalize(result,input.project,generatedAt,generated,input.locale);
 
   const incrementalPlan=Incremental.buildPlan(input.project,{
     generatedAt,
@@ -104,28 +106,29 @@ function handle(request){
     configPaths
   });
   result.incrementalPlan=Incremental.publicPlan(incrementalPlan);
-  result.incrementalSummaryMarkdown=Incremental.buildSummaryMarkdown(incrementalPlan);
+  result.incrementalSummaryMarkdown=Incremental.buildSummaryMarkdown(incrementalPlan,{locale:input.locale});
   result.artifacts.push(...arr(incrementalPlan.artifacts).map(file=>({
     path:file.path,content:file.content,mime:file.mime||'text/plain;charset=utf-8'
   })));
   result.issues.push(...arr(incrementalPlan.issues));
-  if(!incrementalPlan.ok)return finalize(result,input.project,generatedAt,generated);
+  if(!incrementalPlan.ok)return finalize(result,input.project,generatedAt,generated,input.locale);
 
   const deploymentPlan=Runbook.buildDeploymentPlan(input.project,{
     generatedAt,
     changeSet,
     incrementalPlan,
-    configPaths
+    configPaths,
+    locale:input.locale
   });
   result.deploymentPlan=deploymentPlan;
   result.issues.push(...arr(deploymentPlan.issues));
-  if(!deploymentPlan.ok)return finalize(result,input.project,generatedAt,generated);
+  if(!deploymentPlan.ok)return finalize(result,input.project,generatedAt,generated,input.locale);
 
   result.ok=true;
-  result.runbookMarkdown=Runbook.buildMarkdown(deploymentPlan);
-  result.rollbackMarkdown=Runbook.buildRollbackMarkdown(deploymentPlan);
-  result.postChangeChecklistMarkdown=ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan);
-  return finalize(result,input.project,generatedAt,generated);
+  result.runbookMarkdown=Runbook.buildMarkdown(deploymentPlan,{locale:input.locale});
+  result.rollbackMarkdown=Runbook.buildRollbackMarkdown(deploymentPlan,{locale:input.locale});
+  result.postChangeChecklistMarkdown=ChangeSet.buildPostChangeChecklist(changeSet,deploymentPlan,{locale:input.locale});
+  return finalize(result,input.project,generatedAt,generated,input.locale);
 }
 
 function main(){
