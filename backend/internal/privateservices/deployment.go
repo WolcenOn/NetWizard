@@ -20,8 +20,9 @@ var (
 )
 
 type DeploymentPlanRequest struct {
-	Project     json.RawMessage `json:"project"`
-	GeneratedAt time.Time       `json:"generatedAt"`
+	Project      json.RawMessage `json:"project"`
+	GeneratedAt  time.Time       `json:"generatedAt"`
+	ReportLocale string          `json:"reportLocale,omitempty"`
 }
 
 type DeploymentArtifact struct {
@@ -168,11 +169,19 @@ func (s *Service) DeploymentConfigured() bool {
 }
 
 func (s *Service) GenerateDeploymentPlan(ctx context.Context, project json.RawMessage, generatedAt time.Time) (DeploymentPlanResult, error) {
+	return s.GenerateDeploymentPlanWithLocale(ctx, project, generatedAt, "es")
+}
+
+func (s *Service) GenerateDeploymentPlanWithLocale(ctx context.Context, project json.RawMessage, generatedAt time.Time, reportLocale string) (DeploymentPlanResult, error) {
 	if s == nil || s.deployment == nil {
 		return DeploymentPlanResult{}, ErrPrivateDeploymentUnavailable
 	}
+	locale := strings.ToLower(strings.TrimSpace(reportLocale))
+	if locale != "en" {
+		locale = "es"
+	}
 	result, err := s.deployment.Run(ctx, DeploymentPlanRequest{
-		Project: project, GeneratedAt: generatedAt,
+		Project: project, GeneratedAt: generatedAt, ReportLocale: locale,
 	})
 	if err != nil {
 		return DeploymentPlanResult{}, err
