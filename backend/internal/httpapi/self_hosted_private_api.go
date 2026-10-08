@@ -460,7 +460,8 @@ func (s *Server) handleSelfHostedPrivateDeploymentPlan(w http.ResponseWriter, r 
 	}
 
 	var body struct {
-		Snapshot json.RawMessage `json:"snapshot"`
+		Snapshot     json.RawMessage `json:"snapshot"`
+		ReportLocale string          `json:"reportLocale"`
 	}
 	maxBody := s.cfg.MaxProjectBytes + selfHostedPrivateRequestOverhead
 	if err := decodeJSON(w, r, &body, maxBody); err != nil {
@@ -472,7 +473,7 @@ func (s *Server) handleSelfHostedPrivateDeploymentPlan(w http.ResponseWriter, r 
 		return
 	}
 	checksum := projects.SnapshotChecksum(body.Snapshot)
-	result, err := s.privateServices.GenerateDeploymentPlan(r.Context(), body.Snapshot, now)
+	result, err := s.privateServices.GenerateDeploymentPlanWithLocale(r.Context(), body.Snapshot, now, body.ReportLocale)
 	if err != nil {
 		if errors.Is(err, privateservices.ErrPrivateDeploymentInvalid) {
 			http.Error(w, "private deployment request rejected", http.StatusBadRequest)
