@@ -61,21 +61,24 @@
     return lines;
   }
 
-  function render(project, deviceId, suppliedPlan){
+  function localeOf(options){ const explicit=options&&options.locale; if(String(explicit||'').trim())return String(explicit).trim().toLowerCase()==='en'?'en':'es'; const i18n=root.NetWizardI18n; return i18n&&typeof i18n.getReportLocale==='function'&&i18n.getReportLocale()==='en'?'en':'es'; }
+  function pick(options,es,en){ return localeOf(options)==='en'?en:es; }
+
+  function render(project, deviceId, suppliedPlan, options){
     const plan = devicePlan(project, deviceId, suppliedPlan);
     if(!plan) return '';
     const lines = [];
     if(plan.strategy === 'static') lines.push(...renderStatic(plan));
     else if(plan.strategy === 'ospf') lines.push(...renderOspf(plan));
     if(!lines.length) return '';
-    return ['!','! Routing generado desde plan neutral',...lines].join('\n');
+    return ['!','! NW-ROUTING — '+pick(options,'instala rutas estáticas u OSPF calculados desde el modelo; revisa next-hop, interfaces y métricas antes de aplicar.','installs static routes or OSPF derived from the model; review next hops, interfaces, and metrics before applying.'),...lines].join('\n');
   }
 
-  function appendToConfig(config, project, deviceId, suppliedPlan){
-    const block = render(project, deviceId, suppliedPlan);
+  function appendToConfig(config, project, deviceId, suppliedPlan, options){
+    const block = render(project, deviceId, suppliedPlan, options);
     if(!block) return config || '';
     const text = String(config || '');
-    const marker = '! Routing generado desde plan neutral';
+    const marker = '! NW-ROUTING';
     if(text.includes(marker)) return text;
     const endIndex = text.lastIndexOf('\nend');
     if(endIndex >= 0) return text.slice(0,endIndex) + '\n' + block + text.slice(endIndex);
