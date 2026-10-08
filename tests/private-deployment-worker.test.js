@@ -67,6 +67,14 @@ assert.throws(
   /client config inputs are no longer accepted/
 );
 
+const english=Worker.handle({project,generatedAt,reportLocale:'en'});
+assert.match(english.productionGateSummaryMarkdown,/Private Production Gate: (READY|REQUIRES REVIEW|BLOCKED)/);
+const englishConfig=english.artifacts.find(x=>x.path===english.configPaths.r1);
+assert.ok(englishConfig);
+assert.match(englishConfig.content,/NW-ROUTING/);
+assert.match(englishConfig.content,/Installs static routes|installs static routes/i);
+assert.doesNotMatch(english.productionGateSummaryMarkdown,/Errores:|Avisos:|Resultado:/);
+
 const windowsProject=JSON.parse(JSON.stringify(project));
 windowsProject.devices[0]={id:'r1',name:'WIN-UTIL',type:'server',kind:'server',vendorOs:'windows'};
 windowsProject.hosts=[{id:'h1',name:'APP-01',type:'server',vlanRef:'v10',ipMode:'static',staticIp:'10.10.10.20',deviceRef:'r1'}];
