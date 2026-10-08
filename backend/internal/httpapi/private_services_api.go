@@ -218,7 +218,8 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 	}
 
 	var body struct {
-		ExpectedVersion int64 `json:"expectedVersion"`
+		ExpectedVersion int64  `json:"expectedVersion"`
+		ReportLocale    string `json:"reportLocale"`
 	}
 	if err := decodeJSON(w, r, &body, maxPrivateDeploymentRequestBytes); err != nil {
 		writeDecodeError(w, err)
@@ -242,8 +243,8 @@ func (s *Server) handlePrivateDeploymentPlan(w http.ResponseWriter, r *http.Requ
 	}
 
 	generatedAt := time.Now().UTC()
-	result, err := s.privateServices.GenerateDeploymentPlan(
-		r.Context(), revision.Snapshot, generatedAt,
+	result, err := s.privateServices.GenerateDeploymentPlanWithLocale(
+		r.Context(), revision.Snapshot, generatedAt, body.ReportLocale,
 	)
 	if err != nil {
 		if errors.Is(err, privateservices.ErrPrivateDeploymentInvalid) {
