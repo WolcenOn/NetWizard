@@ -71,8 +71,10 @@ const english=Worker.handle({project,generatedAt,reportLocale:'en'});
 assert.match(english.productionGateSummaryMarkdown,/Private Production Gate: (READY|REQUIRES REVIEW|BLOCKED)/);
 const englishConfig=english.artifacts.find(x=>x.path===english.configPaths.r1);
 assert.ok(englishConfig);
-assert.match(englishConfig.content,/NW-ROUTING/);
-assert.match(englishConfig.content,/Installs static routes|installs static routes/i);
+assert.match(englishConfig.content,/NW-MGMT-BASELINE/);
+assert.match(englishConfig.content,/configures secure management, time synchronization, and observability/i);
+assert.match(englishConfig.content,/NW-HA-SERVICES/);
+assert.match(englishConfig.content,/configures default routes, DHCP relay, and VRRP/i);
 assert.doesNotMatch(english.productionGateSummaryMarkdown,/Errores:|Avisos:|Resultado:/);
 
 const windowsProject=JSON.parse(JSON.stringify(project));
