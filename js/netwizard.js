@@ -482,7 +482,7 @@ function buildCommentedConfig(cfg){
     if(/^default-router\s+/.test(t)) return i18nText('deploy.explain.defaultRouter',{},'Indica la puerta de enlace entregada por DHCP.');
     if(/^dns-server\s+/.test(t)) return i18nText('deploy.explain.dnsServer',{},'Define los DNS que dará el servicio DHCP.');
     if(/^lease\s+/.test(t)) return i18nText('deploy.explain.lease',{},'Establece la duración de la concesión DHCP.');
-    return i18nText('deploy.explain.generatedLine',{},'Línea de configuración generada automáticamente.');
+    return i18nText('deploy.explain.generatedLine',{command:t},'Comando específico del vendor: {command}. Revisa su efecto dentro del bloque funcional y valida la sintaxis antes de producción.');
   };
   for(const line of lines){
     if(line.trim()) out.push(line+'    ! '+explain(line));
