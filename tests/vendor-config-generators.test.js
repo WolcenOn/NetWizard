@@ -165,7 +165,7 @@ test('UniFi genera plan neutral de controlador, no CLI falsa', () => {
   const cfg = genFor(project)('r1', 'ubiquiti_unifi');
   assert.ok(cfg.includes('Procedimiento de controlador/cloud'));
   assert.ok(cfg.includes('Ubiquiti UniFi'));
-  assert.ok(cfg.includes('VLANs a transportar: 10'));
+  assert.ok(cfg.includes('VLANs a transportar por el uplink: 10'));
 });
 
 test('Cisco IOS con RoaS explícito usa fallback modular cuando el generador legacy no está disponible', () => {
