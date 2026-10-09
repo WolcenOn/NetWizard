@@ -8,6 +8,13 @@
 
   function arr(v){ return Array.isArray(v) ? v : []; }
   function clean(v){ return String(v == null ? '' : v).trim(); }
+  function localeOf(options){
+    const explicit=options&&options.locale;
+    if(clean(explicit))return clean(explicit).toLowerCase()==='en'?'en':'es';
+    const i18n=root.NetWizardI18n;
+    return i18n&&typeof i18n.getReportLocale==='function'&&i18n.getReportLocale()==='en'?'en':'es';
+  }
+  function pick(options,es,en){ return localeOf(options)==='en'?en:es; }
   function token(v, fallback){ return (clean(v || fallback).replace(/[^A-Za-z0-9_.-]/g,'_').replace(/_+/g,'_').slice(0,63) || fallback); }
   function tryRequire(p){ try { return require(p); } catch { return null; } }
   function networkUtils(){ return root.NetWizardNetworkUtils || (typeof require === 'function' ? tryRequire('./netwizard-network-utils.js') : null); }
