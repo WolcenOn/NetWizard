@@ -102,111 +102,111 @@
 
 <!-- ═══════════ WIZARD ═══════════ -->
 <div class="pg" id="pg-wiz">
-  <div class="ph"><h1>⚡ Asistente de diseño</h1><p>Crea una propuesta To-Be inicial en 3 pasos. No se usa como recorrido de inventario As-Built.</p></div>
+  <div class="ph"><h1 data-i18n="wizard.page.title">⚡ Asistente de diseño</h1><p data-i18n="wizard.page.subtitle">Crea una propuesta To-Be inicial en 3 pasos. No se usa como recorrido de inventario As-Built.</p></div>
 
   <div class="card" id="wStep1Card">
-    <div class="card-t" style="margin-bottom:10px;">Paso 1 — ¿Qué tipo de red vas a diseñar?</div>
+    <div class="card-t" style="margin-bottom:10px;" data-i18n="wizard.step1.title">Paso 1 — ¿Qué tipo de red vas a diseñar?</div>
     <div class="scgrid" id="scGrid"></div>
   </div>
 
   <div class="card" id="wModeCard" style="display:none;">
-    <div class="card-t" style="margin-bottom:10px;">Paso 1.5 — ¿Cómo quieres empezar?</div>
+    <div class="card-t" style="margin-bottom:10px;" data-i18n="wizard.mode.title">Paso 1.5 — ¿Cómo quieres empezar?</div>
     <div class="co co-ac" id="wModeInfo" style="margin-bottom:10px;"></div>
     <div class="g2">
       <button class="btn bs wiz-choice-btn" id="wNewScenario" type="button">
-        <b>✨ Nuevo</b><br>
-        <span class="hint">Continuar con el asistente y construir el escenario desde cero.</span>
+        <b data-i18n="wizard.mode.new">✨ Nuevo</b><br>
+        <span class="hint" data-i18n="wizard.mode.newHint">Continuar con el asistente y construir el escenario desde cero.</span>
       </button>
       <button class="btn bp wiz-choice-btn" id="wLoadExample" type="button">
-        <b>⭐ Cargar ejemplo</b><br>
-        <span class="hint">Abrir una Golden Path realista y editable para este escenario.</span>
+        <b data-i18n="wizard.mode.example">⭐ Cargar ejemplo</b><br>
+        <span class="hint" data-i18n="wizard.mode.exampleHint">Abrir una Golden Path realista y editable para este escenario.</span>
       </button>
     </div>
     <div class="brow">
-      <button class="btn bs" id="wBackScenario" type="button">← Elegir otro escenario</button>
+      <button class="btn bs" id="wBackScenario" type="button" data-i18n="wizard.actions.otherScenario">← Elegir otro escenario</button>
     </div>
   </div>
 
   <div class="card" id="wStep2Card" style="display:none;">
-    <div class="card-t" style="margin-bottom:10px;">Paso 2 — ¿Qué quieres conectar?</div>
-    <div class="co co-ac" style="margin-bottom:10px;">Selecciona todos los elementos que quieras incluir en tu red</div>
+    <div class="card-t" style="margin-bottom:10px;" data-i18n="wizard.step2.title">Paso 2 — ¿Qué quieres conectar?</div>
+    <div class="co co-ac" style="margin-bottom:10px;" data-i18n="wizard.step2.hint">Selecciona todos los elementos que quieras incluir en tu red</div>
     <div class="devpick" id="devPicker"></div>
     <div class="brow">
-      <button class="btn bp" id="wNext2">Siguiente →</button>
-      <button class="btn bs" id="wBack1">← Volver</button>
+      <button class="btn bp" id="wNext2" data-i18n="actions.next">Siguiente →</button>
+      <button class="btn bs" id="wBack1" data-i18n="wizard.actions.back">← Volver</button>
     </div>
   </div>
 
   <div class="card" id="wStep3Card" style="display:none;">
-    <div class="card-t" style="margin-bottom:10px;">Paso 3 — Parámetros de red</div>
+    <div class="card-t" style="margin-bottom:10px;" data-i18n="wizard.step3.title">Paso 3 — Parámetros de red</div>
     <div class="g2">
       <div>
-        <label class="fl">Bloque IP base</label><input id="wBase" value="10.10.0.0/16"/>
-        <label class="fl">Tamaño de subnet por VLAN</label>
+        <label class="fl" data-i18n="wizard.fields.baseBlock">Bloque IP base</label><input id="wBase" value="10.10.0.0/16"/>
+        <label class="fl" data-i18n="wizard.fields.subnetSize">Tamaño de subnet por VLAN</label>
         <select id="wSize">
           <option value="24">/24 — 254 hosts</option>
           <option value="25">/25 — 126 hosts</option>
           <option value="26">/26 — 62 hosts</option>
           <option value="23">/23 — 510 hosts</option>
         </select>
-        <label class="fl">Nombre firewall/router</label><input id="wFwN" placeholder="FW-EDGE-01"/>
-        <label class="fl">Nombre switch core</label><input id="wSwN" placeholder="SW-CORE-01"/>
-        <label class="fl">Seguridad</label>
-        <select id="wSec"><option value="low">Básica (Lab)</option><option value="med" selected>Media (Empresa)</option><option value="high">Alta (Producción)</option></select>
+        <label class="fl" data-i18n="wizard.fields.firewallName">Nombre firewall/router</label><input id="wFwN" placeholder="FW-EDGE-01"/>
+        <label class="fl" data-i18n="wizard.fields.coreSwitchName">Nombre switch core</label><input id="wSwN" placeholder="SW-CORE-01"/>
+        <label class="fl" data-i18n="wizard.fields.security">Seguridad</label>
+        <select id="wSec"><option value="low" data-i18n="wizard.security.low">Básica (Lab)</option><option value="med" selected data-i18n="wizard.security.medium">Media (Empresa)</option><option value="high" data-i18n="wizard.security.high">Alta (Producción)</option></select>
       </div>
       <div>
         <div class="co co-ac" id="wPreview" style="min-height:120px;"></div>
-        <div class="co co-gn" style="margin-top:8px;"><b>✓ Se generará automáticamente:</b><br>Dispositivos, VLANs con colores, subnets, interfaces, reglas de seguridad base y políticas de firewall.</div>
+        <div class="co co-gn" style="margin-top:8px;"><b data-i18n="wizard.generated.title">✓ Se generará automáticamente:</b><br><span data-i18n="wizard.generated.items">Dispositivos, VLANs con colores, subnets, interfaces, reglas de seguridad base y políticas de firewall.</span></div>
       </div>
     </div>
     <div class="brow">
-      <button class="btn bp" id="wApply">⚡ Aplicar y empezar</button>
-      <button class="btn bs" id="wBack2">← Volver</button>
+      <button class="btn bp" id="wApply" data-i18n="wizard.actions.apply">⚡ Aplicar y empezar</button>
+      <button class="btn bs" id="wBack2" data-i18n="wizard.actions.back">← Volver</button>
     </div>
   </div>
 </div>
 
 <!-- ═══════════ DISPOSITIVOS ═══════════ -->
 <div class="pg" id="pg-loc">
-  <div class="ph"><h1>📍 Paso 0 · Ubicaciones</h1></div>
+  <div class="ph"><h1 data-i18n="locations.page.title">📍 Paso 0 · Ubicaciones</h1></div>
   <div class="g2 nw-workspace-stack">
     <div>
       <div class="card">
-        <div class="card-h"><div class="card-t">📍 Ubicaciones físicas</div><span class="b bac" id="physLocCnt">0</span></div>
-        <div class="hint" style="margin-bottom:10px;">Define una jerarquía de ubicaciones tipo árbol. Ejemplo: Almacén → Oficina → Producción. Los cambios se comparten entre V4 y V5.</div>
+        <div class="card-h"><div class="card-t" data-i18n="locations.card.title">📍 Ubicaciones físicas</div><span class="b bac" id="physLocCnt">0</span></div>
+        <div class="hint" style="margin-bottom:10px;" data-i18n="locations.card.hint">Define una jerarquía de ubicaciones tipo árbol. Ejemplo: Almacén → Oficina → Producción. Los cambios se comparten entre V4 y V5.</div>
         <div class="row">
-          <div><label class="fl">Nombre</label><input id="plName" placeholder="Edificio A / Planta 1 / Rack R1 / Sala 203"/></div>
+          <div><label class="fl" data-i18n="form.name">Nombre</label><input id="plName" placeholder="Edificio A / Planta 1 / Rack R1 / Sala 203" data-i18n-placeholder="locations.placeholder.name"/></div>
           <div><label class="fl" data-i18n="form.type">Tipo</label>
             <select id="plType">
-              <option value="site">Sede</option>
-              <option value="campus">Campus</option>
-              <option value="building" selected>Edificio</option>
-              <option value="floor">Planta</option>
-              <option value="room">Habitación</option>
-              <option value="rack">Rack</option>
-              <option value="zone">Zona</option>
-              <option value="desk">Puesto</option>
-              <option value="other">Otra</option>
+              <option value="site" data-i18n="locations.type.site">Sede</option>
+              <option value="campus" data-i18n="locations.type.campus">Campus</option>
+              <option value="building" selected data-i18n="locations.type.building">Edificio</option>
+              <option value="floor" data-i18n="locations.type.floor">Planta</option>
+              <option value="room" data-i18n="locations.type.room">Habitación</option>
+              <option value="rack" data-i18n="locations.type.rack">Rack</option>
+              <option value="zone" data-i18n="locations.type.zone">Zona</option>
+              <option value="desk" data-i18n="locations.type.desk">Puesto</option>
+              <option value="other" data-i18n="locations.type.other">Otra</option>
             </select>
           </div>
         </div>
         <div class="row">
-          <div><label class="fl">Ubicación superior</label><select id="plParent"></select></div>
-          <div><label class="fl">Distancia a superior (m)</label><input id="plDistance" type="number" min="0" step="0.1" placeholder="12.5"/></div>
+          <div><label class="fl" data-i18n="locations.fields.parent">Ubicación superior</label><select id="plParent"></select></div>
+          <div><label class="fl" data-i18n="locations.fields.distance">Distancia a superior (m)</label><input id="plDistance" type="number" min="0" step="0.1" placeholder="12.5"/></div>
         </div>
-        <label class="fl">Notas</label><input id="plNotes" placeholder="Jerarquía física, observaciones, tramo, etc."/>
+        <label class="fl" data-i18n="form.notes">Notas</label><input id="plNotes" placeholder="Jerarquía física, observaciones, tramo, etc." data-i18n-placeholder="locations.placeholder.notes"/>
         <input type="hidden" id="plEditId"/>
         <div class="brow">
-          <button type="button" class="btn bp" id="btnAddPhysLoc">➕ Añadir ubicación</button>
-          <button type="button" class="btn bs" id="btnCancelPhysLocEdit" style="display:none;">Cancelar edición</button>
+          <button type="button" class="btn bp" id="btnAddPhysLoc" data-i18n="locations.actions.add">➕ Añadir ubicación</button>
+          <button type="button" class="btn bs" id="btnCancelPhysLocEdit" style="display:none;" data-i18n="locations.actions.cancelEdit">Cancelar edición</button>
         </div>
         <div id="physLocList" style="margin-top:10px;"></div>
       </div>
     </div>
     <div>
       <div class="card">
-        <div class="card-h"><div class="card-t">🧭 Uso de ubicaciones</div></div>
-        <div class="hint">Puedes asignar ubicaciones desde formularios y desde la Vista Visual V5. Siempre se guarda la última modificación.</div>
+        <div class="card-h"><div class="card-t" data-i18n="locations.usage.title">🧭 Uso de ubicaciones</div></div>
+        <div class="hint" data-i18n="locations.usage.hint">Puedes asignar ubicaciones desde formularios y desde la Vista Visual V5. Siempre se guarda la última modificación.</div>
       </div>
     </div>
   </div>
