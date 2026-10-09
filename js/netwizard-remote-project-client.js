@@ -176,10 +176,13 @@ function createClient(options){
   async function generatePrivateDeploymentPlan(){
     if(!context)throw createError('remote project context required',0,null);
     if(!canUsePrivateDeploymentPlan())throw createError('private deployment plan unavailable for current session',403,null);
+    const reportLocale=root.NetWizardI18n&&typeof root.NetWizardI18n.getReportLocale==='function'
+      ? clean(root.NetWizardI18n.getReportLocale())
+      : 'es';
     const result=await requestJSON('/api/projects/'+encodeURIComponent(context.projectId)+'/private/deployment-plan',{
       method:'POST',
       headers:{'Content-Type':'application/json','X-NetWizard-CSRF':csrf()},
-      body:JSON.stringify({expectedVersion:context.currentVersion})
+      body:JSON.stringify({expectedVersion:context.currentVersion,reportLocale})
     });
     const body=result.body||{};
     if(

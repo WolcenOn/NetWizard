@@ -25,6 +25,14 @@
     const core = opts.coreUtils || root.NetWizardCoreUtils || {};
     const cliText = core.safeCliText || defaultCliText;
     const cliToken = core.safeCliToken || defaultCliToken;
+    function reportLocale(){
+      const explicit=typeof opts.locale==='function'?opts.locale():opts.locale;
+      if(clean(explicit))return clean(explicit).toLowerCase()==='en'?'en':'es';
+      const i18n=root.NetWizardI18n;
+      const current=i18n&&typeof i18n.getReportLocale==='function'?i18n.getReportLocale():'es';
+      return clean(current).toLowerCase()==='en'?'en':'es';
+    }
+    function explain(es,en){return reportLocale()==='en'?en:es;}
 
     function quote(v,max=120){ return cliText(v,max).replace(/"/g,"'"); }
     function project(){ return getProject() || {}; }
@@ -128,14 +136,14 @@
       });
       const L=['!',`! ${'═'.repeat(40)}`,`! ${cliText(d.name,80)} — Cisco IOS Router/Firewall`,`! ${'═'.repeat(40)}`];
       if(needsRoaS&&!explicitRoaS&&!deterministicRoaS&&hasUnownedRoutedVlan){
-        L.push('! Aviso: gateway RoaS inferido automáticamente porque hay VLANs asignadas a este router sin una selección RoaS explícita.','! Revisa Configuración → RoaS/DHCP para fijar explícitamente la interfaz LAN.');
+        L.push(explain('! Aviso: NetWizard infirió el gateway RoaS porque estas VLANs pertenecen a este router pero no hay una selección RoaS explícita.','! Warning: NetWizard inferred the RoaS gateway because these VLANs belong to this router but no explicit RoaS selection exists.'),explain('! Revisa RoaS/DHCP y fija la interfaz LAN antes de producción para evitar aplicar subinterfaces sobre un enlace incorrecto.','! Review RoaS/DHCP and pin the LAN interface before production to avoid applying subinterfaces to the wrong link.'));
       }
       const hasIpv6=routedVlans.some(v=>{const n=ipv6NetworkByVlan(p,v.id);return n&&clean(n.prefix)&&clean(n.gateway);});
       L.push('configure terminal',`hostname ${cliToken(d.name,'router')}`);
       if(hasIpv6)L.push('ipv6 unicast-routing');
       const ports=portsByDev(p,d.id).sort((a,b)=>clean(a.name).localeCompare(clean(b.name),'es',{numeric:true}));
       if(ports.length){
-        L.push('!','! Interfaces físicas');
+        L.push('!',explain('! Interfaces físicas — habilita los puertos declarados y aplica direccionamiento L3 cuando el modelo lo define.','! Physical interfaces — enables declared ports and applies L3 addressing where the model defines it.'));
         ports.forEach(pt=>{
           L.push(`interface ${cliText(pt.name,80)}`);
           if(pt.desc) L.push(` description ${cliText(pt.desc,120)}`);
@@ -144,7 +152,7 @@
         });
       }
       if(lanIf && routedVlans.length){
-        L.push('!','! RoaS — subinterfaces VLAN',`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
+        L.push('!',explain('! RoaS — crea una subinterfaz 802.1Q por VLAN, instala su gateway y marca el tráfico interno para NAT.','! RoaS — creates one 802.1Q subinterface per VLAN, installs its gateway, and marks internal traffic for NAT.'),`interface ${cliText(lanIf,80)}`,' no ip address',' no shutdown',' exit');
         routedVlans.slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
           const sn=subnetByVlan(p,v.id); if(!sn||!sn.gateway||!sn.cidr) return;
           const v6=ipv6NetworkByVlan(p,v.id);
@@ -167,14 +175,14 @@
         if(sn.gateway) dh.push(` default-router ${sn.gateway}`);
         dh.push(` dns-server ${dhcpDns(p,v).replace(/,/g,' ')}`,` lease ${dhcpLease(p,v)}`,' exit');
       });
-      if(dh.length) L.push('!','! DHCP Pools',...dh);
+      if(dh.length) L.push('!',explain('! DHCP — reserva gateways/IPs estáticas y entrega red, router, DNS y lease a cada VLAN con DHCP activo.','! DHCP — excludes gateways/static IPs and supplies network, router, DNS, and lease settings for each DHCP-enabled VLAN.'),...dh);
       const legacyWanCidr=clean((p.roas||{}).wanCidr), legacyNh=clean((p.roas||{}).wanNh);
       const canonicalPort=wanContext.port;
       if(d.internetEdge==='yes'){
         const bindings=wanBindings.length?wanBindings:[{circuit:wanContext.primary,port:canonicalPort||{name:wanIf}}];
         const valid=bindings.filter(x=>x&&x.port&&clean(x.port.name));
         if(valid.length){
-          L.push('!','! WAN');
+          L.push('!',explain('! WAN — configura las interfaces de salida y las marca como NAT outside.','! WAN — configures egress interfaces and marks them as NAT outside.'));
           for(const binding of valid){
             const pt=binding.port,ifName=clean(pt.name);
             const wanLines=[`interface ${cliText(ifName,80)}`];
@@ -184,11 +192,11 @@
             wanLines.push(' ip nat outside',' no shutdown',' exit');
             L.push(...wanLines);
           }
-          L.push('!','! NAT overload','access-list 100 permit ip any any');
+          L.push('!',explain('! NAT overload — aplica PAT para que las redes internas compartan la IP de la interfaz WAN al salir a Internet.','! NAT overload — applies PAT so internal networks share the WAN interface address for Internet egress.'),'access-list 100 permit ip any any');
           for(const binding of valid)L.push(`ip nat inside source list 100 interface ${cliText(binding.port.name,80)} overload`);
         }
       }
-      if(d.internetEdge==='yes' && legacyNh && !wanContext.route) L.push('!','! Default route',`ip route 0.0.0.0 0.0.0.0 ${legacyNh}`);
+      if(d.internetEdge==='yes' && legacyNh && !wanContext.route) L.push('!',explain('! Ruta por defecto — envía destinos no conocidos al next-hop WAN configurado.','! Default route — sends unknown destinations to the configured WAN next hop.'),`ip route 0.0.0.0 0.0.0.0 ${legacyNh}`);
       const aclResult=getFwAcl(d.id);
       const acl=typeof aclResult==='string'?aclResult:String(aclResult&&aclResult.text||'');
       const aclV6=typeof aclResult==='object'?String(aclResult&&aclResult.ipv6Text||''):'';
@@ -215,7 +223,7 @@
 
     function genMikrotik(d){
       const p=project(), lanBridge='bridge-lan', wanIf=inferWanPort(p,d);
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — MikroTik RouterOS`,`# ${'═'.repeat(40)}`,'# Revisar nombres de interfaz antes de aplicar.','/system identity set name="'+quote(d.name||'router',64)+'"','/interface bridge add name='+lanBridge+' vlan-filtering=yes comment="LAN VLAN bridge"'];
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — MikroTik RouterOS`,`# ${'═'.repeat(40)}`,explain('# Revisa los nombres de interfaz: RouterOS aplicará bridge, VLAN y NAT sobre esos puertos concretos.','# Review interface names: RouterOS will apply bridge, VLAN, and NAT behavior to those exact ports.'),'/system identity set name="'+quote(d.name||'router',64)+'"','/interface bridge add name='+lanBridge+' vlan-filtering=yes comment="LAN VLAN bridge"'];
       portsByDev(p,d.id).forEach(pt=>{ if(pt.name!==wanIf) L.push(`/interface bridge port add bridge=${lanBridge} interface=${quote(pt.name,64)}`); });
       arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{
         const sn=subnetByVlan(p,v.id);
@@ -225,8 +233,8 @@
         L.push(`/interface bridge vlan add bridge=${lanBridge} vlan-ids=${v.vlanId} tagged=${lanBridge}`);
         if(enabledDhcp(p,v)&&sn&&sn.cidr) L.push(`/ip pool add name=pool_vlan${v.vlanId} ranges=${firstUsable(sn.cidr,20)}-${lastUsable(sn.cidr,1)}`, `/ip dhcp-server add name=dhcp_vlan${v.vlanId} interface=vlan${v.vlanId} address-pool=pool_vlan${v.vlanId} disabled=no`, `/ip dhcp-server network add address=${sn.cidr} gateway=${sn.gateway||''} dns-server=${dhcpDns(p,v).replace(/\s+/g,',')}`);
       });
-      if(d.internetEdge==='yes') L.push('# WAN / NAT',`/ip dhcp-client add interface=${quote(wanIf,64)} disabled=no`,`/ip firewall nat add chain=srcnat out-interface=${quote(wanIf,64)} action=masquerade comment="NetWizard NAT Internet"`);
-      L.push('# Seguridad mínima recomendada','/ip service disable telnet,ftp,www,api,api-ssl','/ip service set ssh address=0.0.0.0/0  # Limitar a VLAN de gestión en producción');
+      if(d.internetEdge==='yes') L.push(explain('# WAN / NAT — obtiene dirección WAN por DHCP y aplica masquerade al tráfico que sale por esa interfaz.','# WAN / NAT — obtains the WAN address by DHCP and masquerades traffic leaving that interface.'),`/ip dhcp-client add interface=${quote(wanIf,64)} disabled=no`,`/ip firewall nat add chain=srcnat out-interface=${quote(wanIf,64)} action=masquerade comment="NetWizard NAT Internet"`);
+      L.push(explain('# Gestión — deshabilita servicios inseguros y deja SSH activo; restringe después el origen a la VLAN de gestión.','# Management — disables insecure services and keeps SSH enabled; then restrict source access to the management VLAN.'),'/ip service disable telnet,ftp,www,api,api-ssl',explain('/ip service set ssh address=0.0.0.0/0  # Temporal: limitar a la red de gestión antes de producción','/ip service set ssh address=0.0.0.0/0  # Temporary: restrict to the management network before production'));
       return L.join('\n')+'\n';
     }
 
@@ -243,7 +251,7 @@
       });
       if(vids.length) L.push('dhcp enable');
       if(lanIf){ L.push(`interface ${cliText(lanIf,80)}`,' port link-type trunk'); if(vids.length)L.push(` port trunk allow-pass vlan ${vids.join(' ')}`); L.push('quit'); }
-      if(d.internetEdge==='yes') L.push(`# WAN: revisar interfaz ${wanIf}`,'# NAT/route pueden variar según modelo/licencia VRP.',`ip route-static 0.0.0.0 0.0.0.0 ${(p.roas||{}).wanNh||'NEXT_HOP_WAN'}`);
+      if(d.internetEdge==='yes') L.push(`# ${explain('WAN — valida que la interfaz de salida sea','WAN — verify the egress interface is')} ${wanIf}`,explain('# NAT y la ruta por defecto pueden variar por versión/modelo VRP; valida sintaxis y licencia antes de aplicar.','# NAT and default-route syntax may vary by VRP model/version; validate syntax and licensing before applying.'),`ip route-static 0.0.0.0 0.0.0.0 ${(p.roas||{}).wanNh||'NEXT_HOP_WAN'}`);
       L.push('return'); return L.join('\n')+'\n';
     }
 
@@ -279,29 +287,29 @@
     function genPfsense(d){
       const p=project();
       const lanIf=inferLanPort(p,d), wanIf=inferWanPort(p,d);
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — pfSense CE/Plus configuration artifact`,`# ${'═'.repeat(40)}`,'# pfSense no tiene una CLI universal para crear toda la config persistente.','# Este bloque documenta los cambios a aplicar en GUI/API/config.xml.'];
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — pfSense CE/Plus configuration artifact`,`# ${'═'.repeat(40)}`,explain('# pfSense no ofrece una CLI universal para toda la configuración persistente; este artefacto documenta cambios para GUI/API/config.xml.','# pfSense has no universal CLI for the full persistent configuration; this artifact documents changes for GUI/API/config.xml.')];
       L.push(`WAN interface: ${wanIf}`,`LAN parent interface for VLANs: ${lanIf}`);
       arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push('',`# VLAN ${v.vlanId} ${cliText(v.name||'',64)}`,'<vlan>','  <if>'+cliText(lanIf,80)+'</if>','  <tag>'+v.vlanId+'</tag>','  <descr>VLAN'+v.vlanId+'_'+vlanName(v)+'</descr>','</vlan>'); if(sn&&sn.gateway&&sn.cidr)L.push('Interface IP: '+sn.gateway+'/'+prefix(sn.cidr)); if(enabledDhcp(p,v)&&sn&&sn.cidr)L.push('DHCP range: '+firstUsable(sn.cidr,20)+' - '+lastUsable(sn.cidr,1)); });
-      L.push('','Firewall/NAT: crear reglas por VLAN según matriz NetWizard; activar outbound NAT para VLANs con salida Internet.');
+      L.push('',explain('Firewall/NAT: crea reglas por VLAN según la matriz NetWizard y activa outbound NAT sólo para VLANs con salida a Internet.','Firewall/NAT: create per-VLAN rules from the NetWizard matrix and enable outbound NAT only for VLANs with Internet access.'));
       return L.join('\n')+'\n';
     }
 
     function genCloudPlan(d,label){
       const p=project(), ports=portsByDev(p,d.id), uplink=ports.find(x=>x.mode==='trunk')||ports[0];
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — ${label}`,`# ${'═'.repeat(40)}`,'# Configuración de controlador/cloud. Aplicar en la consola del fabricante.'];
-      L.push(`# Modelo: ${cliText(d.model||'—',80)}`,`# Gestión: ${cliText(d.mgmtIp||'sin IP gestión',80)}`,`# Uplink recomendado: ${uplink?cliText(uplink.name,80):'definir puerto uplink'}${uplink&&uplink.mode==='trunk'?' trunk':' trunk recomendado'}`);
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — ${label}`,`# ${'═'.repeat(40)}`,explain('# Procedimiento de controlador/cloud: aplica estos ajustes en la consola del fabricante; no es CLI para pegar directamente.','# Controller/cloud procedure: apply these settings in the vendor console; this is not paste-ready CLI.')];
+      L.push(`# ${explain('Modelo','Model')}: ${cliText(d.model||'—',80)}`,`# ${explain('Gestión','Management')}: ${cliText(d.mgmtIp||explain('sin IP gestión','no management IP'),80)}`,`# ${explain('Uplink recomendado','Recommended uplink')}: ${uplink?cliText(uplink.name,80):explain('definir puerto uplink','define uplink port')}${uplink&&uplink.mode==='trunk'?' trunk':explain(' trunk recomendado',' trunk recommended')}`);
       const allowed=(uplink&&arr(uplink.allowedVlans).length)?arr(uplink.allowedVlans):arr(p.vlans).map(v=>v.vlanId);
-      L.push(`# VLANs a transportar: ${allowed.join(', ')||'definir'}`);
-      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`- Crear/usar red VLAN ${v.vlanId} "${cliText(v.name||'VLAN',80)}"${sn?` (${sn.cidr}, GW ${sn.gateway||'—'})`:''}`); });
-      L.push('- SSID IoT: VLAN IoT, aislamiento de clientes, acceso solo a broker/controlador/DNS/NTP.','- SSID invitados: VLAN dedicada, solo Internet, sin acceso lateral a LAN.','- Guardar credenciales como alias/secretAlias; no exportar contraseñas reales.');
+      L.push(`# ${explain('VLANs a transportar por el uplink','VLANs to carry on the uplink')}: ${allowed.join(', ')||explain('definir','define')}`);
+      arr(p.vlans).slice().sort((a,b)=>(a.vlanId||0)-(b.vlanId||0)).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`- ${explain('Crear/usar red VLAN','Create/use VLAN network')} ${v.vlanId} "${cliText(v.name||'VLAN',80)}"${sn?` (${sn.cidr}, GW ${sn.gateway||'—'})`:''}`); });
+      L.push(explain('- SSID IoT: usa VLAN IoT, aislamiento de clientes y acceso sólo a broker/controlador/DNS/NTP.','- IoT SSID: use the IoT VLAN, client isolation, and access only to broker/controller/DNS/NTP.'),explain('- SSID invitados: usa VLAN dedicada, sólo Internet y sin acceso lateral a LAN.','- Guest SSID: use a dedicated VLAN, Internet-only access, and no lateral LAN access.'),explain('- Credenciales: guarda alias/secretAlias; no exportes contraseñas reales.','- Credentials: store aliases/secretAlias values; do not export real passwords.'));
       return L.join('\n')+'\n';
     }
 
     function genGenericPlan(d){
       const p=project();
-      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — Configuración genérica`,`# ${'═'.repeat(40)}`,`# Vendor/OS no implementado directamente: ${vendor(d)}`];
+      const L=[`# ${'═'.repeat(40)}`,`# ${cliText(d.name,80)} — ${explain('Configuración genérica','Generic configuration')}`,`# ${'═'.repeat(40)}`,`# ${explain('Vendor/OS sin renderer específico; revisa y adapta esta intención antes de aplicar','Vendor/OS has no specific renderer; review and adapt this intent before applying')}: ${vendor(d)}`];
       portsByDev(p,d.id).forEach(pt=>{ L.push(`interface ${cliText(pt.name,80)}`,` description ${cliText(pt.desc||pt.role||'',80)}`,` mode ${pt.mode||'—'}`,` access-vlan ${(vlanByRef(p,pt.accessVlanRef)||{}).vlanId||'—'}`,` allowed-vlans ${arr(pt.allowedVlans).join(',')||'—'}`,' exit'); });
-      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`vlan ${v.vlanId} name ${cliText(v.name||'',60)} ${sn?sn.cidr:'sin-subnet'} gw=${sn&&sn.gateway?sn.gateway:'—'}`); });
+      arr(p.vlans).forEach(v=>{ const sn=subnetByVlan(p,v.id); L.push(`vlan ${v.vlanId} name ${cliText(v.name||'',60)} ${sn?sn.cidr:explain('sin-subnet','no-subnet')} gw=${sn&&sn.gateway?sn.gateway:'—'}`); });
       return L.join('\n')+'\n';
     }
 

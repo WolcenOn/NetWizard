@@ -105,7 +105,7 @@ test('el asistente separa infraestructura gestionada y endpoints sin switches fi
   expect(result.devices.some(device=>device.name==='SRV-Web')).toBe(false);
   expect(result.devices.every(device=>device.kind===device.type)).toBe(true);
   expect(result.apPort).toMatchObject({name:'eth0',mode:'trunk'});
-  expect(result.apConfig).toMatch(/Configuración genérica|Vendor\/OS no implementado directamente/i);
+  expect(result.apConfig).toMatch(/Configuración genérica|Generic configuration|Vendor\/OS (?:no implementado directamente|has no specific renderer)/i);
   for(const name of ['SRV-Web','AP-01','PC-01','IOT-01','NVR-01']) expect(result.hosts.some(host=>host.name===name), `${name} debe existir`).toBe(true);
   const apHost=result.hosts.find(host=>host.name==='AP-01');
   expect(apHost.deviceRef).toBeTruthy();

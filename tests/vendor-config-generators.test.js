@@ -14,13 +14,14 @@ function test(name, fn){
   catch (err) { console.error(`✗ ${name}`); throw err; }
 }
 
-function genFor(project){
+function genFor(project, locale){
   return NWV.createEnhancedGenConfig({
     originalGenConfig(devId, format){ return `! Sin vendor asignado: ${devId} ${format || ''}\n`; },
     getProject(){ return project; },
     getFwAcl(){ return '! FW ACL TEST'; },
     coreUtils: NWCore,
-    netUtils: NWU
+    netUtils: NWU,
+    locale: locale || 'es'
   });
 }
 
@@ -34,6 +35,16 @@ const baseProject = {
   roas:{wanCidr:'198.51.100.2/30',wanNh:'198.51.100.1'},
   fwRules:[]
 };
+
+test('Comentarios de configuración respetan el idioma de informes y explican el efecto', () => {
+  const es=genFor(baseProject,'es')('r1','cisco_ios');
+  const en=genFor(baseProject,'en')('r1','cisco_ios');
+  assert.match(es,/NAT overload — aplica PAT/);
+  assert.match(es,/DHCP — reserva gateways\/IPs estáticas/);
+  assert.match(en,/NAT overload — applies PAT/);
+  assert.match(en,/DHCP — excludes gateways\/static IPs/);
+  assert.doesNotMatch(en,/Interfaces físicas|Ruta por defecto|reserva gateways/);
+});
 
 test('Cisco IOS router sin RoaS explícito genera subinterfaces, DHCP, NAT y ACL', () => {
   const gen = genFor(baseProject);
@@ -152,9 +163,9 @@ test('UniFi genera plan neutral de controlador, no CLI falsa', () => {
   project.ports[1].mode = 'trunk';
   project.ports[1].allowedVlans = [10];
   const cfg = genFor(project)('r1', 'ubiquiti_unifi');
-  assert.ok(cfg.includes('Configuración de controlador/cloud'));
+  assert.ok(cfg.includes('Procedimiento de controlador/cloud'));
   assert.ok(cfg.includes('Ubiquiti UniFi'));
-  assert.ok(cfg.includes('VLANs a transportar: 10'));
+  assert.ok(cfg.includes('VLANs a transportar por el uplink: 10'));
 });
 
 test('Cisco IOS con RoaS explícito usa fallback modular cuando el generador legacy no está disponible', () => {

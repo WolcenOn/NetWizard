@@ -10,7 +10,7 @@
       "configs": [
         { "deviceId": "fw1", "vendor": "fortinet", "signatures": ["NetWizard FortiGate edge configuration", "config system interface"] },
         { "deviceId": "sw1", "vendor": "cisco_ios", "signatures": ["NetWizard switching profesional", "hostname SW-Access"] },
-        { "deviceId": "ap1", "vendor": "ubiquiti_unifi", "signatures": ["Ubiquiti UniFi", "Configuración de controlador/cloud"] }
+        { "deviceId": "ap1", "vendor": "ubiquiti_unifi", "signatures": ["Ubiquiti UniFi", "Procedimiento de controlador/cloud"] }
       ]
     },
     {

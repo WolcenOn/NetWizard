@@ -148,7 +148,7 @@ test('proyecto cloud sincroniza revisión y consume deployment plan v2 del Priva
   await expect(card.locator('#nwPrivateDeploymentOutput')).toHaveValue(/SERVER-ONLY-CONFIG/);
 
   expect(putBody.snapshot.devices[0].name).toBe('RTR-CLOUD-DEPLOY-EDITED');
-  expect(deploymentBody).toEqual({expectedVersion:5});
+  expect(deploymentBody).toEqual({expectedVersion:5,reportLocale:'es'});
   expect(deploymentBody.desiredConfigs).toBeUndefined();
   expect(deploymentBody.configPaths).toBeUndefined();
 

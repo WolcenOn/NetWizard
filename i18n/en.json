@@ -1547,7 +1547,7 @@
   "deploy.explain.defaultRouter": "Defines the default gateway delivered by DHCP.",
   "deploy.explain.dnsServer": "Defines the DNS servers delivered by DHCP.",
   "deploy.explain.lease": "Sets the DHCP lease duration.",
-  "deploy.explain.generatedLine": "Automatically generated configuration line.",
+  "deploy.explain.generatedLine": "Vendor-specific command: {command}. Review its effect within the functional block and validate the syntax before production.",
   "deploy.private.crossPreview": "! Private Engine generated this device for {assigned}.\n! Cross-preview as {requested} is not available in production.\n! Change the device Vendor/OS and regenerate the Private Deployment Plan.\n",
   "deploy.private.status": "! Private Engine: {status} for {assigned}.\n{reasons}\n! Review “Generation diagnostics” in Private Deployment Plan and fix the device before regenerating.\n",
   "deploy.private.pendingConfig": "! Private configuration pending for {assigned}.\n! Generate the artifact from Private Deployment Plan / self-hosted Private Engine.\n! When complete, this view will show the device's server-side configuration here.\n",

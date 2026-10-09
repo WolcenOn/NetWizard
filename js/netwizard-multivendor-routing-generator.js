@@ -121,11 +121,11 @@
     return lines;
   }
 
-  function markerFor(vendor){
-    return vendor === 'juniper_junos' ? '# Routing generado desde plan neutral' : vendor === 'huawei_vrp' ? '# Routing generado desde plan neutral' : '# Routing generado desde plan neutral';
-  }
+  function localeOf(options){ const explicit=options&&options.locale; if(String(explicit||'').trim())return String(explicit).trim().toLowerCase()==='en'?'en':'es'; const i18n=root.NetWizardI18n; return i18n&&typeof i18n.getReportLocale==='function'&&i18n.getReportLocale()==='en'?'en':'es'; }
+  function pick(options,es,en){ return localeOf(options)==='en'?en:es; }
+  function markerFor(){ return '# NW-ROUTING'; }
 
-  function render(project, deviceId, vendor, suppliedPlan){
+  function render(project, deviceId, vendor, suppliedPlan, options){
     const plan = devicePlan(project, deviceId, suppliedPlan);
     if(!plan) return '';
     let lines = [];
@@ -133,14 +133,14 @@
     else if(vendor === 'huawei_vrp') lines = renderHuawei(plan);
     else if(vendor === 'mikrotik_routeros') lines = renderMikrotik(plan);
     if(!lines.length) return '';
-    return [markerFor(vendor), ...lines].join('\n');
+    return [markerFor(), '# '+pick(options,'Instala rutas estáticas u OSPF derivados del modelo; revisa next-hop, interfaces y métricas antes de aplicar.','Installs static routes or OSPF derived from the model; review next hops, interfaces, and metrics before applying.'), ...lines].join('\n');
   }
 
-  function appendToConfig(config, project, deviceId, vendor, suppliedPlan){
-    const block = render(project, deviceId, vendor, suppliedPlan);
+  function appendToConfig(config, project, deviceId, vendor, suppliedPlan, options){
+    const block = render(project, deviceId, vendor, suppliedPlan, options);
     if(!block) return String(config || '');
     const text = String(config || '');
-    if(text.includes(markerFor(vendor))) return text;
+    if(text.includes(markerFor())) return text;
     if(vendor === 'juniper_junos'){
       const commitIndex = text.lastIndexOf('\ncommit');
       if(commitIndex >= 0) return text.slice(0, commitIndex) + '\n' + block + text.slice(commitIndex);

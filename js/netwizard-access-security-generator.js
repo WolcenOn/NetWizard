@@ -11,9 +11,11 @@
   function planner(){ return root.NetWizardAccessSecurityPlan || (typeof require==='function'?tryRequire('./netwizard-access-security-plan.js'):null); }
   function devicePlan(project,id,supplied){ const p=supplied||(planner()&&planner().build?planner().build(project||{}):null); return p&&arr(p.devices).find(x=>x.deviceId===id)||null; }
   function vlans(plan){ return arr(plan&&plan.protectedVlans).join(','); }
+  function localeOf(options){ const explicit=options&&options.locale; if(clean(explicit))return clean(explicit).toLowerCase()==='en'?'en':'es'; const i18n=root.NetWizardI18n; return i18n&&typeof i18n.getReportLocale==='function'&&i18n.getReportLocale()==='en'?'en':'es'; }
+  function pick(options,es,en){ return localeOf(options)==='en'?en:es; }
 
-  function cisco(plan){
-    const L=['!','! LACP y seguridad de acceso generados desde plan neutral'];
+  function cisco(plan,options){
+    const L=['!','! NW-ACCESS-SECURITY — '+pick(options,'protege puertos de acceso con DHCP Snooping/DAI/port-security y configura LACP donde el diseño declara agregación.','protects access ports with DHCP Snooping/DAI/port-security and configures LACP where the design declares aggregation.')];
     if(plan.dhcpSnooping&&plan.protectedVlans.length)L.push('ip dhcp snooping',`ip dhcp snooping vlan ${vlans(plan)}`,'no ip dhcp snooping information option');
     if(plan.arpInspection&&plan.protectedVlans.length)L.push(`ip arp inspection vlan ${vlans(plan)}`);
     for(const p of arr(plan.trustedPorts))L.push(`interface ${p.name}`,' ip dhcp snooping trust',' ip arp inspection trust',' exit');
@@ -34,8 +36,8 @@
     return L.join('\n');
   }
 
-  function junos(plan){
-    const L=['# LACP y seguridad de acceso generados desde plan neutral'];
+  function junos(plan,options){
+    const L=['# NW-ACCESS-SECURITY — '+pick(options,'aplica LACP y controles de acceso L2; valida diferencias EX classic/ELS antes de producción.','applies LACP and L2 access controls; validate EX classic/ELS differences before production.')];
     for(const g of arr(plan.aggregates)){
       L.push(`set chassis aggregated-devices ethernet device-count ${Math.max(g.number,1)}`);
       for(const name of g.memberPortNames)L.push(`set interfaces ${name} ether-options 802.3ad ae${g.number}`);
@@ -46,12 +48,12 @@
     if(plan.dhcpSnooping)L.push('set ethernet-switching-options secure-access-port dhcp-trusted server');
     for(const p of arr(plan.trustedPorts))L.push(`set ethernet-switching-options secure-access-port interface ${p.name} dhcp-trusted`);
     for(const p of arr(plan.accessPorts))if(p.portSecurity)L.push(`set ethernet-switching-options secure-access-port interface ${p.name} mac-limit ${p.maxMac} action drop`);
-    L.push('# DAI y DHCP security varían entre EX classic y ELS; validar sintaxis según Junos/modelo.');
+    L.push('# '+pick(options,'DAI y DHCP security varían entre EX classic y ELS; valida sintaxis y modelo antes de aplicar.','DAI and DHCP security differ between EX classic and ELS; validate syntax and platform before applying.'));
     return L.join('\n');
   }
 
-  function huawei(plan){
-    const L=['# LACP y seguridad de acceso generados desde plan neutral','system-view'];
+  function huawei(plan,options){
+    const L=['# NW-ACCESS-SECURITY — '+pick(options,'habilita controles L2 y agregación LACP según puertos confiables y VLANs protegidas.','enables L2 controls and LACP aggregation from trusted ports and protected VLANs.'),'system-view'];
     if(plan.dhcpSnooping)L.push('dhcp snooping enable');
     for(const p of arr(plan.trustedPorts))L.push(`interface ${p.name}`,' dhcp snooping trusted','quit');
     for(const p of arr(plan.accessPorts)){
@@ -66,44 +68,44 @@
       L.push('quit');
       for(const name of g.memberPortNames)L.push(`interface ${name}`,` eth-trunk ${g.number}`,'quit');
     }
-    if(plan.arpInspection)L.push('# Habilitar ARP anti-attack/DAI según versión VRP y tabla de bindings disponible.');
+    if(plan.arpInspection)L.push('# '+pick(options,'ARP anti-attack/DAI depende de la versión VRP y de bindings válidos; no lo actives sin verificar ambos.','ARP anti-attack/DAI depends on VRP version and valid bindings; do not enable it until both are verified.'));
     return L.join('\n');
   }
 
-  function mikrotik(plan){
-    const L=['# LACP y seguridad de acceso generados desde plan neutral'];
+  function mikrotik(plan,options){
+    const L=['# NW-ACCESS-SECURITY — '+pick(options,'configura bonding LACP y controles DHCP de bridge cuando la plataforma los soporta.','configures LACP bonding and bridge DHCP controls where supported by the platform.')];
     for(const g of arr(plan.aggregates))L.push(`/interface/bonding/add name=bond${g.number} mode=802.3ad slaves=${g.memberPortNames.join(',')} lacp-rate=1sec transmit-hash-policy=layer-2-and-3`);
-    L.push('# RouterOS bridge ofrece DHCP snooping en versiones compatibles; validar hardware offload y versión antes de activar.');
+    L.push('# '+pick(options,'DHCP snooping de bridge depende de versión y hardware offload; valida ambos antes de activarlo.','Bridge DHCP snooping depends on RouterOS version and hardware offload; validate both before enabling it.'));
     if(plan.dhcpSnooping)L.push('/interface/bridge/set [find name="bridge-lan"] dhcp-snooping=yes add-dhcp-option82=no');
     for(const p of arr(plan.trustedPorts))L.push(`/interface/bridge/port/set [find interface="${p.name}"] trusted=yes`);
-    L.push('# Port-security MAC-limit no es equivalente directo; usar bridge host learning, ACL/switch rules o 802.1X según hardware.');
+    L.push('# '+pick(options,'RouterOS no tiene un equivalente universal a MAC-limit; usa host learning, switch rules/ACL o 802.1X según hardware.','RouterOS has no universal MAC-limit equivalent; use host learning, switch rules/ACLs, or 802.1X depending on hardware.'));
     return L.join('\n');
   }
 
-  function aruba(plan){
-    const L=['; LACP y seguridad de acceso generados desde plan neutral','configure terminal'];
+  function aruba(plan,options){
+    const L=['; NW-ACCESS-SECURITY — '+pick(options,'configura LACP, DHCP snooping y límites MAC en puertos de acceso.','configures LACP, DHCP snooping, and MAC limits on access ports.'),'configure terminal'];
     if(plan.dhcpSnooping&&plan.protectedVlans.length)L.push('dhcp-snooping',`dhcp-snooping vlan ${plan.protectedVlans.join(' ')}`);
     for(const p of arr(plan.trustedPorts))L.push(`interface ${p.name}`,' dhcp-snooping trust',' exit');
     for(const g of arr(plan.aggregates))L.push(`trunk ${g.memberPortNames.join(',')} trk${g.number} lacp`);
     for(const p of arr(plan.accessPorts))if(p.portSecurity)L.push(`port-security ${p.name} learn-mode limited-continuous address-limit ${p.maxMac} action send-disable`);
-    if(plan.arpInspection)L.push('; Dynamic ARP protection depende de familia ArubaOS-Switch/Aruba CX; validar plataforma.');
+    if(plan.arpInspection)L.push('; '+pick(options,'Dynamic ARP protection cambia entre ArubaOS-Switch y Aruba CX; valida la familia antes de aplicar.','Dynamic ARP protection differs between ArubaOS-Switch and Aruba CX; validate the platform family before applying.'));
     L.push('write memory');
     return L.join('\n');
   }
 
-  function render(project,deviceId,vendor,supplied){
+  function render(project,deviceId,vendor,supplied,options){
     const plan=devicePlan(project,deviceId,supplied); if(!plan)return '';
     const v=clean(vendor||plan.vendorOs);
-    if(v==='cisco_ios')return cisco(plan);
-    if(v==='juniper_junos')return junos(plan);
-    if(v==='huawei_vrp')return huawei(plan);
-    if(v==='mikrotik_routeros')return mikrotik(plan);
-    if(v==='aruba_aoss')return aruba(plan);
+    if(v==='cisco_ios')return cisco(plan,options);
+    if(v==='juniper_junos')return junos(plan,options);
+    if(v==='huawei_vrp')return huawei(plan,options);
+    if(v==='mikrotik_routeros')return mikrotik(plan,options);
+    if(v==='aruba_aoss')return aruba(plan,options);
     return '';
   }
-  function appendToConfig(config,project,deviceId,vendor,supplied){
-    const block=render(project,deviceId,vendor,supplied); if(!block)return String(config||'');
-    const marker='LACP y seguridad de acceso generados desde plan neutral';
+  function appendToConfig(config,project,deviceId,vendor,supplied,options){
+    const block=render(project,deviceId,vendor,supplied,options); if(!block)return String(config||'');
+    const marker='NW-ACCESS-SECURITY';
     const text=String(config||''); if(text.includes(marker))return text;
     return text.replace(/\s*$/,'')+'\n'+block+'\n';
   }

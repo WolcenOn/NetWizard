@@ -85,7 +85,7 @@ test('Cisco IOS inserta routing antes de end sin duplicarlo', () => {
   const once = CiscoRouting.appendToConfig('configure terminal\nend\n', p, 'r1');
   const twice = CiscoRouting.appendToConfig(once, p, 'r1');
   assert.ok(once.indexOf('ip route') < once.indexOf('\nend'));
-  assert.strictEqual((twice.match(/Routing generado desde plan neutral/g) || []).length, 1);
+  assert.strictEqual((twice.match(/NW-ROUTING/g) || []).length, 1);
 });
 
 console.log('\nTests Cisco routing generator completados.');

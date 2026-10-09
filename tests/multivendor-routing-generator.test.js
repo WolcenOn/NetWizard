@@ -108,7 +108,7 @@ test('La inserción multivendor es idempotente', () => {
   const once = Generator.appendToConfig('system-view\nsave\n', p, 'r1', 'huawei_vrp', plan);
   const twice = Generator.appendToConfig(once, p, 'r1', 'huawei_vrp', plan);
   assert.strictEqual(once, twice);
-  assert.strictEqual((once.match(/Routing generado desde plan neutral/g) || []).length, 1);
+  assert.strictEqual((once.match(/NW-ROUTING/g) || []).length, 1);
 });
 
 console.log('\nTests multivendor routing generator completados.');
