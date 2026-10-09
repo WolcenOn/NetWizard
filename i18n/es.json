@@ -1503,7 +1503,7 @@
   "deploy.explain.defaultRouter": "Indica la puerta de enlace entregada por DHCP.",
   "deploy.explain.dnsServer": "Define los DNS que dará el servicio DHCP.",
   "deploy.explain.lease": "Establece la duración de la concesión DHCP.",
-  "deploy.explain.generatedLine": "Línea de configuración generada automáticamente.",
+  "deploy.explain.generatedLine": "Comando específico del vendor: {command}. Revisa su efecto dentro del bloque funcional y valida la sintaxis antes de producción.",
   "deploy.private.crossPreview": "! El Private Engine generó este dispositivo para {assigned}.\n! La previsualización cruzada como {requested} no está disponible en producción.\n! Cambia Vendor/OS del dispositivo y vuelve a generar Private Deployment Plan.\n",
   "deploy.private.status": "! Private Engine: {status} para {assigned}.\n{reasons}\n! Revisa “Diagnóstico de generación” en Private Deployment Plan y corrige el dispositivo antes de regenerar.\n",
   "deploy.private.pendingConfig": "! Configuración privada pendiente para {assigned}.\n! Genera el artefacto desde Private Deployment Plan / Private Engine self-hosted.\n! Cuando termine, esta vista mostrará aquí la configuración server-side del dispositivo.\n",
