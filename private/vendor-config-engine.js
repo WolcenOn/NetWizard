@@ -563,7 +563,7 @@ function create(project,options){
   pipeline.registerStage({
     id:'ha.services',order:400,
     supports(ctx){return MODULAR_VENDORS.has(ctx.vendor);},
-    apply(config,ctx){return Ha.append(config,ctx.project,ctx.deviceId,ctx.vendor);}
+    apply(config,ctx){return Ha.append(config,ctx.project,ctx.deviceId,ctx.vendor,null,{locale:clean(opts.locale,16)||'es'});}
   });
   return pipeline;
 }
