@@ -10,7 +10,7 @@ async function resetStorage(page){
   await page.reload();
 }
 
-test('Deployment / Export cambia ES/EN en caliente sin alterar la configuración técnica', async ({page})=>{
+test('Deployment / Export cambia ES/EN en caliente sin alterar los comandos técnicos', async ({page})=>{
   await resetStorage(page);
 
   await page.evaluate(()=>{
@@ -31,6 +31,7 @@ test('Deployment / Export cambia ES/EN en caliente sin alterar la configuración
   await expect(page.locator('#impJsonFile')).toHaveText('📂 Load JSON file');
   await expect(page.locator('#jsonImportStatus')).toContainText('paste JSON');
 
+  const technical=value=>value.split(/\r?\n/).filter(line=>!/^\s*!/.test(line)).join('\n');
   const rawBefore=await page.locator('#cfgOut').inputValue();
   const commentedBefore=await page.locator('#cfgOutComment').inputValue();
   if(commentedBefore.includes('configure terminal')){
@@ -47,14 +48,17 @@ test('Deployment / Export cambia ES/EN en caliente sin alterar la configuración
 
   const rawEs=await page.locator('#cfgOut').inputValue();
   const commentedEs=await page.locator('#cfgOutComment').inputValue();
-  expect(rawEs).toBe(rawBefore);
+  expect(technical(rawEs)).toBe(technical(rawBefore));
+  expect(rawEs).not.toBe(rawBefore);
+  expect(rawBefore).toContain('NW-MGMT-BASELINE — configures');
+  expect(rawEs).toContain('NW-MGMT-BASELINE — configura');
   if(commentedEs.includes('configure terminal')){
     expect(commentedEs).toContain('Entra al modo de configuración global.');
   }
 
   await page.evaluate(()=>window.NetWizardI18n.setLocale('en'));
   await expect(root).toContainText('Deployment & Export');
-  expect(await page.locator('#cfgOut').inputValue()).toBe(rawBefore);
+  expect(technical(await page.locator('#cfgOut').inputValue())).toBe(technical(rawBefore));
 });
 
 test('As-Built export controls cambian de locale sin modificar el inventario', async ({page})=>{
