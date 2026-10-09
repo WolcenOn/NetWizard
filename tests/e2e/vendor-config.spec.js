@@ -97,8 +97,8 @@ const VENDORS = [
     type: 'access_point',
     signatures: [
       /Ubiquiti UniFi/,
-      /Configuración de controlador\/cloud/,
-      /VLANs a transportar: 10/,
+      /Procedimiento de controlador\/cloud/,
+      /VLANs a transportar por el uplink: 10/,
       /Crear\/usar red VLAN 10 "Usuarios"/
     ]
   },
@@ -108,8 +108,8 @@ const VENDORS = [
     type: 'wlan_controller',
     signatures: [
       /TP-Link Omada/,
-      /Configuración de controlador\/cloud/,
-      /VLANs a transportar: 10/,
+      /Procedimiento de controlador\/cloud/,
+      /VLANs a transportar por el uplink: 10/,
       /Crear\/usar red VLAN 10 "Usuarios"/
     ]
   },
@@ -119,8 +119,8 @@ const VENDORS = [
     type: 'wlan_controller',
     signatures: [
       /Galgus Cloud/,
-      /Configuración de controlador\/cloud/,
-      /VLANs a transportar: 10/,
+      /Procedimiento de controlador\/cloud/,
+      /VLANs a transportar por el uplink: 10/,
       /Crear\/usar red VLAN 10 "Usuarios"/
     ]
   },
