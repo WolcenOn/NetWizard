@@ -226,7 +226,8 @@ test.describe('generación de configuración multivendor', () => {
       const commented = await page.locator('#cfgOutComment').inputValue();
       expect(commented.length, `${vendor.id} debe generar también la versión comentada`)
         .toBeGreaterThan(output.length);
-      expect(commented).toContain('Línea de configuración generada automáticamente.');
+      expect(commented).not.toContain('Línea de configuración generada automáticamente.');
+      expect(commented).toMatch(/Comando específico del vendor:|Entra al modo de configuración global|Asigna el nombre del dispositivo|Crea o selecciona la VLAN|Entra en la configuración de la interfaz/);
     });
   }
 
