@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 test('expone informes profesional y educativo sin IDs internos', async ({ page }) => {
   await page.goto('/index.html');
+  await page.evaluate(()=>window.NetWizardI18n?.setReportLocale?.('es'));
   await expect(page.locator('#btnDetailedReport')).toBeVisible();
   await expect(page.locator('#btnEducationalReport')).toBeVisible();
 
