@@ -65,7 +65,7 @@ const EN_REPLACEMENTS=[
  ['Informe de instalación','Installation report'],['Esquema','Schema'],['equipo(s)','device(s)'],['puerto(s)','port(s)'],['rack(s)','rack(s)'],
  ['BLOQUEADO','BLOCKED'],['APTO CON ADVERTENCIAS','READY WITH WARNINGS'],['APTO','READY'],['Crítico','Critical'],['Alto','High'],['Medio','Medium'],['Bajo','Low']
 ];
-function localizeHtml(html,locale){if(locale!=='en')return html;let out=String(html);for(const pair of EN_REPLACEMENTS)out=out.split(pair[0]).join(pair[1]);return out;}
+function localizeHtml(html,locale){if(locale!=='en')return html;let out=String(html);for(const pair of EN_REPLACEMENTS.slice().sort((a,b)=>b[0].length-a[0].length))out=out.split(pair[0]).join(pair[1]);return out;}
 const SEC=root.NetWizardSecurityUtils||{};const CORE=root.NetWizardCoreUtils||{};
 const fallback=v=>clean(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const esc=v=>{try{return typeof SEC.escapeHtml==='function'?SEC.escapeHtml(clean(v)):typeof CORE.escapeHtml==='function'?CORE.escapeHtml(clean(v)):fallback(v);}catch{return fallback(v);}};
