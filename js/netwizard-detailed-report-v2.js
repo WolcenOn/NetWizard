@@ -93,9 +93,10 @@ function inject(){
   const e=root.document.getElementById('btnExport');if(!e)return;
   const make=(id,mode)=>{
     const b=root.document.createElement('button');b.id=id;b.className='btn bs bsm';b.type='button';
-    const paint=()=>{const l=localeOf();b.textContent=mode==='educational'?pick(l,'🎓 Informe educativo','🎓 Educational report'):pick(l,'📄 Informe detallado','📄 Detailed report');};
+    const uiLocale=()=>{const i18n=root.NetWizardI18n;return i18n&&typeof i18n.getLocale==='function'&&i18n.getLocale()==='en'?'en':'es';};
+    const paint=()=>{const l=uiLocale();b.textContent=mode==='educational'?pick(l,'🎓 Informe educativo','🎓 Educational report'):pick(l,'📄 Informe detallado','📄 Detailed report');};
     paint();b.onclick=()=>openReport(currentProject(),{reportMode:mode,locale:localeOf()});e.parentNode.insertBefore(b,e);
-    root.document.addEventListener('nw:i18n:changed',paint);
+    root.addEventListener&&root.addEventListener('netwizard:i18n',paint);
   };
   make('btnDetailedReport','professional');make('btnEducationalReport','educational');
 }
