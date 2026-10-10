@@ -26,7 +26,7 @@ function mediaKind(value){
 }
 function mediaLabel(value){return clean(value)||'No documentado';}
 function portIdFromLink(link,key){return key==='a'?linkPortA(link):linkPortB(link);}
-function buildPortMatrices(project,structuredCabling){
+function buildPortMatrices(project,structuredCabling,options){const locale=localeOf(options);
  const ports=arr(project&&project.ports),links=arr(project&&project.links),hosts=arr(project&&project.hosts);
  const linkByPort=new Map();
  for(const link of links){
@@ -67,7 +67,7 @@ function buildPortMatrices(project,structuredCabling){
    return{deviceId:device.id,deviceName:device.name||device.id,rackId:device.rackId||device.rack||null,ports:mapped};
  }).filter(x=>x.ports.length);
 }
-function buildStructuredChains(project,structuredCabling){
+function buildStructuredChains(project,structuredCabling,options){const locale=localeOf(options);
  const ports=arr(project&&project.ports),devices=arr(project&&project.devices),panels=arr(project&&project.patchPanels),outlets=arr(project&&project.telecomOutlets),hosts=arr(project&&project.hosts),locations=arr(project&&project.physicalLocations);
  return arr(structuredCabling&&structuredCabling.paths).map(path=>{
    const port=byId(ports,path.switchPortId),device=port?byId(devices,port.deviceId):null,panel=byId(panels,path.patchPanelId),outlet=byId(outlets,path.outletId),host=byId(hosts,path.hostId),location=outlet?byId(locations,outlet.locationId):null;
@@ -211,7 +211,7 @@ function buildInstallationLabels(project,structuredChains,powerMap,options){cons
  const counts={};for(const label of labels)counts[label.kind]=(counts[label.kind]||0)+1;
  return{items:labels,counts,total:labels.length};
 }
-function buildPowerMap(project,racks){
+function buildPowerMap(project,racks,options){const locale=localeOf(options);
  const devices=arr(project&&project.devices),items=arr(racks&&racks.items),pdus=arr(project&&project.pdus),connections=arr(project&&project.powerConnections);
  const rackByDevice=new Map();
  for(const item of items)if(item&&item.deviceId&&item.rackId&&!rackByDevice.has(item.deviceId))rackByDevice.set(item.deviceId,item.rackId);
@@ -222,7 +222,7 @@ function buildPowerMap(project,racks){
    if(!rackId&&!connections.some(c=>c&&c.deviceId===device.id))continue;
    const own=connections.filter(c=>c&&c.deviceId===device.id).slice().sort((a,b)=>Number(a.powerSupplyIndex||0)-Number(b.powerSupplyIndex||0));
    if(!own.length){
-     rows.push({rackId,deviceId:device.id,deviceName:device.name||device.id,psu:1,pduId:null,pduName:pick(localeOf(options),'Sin conexión declarada','No declared connection'),outlet:null,feed:null,status:'missing'});
+     rows.push({rackId,deviceId:device.id,deviceName:device.name||device.id,psu:1,pduId:null,pduName:pick(locale,'Sin conexión declarada','No declared connection'),outlet:null,feed:null,status:'missing'});
      continue;
    }
    for(const c of own){
@@ -242,9 +242,9 @@ function build(project,options){options=options||{};const locale=localeOf(option
  const materials=rackMaterials.concat(cableMaterials);
  const structuredCabling=CABLING?CABLING.validate(project):{issues:[],paths:[]};
  const rackTopologies=RACK&&typeof RACK.rackTopology==='function'?racks.racks.map(r=>RACK.rackTopology(project,r.id)):[];
- const portMatrices=buildPortMatrices(project,structuredCabling);
- const powerMap=buildPowerMap(project,racks);
- const structuredChains=buildStructuredChains(project,structuredCabling);
+ const portMatrices=buildPortMatrices(project,structuredCabling,{locale});
+ const powerMap=buildPowerMap(project,racks,{locale});
+ const structuredChains=buildStructuredChains(project,structuredCabling,{locale});
  const rackSummaries=buildRackSummaries(project,racks,structuredChains,powerMap);
  const installationChecklist=buildInstallationChecklist(project,rackSummaries,structuredChains,powerMap,{locale});
  const connectionOverview=buildConnectionOverview(project,structuredChains,{locale});
