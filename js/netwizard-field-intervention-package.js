@@ -8,6 +8,8 @@ const arr=v=>Array.isArray(v)?v:[];
 const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const clean=v=>String(v==null?'':v).trim();
 const clone=v=>JSON.parse(JSON.stringify(v==null?null:v));
+function localeOf(options){const explicit=clean(options&&options.locale);if(explicit)return explicit.toLowerCase()==='en'?'en':'es';const i18n=root.NetWizardI18n;const current=i18n&&typeof i18n.getReportLocale==='function'?i18n.getReportLocale():i18n&&typeof i18n.getLocale==='function'?i18n.getLocale():'es';return clean(current).toLowerCase()==='en'?'en':'es';}
+function tr(locale,es,en){return locale==='en'?en:es;}
 function planner(){
   if(root.NetWizardPhysicalInterventionPlan)return root.NetWizardPhysicalInterventionPlan;
   if(typeof require==='function'){try{return require('./netwizard-physical-intervention-plan.js');}catch(_e){}}
@@ -26,17 +28,17 @@ function currentMap(list){
 function material(kind,description,quantity,disposition,extra){
   return Object.assign({kind,description:clean(description)||kind,quantity:Number(quantity)||1,disposition},extra||{});
 }
-function deviceDescription(d){
-  return [clean(d&&d.manufacturer),clean(d&&d.model),clean(d&&d.name)].filter(Boolean).join(' · ')||clean(d&&d.id)||'Equipo';
+function deviceDescription(d,locale){
+  return [clean(d&&d.manufacturer),clean(d&&d.model),clean(d&&d.name)].filter(Boolean).join(' · ')||clean(d&&d.id)||tr(locale,'Equipo','Device');
 }
 function rackDescription(r){return `${clean(r&&r.name)||clean(r&&r.id)||'Rack'} · ${r&&r.rackUnits||'—'}U`;}
-function pduDescription(p){return [clean(p&&p.name)||clean(p&&p.id)||'PDU',p&&p.outletCount?`${p.outletCount} tomas`:null,clean(p&&p.feed)?`feed ${p.feed}`:null].filter(Boolean).join(' · ');}
-function cableDescription(c){return [clean(c&&c.label)||clean(c&&c.id)||'Cable',clean(c&&c.cableType)||'Cableado',c&&c.lengthM!=null?`${c.lengthM} m`:null,clean(c&&c.route)||null].filter(Boolean).join(' · ');}
-function patchDescription(p,kind){
-  if(kind==='host')return `Toma ${clean(p&&p.outletId)||'—'} P${p&&p.outletPort||1} ↔ host ${clean(p&&p.hostId)||'—'}`;
-  return `Patch panel ${clean(p&&p.patchPanelId)||'—'} P${p&&p.patchPort||'—'} ↔ puerto ${clean(p&&p.switchPortId)||'—'}`;
+function pduDescription(p,locale){return [clean(p&&p.name)||clean(p&&p.id)||'PDU',p&&p.outletCount?`${p.outletCount} ${tr(locale,'tomas','outlets')}`:null,clean(p&&p.feed)?`feed ${p.feed}`:null].filter(Boolean).join(' · ');}
+function cableDescription(c,locale){return [clean(c&&c.label)||clean(c&&c.id)||'Cable',clean(c&&c.cableType)||tr(locale,'Cableado','Cabling'),c&&c.lengthM!=null?`${c.lengthM} m`:null,clean(c&&c.route)||null].filter(Boolean).join(' · ');}
+function patchDescription(p,kind,locale){
+  if(kind==='host')return `${tr(locale,'Toma','Outlet')} ${clean(p&&p.outletId)||'—'} P${p&&p.outletPort||1} ↔ host ${clean(p&&p.hostId)||'—'}`;
+  return `Patch panel ${clean(p&&p.patchPanelId)||'—'} P${p&&p.patchPort||'—'} ↔ ${tr(locale,'puerto','port')} ${clean(p&&p.switchPortId)||'—'}`;
 }
-function diffMaterials(project){
+function diffMaterials(project,options){const locale=localeOf(options);
   const p=project||{},workflow=obj(p.workflow),base=obj(workflow.interventionBaseline);
   const additions=[],removals=[],reuse=[],review=[];
 
@@ -46,23 +48,23 @@ function diffMaterials(project){
   for(const d of curDevices){
     const origin=clean(d.originRef),disp=clean(d.designDisposition)||(origin?'keep':'add');
     if(!origin||disp==='add'){
-      if(!replacementRefs.has(clean(d.id))) additions.push(material('Equipo',deviceDescription(d),1,'add',{deviceId:d.id}));
+      if(!replacementRefs.has(clean(d.id))) additions.push(material(tr(locale,'Equipo','Device'),deviceDescription(d,locale),1,'add',{deviceId:d.id}));
       continue;
     }
     const before=baseDevices.get(origin);
     if(disp==='retire'){
-      removals.push(material('Equipo',deviceDescription(before||d),1,'remove',{originRef:origin}));
+      removals.push(material(tr(locale,'Equipo','Device'),deviceDescription(before||d,locale),1,'remove',{originRef:origin}));
     }else if(disp==='replace'){
-      removals.push(material('Equipo',deviceDescription(before||d),1,'replace-old',{originRef:origin}));
+      removals.push(material(tr(locale,'Equipo','Device'),deviceDescription(before||d,locale),1,'replace-old',{originRef:origin}));
       const replacement=clean(d.replacementDeviceRef)?byId(p.devices,d.replacementDeviceRef):null;
-      if(replacement)additions.push(material('Equipo',deviceDescription(replacement),1,'replace-new',{deviceId:replacement.id,originRef:origin}));
-      else review.push(material('Equipo',clean(d.replacementNote)||`Reemplazo pendiente para ${deviceDescription(d)}`,1,'replacement-required',{originRef:origin}));
+      if(replacement)additions.push(material(tr(locale,'Equipo','Device'),deviceDescription(replacement,locale),1,'replace-new',{deviceId:replacement.id,originRef:origin}));
+      else review.push(material('Equipo',clean(d.replacementNote)||`${tr(locale,'Reemplazo pendiente para','Replacement pending for')} ${deviceDescription(d,locale)}`,1,'replacement-required',{originRef:origin}));
     }else{
-      reuse.push(material('Equipo',deviceDescription(d),1,'reuse',{deviceId:d.id,originRef:origin}));
+      reuse.push(material(tr(locale,'Equipo','Device'),deviceDescription(d,locale),1,'reuse',{deviceId:d.id,originRef:origin}));
     }
   }
   for(const [id,b] of baseDevices){
-    if(!currentOrigins.has(id)&&!curDevices.some(d=>d&&d.id===id))removals.push(material('Equipo',deviceDescription(b),1,'remove',{originRef:id,implicit:true}));
+    if(!currentOrigins.has(id)&&!curDevices.some(d=>d&&d.id===id))removals.push(material(tr(locale,'Equipo','Device'),deviceDescription(b,locale),1,'remove',{originRef:id,implicit:true}));
   }
 
   function diffSimple(baseList,currentList,kind,describe){
@@ -76,13 +78,13 @@ function diffMaterials(project){
     for(const [id,b] of baseM)if(!curM.has(id))removals.push(material(kind,describe(b),1,'remove',{originRef:id}));
   }
   diffSimple(base.racks,p.racks,'Rack',rackDescription);
-  diffSimple(base.pdus,p.pdus,'PDU',pduDescription);
+  diffSimple(base.pdus,p.pdus,'PDU',x=>pduDescription(x,locale));
 
   const baseCables=baselineMap(base.cableRuns),curCableMap=currentMap(p.cableRuns);
   for(const c of arr(p.cableRuns)){
     const origin=clean(c.originRef),key=origin||clean(c.id),before=baseCables.get(key);
     if(!origin&&!before){
-      additions.push(material('Cableado',cableDescription(c),1,'add',{currentId:c.id}));
+      additions.push(material(tr(locale,'Cableado','Cabling'),cableDescription(c,locale),1,'add',{currentId:c.id}));
       continue;
     }
     if(before){
@@ -90,20 +92,20 @@ function diffMaterials(project){
       const lengthChanged=String(before.lengthM??'')!==String(c.lengthM??'');
       const routeChanged=clean(before.route)!==clean(c.route);
       if(typeChanged||lengthChanged){
-        removals.push(material('Cableado',cableDescription(before),1,'replace-old',{originRef:key}));
-        additions.push(material('Cableado',cableDescription(c),1,'replace-new',{currentId:c.id,originRef:key}));
+        removals.push(material(tr(locale,'Cableado','Cabling'),cableDescription(before,locale),1,'replace-old',{originRef:key}));
+        additions.push(material(tr(locale,'Cableado','Cabling'),cableDescription(c,locale),1,'replace-new',{currentId:c.id,originRef:key}));
       }else if(routeChanged){
-        review.push(material('Cableado',`Reencaminar ${cableDescription(c)}`,1,'reroute',{currentId:c.id,originRef:key}));
-      }else reuse.push(material('Cableado',cableDescription(c),1,'reuse',{currentId:c.id,originRef:key}));
+        review.push(material(tr(locale,'Cableado','Cabling'),`${tr(locale,'Reencaminar','Reroute')} ${cableDescription(c,locale)}`,1,'reroute',{currentId:c.id,originRef:key}));
+      }else reuse.push(material(tr(locale,'Cableado','Cabling'),cableDescription(c,locale),1,'reuse',{currentId:c.id,originRef:key}));
     }
   }
-  for(const [id,b] of baseCables)if(!curCableMap.has(id))removals.push(material('Cableado',cableDescription(b),1,'remove',{originRef:id}));
+  for(const [id,b] of baseCables)if(!curCableMap.has(id))removals.push(material(tr(locale,'Cableado','Cabling'),cableDescription(b,locale),1,'remove',{originRef:id}));
 
   function diffPatch(baseList,currentList,kind,labelKind){
     const baseM=baselineMap(baseList),curM=currentMap(currentList);
     for(const c of arr(currentList)){
       const origin=clean(c.originRef),key=origin||clean(c.id),before=baseM.get(key);
-      if(!origin&&!before)additions.push(material(kind,patchDescription(c,labelKind),1,'add',{currentId:c.id}));
+      if(!origin&&!before)additions.push(material(kind,patchDescription(c,labelKind,locale),1,'add',{currentId:c.id}));
       else if(before){
         const keys=labelKind==='host'?['hostId','outletId','outletPort','patchCordLengthM']:['patchPanelId','patchPort','switchPortId','patchCordLengthM'];
         const changed=keys.some(k=>String(before[k]??'')!==String(c[k]??''));
@@ -111,10 +113,10 @@ function diffMaterials(project){
         else reuse.push(material(kind,patchDescription(c,labelKind),1,'reuse',{currentId:c.id,originRef:key}));
       }
     }
-    for(const [id,b] of baseM)if(!curM.has(id))removals.push(material(kind,patchDescription(b,labelKind),1,'remove',{originRef:id}));
+    for(const [id,b] of baseM)if(!curM.has(id))removals.push(material(kind,patchDescription(b,labelKind,locale),1,'remove',{originRef:id}));
   }
-  diffPatch(base.patchConnections,p.patchConnections,'Latiguillo rack','rack');
-  diffPatch(base.hostOutletConnections,p.hostOutletConnections,'Latiguillo usuario','host');
+  diffPatch(base.patchConnections,p.patchConnections,tr(locale,'Latiguillo rack','Rack patch cord'),'rack');
+  diffPatch(base.hostOutletConnections,p.hostOutletConnections,tr(locale,'Latiguillo usuario','User patch cord'),'host');
 
   return{additions,removals,reuse,review};
 }
@@ -129,13 +131,13 @@ function beforeAfterRows(plan){
     details:a.details||''
   }));
 }
-function build(project){
+function build(project,options){const locale=localeOf(options);
   const P=planner();
-  const checklist=P&&P.buildChecklist?P.buildChecklist(project):null;
+  const checklist=P&&P.buildChecklist?P.buildChecklist(project,{locale}):null;
   if(!checklist||!checklist.ok){
-    return{ok:false,version:'netwizard-field-intervention-package-v1',code:checklist&&checklist.code||'planner_unavailable',message:checklist&&checklist.message||'No se puede construir el paquete de intervención.',checklist:[],beforeAfter:[],bom:{additions:[],removals:[],reuse:[],review:[]}};
+    return{ok:false,version:'netwizard-field-intervention-package-v1',code:checklist&&checklist.code||'planner_unavailable',message:checklist&&checklist.message||tr(locale,'No se puede construir el paquete de intervención.','The intervention package cannot be built.'),checklist:[],beforeAfter:[],bom:{additions:[],removals:[],reuse:[],review:[]}};
   }
-  const bom=diffMaterials(project);
+  const bom=diffMaterials(project,{locale});
   return{
     ok:true,
     version:'netwizard-field-intervention-package-v1',
@@ -154,11 +156,11 @@ function build(project){
     bom
   };
 }
-function mdList(items,render){return arr(items).length?arr(items).map((x,i)=>render(x,i)).join('\n'):'- Sin elementos.';}
-function buildMarkdown(project){
-  const pkg=build(project);if(!pkg.ok)return `# Paquete de intervención\n\nNo disponible: ${pkg.message}\n`;
+function mdList(items,render){return arr(items).length?arr(items).map((x,i)=>render(x,i)).join('\n'):tr(locale,'- Sin elementos.','- No items.');}
+function buildMarkdown(project,options){const locale=localeOf(options);
+  const pkg=build(project,{locale});if(!pkg.ok)return `# Paquete de intervención\n\nNo disponible: ${pkg.message}\n`;
   const lines=[
-    `# Paquete de intervención — ${pkg.projectName}`,'',
+    `# ${tr(locale,'Paquete de intervención','Intervention package')} — ${pkg.projectName}`,'',
     `- Línea base As-Built: ${pkg.baselineCapturedAt||'no documentada'}`,
     `- Acciones físicas: ${pkg.counts.actions}`,
     `- Material a añadir: ${pkg.counts.addMaterials}`,
