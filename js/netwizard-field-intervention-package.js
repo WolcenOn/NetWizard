@@ -58,7 +58,7 @@ function diffMaterials(project,options){const locale=localeOf(options);
       removals.push(material(tr(locale,'Equipo','Device'),deviceDescription(before||d,locale),1,'replace-old',{originRef:origin}));
       const replacement=clean(d.replacementDeviceRef)?byId(p.devices,d.replacementDeviceRef):null;
       if(replacement)additions.push(material(tr(locale,'Equipo','Device'),deviceDescription(replacement,locale),1,'replace-new',{deviceId:replacement.id,originRef:origin}));
-      else review.push(material('Equipo',clean(d.replacementNote)||`${tr(locale,'Reemplazo pendiente para','Replacement pending for')} ${deviceDescription(d,locale)}`,1,'replacement-required',{originRef:origin}));
+      else review.push(material(tr(locale,'Equipo','Device'),clean(d.replacementNote)||`${tr(locale,'Reemplazo pendiente para','Replacement pending for')} ${deviceDescription(d,locale)}`,1,'replacement-required',{originRef:origin}));
     }else{
       reuse.push(material(tr(locale,'Equipo','Device'),deviceDescription(d,locale),1,'reuse',{deviceId:d.id,originRef:origin}));
     }
@@ -156,7 +156,7 @@ function build(project,options){const locale=localeOf(options);
     bom
   };
 }
-function mdList(items,render){return arr(items).length?arr(items).map((x,i)=>render(x,i)).join('\n'):tr(locale,'- Sin elementos.','- No items.');}
+function mdList(items,render,locale){return arr(items).length?arr(items).map((x,i)=>render(x,i)).join('\n'):tr(locale,'- Sin elementos.','- No items.');}
 function buildMarkdown(project,options){const locale=localeOf(options);
   const pkg=build(project,{locale});if(!pkg.ok)return `# Paquete de intervención\n\nNo disponible: ${pkg.message}\n`;
   const lines=[
@@ -166,17 +166,17 @@ function buildMarkdown(project,options){const locale=localeOf(options);
     `- Material a añadir: ${pkg.counts.addMaterials}`,
     `- Material a retirar: ${pkg.counts.removeMaterials}`,'',
     '## Checklist de trabajo','',
-    mdList(pkg.checklist,a=>`- [ ] ${a.order}. ${a.title}${a.details?` — ${a.details}`:''}`),'',
+    mdList(pkg.checklist,a=>`- [ ] ${a.order}. ${a.title}${a.details?` — ${a.details}`:''}`,locale),'',
     '## Comparativa As-Built -> To-Be','',
-    mdList(pkg.beforeAfter,r=>`- ${r.order}. **${r.title}**${r.details?` — ${r.details}`:''}`),'',
+    mdList(pkg.beforeAfter,r=>`- ${r.order}. **${r.title}**${r.details?` — ${r.details}`:''}`,locale),'',
     '## BOM diferencial — añadir','',
-    mdList(pkg.bom.additions,x=>`- +${x.quantity} ${x.kind}: ${x.description}`),'',
+    mdList(pkg.bom.additions,x=>`- +${x.quantity} ${x.kind}: ${x.description}`,locale),'',
     '## BOM diferencial — retirar','',
-    mdList(pkg.bom.removals,x=>`- -${x.quantity} ${x.kind}: ${x.description}`),'',
+    mdList(pkg.bom.removals,x=>`- -${x.quantity} ${x.kind}: ${x.description}`,locale),'',
     '## Reutilización','',
-    mdList(pkg.bom.reuse,x=>`- =${x.quantity} ${x.kind}: ${x.description}`),'',
+    mdList(pkg.bom.reuse,x=>`- =${x.quantity} ${x.kind}: ${x.description}`,locale),'',
     '## Revisión manual','',
-    mdList(pkg.bom.review,x=>`- [ ] ${x.kind}: ${x.description}`),'',
+    mdList(pkg.bom.review,x=>`- [ ] ${x.kind}: ${x.description}`,locale),'',
     '## Cierre','',
     '- [ ] Verificar estado físico y alimentación de todos los equipos intervenidos.',
     '- [ ] Validar enlaces, patching y etiquetado final.',
