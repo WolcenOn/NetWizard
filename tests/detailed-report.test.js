@@ -38,6 +38,22 @@ assert.ok(professional.includes('Red &lt;Principal&gt;'));
 assert.ok(!professional.includes('<h1>Red <Principal></h1>'));
 assert.ok(professional.includes('Imprimir / Guardar PDF'));
 
+const english=report.build(project,{gateReport:gate,reportMode:'professional',locale:'en'});
+assert.ok(english.includes('<html lang="en">'));
+assert.ok(english.includes('Detailed report'));
+assert.ok(english.includes('Executive summary'));
+assert.ok(english.includes('Recommended actions'));
+assert.ok(english.includes('Device inventory'));
+assert.ok(english.includes('Hosts and endpoints'));
+assert.ok(english.includes('Ports and interfaces'));
+assert.ok(english.includes('BLOCKED'));
+assert.ok(english.includes('Correction checklist'));
+assert.ok(english.includes('No VRFs are defined'));
+assert.ok(english.includes('No WAN circuits are declared'));
+assert.ok(english.includes('Print / Save PDF'));
+assert.ok(!english.includes('Informe detallado'));
+assert.ok(!english.includes('Inventario de dispositivos'));
+
 const educational=report.build(project,{gateReport:gate,reportMode:'educational'});
 assert.ok(educational.includes('Modo educativo'));
 assert.ok(educational.includes('Concepto afectado'));

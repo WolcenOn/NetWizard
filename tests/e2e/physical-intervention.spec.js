@@ -4,6 +4,7 @@ async function resetStorage(page){
   await page.goto('/index.html');
   await page.evaluate(()=>{localStorage.clear();sessionStorage.clear();});
   await page.reload();
+  await page.evaluate(()=>window.NetWizardI18n?.setReportLocale?.('es'));
 }
 
 test('plan físico detecta movimiento, reconexión eléctrica y recableado en To-Be', async ({page})=>{

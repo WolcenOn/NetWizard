@@ -6,6 +6,8 @@ const arr=v=>Array.isArray(v)?v:[];
 const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const clean=v=>String(v==null?'':v).trim();
 const clone=v=>JSON.parse(JSON.stringify(v==null?null:v));
+function localeOf(options){const explicit=clean(options&&options.locale);if(explicit)return explicit.toLowerCase()==='en'?'en':'es';const i18n=root.NetWizardI18n;const current=i18n&&typeof i18n.getReportLocale==='function'?i18n.getReportLocale():i18n&&typeof i18n.getLocale==='function'?i18n.getLocale():'es';return clean(current).toLowerCase()==='en'?'en':'es';}
+function tr(locale,es,en){return locale==='en'?en:es;}
 
 function pick(source,keys){
   const s=obj(source),out={};
@@ -70,82 +72,82 @@ function diffCollection(options){
   return actions;
 }
 
-function deviceActions(project,baseline){
+function deviceActions(project,baseline,options){const locale=localeOf(options);
   const current=arr(project&&project.devices),base=baselineMap(baseline.devices),seen=new Set(),actions=[];
   for(const d of current){
     const origin=clean(d.originRef),id=clean(d.id),disp=clean(d.designDisposition)||(origin?'keep':'add');
     if(origin)seen.add(origin);
     if(disp==='add'){
-      actions.push(action(`device:add:${id}`,'device','add-device',`Instalar ${label(d,id)}`,[d.rackId||d.rack,d.rackUnit!=null?`U${d.rackUnit}`:null].filter(Boolean).join(' · '),{deviceId:id}));
+      actions.push(action(`device:add:${id}`,'device','add-device',`${tr(locale,'Instalar','Install')} ${label(d,id)}`,[d.rackId||d.rack,d.rackUnit!=null?`U${d.rackUnit}`:null].filter(Boolean).join(' · '),{deviceId:id}));
       continue;
     }
     if(disp==='retire'){
-      actions.push(action(`device:retire:${origin||id}`,'device','retire-device',`Retirar ${label(d,id)}`,'Equipo existente marcado para retirada.',{deviceId:id,originRef:origin||id}));
+      actions.push(action(`device:retire:${origin||id}`,'device','retire-device',`${tr(locale,'Retirar','Remove')} ${label(d,id)}`,'Equipo existente marcado para retirada.',{deviceId:id,originRef:origin||id}));
       continue;
     }
     if(disp==='replace'){
-      actions.push(action(`device:replace:${origin||id}`,'device','replace-device',`Reemplazar ${label(d,id)}`,clean(d.replacementNote)||'Sustituir el equipo manteniendo la referencia de origen.',{deviceId:id,originRef:origin||id,replacementDeviceRef:clean(d.replacementDeviceRef)||null}));
+      actions.push(action(`device:replace:${origin||id}`,'device','replace-device',`${tr(locale,'Reemplazar','Replace')} ${label(d,id)}`,clean(d.replacementNote)||tr(locale,'Sustituir el equipo manteniendo la referencia de origen.','Replace the device while preserving the source reference.'),{deviceId:id,originRef:origin||id,replacementDeviceRef:clean(d.replacementDeviceRef)||null}));
     }
     const b=base.get(origin||id);
     if(b&&differs(b,d,['locationId','rackId','rackUnit','rackUnits'])){
-      const from=[b.rackId||b.rack,b.rackUnit!=null?`U${b.rackUnit}`:null].filter(Boolean).join(' · ')||'sin rack';
+      const from=[b.rackId||b.rack,b.rackUnit!=null?`U${b.rackUnit}`:null].filter(Boolean).join(' · ')||tr(locale,'sin rack','no rack');
       const to=[d.rackId||d.rack,d.rackUnit!=null?`U${d.rackUnit}`:null].filter(Boolean).join(' · ')||'sin rack';
-      actions.push(action(`device:move:${origin||id}`,'device','move-device',`Mover ${label(d,id)}`,`${from} → ${to}`,{deviceId:id,originRef:origin||id,before:clone(b),after:pick(d,['locationId','rackId','rackUnit','rackUnits'])}));
+      actions.push(action(`device:move:${origin||id}`,'device','move-device',`${tr(locale,'Mover','Move')} ${label(d,id)}`,`${from} → ${to}`,{deviceId:id,originRef:origin||id,before:clone(b),after:pick(d,['locationId','rackId','rackUnit','rackUnits'])}));
     }
   }
   for(const [id,b] of base){
     if(!seen.has(id)&&!current.some(d=>d&&d.id===id)){
-      actions.push(action(`device:missing:${id}`,'device','retire-device',`Retirar ${label(b,id)}`,'El equipo existía en el As-Built y ya no aparece en el To-Be.',{originRef:id,implicit:true}));
+      actions.push(action(`device:missing:${id}`,'device','retire-device',`Retirar ${label(b,id)}`,tr(locale,'El equipo existía en el As-Built y ya no aparece en el To-Be.','The device existed in the As-Built and no longer appears in the To-Be.'),{originRef:id,implicit:true}));
     }
   }
   return actions;
 }
 
-function build(project){
+function build(project,options){const locale=localeOf(options);
   const p=project||{},workflow=obj(p.workflow),baseline=obj(workflow.interventionBaseline);
   if(baseline.version!=='netwizard-physical-intervention-baseline-v1'){
-    return{ok:false,version:'netwizard-physical-intervention-plan-v1',code:'baseline_missing',message:'El diseño no contiene línea base física de intervención.',actions:[],counts:{total:0}};
+    return{ok:false,version:'netwizard-physical-intervention-plan-v1',code:'baseline_missing',message:tr(locale,'El diseño no contiene línea base física de intervención.','The design does not contain a physical intervention baseline.'),actions:[],counts:{total:0}};
   }
   const actions=[];
-  actions.push(...deviceActions(p,baseline));
+  actions.push(...deviceActions(p,baseline,{locale}));
   actions.push(...diffCollection({
     category:'rack',baseline:baseline.racks,current:p.racks,
     keys:['locationId','rackUnits','numberingDirection'],
     addType:'add-rack',removeType:'remove-rack',changeType:'modify-rack',
-    addVerb:'Instalar rack',removeVerb:'Retirar rack',changeVerb:'Modificar rack',
+    addVerb:tr(locale,'Instalar rack','Install rack'),removeVerb:tr(locale,'Retirar rack','Remove rack'),changeVerb:tr(locale,'Modificar rack','Modify rack'),
     changeDetails:(b,c)=>`${b.rackUnits||'—'}U → ${c.rackUnits||'—'}U`
   }));
   actions.push(...diffCollection({
     category:'pdu',baseline:baseline.pdus,current:p.pdus,
     keys:['rackId','feed','mounting','outletCount','voltage','maxCurrentAmps','maxPowerWatts'],
     addType:'add-pdu',removeType:'remove-pdu',changeType:'modify-pdu',
-    addVerb:'Instalar PDU',removeVerb:'Retirar PDU',changeVerb:'Modificar PDU'
+    addVerb:tr(locale,'Instalar PDU','Install PDU'),removeVerb:tr(locale,'Retirar PDU','Remove PDU'),changeVerb:tr(locale,'Modificar PDU','Modify PDU')
   }));
   actions.push(...diffCollection({
     category:'power',baseline:baseline.powerConnections,current:p.powerConnections,
     keys:['deviceId','pduId','outlet','powerSupplyIndex','feed'],
     addType:'connect-power',removeType:'disconnect-power',changeType:'reconnect-power',
-    addVerb:'Conectar alimentación',removeVerb:'Desconectar alimentación',changeVerb:'Reconectar alimentación',
-    changeDetails:(b,c)=>`${b.pduId||'—'} / toma ${b.outlet||'—'} → ${c.pduId||'—'} / toma ${c.outlet||'—'}`
+    addVerb:tr(locale,'Conectar alimentación','Connect power'),removeVerb:tr(locale,'Desconectar alimentación','Disconnect power'),changeVerb:tr(locale,'Reconectar alimentación','Reconnect power'),
+    changeDetails:(b,c)=>`${b.pduId||'—'} / ${tr(locale,'toma','outlet')} ${b.outlet||'—'} → ${c.pduId||'—'} / ${tr(locale,'toma','outlet')} ${c.outlet||'—'}`
   }));
   actions.push(...diffCollection({
     category:'cable',baseline:baseline.cableRuns,current:p.cableRuns,
     keys:['label','patchPanelId','patchPort','outletId','outletPort','cableType','lengthM','route'],
     addType:'install-cable',removeType:'remove-cable',changeType:'replace-or-reroute-cable',
-    addVerb:'Instalar cable',removeVerb:'Retirar cable',changeVerb:'Sustituir/reencaminar cable',
+    addVerb:tr(locale,'Instalar cable','Install cable'),removeVerb:tr(locale,'Retirar cable','Remove cable'),changeVerb:tr(locale,'Sustituir/reencaminar cable','Replace/reroute cable'),
     changeDetails:(b,c)=>`${b.cableType||'—'} ${b.route||''} → ${c.cableType||'—'} ${c.route||''}`.trim()
   }));
   actions.push(...diffCollection({
     category:'patch',baseline:baseline.patchConnections,current:p.patchConnections,
     keys:['patchPanelId','patchPort','switchPortId','patchCordLengthM'],
     addType:'add-patch',removeType:'remove-patch',changeType:'repatch',
-    addVerb:'Añadir latiguillo rack',removeVerb:'Retirar latiguillo rack',changeVerb:'Repatch'
+    addVerb:tr(locale,'Añadir latiguillo rack','Add rack patch cord'),removeVerb:tr(locale,'Retirar latiguillo rack','Remove rack patch cord'),changeVerb:'Repatch'
   }));
   actions.push(...diffCollection({
     category:'host-patch',baseline:baseline.hostOutletConnections,current:p.hostOutletConnections,
     keys:['hostId','outletId','outletPort','patchCordLengthM'],
     addType:'add-host-patch',removeType:'remove-host-patch',changeType:'repatch-host',
-    addVerb:'Conectar toma a host',removeVerb:'Desconectar toma de host',changeVerb:'Reconectar toma de host'
+    addVerb:tr(locale,'Conectar toma a host','Connect outlet to host'),removeVerb:tr(locale,'Desconectar toma de host','Disconnect outlet from host'),changeVerb:tr(locale,'Reconectar toma de host','Reconnect host outlet')
   }));
   const counts={total:actions.length,devices:0,racks:0,pdus:0,power:0,cabling:0};
   for(const a of actions){
@@ -164,8 +166,8 @@ function build(project){
     actions
   };
 }
-function buildChecklist(project){
-  const plan=build(project);
+function buildChecklist(project,options){
+  const plan=build(project,options);
   if(!plan.ok)return plan;
   const order=['disconnect-power','remove-patch','remove-host-patch','remove-cable','retire-device','move-device','remove-pdu','remove-rack','add-rack','add-pdu','add-device','replace-device','modify-rack','modify-pdu','install-cable','replace-or-reroute-cable','add-patch','repatch','add-host-patch','repatch-host','connect-power','reconnect-power'];
   const rank=new Map(order.map((x,i)=>[x,i]));

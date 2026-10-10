@@ -67,6 +67,18 @@ assert.ok(defaultHtml.includes('Eth0'));
 assert.ok(defaultHtml.includes('CAB-OFI-01'));
 assert.ok(defaultHtml.includes('Hojas de etiquetas imprimibles'),'Las etiquetas deben formar parte del informe técnico por defecto');
 
+const englishHtml=report.build(project,{gateReport:gate,locale:'en'});
+assert.ok(englishHtml.includes('<html lang="en">'));
+assert.ok(englishHtml.includes('Technical installation manual'));
+assert.ok(englishHtml.includes('Installation readiness'));
+assert.ok(englishHtml.includes('Overall equipment connection diagram'));
+assert.ok(englishHtml.includes('Printable label sheets'));
+assert.ok(englishHtml.includes('Print / Save PDF'));
+assert.ok(englishHtml.includes('Mount SW-CORE at U20'));
+assert.ok(englishHtml.includes('Connect SW-CORE · Gi1/0/2'));
+assert.ok(!englishHtml.includes('Manual técnico de instalación'));
+assert.ok(!englishHtml.includes('Estado de preparación para instalación'));
+
 const connectionsOnly=report.build(project,{gateReport:gate,sections:['connection-diagram','direct-connectivity']});
 assert.ok(connectionsOnly.includes('Esquema general de conexión de equipos'));
 assert.ok(connectionsOnly.includes('Conectividad directa de datos'));
