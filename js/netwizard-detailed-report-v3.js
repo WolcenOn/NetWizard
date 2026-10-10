@@ -549,7 +549,7 @@ function inject(){
  const b=root.document.createElement('button');b.id='btnCompactReport';b.className='btn bs bsm';b.type='button';
  const paint=()=>{const locale=localeOf();b.textContent=pick(locale,'🧰 Informe de instalación','🧰 Installation report');};
  paint();b.onclick=()=>{try{openConfigurator(currentProject());}catch(e){root.alert&&root.alert(e.message);}};
- target.parentNode.insertBefore(b,target);root.document.addEventListener('nw:i18n:changed',paint);
+ target.parentNode.insertBefore(b,target);root.addEventListener&&root.addEventListener('netwizard:i18n',paint);
 }
 const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets,interventionReport};
 root.NetWizardInstallationReport=api;
