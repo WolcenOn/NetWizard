@@ -146,8 +146,7 @@ footer{color:#70859f;font-size:11px;margin:16px 0 4px}
 'use strict';
 
 const $=s=>document.querySelector(s);
-const $$=s=>[...document.querySelectorAll(s)];
-const uid=(prefix,text,index)=>{
+ const uid=(prefix,text,index)=>{
   const base=String(text||'item').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'item';
   return prefix+'_'+base+'_'+String(index+1).padStart(2,'0');
 };
