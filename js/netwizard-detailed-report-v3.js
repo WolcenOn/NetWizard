@@ -63,7 +63,7 @@ const EN_REPLACEMENTS=[
  ['Formato de etiquetas','Label format'],['Elige según el papel adhesivo. Después puedes ajustar la escala al 100 % en el diálogo de impresión.','Choose the adhesive paper format. You can then set print scaling to 100% in the print dialog.'],
  ['Cancelar','Cancel'],['Abrir solo etiquetas','Open labels only'],['Generar informe','Generate report'],['Selecciona al menos una sección.','Select at least one section.'],
  ['Informe de instalación','Installation report'],['Esquema','Schema'],['equipo(s)','device(s)'],['puerto(s)','port(s)'],['rack(s)','rack(s)'],
- ['BLOQUEADO','BLOCKED'],['APTO CON ADVERTENCIAS','READY WITH WARNINGS'],['APTO','READY'],['Crítico','Critical'],['Alto','High'],['Medio','Medium'],['Bajo','Low']
+ ['BLOQUEADO','BLOCKED'],['APTO CON ADVERTENCIAS','READY WITH WARNINGS'],['APTO','READY'],['Crítico','Critical'],['Alto','High'],['Medio','Medium'],['Bajo','Low'],['Sin host','No host'],['Acciones','Actions'],['intervenciones físicas','physical interventions'],['Añadir','Add'],['líneas de material','material lines'],['Retirar','Remove'],['Reutilizar','Reuse'],['Revisar','Review'],['decisiones manuales','manual decisions'],['Checklist de trabajo','Work checklist'],['Acción','Action'],['Comparativa As-Built → To-Be','As-Built → To-Be comparison'],['Cambio','Change'],['BOM diferencial · material a añadir','Differential BOM · material to add'],['BOM diferencial · material a retirar','Differential BOM · material to remove'],['Material reutilizado','Reused material'],['Revisión manual','Manual review'],['Sin elementos.','No items.'],['Cierre: actualizar el As-Built después de ejecutar y verificar la intervención real.','Closeout: update the As-Built after executing and verifying the actual intervention.'],['etiquetas','labels'],['Plantilla','Template'],['Los cables generan una etiqueta para cada extremo.','Cables generate one label for each end.'],['hoja','sheet'],['EQUIPO','DEVICE'],['TOMA','OUTLET'],['CABLE ESTRUCTURADO','STRUCTURED CABLE'],['ALIMENTACIÓN','POWER'],['puertos','ports'],['toma','outlet'],['Extremo A','End A'],['Extremo B','End B']
 ];
 function localizeHtml(html,locale){if(locale!=='en')return html;let out=String(html);for(const pair of EN_REPLACEMENTS.slice().sort((a,b)=>b[0].length-a[0].length))out=out.split(pair[0]).join(pair[1]);return out;}
 const SEC=root.NetWizardSecurityUtils||{};const CORE=root.NetWizardCoreUtils||{};
@@ -293,8 +293,8 @@ function workSequenceReport(){
  ];
  return`<div class="work-sequence">${steps.map(([n,t,d])=>`<div class="work-step"><b>${esc(n)}</b><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></div>`).join('')}</div>`;
 }
-function interventionReport(project){
- const pkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project):null;
+function interventionReport(project,options){const locale=localeOf(options);
+ const pkg=root.NetWizardFieldInterventionPackage&&typeof root.NetWizardFieldInterventionPackage.build==='function'?root.NetWizardFieldInterventionPackage.build(project,{locale}):null;
  if(!pkg||!pkg.ok)return'<p class="empty">Este proyecto no contiene un plan de intervención derivado de As-Built.</p>';
  const checklist=table(['Hecho','#','Área','Acción','Detalle'],arr(pkg.checklist).map(a=>['☐',a.order,a.category||'—',a.title||a.type,a.details||'—']),'No hay acciones físicas pendientes.');
  const compare=table(['#','Área','Cambio','Detalle'],arr(pkg.beforeAfter).map(r=>[r.order,r.category||'—',r.title||r.type,r.details||'—']),'No hay diferencias físicas.');
@@ -468,7 +468,7 @@ function build(project,options){
   'power-map':()=>powerMap(project,model),
   'structured-cabling':()=>structuredChainsReport(model),
   checklist:()=>installationChecklistReport(project,model),
-  intervention:()=>interventionReport(project),
+  intervention:()=>interventionReport(project,{locale}),
   'direct-connectivity':()=>connectivity,
   inventory:()=>inventory+'<h3>Material pasivo</h3>'+materials,
   'rack-connections':()=>rackConnections,
@@ -551,7 +551,7 @@ function inject(){
  paint();b.onclick=()=>{try{openConfigurator(currentProject());}catch(e){root.alert&&root.alert(e.message);}};
  target.parentNode.insertBefore(b,target);root.document.addEventListener('nw:i18n:changed',paint);
 }
-const api={version:'netwizard-installation-report-v7.1',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets,interventionReport};
+const api={version:'netwizard-installation-report-v7',build,openReport,currentProject,inject,openConfigurator,SECTION_DEFS,LABEL_PRESETS,selectedSections,equipmentConnectionDiagram,installationLabelSheets,interventionReport};
 root.NetWizardInstallationReport=api;
 root.NetWizardCompactReport=api;
 if(!root.NetWizardDetailedReport)root.NetWizardDetailedReport=api;
