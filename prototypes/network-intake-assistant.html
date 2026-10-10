@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetWizard · Prototipo de asistente de diseño</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#07111f;--panel:#0d1b2d;--panel2:#10233a;--line:#29415f;--text:#e7eef8;
+  --muted:#9fb1c8;--accent:#5aa7ff;--good:#49d17d;--warn:#ffbd59;--bad:#ff6b6b;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#07111f,#0a1626 30%,#07111f);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:1500px;margin:0 auto;padding:22px}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+.hero h1{margin:0 0 8px;font-size:30px}
+.hero p{margin:0;color:var(--muted);max-width:900px;line-height:1.5}
+.badge{border:1px solid var(--line);background:#0c1d32;padding:7px 10px;border-radius:999px;color:#b9d8ff;font-size:12px;white-space:nowrap}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr);gap:18px}
+.panel{background:rgba(13,27,45,.96);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 18px 50px #0004}
+.panel h2{margin:0 0 6px;font-size:19px}.panel>p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.45}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.step{border:1px solid var(--line);background:#0a1728;color:var(--muted);padding:7px 10px;border-radius:999px;font-size:12px}
+.step.active{border-color:#5aa7ff;color:#e8f4ff;background:#102a49}
+.section{border-top:1px solid #203753;padding-top:16px;margin-top:16px}
+.section:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.section-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
+.section-head h3{margin:0;font-size:16px}
+.row{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:8px;align-items:end}
+.field{grid-column:span 3;display:grid;gap:5px}
+.field.w2{grid-column:span 2}.field.w4{grid-column:span 4}.field.w5{grid-column:span 5}.field.w6{grid-column:span 6}.field.w8{grid-column:span 8}.field.w12{grid-column:span 12}
+label{font-size:11px;color:#a9bdd4}
+input,select,textarea{width:100%;border:1px solid #304a69;background:#081524;color:var(--text);border-radius:8px;padding:9px 10px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px #5aa7ff22}
+textarea{min-height:88px;resize:vertical}
+.btn{border:1px solid #315276;background:#0d2440;color:#d9ebff;padding:8px 11px;border-radius:9px}
+.btn:hover{background:#123057}.btn.primary{background:#1767b8;border-color:#2b8ce8;color:white}.btn.good{background:#14653a;border-color:#27935a}.btn.danger{background:#3a1820;border-color:#6d2835;color:#ffc8d0}.btn.ghost{background:transparent}
+.card-list{display:grid;gap:8px}
+.item{border:1px solid #263e5b;background:#091829;border-radius:11px;padding:10px}
+.item-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:end}
+.item-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.small{font-size:11px;color:var(--muted)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}.pill{font-size:11px;border:1px solid #35506f;padding:4px 7px;border-radius:999px;background:#0c2038}
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.metric{background:#091829;border:1px solid #263e5b;border-radius:10px;padding:10px}.metric b{display:block;font-size:22px}.metric span{font-size:11px;color:var(--muted)}
+.validation{display:grid;gap:7px;max-height:280px;overflow:auto}
+.msg{border:1px solid #304a69;background:#091829;border-radius:9px;padding:8px 9px;font-size:12px}.msg.good{border-color:#276b47}.msg.warn{border-color:#7a5a23}.msg.bad{border-color:#7b3030}
+.tabs{display:flex;gap:6px;margin:12px 0 8px}.tab{border:1px solid var(--line);background:#091829;color:var(--muted);border-radius:8px;padding:7px 10px}.tab.active{color:white;border-color:#4e8fd1;background:#102846}
+.output{min-height:430px;font-family:"Fira Code",Consolas,monospace;font-size:12px;white-space:pre;overflow:auto}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.note{padding:10px;border-left:4px solid var(--accent);background:#0b1e34;border-radius:8px;font-size:12px;color:#c7dbef}
+footer{color:#70859f;font-size:11px;margin:16px 0 4px}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.field,.field.w2,.field.w4,.field.w5,.field.w6,.field.w8{grid-column:span 6}}
+@media(max-width:680px){.app{padding:12px}.hero{flex-direction:column}.field,.field.w2,.field.w4,.field.w5,.field.w6,.field.w8,.field.w12{grid-column:span 12}.summary-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <div>
+      <h1>Asistente de diseño de red · prototipo independiente</h1>
+      <p>Prueba aislada para recoger requisitos de ubicaciones, VLANs, subredes, grupos de hosts y comunicaciones. Genera un JSON candidato compatible con el modelo 3.50.0 y un prompt estructurado para IA. No carga ni modifica NetWizard.</p>
+    </div>
+    <span class="badge">Standalone · sin dependencias</span>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="steps">
+        <span class="step active">1 Proyecto</span><span class="step">2 Ubicaciones</span><span class="step">3 VLANs</span><span class="step">4 Hosts</span><span class="step">5 Comunicaciones</span><span class="step">6 Validar</span>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Proyecto</h3><button class="btn" id="loadExample">Cargar ejemplo seguro</button></div>
+        <div class="row">
+          <div class="field w6"><label>Nombre del proyecto</label><input id="projectName" value="Nueva red"></div>
+          <div class="field w3"><label>Política inter-zona por defecto</label><select id="defaultPolicy"><option value="deny" selected>DENY</option><option value="allow">ALLOW</option></select></div>
+          <div class="field w3"><label>Dominio interno</label><input id="domain" placeholder="corp.example"></div>
+          <div class="field w12"><label>Objetivo / contexto</label><textarea id="projectGoal" placeholder="Ej.: oficina con usuarios, servidores, cámaras, invitados y gestión separada."></textarea></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Ubicaciones</h3><button class="btn" data-add="location">+ Ubicación</button></div>
+        <p class="small">Define sedes, edificios, plantas, salas o CPD. El alcance de cada VLAN podrá referenciar estas ubicaciones.</p>
+        <div id="locations" class="card-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>VLANs, subredes y alcance</h3><button class="btn" data-add="vlan">+ VLAN</button></div>
+        <p class="small">Cada VLAN actúa como segmento lógico. Define función, red, gateway, DHCP, nivel de confianza y dónde debe existir.</p>
+        <div id="vlans" class="card-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Grupos de hosts</h3><button class="btn" data-add="host">+ Grupo de hosts</button></div>
+        <p class="small">Un grupo representa hosts con la misma función y política. El prototipo expande la cantidad indicada a hosts individuales.</p>
+        <div id="hosts" class="card-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Comunicaciones y política firewall</h3><button class="btn" data-add="comm">+ Comunicación</button></div>
+        <p class="small">Define quién inicia la comunicación, hacia qué zona/grupo, protocolo, puertos, acción, motivo y registro.</p>
+        <div id="comms" class="card-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="note">
+          El prototipo usa <b>default deny</b> como diseño recomendado. Las reglas <b>ALLOW</b> deben describir necesidades concretas. Las reglas con <b>ANY</b>, destinos amplios o acceso desde Guest/IoT hacia Management generan advertencias.
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>Resultado y validación</h2>
+      <p>Se recalcula automáticamente al editar el formulario.</p>
+      <div class="summary-grid">
+        <div class="metric"><b id="mLocations">0</b><span>ubicaciones</span></div>
+        <div class="metric"><b id="mVlans">0</b><span>VLANs</span></div>
+        <div class="metric"><b id="mHosts">0</b><span>hosts generados</span></div>
+        <div class="metric"><b id="mRules">0</b><span>reglas firewall</span></div>
+      </div>
+      <div id="validation" class="validation"></div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="json">JSON candidato</button>
+        <button class="tab" data-tab="prompt">Prompt IA</button>
+        <button class="tab" data-tab="matrix">Matriz</button>
+      </div>
+      <textarea id="output" class="output" spellcheck="false"></textarea>
+      <div class="toolbar">
+        <button class="btn primary" id="copyOutput">Copiar</button>
+        <button class="btn good" id="downloadJson">Descargar JSON</button>
+        <button class="btn" id="validateNow">Validar</button>
+      </div>
+      <footer>Prototipo experimental. No forma parte del runtime principal de NetWizard.</footer>
+    </aside>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const uid=(prefix,text,index)=>{
+  const base=String(text||'item').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'item';
+  return prefix+'_'+base+'_'+String(index+1).padStart(2,'0');
+};
+const state={tab:'json'};
+
+const hostTypes=[
+  ['workstation','PC / workstation'],['laptop','Portátil'],['server','Servidor'],['hypervisor','Hypervisor'],
+  ['printer','Impresora'],['phone','Teléfono IP'],['ap','Access Point'],['camera','Cámara IP'],
+  ['nvr','NVR'],['iot','IoT'],['plc','PLC / industrial'],['pos','POS'],['nas','NAS / almacenamiento'],
+  ['network','Equipo de red'],['management','Gestión / appliance'],['guest','Invitado'],['other','Otro']
+];
+const vlanRoles=[
+  ['users','Usuarios'],['servers','Servidores'],['management','Gestión'],['voice','Voz'],['iot','IoT'],
+  ['cameras','Cámaras'],['guest','Invitados'],['dmz','DMZ'],['storage','Storage'],['lab','Laboratorio'],['transit','Tránsito'],['other','Otro']
+];
+const trustLevels=[['trusted','Trusted'],['restricted','Restricted'],['untrusted','Untrusted'],['management','Management']];
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function options(list,selected=''){return list.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(selected)?'selected':'')+'>'+esc(l)+'</option>').join('');}
+function removeButton(){return '<button class="btn danger" data-remove>Eliminar</button>';}
+
+function locationCard(data={}){
+  const el=document.createElement('div');el.className='item';el.dataset.kind='location';
+  el.innerHTML='<div class="item-grid">'+
+    '<div class="field w4"><label>Nombre</label><input data-k="name" value="'+esc(data.name||'')+'" placeholder="Sede Madrid"></div>'+
+    '<div class="field w3"><label>Tipo</label><select data-k="type">'+options([['site','Sede'],['building','Edificio'],['floor','Planta'],['room','Sala / CPD'],['zone','Zona']],data.type||'site')+'</select></div>'+
+    '<div class="field w5"><label>Padre (nombre, opcional)</label><input data-k="parent" value="'+esc(data.parent||'')+'" placeholder="Sede Madrid"></div>'+
+    '</div><div class="item-actions">'+removeButton()+'</div>';
+  return el;
+}
+
+function vlanCard(data={}){
+  const el=document.createElement('div');el.className='item';el.dataset.kind='vlan';
+  el.innerHTML='<div class="item-grid">'+
+    '<div class="field w2"><label>VLAN ID</label><input data-k="vlanId" type="number" min="1" max="4094" value="'+esc(data.vlanId||'')+'" placeholder="20"></div>'+
+    '<div class="field w3"><label>Nombre</label><input data-k="name" value="'+esc(data.name||'')+'" placeholder="USERS"></div>'+
+    '<div class="field w2"><label>Función</label><select data-k="role">'+options(vlanRoles,data.role||'users')+'</select></div>'+
+    '<div class="field w2"><label>Confianza</label><select data-k="trust">'+options(trustLevels,data.trust||'restricted')+'</select></div>'+
+    '<div class="field w3"><label>Alcance</label><input data-k="scope" value="'+esc(data.scope||'')+'" placeholder="Sede Madrid, Planta 1"></div>'+
+    '<div class="field w4"><label>Subred IPv4</label><input data-k="cidr" value="'+esc(data.cidr||'')+'" placeholder="10.10.20.0/24"></div>'+
+    '<div class="field w4"><label>Gateway</label><input data-k="gateway" value="'+esc(data.gateway||'')+'" placeholder="10.10.20.1"></div>'+
+    '<div class="field w2"><label>DHCP</label><select data-k="dhcp"><option value="yes" '+(data.dhcp!=='no'?'selected':'')+'>Sí</option><option value="no" '+(data.dhcp==='no'?'selected':'')+'>No</option></select></div>'+
+    '<div class="field w2"><label>Internet</label><select data-k="internet"><option value="yes" '+(data.internet==='yes'?'selected':'')+'>Sí</option><option value="no" '+(data.internet!=='yes'?'selected':'')+'>No</option></select></div>'+
+    '<div class="field w12"><label>Notas de alcance / restricciones</label><input data-k="notes" value="'+esc(data.notes||'')+'" placeholder="No extender L2 fuera de la sede; sólo routing entre sedes."></div>'+
+    '</div><div class="item-actions">'+removeButton()+'</div>';
+  return el;
+}
+
+function hostCard(data={}){
+  const el=document.createElement('div');el.className='item';el.dataset.kind='host';
+  el.innerHTML='<div class="item-grid">'+
+    '<div class="field w3"><label>Grupo</label><input data-k="name" value="'+esc(data.name||'')+'" placeholder="PC-USERS"></div>'+
+    '<div class="field w2"><label>Tipo</label><select data-k="type">'+options(hostTypes,data.type||'workstation')+'</select></div>'+
+    '<div class="field w2"><label>Cantidad</label><input data-k="count" type="number" min="1" max="500" value="'+esc(data.count||1)+'"></div>'+
+    '<div class="field w2"><label>VLAN (ID o nombre)</label><input data-k="vlan" value="'+esc(data.vlan||'')+'" placeholder="20"></div>'+
+    '<div class="field w3"><label>Ubicación</label><input data-k="location" value="'+esc(data.location||'')+'" placeholder="Planta 1"></div>'+
+    '<div class="field w4"><label>Direccionamiento</label><select data-k="ipMode"><option value="dhcp" '+(data.ipMode!=='static'?'selected':'')+'>DHCP</option><option value="static" '+(data.ipMode==='static'?'selected':'')+'>Estático</option></select></div>'+
+    '<div class="field w8"><label>Necesidades / observaciones</label><input data-k="notes" value="'+esc(data.notes||'')+'" placeholder="Acceso web, DNS, ERP"></div>'+
+    '</div><div class="item-actions">'+removeButton()+'</div>';
+  return el;
+}
+
+function commCard(data={}){
+  const el=document.createElement('div');el.className='item';el.dataset.kind='comm';
+  el.innerHTML='<div class="item-grid">'+
+    '<div class="field w3"><label>Origen (VLAN/grupo)</label><input data-k="src" value="'+esc(data.src||'')+'" placeholder="USERS"></div>'+
+    '<div class="field w3"><label>Destino (VLAN/grupo/IP/Internet)</label><input data-k="dst" value="'+esc(data.dst||'')+'" placeholder="SERVERS"></div>'+
+    '<div class="field w2"><label>Protocolo</label><select data-k="proto">'+options([['tcp','TCP'],['udp','UDP'],['tcp/udp','TCP/UDP'],['icmp','ICMP'],['any','ANY']],data.proto||'tcp')+'</select></div>'+
+    '<div class="field w2"><label>Puertos</label><input data-k="ports" value="'+esc(data.ports||'')+'" placeholder="443,8443"></div>'+
+    '<div class="field w2"><label>Acción</label><select data-k="action"><option value="allow" '+(data.action!=='deny'?'selected':'')+'>ALLOW</option><option value="deny" '+(data.action==='deny'?'selected':'')+'>DENY</option></select></div>'+
+    '<div class="field w6"><label>Motivo</label><input data-k="reason" value="'+esc(data.reason||'')+'" placeholder="Usuarios acceden al ERP por HTTPS"></div>'+
+    '<div class="field w3"><label>Log</label><select data-k="log"><option value="yes" '+(data.log==='yes'?'selected':'')+'>Sí</option><option value="no" '+(data.log!=='yes'?'selected':'')+'>No</option></select></div>'+
+    '<div class="field w3"><label>Obligatoria</label><select data-k="required"><option value="yes" '+(data.required!=='no'?'selected':'')+'>Sí</option><option value="no" '+(data.required==='no'?'selected':'')+'>No</option></select></div>'+
+    '</div><div class="item-actions">'+removeButton()+'</div>';
+  return el;
+}
+
+function add(kind,data){
+  const map={location:['#locations',locationCard],vlan:['#vlans',vlanCard],host:['#hosts',hostCard],comm:['#comms',commCard]};
+  const [target,fn]=map[kind];$(target).appendChild(fn(data));refresh();
+}
+function rows(kind){return $$('[data-kind="'+kind+'"]').map(el=>Object.fromEntries($$('[data-k]',el).map(x=>[x.dataset.k,x.value.trim()])));}
+function $$(s,root=document){return [...root.querySelectorAll(s)];}
+
+function normalizeRef(v){return String(v||'').trim().toLowerCase();}
+function findVlan(ref,vlans){
+  const r=normalizeRef(ref);
+  return vlans.find(v=>String(v.vlanId)===r||normalizeRef(v.name)===r)||null;
+}
+function ip4(s){const p=String(s||'').split('.');return p.length===4&&p.every(x=>/^\d+$/.test(x)&&Number(x)>=0&&Number(x)<=255);}
+function cidrOk(s){
+  const [ip,prefix]=String(s||'').split('/');
+  return ip4(ip)&&/^\d+$/.test(prefix)&&Number(prefix)>=0&&Number(prefix)<=32;
+}
+function ipToInt(ip){return ip.split('.').reduce((n,x)=>(n<<8)+(Number(x)&255),0)>>>0;}
+function gatewayInCidr(gateway,cidr){
+  if(!ip4(gateway)||!cidrOk(cidr))return false;
+  const [network,p]=cidr.split('/'),prefix=Number(p),mask=prefix===0?0:(0xffffffff<<(32-prefix))>>>0;
+  return (ipToInt(gateway)&mask)===(ipToInt(network)&mask);
+}
+
+function build(){
+  const locations=rows('location').filter(x=>x.name);
+  const vlans=rows('vlan').filter(x=>x.vlanId||x.name);
+  const hostGroups=rows('host').filter(x=>x.name);
+  const comms=rows('comm').filter(x=>x.src||x.dst);
+
+  const locIds=new Map(locations.map((x,i)=>[normalizeRef(x.name),uid('loc',x.name,i)]));
+  const vlanModels=vlans.map((v,i)=>({
+    id:uid('vlan',v.name||v.vlanId,i),
+    vlanId:Number(v.vlanId)||null,
+    name:v.name||('VLAN '+v.vlanId),
+    description:[v.role,v.trust,v.notes].filter(Boolean).join(' · '),
+    _prototype:{role:v.role,trust:v.trust,scope:v.scope,internet:v.internet}
+  }));
+  const subnetModels=vlans.map((v,i)=>{
+    const vm=vlanModels[i];
+    return {id:uid('subnet',v.name||v.vlanId,i),vlanRef:vm.id,cidr:v.cidr,gateway:v.gateway};
+  });
+  const dhcp={};
+  vlans.forEach((v,i)=>{
+    if(v.dhcp==='yes'&&vlanModels[i].vlanId){
+      dhcp[String(vlanModels[i].vlanId)]={enabled:true,start:'',end:'',dns:'',domain:$('#domain').value.trim(),lease:7,exclusions:[],reservations:[]};
+    }
+  });
+
+  const hosts=[];
+  hostGroups.forEach((g,gi)=>{
+    const vm=findVlan(g.vlan,vlans);
+    const vi=vm?vlans.indexOf(vm):-1;
+    const count=Math.max(1,Math.min(500,Number(g.count)||1));
+    for(let n=0;n<count;n++){
+      hosts.push({
+        id:uid('host',g.name+'_'+(n+1),hosts.length),
+        name:count===1?g.name:(g.name+'-'+String(n+1).padStart(2,'0')),
+        type:g.type,
+        vlanRef:vi>=0?vlanModels[vi].id:'',
+        subnetRef:vi>=0?subnetModels[vi].id:'',
+        ipMode:g.ipMode,
+        physicalLocation:g.location,
+        description:g.notes
+      });
+    }
+  });
+
+  const fwRules=comms.map((c,i)=>({
+    id:uid('fw',c.src+'_'+c.dst,i),
+    name:(c.src||'ANY')+' to '+(c.dst||'ANY'),
+    src:c.src||'ANY',
+    dst:c.dst||'ANY',
+    proto:c.proto||'any',
+    port:c.ports||'any',
+    action:c.action||'deny',
+    log:c.log==='yes',
+    description:c.reason
+  }));
+
+  const vlanMatrix={};
+  comms.forEach(c=>{
+    if(c.action!=='allow')return;
+    const sv=findVlan(c.src,vlans),dv=findVlan(c.dst,vlans);
+    if(!sv||!dv)return;
+    const si=vlans.indexOf(sv),di=vlans.indexOf(dv);
+    vlanMatrix[vlanModels[si].id+'_'+vlanModels[di].id]=true;
+  });
+
+  const project={
+    _schemaVersion:'3.50.0',
+    step:'dash',
+    projName:$('#projectName').value.trim()||'Nueva red',
+    workflow:{mode:'design'},
+    devices:[],ports:[],
+    vlans:vlanModels.map(v=>{const x={...v};delete x._prototype;return x;}),
+    subnets:subnetModels,
+    hosts,
+    links:[],
+    fwRules,
+    vlanMatrix,
+    dhcp,
+    security:{},
+    roas:{},
+    vtp:{roles:{}},
+    topo:{pos:{}},
+    physicalLocations:locations.map((l,i)=>({
+      id:locIds.get(normalizeRef(l.name)),
+      name:l.name,
+      type:l.type,
+      ...(l.parent&&locIds.get(normalizeRef(l.parent))?{parentId:locIds.get(normalizeRef(l.parent))}:{})
+    })),
+    hostPhysicalLocations:[],
+    uiSort:{},
+    racks:[],rackItems:[],pdus:[],powerConnections:[],patchPanels:[],telecomOutlets:[],cableRuns:[],patchConnections:[],hostOutletConnections:[],
+    vrfs:[],wanCircuits:[],trafficProfiles:[],internalServices:[],wifiControllers:[],wifiAccessPoints:[],wifiSsids:[],ipv6Networks:[],
+    failureScenarios:[],stacks:[],mlagDomains:[],haGroups:[],diversityPolicies:[],linkAggregations:[],
+    routing:{},highAvailability:{},accessSecurity:{},management:{},observedState:null,driftPolicy:{}
+  };
+
+  return {locations,vlans,hostGroups,comms,vlanModels,subnetModels,hosts,project};
+}
+
+function validate(model){
+  const msgs=[],{locations,vlans,hostGroups,comms}=model;
+  const ok=(t)=>msgs.push({kind:'good',text:t}),warn=t=>msgs.push({kind:'warn',text:t}),bad=t=>msgs.push({kind:'bad',text:t});
+  if(!$('#projectName').value.trim())bad('Falta el nombre del proyecto.');
+  if(!locations.length)warn('No hay ubicaciones. El proyecto puede ser lógico, pero no tendrá alcance físico.');
+  const locNames=new Set(locations.map(x=>normalizeRef(x.name)));
+  locations.forEach(l=>{if(l.parent&&!locNames.has(normalizeRef(l.parent)))warn('La ubicación "'+l.name+'" referencia un padre no definido: '+l.parent);});
+
+  const seenIds=new Set(),seenNames=new Set();
+  vlans.forEach(v=>{
+    const id=Number(v.vlanId);
+    if(!id||id<1||id>4094)bad('VLAN "'+(v.name||'?')+'": VLAN ID inválido.');
+    else if(seenIds.has(id))bad('VLAN ID duplicado: '+id); else seenIds.add(id);
+    const nn=normalizeRef(v.name);if(nn){if(seenNames.has(nn))bad('Nombre de VLAN duplicado: '+v.name);seenNames.add(nn);}
+    if(!cidrOk(v.cidr))bad('VLAN '+(v.name||id)+': subred CIDR inválida o vacía.');
+    if(!ip4(v.gateway))bad('VLAN '+(v.name||id)+': gateway inválido o vacío.');
+    else if(cidrOk(v.cidr)&&!gatewayInCidr(v.gateway,v.cidr))bad('VLAN '+(v.name||id)+': el gateway no pertenece a '+v.cidr+'.');
+    if(v.scope){
+      v.scope.split(',').map(x=>normalizeRef(x)).filter(Boolean).forEach(scope=>{if(!locNames.has(scope))warn('VLAN '+(v.name||id)+': alcance "'+scope+'" no coincide con una ubicación definida.');});
+    }else warn('VLAN '+(v.name||id)+': no tiene alcance definido.');
+    if(v.role==='guest'&&v.trust!=='untrusted')warn('VLAN '+(v.name||id)+': Guest debería ser normalmente Untrusted.');
+    if(v.role==='management'&&v.trust!=='management')warn('VLAN '+(v.name||id)+': Management debería usar nivel de confianza Management.');
+  });
+  if(vlans.length)ok(vlans.length+' VLAN(s) analizadas.');
+
+  hostGroups.forEach(g=>{
+    if(!findVlan(g.vlan,vlans))bad('Grupo '+g.name+': VLAN no encontrada ('+g.vlan+').');
+    if(g.location&&!locNames.has(normalizeRef(g.location)))warn('Grupo '+g.name+': ubicación no definida ('+g.location+').');
+    if((Number(g.count)||0)<1)bad('Grupo '+g.name+': cantidad inválida.');
+  });
+
+  comms.forEach((c,i)=>{
+    if(!c.src||!c.dst)bad('Comunicación '+(i+1)+': origen y destino son obligatorios.');
+    if(c.action==='allow'&&(c.proto==='any'||normalizeRef(c.ports)==='any'||!c.ports)&&c.dst.toLowerCase()!=='internet')warn('ALLOW '+c.src+' → '+c.dst+' es demasiado amplio (ANY o puertos vacíos).');
+    const srcV=findVlan(c.src,vlans),dstV=findVlan(c.dst,vlans);
+    const srcRole=srcV&&srcV.role,dstRole=dstV&&dstV.role;
+    if(c.action==='allow'&&['guest','iot','cameras'].includes(srcRole)&&dstRole==='management')bad('Regla sensible: '+c.src+' → '+c.dst+' permite acceso hacia Management.');
+    if(c.action==='allow'&&!c.reason)warn('ALLOW '+c.src+' → '+c.dst+' no documenta el motivo.');
+  });
+
+  if($('#defaultPolicy').value==='allow')warn('La política inter-zona por defecto es ALLOW. Para segmentación segura se recomienda DENY.');
+  else ok('Política inter-zona por defecto: DENY.');
+
+  if(!msgs.some(x=>x.kind==='bad'))ok('No se detectan errores bloqueantes en el formulario.');
+  return msgs;
+}
+
+function prompt(model){
+  const {locations,vlans,hostGroups,comms}=model;
+  return [
+    'Crea un archivo JSON de proyecto NetWizard compatible con schema 3.50.0.',
+    '',
+    'REGLAS OBLIGATORIAS',
+    '- Devuelve exclusivamente JSON válido, sin Markdown.',
+    '- Usa _schemaVersion: "3.50.0".',
+    '- Todos los IDs deben ser únicos, estables y legibles.',
+    '- vlanRef, subnetRef, deviceId, portId, parentId y cualquier otra referencia deben apuntar a entidades existentes.',
+    '- No inventes dispositivos, puertos, IPs, servicios o relaciones que no estén indicados.',
+    '- No generes una regla ALLOW más amplia que la necesidad descrita.',
+    '- Política inter-zona por defecto: '+$('#defaultPolicy').value.toUpperCase()+'.',
+    '- Si falta un dato necesario para producir un JSON válido, indícalo en una colección warnings dentro de metadata de trabajo; no inventes el valor.',
+    '- Cada VLAN debe conservar su alcance físico indicado. No extiendas L2 a otras ubicaciones salvo que se solicite expresamente.',
+    '- Genera vlanMatrix sólo para comunicaciones inter-VLAN permitidas.',
+    '- Genera fwRules con origen, destino, protocolo, puertos, acción y descripción.',
+    '',
+    'PROYECTO',
+    'Nombre: '+($('#projectName').value.trim()||'Nueva red'),
+    'Dominio: '+($('#domain').value.trim()||'no especificado'),
+    'Objetivo: '+($('#projectGoal').value.trim()||'no especificado'),
+    '',
+    'UBICACIONES',
+    ...(locations.length?locations.map(x=>'- '+x.name+' | tipo='+x.type+(x.parent?' | padre='+x.parent:'')):['- Ninguna']),
+    '',
+    'VLANS Y SUBREDES',
+    ...(vlans.length?vlans.map(v=>'- VLAN '+v.vlanId+' '+v.name+' | rol='+v.role+' | confianza='+v.trust+' | red='+v.cidr+' | gateway='+v.gateway+' | DHCP='+v.dhcp+' | Internet='+v.internet+' | alcance='+ (v.scope||'no definido')+(v.notes?' | notas='+v.notes:'')):['- Ninguna']),
+    '',
+    'GRUPOS DE HOSTS',
+    ...(hostGroups.length?hostGroups.map(g=>'- '+g.name+' | tipo='+g.type+' | cantidad='+g.count+' | VLAN='+g.vlan+' | ubicación='+(g.location||'no definida')+' | IP='+g.ipMode+(g.notes?' | necesidades='+g.notes:'')):['- Ninguno']),
+    '',
+    'COMUNICACIONES / FIREWALL',
+    ...(comms.length?comms.map(c=>'- '+c.src+' -> '+c.dst+' | '+c.proto.toUpperCase()+'/'+(c.ports||'ANY')+' | '+c.action.toUpperCase()+' | log='+c.log+' | obligatoria='+c.required+' | motivo='+(c.reason||'no documentado')):['- Ninguna']),
+    '',
+    'VALIDACIONES QUE DEBES CUMPLIR',
+    '- VLAN IDs únicos y entre 1 y 4094.',
+    '- Gateway perteneciente a su subred.',
+    '- Hosts asociados únicamente a VLAN/subnet existentes.',
+    '- No referencias huérfanas.',
+    '- No permitir Guest/IoT/Cameras hacia Management salvo regla explícita y justificada.',
+    '- Evitar ANY en reglas ALLOW cuando se conocen servicios concretos.',
+    '- Mantener DENY implícito entre zonas cuando no exista comunicación autorizada.'
+  ].join('\n');
+}
+
+function matrix(model){
+  if(!model.comms.length)return 'Sin comunicaciones definidas.';
+  const rows=[['Origen','Destino','Proto/Puertos','Acción','Log','Motivo']];
+  model.comms.forEach(c=>rows.push([c.src,c.dst,(c.proto||'any').toUpperCase()+'/'+(c.ports||'ANY'),(c.action||'deny').toUpperCase(),c.log==='yes'?'Sí':'No',c.reason||'—']));
+  const widths=rows[0].map((_,i)=>Math.max(...rows.map(r=>String(r[i]).length)));
+  return rows.map((r,ri)=>r.map((v,i)=>String(v).padEnd(widths[i])).join(' | ')+(ri===0?'\n'+widths.map(w=>'-'.repeat(w)).join('-|-'):'')).join('\n');
+}
+
+function refresh(){
+  const model=build(),msgs=validate(model);
+  $('#mLocations').textContent=model.locations.length;
+  $('#mVlans').textContent=model.vlans.length;
+  $('#mHosts').textContent=model.hosts.length;
+  $('#mRules').textContent=model.comms.length;
+  $('#validation').innerHTML=msgs.map(m=>'<div class="msg '+m.kind+'">'+esc(m.text)+'</div>').join('');
+  if(state.tab==='json')$('#output').value=JSON.stringify({format:'netwizard-project',schemaVersion:'3.50.0',project:model.project},null,2);
+  if(state.tab==='prompt')$('#output').value=prompt(model);
+  if(state.tab==='matrix')$('#output').value=matrix(model);
+}
+
+document.addEventListener('input',e=>{if(e.target.matches('input,select,textarea')&&e.target.id!=='output')refresh();});
+document.addEventListener('change',e=>{if(e.target.matches('input,select')&&e.target.id!=='output')refresh();});
+document.addEventListener('click',e=>{
+  const addBtn=e.target.closest('[data-add]');if(addBtn){add(addBtn.dataset.add);return;}
+  const rem=e.target.closest('[data-remove]');if(rem){rem.closest('.item').remove();refresh();return;}
+  const tab=e.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;$$('.tab').forEach(x=>x.classList.toggle('active',x===tab));refresh();}
+});
+
+$('#copyOutput').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText($('#output').value);$('#copyOutput').textContent='Copiado';setTimeout(()=>$('#copyOutput').textContent='Copiar',1000);}
+  catch{ $('#output').select();document.execCommand('copy'); }
+});
+$('#downloadJson').addEventListener('click',()=>{
+  const model=build(),blob=new Blob([JSON.stringify({format:'netwizard-project',schemaVersion:'3.50.0',project:model.project},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(model.project.projName||'netwizard-proyecto').replace(/[^a-z0-9_-]+/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+});
+$('#validateNow').addEventListener('click',()=>{refresh();$('#validation').scrollTop=0;});
+$('#loadExample').addEventListener('click',()=>{
+  $('#locations').innerHTML='';$('#vlans').innerHTML='';$('#hosts').innerHTML='';$('#comms').innerHTML='';
+  $('#projectName').value='Oficina segmentada · prueba';
+  $('#domain').value='corp.example';
+  $('#projectGoal').value='Oficina con usuarios, servidores, cámaras, invitados y gestión separada. Default deny entre zonas.';
+  $('#defaultPolicy').value='deny';
+  add('location',{name:'Sede Madrid',type:'site'});
+  add('location',{name:'CPD',type:'room',parent:'Sede Madrid'});
+  add('location',{name:'Planta 1',type:'floor',parent:'Sede Madrid'});
+  add('vlan',{vlanId:10,name:'MGMT',role:'management',trust:'management',scope:'CPD',cidr:'10.10.10.0/24',gateway:'10.10.10.1',dhcp:'no',internet:'no',notes:'Sólo administración de infraestructura.'});
+  add('vlan',{vlanId:20,name:'USERS',role:'users',trust:'restricted',scope:'Planta 1',cidr:'10.10.20.0/24',gateway:'10.10.20.1',dhcp:'yes',internet:'yes'});
+  add('vlan',{vlanId:30,name:'SERVERS',role:'servers',trust:'trusted',scope:'CPD',cidr:'10.10.30.0/24',gateway:'10.10.30.1',dhcp:'no',internet:'no'});
+  add('vlan',{vlanId:40,name:'CAMERAS',role:'cameras',trust:'untrusted',scope:'Planta 1',cidr:'10.10.40.0/24',gateway:'10.10.40.1',dhcp:'yes',internet:'no'});
+  add('vlan',{vlanId:50,name:'GUEST',role:'guest',trust:'untrusted',scope:'Planta 1',cidr:'10.10.50.0/24',gateway:'10.10.50.1',dhcp:'yes',internet:'yes'});
+  add('host',{name:'PC-USERS',type:'workstation',count:20,vlan:'USERS',location:'Planta 1',ipMode:'dhcp',notes:'Navegación, DNS y acceso al ERP.'});
+  add('host',{name:'ERP',type:'server',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static',notes:'Aplicación HTTPS TCP/443.'});
+  add('host',{name:'NVR',type:'nvr',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static'});
+  add('host',{name:'CAM',type:'camera',count:8,vlan:'CAMERAS',location:'Planta 1',ipMode:'dhcp'});
+  add('comm',{src:'USERS',dst:'SERVERS',proto:'tcp',ports:'443',action:'allow',reason:'Acceso al ERP por HTTPS',log:'yes',required:'yes'});
+  add('comm',{src:'CAMERAS',dst:'NVR',proto:'tcp',ports:'554,443',action:'allow',reason:'Vídeo y gestión del NVR',log:'yes',required:'yes'});
+  add('comm',{src:'GUEST',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación de invitados',log:'no',required:'yes'});
+  add('comm',{src:'GUEST',dst:'MGMT',proto:'any',ports:'any',action:'deny',reason:'Aislamiento de gestión',log:'yes',required:'yes'});
+  refresh();
+});
+
+add('location',{name:'Sede principal',type:'site'});
+add('vlan',{vlanId:20,name:'USERS',role:'users',trust:'restricted',scope:'Sede principal',cidr:'10.10.20.0/24',gateway:'10.10.20.1',dhcp:'yes',internet:'yes'});
+add('host',{name:'USERS-PC',type:'workstation',count:10,vlan:'USERS',location:'Sede principal',ipMode:'dhcp'});
+add('comm',{src:'USERS',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación',log:'no',required:'yes'});
+refresh();
+})();
+</script>
+</body>
+</html>
