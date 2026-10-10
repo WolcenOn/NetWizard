@@ -7,6 +7,8 @@ const POE=root.NetWizardPoeModel||(typeof require==='function'?require('./netwiz
 const RACK=root.NetWizardRackModel||(typeof require==='function'?require('./netwizard-rack-model.js'):null);
 const CABLING=root.NetWizardStructuredCabling||(typeof require==='function'?require('./netwizard-structured-cabling.js'):null);
 const byId=(list,id)=>arr(list).find(x=>x&&x.id===id)||null;
+function localeOf(options){const explicit=clean(options&&options.locale);if(explicit)return explicit.toLowerCase()==='en'?'en':'es';const i18n=root.NetWizardI18n;const current=i18n&&typeof i18n.getReportLocale==='function'?i18n.getReportLocale():i18n&&typeof i18n.getLocale==='function'?i18n.getLocale():'es';return clean(current).toLowerCase()==='en'?'en':'es';}
+function pick(locale,es,en){return locale==='en'?en:es;}
 function labelDevice(project,id,options){const locale=localeOf(options),d=byId(project&&project.devices,id);return d?d.name||d.id:pick(locale,'Sin equipo asignado','No device assigned');}
 function labelPort(project,id,options){const locale=localeOf(options),p=byId(project&&project.ports,id);return p?`${labelDevice(project,p.deviceId,{locale})} · ${p.name||p.id}`:pick(locale,'Sin puerto asignado','No port assigned');}
 function linkPortA(link){return link&&(link.aPortId||link.a||link.fromPortId||link.from||link.portA)||null;}
@@ -24,7 +26,7 @@ function mediaKind(value){
  if(/console|serial|rollover|usb/.test(s))return'console';
  return'other';
 }
-function mediaLabel(value){return clean(value)||'No documentado';}
+function mediaLabel(value,options){const locale=localeOf(options);return clean(value)||pick(locale,'No documentado','Not documented');}
 function portIdFromLink(link,key){return key==='a'?linkPortA(link):linkPortB(link);}
 function buildPortMatrices(project,structuredCabling,options){const locale=localeOf(options);
  const ports=arr(project&&project.ports),links=arr(project&&project.links),hosts=arr(project&&project.hosts);
@@ -48,20 +50,20 @@ function buildPortMatrices(project,structuredCabling,options){const locale=local
      const direct=linkByPort.get(port.id);
      if(direct){
        const remote=byId(ports,direct.otherId),link=direct.link;
-       const medium=link.media||link.medium||link.cableType||port.media||'No documentado';
+       const medium=link.media||link.medium||link.cableType||port.media||pick(locale,'No documentado','Not documented');
        return{id:port.id,name:port.name||port.id,destination:remote?labelDevice(project,remote.deviceId,{locale}):pick(locale,'Extremo no documentado','Undocumented endpoint'),remotePort:remote?remote.name||remote.id:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:link.physicalPath||link.route||link.name||link.label||pick(locale,'Enlace directo','Direct link'),connectionType:'direct'};
      }
      const path=structuredByPort.get(port.id);
      if(path){
-       const medium=path.cableType||port.media||'No documentado';
+       const medium=path.cableType||port.media||pick(locale,'No documentado','Not documented');
        return{id:port.id,name:port.name||port.id,destination:path.hostLabel||pick(locale,'Host no documentado','Undocumented host'),remotePort:path.outletLabel?`${path.outletLabel} · P${path.outletPort||1}`:'—',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:[path.panelLabel&&`${path.panelLabel} · P${path.patchPort||'—'}`,path.route].filter(Boolean).join(' → ')||pick(locale,'Cableado estructurado','Structured cabling'),connectionType:'structured'};
      }
      const host=hostByPort.get(port.id);
      if(host){
-       const medium=port.media||'No documentado';
-       return{id:port.id,name:port.name||port.id,destination:host.name||host.hostname||host.id,remotePort:'NIC / endpoint',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:'Host conectado directamente',connectionType:'host'};
+       const medium=port.media||pick(locale,'No documentado','Not documented');
+       return{id:port.id,name:port.name||port.id,destination:host.name||host.hostname||host.id,remotePort:'NIC / endpoint',medium:mediaLabel(medium),mediaKind:mediaKind(medium),route:pick(locale,'Host conectado directamente','Host connected directly'),connectionType:'host'};
      }
-     const medium=port.media||'No documentado';
+     const medium=port.media||pick(locale,'No documentado','Not documented');
      return{id:port.id,name:port.name||port.id,destination:pick(locale,'Libre','Free'),remotePort:'—',medium:mediaLabel(medium),mediaKind:'free',route:port.desc||port.description||pick(locale,'Sin conexión documentada','No documented connection'),connectionType:'free'};
    });
    return{deviceId:device.id,deviceName:device.name||device.id,rackId:device.rackId||device.rack||null,ports:mapped};
@@ -72,16 +74,16 @@ function buildStructuredChains(project,structuredCabling,options){const locale=l
  return arr(structuredCabling&&structuredCabling.paths).map(path=>{
    const port=byId(ports,path.switchPortId),device=port?byId(devices,port.deviceId):null,panel=byId(panels,path.patchPanelId),outlet=byId(outlets,path.outletId),host=byId(hosts,path.hostId),location=outlet?byId(locations,outlet.locationId):null;
    const missing=[];
-   if(!port)missing.push('puerto de switch');
+   if(!port)missing.push(pick(locale,'puerto de switch','switch port'));
    if(!panel)missing.push('patch panel');
-   if(!outlet)missing.push('toma');
-   if(!host)missing.push('equipo final');
+   if(!outlet)missing.push(pick(locale,'toma','outlet'));
+   if(!host)missing.push(pick(locale,'equipo final','endpoint'));
    const lengths=[path.patchCordLengthM,path.lengthM,path.hostCordLengthM].map(Number).filter(Number.isFinite);
    return{
      id:path.id,label:path.label||path.id,rackId:panel&&panel.rackId||null,
      switchPortId:path.switchPortId||null,switchDeviceId:device&&device.id||null,switchDeviceName:device?device.name||device.id:pick(locale,'Sin switch','No switch'),switchPortName:port?port.name||port.id:pick(locale,'Sin puerto','No port'),
      patchCordLengthM:path.patchCordLengthM,patchPanelId:path.patchPanelId||null,patchPanelName:panel?panel.name||panel.id:path.panelLabel||pick(locale,'Sin patch panel','No patch panel'),patchPort:path.patchPort||null,
-     cableType:path.cableType||'No documentado',lengthM:path.lengthM,route:path.route||'Ruta no documentada',
+     cableType:path.cableType||pick(locale,'No documentado','Not documented'),lengthM:path.lengthM,route:path.route||pick(locale,'Ruta no documentada','Undocumented path'),
      outletId:path.outletId||null,outletName:outlet?outlet.name||outlet.id:path.outletLabel||pick(locale,'Sin toma','No outlet'),outletPort:path.outletPort||1,locationName:location?location.name||location.id:pick(locale,'Ubicación no documentada','Undocumented location'),
      hostId:path.hostId||null,hostName:host?host.name||host.hostname||host.id:path.hostLabel||pick(locale,'Sin equipo final','No endpoint'),hostCordLengthM:path.hostCordLengthM,
      totalLengthM:lengths.length?lengths.reduce((a,b)=>a+b,0):null,complete:!!path.complete&&!missing.length,missing
@@ -117,13 +119,13 @@ function buildInstallationChecklist(project,rackSummaries,structuredChains,power
  for(const item of items)push(item.rackId,pick(locale,'Montaje','Mounting'),`${pick(locale,'Montar','Mount')} ${item.label||item.name||item.id} ${pick(locale,'en','at')} ${Number.isFinite(Number(item.startUnit))?'U'+item.startUnit:pick(locale,'posición definida','defined position')}`,item.face||'front',Number.isFinite(Number(item.startUnit))||String(item.mounting||'').startsWith('vertical'));
  for(const link of arr(project&&project.links)){
    const a=portById.get(linkPortA(link)),b=portById.get(linkPortB(link)),rackId=a&&rackByDevice.get(a.deviceId)||b&&rackByDevice.get(b.deviceId)||null;
-   push(rackId,'Datos',`Conectar ${labelPort(project,linkPortA(link))} ↔ ${labelPort(project,linkPortB(link))}`,[link.media||link.medium||link.cableType,link.physicalPath||link.route].filter(Boolean).join(' · '),!!(a&&b));
+   push(rackId,pick(locale,'Datos','Data'),`${pick(locale,'Conectar','Connect')} ${labelPort(project,linkPortA(link),{locale})} ↔ ${labelPort(project,linkPortB(link),{locale})}`,[link.media||link.medium||link.cableType,link.physicalPath||link.route].filter(Boolean).join(' · '),!!(a&&b));
  }
  for(const chain of structuredChains){
    push(chain.rackId,pick(locale,'Parcheo','Patching'),`${pick(locale,'Conectar','Connect')} ${chain.switchDeviceName} · ${chain.switchPortName} → ${chain.patchPanelName} · P${chain.patchPort||'—'}`,chain.patchCordLengthM!=null?`${pick(locale,'Latiguillo','Patch cord')} ${chain.patchCordLengthM} m`:pick(locale,'Latiguillo rack','Rack patch cord'),!!chain.switchPortId);
    push(chain.rackId,pick(locale,'Cableado','Cabling'),`${pick(locale,'Tender','Run')} ${chain.patchPanelName} · P${chain.patchPort||'—'} → ${chain.outletName} · P${chain.outletPort||1}`,[chain.cableType,chain.lengthM!=null?`${chain.lengthM} m`:null,chain.route].filter(Boolean).join(' · '),!!(chain.patchPanelId&&chain.outletId));
    push(chain.rackId,pick(locale,'Puesto final','Endpoint'),`${pick(locale,'Conectar','Connect')} ${chain.outletName} · P${chain.outletPort||1} → ${chain.hostName}`,chain.hostCordLengthM!=null?`${pick(locale,'Latiguillo','Patch cord')} ${chain.hostCordLengthM} m`:pick(locale,'Latiguillo usuario','User patch cord'),!!chain.hostId);
-   push(chain.rackId,'Etiquetado',`Etiquetar ambos extremos de ${chain.label}`,`${chain.patchPanelName} P${chain.patchPort||'—'} / ${chain.outletName} P${chain.outletPort||1}`,chain.complete);
+   push(chain.rackId,pick(locale,'Etiquetado','Labeling'),`${pick(locale,'Etiquetar ambos extremos de','Label both ends of')} ${chain.label}`,`${chain.patchPanelName} P${chain.patchPort||'—'} / ${chain.outletName} P${chain.outletPort||1}`,chain.complete);
    push(chain.rackId,pick(locale,'Certificación','Certification'),`${pick(locale,'Certificar enlace','Certify link')} ${chain.label}`,chain.cableType,chain.complete);
  }
  for(const row of arr(powerMap&&powerMap.rows))push(row.rackId,pick(locale,'Energía','Power'),`${pick(locale,'Conectar','Connect')} ${row.deviceName} PSU-${row.psu} → ${row.pduName}`,row.outlet?`${pick(locale,'Toma','Outlet')} ${row.outlet} · feed ${row.feed||'—'}`:pick(locale,'Sin toma documentada','No documented outlet'),row.status==='connected');
@@ -157,7 +159,7 @@ function buildConnectionOverview(project,structuredChains,options){const locale=
  for(const link of links){
    const aId=linkPortA(link),bId=linkPortB(link),a=portMap.get(aId),b=portMap.get(bId);if(!a||!b)continue;
    const fromId=addDevice(a.deviceId),toId=addDevice(b.deviceId);if(!fromId||!toId)continue;
-   pushEdge({id:`link:${link.id||aId+'-'+bId}`,kind:'direct',fromId,toId,label:link.name||link.label||link.cableId||pick(locale,'Enlace','Link'),fromPort:a.name||a.id,toPort:b.name||b.id,media:mediaLabel(link.media||link.medium||link.cableType),capacityMbps:link.capacityMbps||null,route:link.physicalPath||link.route||null});
+   pushEdge({id:`link:${link.id||aId+'-'+bId}`,kind:'direct',fromId,toId,label:link.name||link.label||link.cableId||pick(locale,'Enlace','Link'),fromPort:a.name||a.id,toPort:b.name||b.id,media:mediaLabel(link.media||link.medium||link.cableType,{locale}),capacityMbps:link.capacityMbps||null,route:link.physicalPath||link.route||null});
  }
  for(const chain of arr(structuredChains)){
    if(!chain||!chain.switchDeviceId||!chain.hostId)continue;
