@@ -369,7 +369,11 @@ function validate(model){
   if(!$('#projectName').value.trim())bad('Falta el nombre del proyecto.');
   if(!locations.length)warn('No hay ubicaciones. El proyecto puede ser lógico, pero no tendrá alcance físico.');
   const locNames=new Set(locations.map(x=>normalizeRef(x.name)));
+  const parents=new Set(locations.map(x=>normalizeRef(x.parent)).filter(Boolean));
   locations.forEach(l=>{if(l.parent&&!locNames.has(normalizeRef(l.parent)))warn('La ubicación "'+l.name+'" referencia un padre no definido: '+l.parent);});
+  const rackLoc=normalizeRef($('#rackLocation').value);
+  if(rackLoc&&!locNames.has(rackLoc))bad('La ubicación de rack/CPD no existe: '+$('#rackLocation').value+'.');
+  else if(rackLoc&&parents.has(rackLoc))warn('La ubicación del rack tiene ubicaciones hijas. Conviene seleccionar una sala/CPD hoja concreta.');
 
   const seenIds=new Set(),seenNames=new Set();
   vlans.forEach(v=>{
@@ -390,7 +394,10 @@ function validate(model){
 
   hostGroups.forEach(g=>{
     if(!findVlan(g.vlan,vlans))bad('Grupo '+g.name+': VLAN no encontrada ('+g.vlan+').');
-    if(g.location&&!locNames.has(normalizeRef(g.location)))warn('Grupo '+g.name+': ubicación no definida ('+g.location+').');
+    const gl=normalizeRef(g.location);
+    if(g.location&&!locNames.has(gl))warn('Grupo '+g.name+': ubicación no definida ('+g.location+').');
+    else if(gl&&parents.has(gl))warn('Grupo '+g.name+': "'+g.location+'" contiene ubicaciones hijas. Asigna el grupo al aula/sala/CPD exacto para evitar que la IA concentre todos los hosts en la sede raíz.');
+    if(!g.location)warn('Grupo '+g.name+': falta ubicación física exacta.');
     if((Number(g.count)||0)<1)bad('Grupo '+g.name+': cantidad inválida.');
   });
 
@@ -605,25 +612,46 @@ $('#downloadJson').addEventListener('click',()=>{
 $('#validateNow').addEventListener('click',()=>{refresh();$('#validation').scrollTop=0;});
 $('#loadExample').addEventListener('click',()=>{
   $('#locations').innerHTML='';$('#vlans').innerHTML='';$('#hosts').innerHTML='';$('#comms').innerHTML='';
-  $('#projectName').value='Oficina segmentada · prueba';
-  $('#domain').value='corp.example';
-  $('#projectGoal').value='Oficina con usuarios, servidores, cámaras, invitados y gestión separada. Default deny entre zonas.';
+  $('#projectName').value='Colegio segmentado · prueba';
+  $('#domain').value='colegio.local';
+  $('#projectGoal').value='Colegio con CPD, dirección, aulas, profesores, alumnos, cámaras, Wi-Fi invitados y administración separada. La infraestructura debe dimensionarse completa y usar default deny.';
   $('#defaultPolicy').value='deny';
-  add('location',{name:'Sede Madrid',type:'site'});
-  add('location',{name:'CPD',type:'room',parent:'Sede Madrid'});
-  add('location',{name:'Planta 1',type:'floor',parent:'Sede Madrid'});
-  add('vlan',{vlanId:10,name:'MGMT',role:'management',trust:'management',scope:'CPD',cidr:'10.10.10.0/24',gateway:'10.10.10.1',dhcp:'no',internet:'no',notes:'Sólo administración de infraestructura.'});
-  add('vlan',{vlanId:20,name:'USERS',role:'users',trust:'restricted',scope:'Planta 1',cidr:'10.10.20.0/24',gateway:'10.10.20.1',dhcp:'yes',internet:'yes'});
-  add('vlan',{vlanId:30,name:'SERVERS',role:'servers',trust:'trusted',scope:'CPD',cidr:'10.10.30.0/24',gateway:'10.10.30.1',dhcp:'no',internet:'no'});
-  add('vlan',{vlanId:40,name:'CAMERAS',role:'cameras',trust:'untrusted',scope:'Planta 1',cidr:'10.10.40.0/24',gateway:'10.10.40.1',dhcp:'yes',internet:'no'});
-  add('vlan',{vlanId:50,name:'GUEST',role:'guest',trust:'untrusted',scope:'Planta 1',cidr:'10.10.50.0/24',gateway:'10.10.50.1',dhcp:'yes',internet:'yes'});
-  add('host',{name:'PC-USERS',type:'workstation',count:20,vlan:'USERS',location:'Planta 1',ipMode:'dhcp',notes:'Navegación, DNS y acceso al ERP.'});
-  add('host',{name:'ERP',type:'server',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static',notes:'Aplicación HTTPS TCP/443.'});
-  add('host',{name:'NVR',type:'nvr',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static'});
-  add('host',{name:'CAM',type:'camera',count:8,vlan:'CAMERAS',location:'Planta 1',ipMode:'dhcp'});
-  add('comm',{src:'USERS',dst:'SERVERS',proto:'tcp',ports:'443',action:'allow',reason:'Acceso al ERP por HTTPS',log:'yes',required:'yes'});
-  add('comm',{src:'CAMERAS',dst:'NVR',proto:'tcp',ports:'554,443',action:'allow',reason:'Vídeo y gestión del NVR',log:'yes',required:'yes'});
-  add('comm',{src:'GUEST',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación de invitados',log:'no',required:'yes'});
+  $('#rackLocation').value='CPD';
+  $('#rackUnits').value='24';
+  $('#portGrowth').value='25';
+  $('#patchPanelPorts').value='24';
+  $('#poeRequired').value='auto';
+  $('#internetMode').value='router-firewall';
+  $('#cablingCategory').value='Cat6A';
+  $('#redundancy').value='none';
+  $('#equipmentCriteria').value='Dimensionar switches gestionables por planta/zona cuando lo requieran distancia o puertos. PoE para AP y cámaras. Router de borde, firewall, uplinks adecuados y rack ordenado con patch panel + pasacables.';
+  add('location',{name:'Colegio',type:'site'});
+  add('location',{name:'Planta baja',type:'floor',parent:'Colegio'});
+  add('location',{name:'CPD',type:'room',parent:'Planta baja'});
+  add('location',{name:'Dirección',type:'room',parent:'Planta baja'});
+  add('location',{name:'Planta 1',type:'floor',parent:'Colegio'});
+  add('location',{name:'Aula 1',type:'room',parent:'Planta 1'});
+  add('location',{name:'Aula 2',type:'room',parent:'Planta 1'});
+  add('location',{name:'Biblioteca',type:'room',parent:'Planta 1'});
+  add('vlan',{vlanId:10,name:'MGMT',role:'management',trust:'management',scope:'CPD',cidr:'10.20.10.0/24',gateway:'10.20.10.1',dhcp:'no',internet:'no',notes:'Administración de infraestructura.'});
+  add('vlan',{vlanId:20,name:'STAFF',role:'users',trust:'restricted',scope:'Dirección,Aula 1,Aula 2,Biblioteca',cidr:'10.20.20.0/24',gateway:'10.20.20.1',dhcp:'yes',internet:'yes'});
+  add('vlan',{vlanId:30,name:'STUDENTS',role:'users',trust:'restricted',scope:'Aula 1,Aula 2,Biblioteca',cidr:'10.20.30.0/23',gateway:'10.20.30.1',dhcp:'yes',internet:'yes'});
+  add('vlan',{vlanId:40,name:'SERVERS',role:'servers',trust:'trusted',scope:'CPD',cidr:'10.20.40.0/24',gateway:'10.20.40.1',dhcp:'no',internet:'no'});
+  add('vlan',{vlanId:50,name:'CAMERAS',role:'cameras',trust:'untrusted',scope:'Planta baja,Planta 1',cidr:'10.20.50.0/24',gateway:'10.20.50.1',dhcp:'yes',internet:'no'});
+  add('vlan',{vlanId:60,name:'GUEST',role:'guest',trust:'untrusted',scope:'Dirección,Aula 1,Aula 2,Biblioteca',cidr:'10.20.60.0/24',gateway:'10.20.60.1',dhcp:'yes',internet:'yes'});
+  add('host',{name:'PC-DIRECCION',type:'workstation',count:4,vlan:'STAFF',location:'Dirección',ipMode:'dhcp',notes:'Administración del centro, ERP y navegación.'});
+  add('host',{name:'PC-AULA1',type:'workstation',count:24,vlan:'STUDENTS',location:'Aula 1',ipMode:'dhcp',notes:'Equipos de alumnos.'});
+  add('host',{name:'PC-AULA2',type:'workstation',count:24,vlan:'STUDENTS',location:'Aula 2',ipMode:'dhcp',notes:'Equipos de alumnos.'});
+  add('host',{name:'PC-BIBLIOTECA',type:'workstation',count:8,vlan:'STUDENTS',location:'Biblioteca',ipMode:'dhcp'});
+  add('host',{name:'SRV-COLEGIO',type:'server',count:2,vlan:'SERVERS',location:'CPD',ipMode:'static',notes:'Servicios internos DNS/ERP/directorio.'});
+  add('host',{name:'AP-AULA1',type:'ap',count:1,vlan:'MGMT',location:'Aula 1',ipMode:'dhcp',notes:'AP PoE gestionado.'});
+  add('host',{name:'AP-AULA2',type:'ap',count:1,vlan:'MGMT',location:'Aula 2',ipMode:'dhcp',notes:'AP PoE gestionado.'});
+  add('host',{name:'CAM-CENTRO',type:'camera',count:6,vlan:'CAMERAS',location:'Planta baja',ipMode:'dhcp'});
+  add('comm',{src:'STAFF',dst:'SERVERS',proto:'tcp',ports:'443,445',action:'allow',reason:'ERP y recursos internos',log:'yes',required:'yes'});
+  add('comm',{src:'STUDENTS',dst:'SERVERS',proto:'tcp',ports:'443',action:'allow',reason:'Acceso a servicios educativos web',log:'yes',required:'yes'});
+  add('comm',{src:'STAFF',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación',log:'no',required:'yes'});
+  add('comm',{src:'STUDENTS',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación filtrada',log:'no',required:'yes'});
+  add('comm',{src:'GUEST',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'Navegación de invitados',log:'no',required:'yes'});
   add('comm',{src:'GUEST',dst:'MGMT',proto:'any',ports:'any',action:'deny',reason:'Aislamiento de gestión',log:'yes',required:'yes'});
   refresh();
 });
