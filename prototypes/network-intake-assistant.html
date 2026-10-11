@@ -70,7 +70,7 @@ footer{color:#70859f;font-size:11px;margin:16px 0 4px}
   <div class="grid">
     <section class="panel">
       <div class="steps">
-        <span class="step active">1 Proyecto</span><span class="step">2 Ubicaciones</span><span class="step">3 VLANs</span><span class="step">4 Hosts</span><span class="step">5 Comunicaciones</span><span class="step">6 Validar</span>
+        <span class="step active">1 Proyecto</span><span class="step">2 Infraestructura</span><span class="step">3 Ubicaciones</span><span class="step">4 VLANs</span><span class="step">5 Hosts</span><span class="step">6 Comunicaciones</span><span class="step">7 Validar</span>
       </div>
 
       <div class="section">
@@ -84,8 +84,24 @@ footer{color:#70859f;font-size:11px;margin:16px 0 4px}
       </div>
 
       <div class="section">
+        <div class="section-head"><h3>Infraestructura a dimensionar por la IA</h3></div>
+        <p class="small">Estos datos indican a la IA que debe diseñar la infraestructura física, no sólo las VLANs. Debe seleccionar router/firewall, switches, rack, patch panels, pasacables, PDU, puertos y cableado necesarios.</p>
+        <div class="row">
+          <div class="field w4"><label>Ubicación del rack / CPD principal</label><input id="rackLocation" placeholder="CPD"></div>
+          <div class="field w2"><label>Rack mínimo</label><select id="rackUnits"><option value="12">12U</option><option value="18">18U</option><option value="24" selected>24U</option><option value="42">42U</option></select></div>
+          <div class="field w2"><label>Reserva de puertos</label><input id="portGrowth" type="number" min="0" max="100" value="20"></div>
+          <div class="field w2"><label>Patch panel</label><select id="patchPanelPorts"><option value="24" selected>24 puertos</option><option value="48">48 puertos</option></select></div>
+          <div class="field w2"><label>PoE necesario</label><select id="poeRequired"><option value="auto" selected>Auto</option><option value="yes">Sí</option><option value="no">No</option></select></div>
+          <div class="field w4"><label>Salida a Internet</label><select id="internetMode"><option value="router-firewall" selected>Router + firewall/perímetro</option><option value="firewall-router">Firewall con routing</option><option value="router-only">Router únicamente</option></select></div>
+          <div class="field w4"><label>Medio de acceso</label><select id="cablingCategory"><option value="Cat6A" selected>Cat6A</option><option value="Cat6">Cat6</option><option value="fiber">Fibra</option><option value="mixed">Mixto</option></select></div>
+          <div class="field w4"><label>Redundancia</label><select id="redundancy"><option value="none" selected>Sin HA obligatoria</option><option value="core">Core redundante</option><option value="edge">Perímetro redundante</option><option value="full">Core + perímetro</option></select></div>
+          <div class="field w12"><label>Criterios de selección de equipos</label><textarea id="equipmentCriteria" placeholder="Ej.: switches gestionables, suficientes puertos con 20% de reserva, PoE para AP/cámaras/teléfonos, uplinks 10G si procede, sin fijar marca concreta."></textarea></div>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-head"><h3>Ubicaciones</h3><button class="btn" data-add="location">+ Ubicación</button></div>
-        <p class="small">Define sedes, edificios, plantas, salas o CPD. El alcance de cada VLAN podrá referenciar estas ubicaciones.</p>
+        <p class="small">Define toda la jerarquía física: sede → edificio → planta → aula/sala/CPD. Los hosts deben quedar asignados a la ubicación hoja exacta, no a la sede superior, salvo que se indique expresamente.</p>
         <div id="locations" class="card-list"></div>
       </div>
 
@@ -353,7 +369,11 @@ function validate(model){
   if(!$('#projectName').value.trim())bad('Falta el nombre del proyecto.');
   if(!locations.length)warn('No hay ubicaciones. El proyecto puede ser lógico, pero no tendrá alcance físico.');
   const locNames=new Set(locations.map(x=>normalizeRef(x.name)));
+  const parents=new Set(locations.map(x=>normalizeRef(x.parent)).filter(Boolean));
   locations.forEach(l=>{if(l.parent&&!locNames.has(normalizeRef(l.parent)))warn('La ubicación "'+l.name+'" referencia un padre no definido: '+l.parent);});
+  const rackLoc=normalizeRef($('#rackLocation').value);
+  if(rackLoc&&!locNames.has(rackLoc))bad('La ubicación de rack/CPD no existe: '+$('#rackLocation').value+'.');
+  else if(rackLoc&&parents.has(rackLoc))warn('La ubicación del rack tiene ubicaciones hijas. Conviene seleccionar una sala/CPD hoja concreta.');
 
   const seenIds=new Set(),seenNames=new Set();
   vlans.forEach(v=>{
@@ -374,7 +394,10 @@ function validate(model){
 
   hostGroups.forEach(g=>{
     if(!findVlan(g.vlan,vlans))bad('Grupo '+g.name+': VLAN no encontrada ('+g.vlan+').');
-    if(g.location&&!locNames.has(normalizeRef(g.location)))warn('Grupo '+g.name+': ubicación no definida ('+g.location+').');
+    const gl=normalizeRef(g.location);
+    if(g.location&&!locNames.has(gl))warn('Grupo '+g.name+': ubicación no definida ('+g.location+').');
+    else if(gl&&parents.has(gl))warn('Grupo '+g.name+': "'+g.location+'" contiene ubicaciones hijas. Asigna el grupo al aula/sala/CPD exacto para evitar que la IA concentre todos los hosts en la sede raíz.');
+    if(!g.location)warn('Grupo '+g.name+': falta ubicación física exacta.');
     if((Number(g.count)||0)<1)bad('Grupo '+g.name+': cantidad inválida.');
   });
 
@@ -394,49 +417,159 @@ function validate(model){
   return msgs;
 }
 
+function locationPath(name,locations){
+  const byName=new Map(locations.map(x=>[normalizeRef(x.name),x])),seen=new Set(),parts=[];
+  let cur=byName.get(normalizeRef(name));
+  while(cur&&!seen.has(normalizeRef(cur.name))){
+    seen.add(normalizeRef(cur.name));parts.unshift(cur.name);
+    cur=cur.parent?byName.get(normalizeRef(cur.parent)):null;
+  }
+  return parts.join(' → ')||name||'';
+}
+function genericProjectContract(){
+  return JSON.stringify({
+    format:'netwizard-project',
+    schemaVersion:'3.50.0',
+    project:{
+      _schemaVersion:'3.50.0',step:'dash',projName:'EJEMPLO',
+      workflow:{mode:'design'},
+      physicalLocations:[
+        {id:'loc_site',name:'Sede',type:'site'},
+        {id:'loc_cpd',name:'CPD',type:'room',parentId:'loc_site'},
+        {id:'loc_classroom_1',name:'Aula 1',type:'room',parentId:'loc_site'}
+      ],
+      racks:[{id:'rack_cpd_01',name:'RACK-CPD-01',locationId:'loc_cpd',rackUnits:24,numberingDirection:'bottom-up'}],
+      devices:[
+        {id:'rtr_edge',name:'RTR-EDGE-01',type:'router',kind:'router',rackId:'rack_cpd_01',rackUnit:20,locationId:'loc_cpd'},
+        {id:'fw_edge',name:'FW-EDGE-01',type:'firewall',kind:'firewall',rackId:'rack_cpd_01',rackUnit:19,locationId:'loc_cpd'},
+        {id:'sw_access_01',name:'SW-ACCESS-01',type:'switch',kind:'switch',rackId:'rack_cpd_01',rackUnit:17,locationId:'loc_cpd',poeBudgetW:370}
+      ],
+      ports:[
+        {id:'p_rtr_wan',deviceId:'rtr_edge',name:'WAN',mode:'routed',desc:'ISP'},
+        {id:'p_rtr_lan',deviceId:'rtr_edge',name:'LAN',mode:'routed',desc:'Hacia firewall'},
+        {id:'p_fw_inside',deviceId:'fw_edge',name:'inside',mode:'routed'},
+        {id:'p_sw_01',deviceId:'sw_access_01',name:'Gi1/0/1',mode:'access',accessVlanRef:'vlan_users'}
+      ],
+      links:[
+        {id:'link_rtr_fw',fromPortId:'p_rtr_lan',toPortId:'p_fw_inside',media:'copper'}
+      ],
+      vlans:[{id:'vlan_users',vlanId:20,name:'USERS'}],
+      subnets:[{id:'subnet_users',vlanRef:'vlan_users',cidr:'10.10.20.0/24',gateway:'10.10.20.1'}],
+      hosts:[{
+        id:'host_pc_01',name:'PC-AULA1-01',type:'workstation',
+        vlanRef:'vlan_users',subnetRef:'subnet_users',portId:'p_sw_01',deviceId:'sw_access_01',
+        locationId:'loc_classroom_1',physicalLocation:'Sede → Aula 1',ipMode:'dhcp'
+      }],
+      patchPanels:[{id:'pp_cpd_01',rackId:'rack_cpd_01',name:'PP-CPD-01',portCount:24,category:'Cat6A',rackUnit:16}],
+      rackItems:[
+        {id:'ri_rtr',rackId:'rack_cpd_01',type:'device',deviceId:'rtr_edge',label:'RTR-EDGE-01',startUnit:20,heightUnits:1,face:'front'},
+        {id:'ri_fw',rackId:'rack_cpd_01',type:'device',deviceId:'fw_edge',label:'FW-EDGE-01',startUnit:19,heightUnits:1,face:'front'},
+        {id:'ri_pp',rackId:'rack_cpd_01',type:'patch-panel',patchPanelId:'pp_cpd_01',label:'PP-CPD-01',startUnit:16,heightUnits:1,face:'front'},
+        {id:'ri_cm',rackId:'rack_cpd_01',type:'cable-manager',label:'Pasacables CPD',startUnit:15,heightUnits:1,face:'front'}
+      ],
+      telecomOutlets:[{id:'to_aula1_01',locationId:'loc_classroom_1',name:'TO-AULA1-01',portCount:1,category:'Cat6A'}],
+      cableRuns:[{id:'run_aula1_01',label:'CAB-AULA1-01',patchPanelId:'pp_cpd_01',patchPort:1,outletId:'to_aula1_01',outletPort:1,cableType:'Cat6A',route:'CPD → Aula 1'}],
+      patchConnections:[{id:'patch_aula1_01',patchPanelId:'pp_cpd_01',patchPort:1,switchPortId:'p_sw_01',patchCordLengthM:1}],
+      hostOutletConnections:[{id:'hc_aula1_01',hostId:'host_pc_01',outletId:'to_aula1_01',outletPort:1,patchCordLengthM:2}],
+      pdus:[{id:'pdu_cpd_a',rackId:'rack_cpd_01',name:'PDU-CPD-A',feed:'A',mounting:'vertical-rear',voltage:230,maxCurrentAmps:16,maxPowerWatts:3680,outletCount:12}],
+      powerConnections:[],
+      fwRules:[{id:'fw_users_internet',name:'USERS to Internet',src:'USERS',dst:'Internet',proto:'tcp',port:'80,443',action:'allow'}],
+      vlanMatrix:{},dhcp:{},wanCircuits:[],
+      security:{},roas:{},vtp:{roles:{}},topo:{pos:{}},hostPhysicalLocations:[],uiSort:{}
+    }
+  },null,2);
+}
 function prompt(model){
   const {locations,vlans,hostGroups,comms}=model;
+  const locationLines=locations.length?locations.map(x=>'- '+locationPath(x.name,locations)+' | tipo='+x.type+' | nombre exacto='+x.name):['- Ninguna'];
   return [
-    'Crea un archivo JSON de proyecto NetWizard compatible con schema 3.50.0.',
+    'OBJETIVO',
+    'Diseña la red completa y devuelve un único archivo JSON NetWizard válido para schema 3.50.0.',
+    'No te limites a copiar VLANs y hosts: debes diseñar también la infraestructura física y lógica necesaria para que la red pueda funcionar.',
     '',
-    'REGLAS OBLIGATORIAS',
-    '- Devuelve exclusivamente JSON válido, sin Markdown.',
-    '- Usa _schemaVersion: "3.50.0".',
+    'CONTRATO DE SALIDA',
+    '- Devuelve exclusivamente JSON válido, sin Markdown, comentarios ni texto fuera del JSON.',
+    '- La raíz debe seguir el formato del ejemplo de contrato incluido más abajo.',
+    '- Usa _schemaVersion y schemaVersion = "3.50.0".',
     '- Todos los IDs deben ser únicos, estables y legibles.',
-    '- vlanRef, subnetRef, deviceId, portId, parentId y cualquier otra referencia deben apuntar a entidades existentes.',
-    '- No inventes dispositivos, puertos, IPs, servicios o relaciones que no estén indicados.',
-    '- No generes una regla ALLOW más amplia que la necesidad descrita.',
-    '- Política inter-zona por defecto: '+$('#defaultPolicy').value.toUpperCase()+'.',
-    '- Si falta un dato necesario para producir un JSON válido, indícalo en una colección warnings dentro de metadata de trabajo; no inventes el valor.',
-    '- Cada VLAN debe conservar su alcance físico indicado. No extiendas L2 a otras ubicaciones salvo que se solicite expresamente.',
-    '- Genera vlanMatrix sólo para comunicaciones inter-VLAN permitidas.',
-    '- Genera fwRules con origen, destino, protocolo, puertos, acción y descripción.',
+    '- Toda referencia debe resolver: vlanRef, subnetRef, deviceId, portId, parentId, rackId, patchPanelId, outletId, switchPortId, pduId, etc.',
+    '- No dejes referencias a nombres cuando el campo espera un ID.',
+    '',
+    'RESPONSABILIDAD DE DISEÑO DE LA IA',
+    '- SÍ debes seleccionar y dimensionar los equipos de red que falten. Puedes elegir tipos/modelos razonables o genéricos compatibles con los requisitos; documenta las decisiones en campos description/desc cuando proceda.',
+    '- Debes incluir al menos la función de routing hacia Internet. Según el modo solicitado, crea router y firewall/perímetro separados o un firewall que haga routing.',
+    '- Debes dimensionar switches de acceso/distribución según el número real de hosts, AP, cámaras, teléfonos y uplinks, añadiendo la reserva de puertos solicitada.',
+    '- Si existen AP, cámaras o teléfonos y PoE está en auto/sí, selecciona switches PoE con presupuesto suficiente.',
+    '- Crea todos los ports necesarios en devices y enlaza físicamente los equipos mediante links.',
+    '- Crea un rack en el CPD/cuarto técnico indicado y coloca router, firewall, switches y demás equipos rackeables sin colisiones de U.',
+    '- Crea patch panels suficientes para el número de tomas, un pasacables/organizador asociado al bloque de patching, PDU y conexiones de alimentación razonables.',
+    '- Para cada host cableado fuera del rack crea telecomOutlet, cableRun, patchConnection y hostOutletConnection coherentes.',
+    '- No conectes un host directamente al switch saltándote el cableado estructurado cuando se ha solicitado rack/patch panel.',
+    '- Los uplinks entre switches deben usar trunks o enlaces routed según el diseño. Limita VLANs permitidas al alcance real.',
+    '- La VLAN de gestión debe alcanzar los equipos de red que deban administrarse; Guest/IoT/Cameras no deben acceder a Management salvo regla explícita.',
+    '',
+    'JERARQUÍA FÍSICA: REGLAS CRÍTICAS',
+    '- physicalLocations debe conservar TODA la jerarquía indicada mediante parentId.',
+    '- Cada host debe usar como locationId la ubicación hoja exacta donde se encuentra: aula, despacho, sala, CPD, etc.',
+    '- physicalLocation debe contener la ruta humana completa (por ejemplo "Colegio → Planta 1 → Aula 2").',
+    '- NUNCA asignes todos los hosts a la sede raíz sólo porque comparten el mismo centro.',
+    '- Los equipos de red instalados en el CPD deben tener locationId del CPD y rackId del rack de ese CPD.',
+    '- Si un aula necesita un switch local por distancia/capacidad, créalo en esa aula o en su armario técnico correspondiente; no lo sitúes automáticamente en la sede raíz.',
+    '',
+    'CRITERIOS DE INFRAESTRUCTURA',
+    'Ubicación rack/CPD: '+($('#rackLocation').value.trim()||'decidir usando la sala/CPD más adecuada'),
+    'Rack mínimo: '+$('#rackUnits').value+'U',
+    'Reserva de puertos: '+$('#portGrowth').value+'%',
+    'Patch panels: '+$('#patchPanelPorts').value+' puertos',
+    'PoE: '+$('#poeRequired').value,
+    'Modo Internet: '+$('#internetMode').value,
+    'Cableado de acceso: '+$('#cablingCategory').value,
+    'Redundancia: '+$('#redundancy').value,
+    'Criterios adicionales: '+($('#equipmentCriteria').value.trim()||'seleccionar infraestructura gestionable, suficiente y coherente con la escala'),
     '',
     'PROYECTO',
     'Nombre: '+($('#projectName').value.trim()||'Nueva red'),
     'Dominio: '+($('#domain').value.trim()||'no especificado'),
     'Objetivo: '+($('#projectGoal').value.trim()||'no especificado'),
+    'Política inter-zona por defecto: '+$('#defaultPolicy').value.toUpperCase(),
     '',
-    'UBICACIONES',
-    ...(locations.length?locations.map(x=>'- '+x.name+' | tipo='+x.type+(x.parent?' | padre='+x.parent:'')):['- Ninguna']),
+    'UBICACIONES — RUTAS COMPLETAS',
+    ...locationLines,
     '',
     'VLANS Y SUBREDES',
     ...(vlans.length?vlans.map(v=>'- VLAN '+v.vlanId+' '+v.name+' | rol='+v.role+' | confianza='+v.trust+' | red='+v.cidr+' | gateway='+v.gateway+' | DHCP='+v.dhcp+' | Internet='+v.internet+' | alcance='+ (v.scope||'no definido')+(v.notes?' | notas='+v.notes:'')):['- Ninguna']),
     '',
-    'GRUPOS DE HOSTS',
-    ...(hostGroups.length?hostGroups.map(g=>'- '+g.name+' | tipo='+g.type+' | cantidad='+g.count+' | VLAN='+g.vlan+' | ubicación='+(g.location||'no definida')+' | IP='+g.ipMode+(g.notes?' | necesidades='+g.notes:'')):['- Ninguno']),
+    'GRUPOS DE HOSTS — RESPETA LA UBICACIÓN EXACTA',
+    ...(hostGroups.length?hostGroups.map(g=>'- '+g.name+' | tipo='+g.type+' | cantidad='+g.count+' | VLAN='+g.vlan+' | ubicación hoja='+locationPath(g.location,locations)+' | IP='+g.ipMode+(g.notes?' | necesidades='+g.notes:'')):['- Ninguno']),
     '',
     'COMUNICACIONES / FIREWALL',
     ...(comms.length?comms.map(c=>'- '+c.src+' -> '+c.dst+' | '+c.proto.toUpperCase()+'/'+(c.ports||'ANY')+' | '+c.action.toUpperCase()+' | log='+c.log+' | obligatoria='+c.required+' | motivo='+(c.reason||'no documentado')):['- Ninguna']),
     '',
-    'VALIDACIONES QUE DEBES CUMPLIR',
-    '- VLAN IDs únicos y entre 1 y 4094.',
-    '- Gateway perteneciente a su subred.',
-    '- Hosts asociados únicamente a VLAN/subnet existentes.',
-    '- No referencias huérfanas.',
-    '- No permitir Guest/IoT/Cameras hacia Management salvo regla explícita y justificada.',
-    '- Evitar ANY en reglas ALLOW cuando se conocen servicios concretos.',
-    '- Mantener DENY implícito entre zonas cuando no exista comunicación autorizada.'
+    'ALGORITMO DE DISEÑO OBLIGATORIO',
+    '1. Construye primero physicalLocations con todos los parentId.',
+    '2. Expande los grupos de hosts y coloca cada host en su ubicación hoja exacta.',
+    '3. Calcula puertos de acceso necesarios por ubicación y aplica la reserva de crecimiento.',
+    '4. Decide cuántos switches hacen falta y dónde deben estar físicamente.',
+    '5. Diseña el perímetro de Internet (router/firewall) y el routing inter-VLAN.',
+    '6. Crea rack(s), posiciones U, patch panels, pasacables, PDU y alimentación.',
+    '7. Crea puertos, trunks/uplinks y links entre equipos.',
+    '8. Crea tomas, cableRuns, patchConnections y hostOutletConnections para endpoints cableados.',
+    '9. Aplica VLANs sólo donde deban existir según su alcance.',
+    '10. Genera fwRules/vlanMatrix desde las comunicaciones declaradas y default deny.',
+    '11. Recorre todas las referencias y comprueba que no existe ninguna referencia huérfana.',
+    '',
+    'VALIDACIONES FINALES',
+    '- VLAN IDs únicos 1-4094 y gateways dentro de sus subredes.',
+    '- Cada host tiene VLAN/subnet válidas y ubicación hoja válida.',
+    '- Cada host cableado tiene camino físico host → toma → cable → patch panel → switch port.',
+    '- Cada equipo de rack tiene rackId/rackUnit y no hay colisiones de U.',
+    '- El número de puertos y patch ports es suficiente, incluida la reserva.',
+    '- Existe conectividad física y lógica desde las redes que requieren Internet hasta el perímetro.',
+    '- Evita ANY en ALLOW si se conocen servicios concretos.',
+    '- Mantén DENY entre zonas cuando no exista permiso explícito.',
+    '',
+    'EJEMPLO GENÉRICO DE ESTRUCTURA VÁLIDA (USA ESTA FORMA, ADÁPTALA A LOS DATOS REALES)',
+    genericProjectContract()
   ].join('\n');
 }
 
@@ -479,25 +612,46 @@ $('#downloadJson').addEventListener('click',()=>{
 $('#validateNow').addEventListener('click',()=>{refresh();$('#validation').scrollTop=0;});
 $('#loadExample').addEventListener('click',()=>{
   $('#locations').innerHTML='';$('#vlans').innerHTML='';$('#hosts').innerHTML='';$('#comms').innerHTML='';
-  $('#projectName').value='Oficina segmentada · prueba';
-  $('#domain').value='corp.example';
-  $('#projectGoal').value='Oficina con usuarios, servidores, cámaras, invitados y gestión separada. Default deny entre zonas.';
+  $('#projectName').value='Colegio segmentado · prueba';
+  $('#domain').value='colegio.local';
+  $('#projectGoal').value='Colegio con CPD, dirección, aulas, profesores, alumnos, cámaras, Wi-Fi invitados y administración separada. La infraestructura debe dimensionarse completa y usar default deny.';
   $('#defaultPolicy').value='deny';
-  add('location',{name:'Sede Madrid',type:'site'});
-  add('location',{name:'CPD',type:'room',parent:'Sede Madrid'});
-  add('location',{name:'Planta 1',type:'floor',parent:'Sede Madrid'});
-  add('vlan',{vlanId:10,name:'MGMT',role:'management',trust:'management',scope:'CPD',cidr:'10.10.10.0/24',gateway:'10.10.10.1',dhcp:'no',internet:'no',notes:'Sólo administración de infraestructura.'});
-  add('vlan',{vlanId:20,name:'USERS',role:'users',trust:'restricted',scope:'Planta 1',cidr:'10.10.20.0/24',gateway:'10.10.20.1',dhcp:'yes',internet:'yes'});
-  add('vlan',{vlanId:30,name:'SERVERS',role:'servers',trust:'trusted',scope:'CPD',cidr:'10.10.30.0/24',gateway:'10.10.30.1',dhcp:'no',internet:'no'});
-  add('vlan',{vlanId:40,name:'CAMERAS',role:'cameras',trust:'untrusted',scope:'Planta 1',cidr:'10.10.40.0/24',gateway:'10.10.40.1',dhcp:'yes',internet:'no'});
-  add('vlan',{vlanId:50,name:'GUEST',role:'guest',trust:'untrusted',scope:'Planta 1',cidr:'10.10.50.0/24',gateway:'10.10.50.1',dhcp:'yes',internet:'yes'});
-  add('host',{name:'PC-USERS',type:'workstation',count:20,vlan:'USERS',location:'Planta 1',ipMode:'dhcp',notes:'Navegación, DNS y acceso al ERP.'});
-  add('host',{name:'ERP',type:'server',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static',notes:'Aplicación HTTPS TCP/443.'});
-  add('host',{name:'NVR',type:'nvr',count:1,vlan:'SERVERS',location:'CPD',ipMode:'static'});
-  add('host',{name:'CAM',type:'camera',count:8,vlan:'CAMERAS',location:'Planta 1',ipMode:'dhcp'});
-  add('comm',{src:'USERS',dst:'SERVERS',proto:'tcp',ports:'443',action:'allow',reason:'Acceso al ERP por HTTPS',log:'yes',required:'yes'});
-  add('comm',{src:'CAMERAS',dst:'NVR',proto:'tcp',ports:'554,443',action:'allow',reason:'Vídeo y gestión del NVR',log:'yes',required:'yes'});
-  add('comm',{src:'GUEST',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación de invitados',log:'no',required:'yes'});
+  $('#rackLocation').value='CPD';
+  $('#rackUnits').value='24';
+  $('#portGrowth').value='25';
+  $('#patchPanelPorts').value='24';
+  $('#poeRequired').value='auto';
+  $('#internetMode').value='router-firewall';
+  $('#cablingCategory').value='Cat6A';
+  $('#redundancy').value='none';
+  $('#equipmentCriteria').value='Dimensionar switches gestionables por planta/zona cuando lo requieran distancia o puertos. PoE para AP y cámaras. Router de borde, firewall, uplinks adecuados y rack ordenado con patch panel + pasacables.';
+  add('location',{name:'Colegio',type:'site'});
+  add('location',{name:'Planta baja',type:'floor',parent:'Colegio'});
+  add('location',{name:'CPD',type:'room',parent:'Planta baja'});
+  add('location',{name:'Dirección',type:'room',parent:'Planta baja'});
+  add('location',{name:'Planta 1',type:'floor',parent:'Colegio'});
+  add('location',{name:'Aula 1',type:'room',parent:'Planta 1'});
+  add('location',{name:'Aula 2',type:'room',parent:'Planta 1'});
+  add('location',{name:'Biblioteca',type:'room',parent:'Planta 1'});
+  add('vlan',{vlanId:10,name:'MGMT',role:'management',trust:'management',scope:'CPD',cidr:'10.20.10.0/24',gateway:'10.20.10.1',dhcp:'no',internet:'no',notes:'Administración de infraestructura.'});
+  add('vlan',{vlanId:20,name:'STAFF',role:'users',trust:'restricted',scope:'Dirección,Aula 1,Aula 2,Biblioteca',cidr:'10.20.20.0/24',gateway:'10.20.20.1',dhcp:'yes',internet:'yes'});
+  add('vlan',{vlanId:30,name:'STUDENTS',role:'users',trust:'restricted',scope:'Aula 1,Aula 2,Biblioteca',cidr:'10.20.30.0/23',gateway:'10.20.30.1',dhcp:'yes',internet:'yes'});
+  add('vlan',{vlanId:40,name:'SERVERS',role:'servers',trust:'trusted',scope:'CPD',cidr:'10.20.40.0/24',gateway:'10.20.40.1',dhcp:'no',internet:'no'});
+  add('vlan',{vlanId:50,name:'CAMERAS',role:'cameras',trust:'untrusted',scope:'Planta baja,Planta 1',cidr:'10.20.50.0/24',gateway:'10.20.50.1',dhcp:'yes',internet:'no'});
+  add('vlan',{vlanId:60,name:'GUEST',role:'guest',trust:'untrusted',scope:'Dirección,Aula 1,Aula 2,Biblioteca',cidr:'10.20.60.0/24',gateway:'10.20.60.1',dhcp:'yes',internet:'yes'});
+  add('host',{name:'PC-DIRECCION',type:'workstation',count:4,vlan:'STAFF',location:'Dirección',ipMode:'dhcp',notes:'Administración del centro, ERP y navegación.'});
+  add('host',{name:'PC-AULA1',type:'workstation',count:24,vlan:'STUDENTS',location:'Aula 1',ipMode:'dhcp',notes:'Equipos de alumnos.'});
+  add('host',{name:'PC-AULA2',type:'workstation',count:24,vlan:'STUDENTS',location:'Aula 2',ipMode:'dhcp',notes:'Equipos de alumnos.'});
+  add('host',{name:'PC-BIBLIOTECA',type:'workstation',count:8,vlan:'STUDENTS',location:'Biblioteca',ipMode:'dhcp'});
+  add('host',{name:'SRV-COLEGIO',type:'server',count:2,vlan:'SERVERS',location:'CPD',ipMode:'static',notes:'Servicios internos DNS/ERP/directorio.'});
+  add('host',{name:'AP-AULA1',type:'ap',count:1,vlan:'MGMT',location:'Aula 1',ipMode:'dhcp',notes:'AP PoE gestionado.'});
+  add('host',{name:'AP-AULA2',type:'ap',count:1,vlan:'MGMT',location:'Aula 2',ipMode:'dhcp',notes:'AP PoE gestionado.'});
+  add('host',{name:'CAM-CENTRO',type:'camera',count:6,vlan:'CAMERAS',location:'Planta baja',ipMode:'dhcp'});
+  add('comm',{src:'STAFF',dst:'SERVERS',proto:'tcp',ports:'443,445',action:'allow',reason:'ERP y recursos internos',log:'yes',required:'yes'});
+  add('comm',{src:'STUDENTS',dst:'SERVERS',proto:'tcp',ports:'443',action:'allow',reason:'Acceso a servicios educativos web',log:'yes',required:'yes'});
+  add('comm',{src:'STAFF',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación',log:'no',required:'yes'});
+  add('comm',{src:'STUDENTS',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'DNS y navegación filtrada',log:'no',required:'yes'});
+  add('comm',{src:'GUEST',dst:'Internet',proto:'tcp/udp',ports:'53,80,443',action:'allow',reason:'Navegación de invitados',log:'no',required:'yes'});
   add('comm',{src:'GUEST',dst:'MGMT',proto:'any',ports:'any',action:'deny',reason:'Aislamiento de gestión',log:'yes',required:'yes'});
   refresh();
 });
