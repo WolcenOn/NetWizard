@@ -70,7 +70,7 @@ footer{color:#70859f;font-size:11px;margin:16px 0 4px}
   <div class="grid">
     <section class="panel">
       <div class="steps">
-        <span class="step active">1 Proyecto</span><span class="step">2 Ubicaciones</span><span class="step">3 VLANs</span><span class="step">4 Hosts</span><span class="step">5 Comunicaciones</span><span class="step">6 Validar</span>
+        <span class="step active">1 Proyecto</span><span class="step">2 Infraestructura</span><span class="step">3 Ubicaciones</span><span class="step">4 VLANs</span><span class="step">5 Hosts</span><span class="step">6 Comunicaciones</span><span class="step">7 Validar</span>
       </div>
 
       <div class="section">
@@ -84,8 +84,24 @@ footer{color:#70859f;font-size:11px;margin:16px 0 4px}
       </div>
 
       <div class="section">
+        <div class="section-head"><h3>Infraestructura a dimensionar por la IA</h3></div>
+        <p class="small">Estos datos indican a la IA que debe diseñar la infraestructura física, no sólo las VLANs. Debe seleccionar router/firewall, switches, rack, patch panels, pasacables, PDU, puertos y cableado necesarios.</p>
+        <div class="row">
+          <div class="field w4"><label>Ubicación del rack / CPD principal</label><input id="rackLocation" placeholder="CPD"></div>
+          <div class="field w2"><label>Rack mínimo</label><select id="rackUnits"><option value="12">12U</option><option value="18">18U</option><option value="24" selected>24U</option><option value="42">42U</option></select></div>
+          <div class="field w2"><label>Reserva de puertos</label><input id="portGrowth" type="number" min="0" max="100" value="20"></div>
+          <div class="field w2"><label>Patch panel</label><select id="patchPanelPorts"><option value="24" selected>24 puertos</option><option value="48">48 puertos</option></select></div>
+          <div class="field w2"><label>PoE necesario</label><select id="poeRequired"><option value="auto" selected>Auto</option><option value="yes">Sí</option><option value="no">No</option></select></div>
+          <div class="field w4"><label>Salida a Internet</label><select id="internetMode"><option value="router-firewall" selected>Router + firewall/perímetro</option><option value="firewall-router">Firewall con routing</option><option value="router-only">Router únicamente</option></select></div>
+          <div class="field w4"><label>Medio de acceso</label><select id="cablingCategory"><option value="Cat6A" selected>Cat6A</option><option value="Cat6">Cat6</option><option value="fiber">Fibra</option><option value="mixed">Mixto</option></select></div>
+          <div class="field w4"><label>Redundancia</label><select id="redundancy"><option value="none" selected>Sin HA obligatoria</option><option value="core">Core redundante</option><option value="edge">Perímetro redundante</option><option value="full">Core + perímetro</option></select></div>
+          <div class="field w12"><label>Criterios de selección de equipos</label><textarea id="equipmentCriteria" placeholder="Ej.: switches gestionables, suficientes puertos con 20% de reserva, PoE para AP/cámaras/teléfonos, uplinks 10G si procede, sin fijar marca concreta."></textarea></div>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-head"><h3>Ubicaciones</h3><button class="btn" data-add="location">+ Ubicación</button></div>
-        <p class="small">Define sedes, edificios, plantas, salas o CPD. El alcance de cada VLAN podrá referenciar estas ubicaciones.</p>
+        <p class="small">Define toda la jerarquía física: sede → edificio → planta → aula/sala/CPD. Los hosts deben quedar asignados a la ubicación hoja exacta, no a la sede superior, salvo que se indique expresamente.</p>
         <div id="locations" class="card-list"></div>
       </div>
 
